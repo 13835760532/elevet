@@ -146,27 +146,11 @@ export const useRenderLayout = () => {
               class={[
                 `${prefixCls}-content-scrollbar`,
                 {
-                  '!h-[calc(100%-var(--tags-view-height))] mt-[calc(var(--tags-view-height))]':
+                  '!h-full':
                     fixedHeader.value && tagsView.value
                 }
               ]}
             >
-              {tagsView.value ? (
-                <TagsView
-                  class={[
-                    'layout-border__bottom absolute',
-                    {
-                      '!fixed top-0 left-0 z-10': fixedHeader.value,
-                      'w-[calc(100%-var(--left-menu-min-width))] !left-[var(--left-menu-min-width)] mt-[var(--logo-height)]':
-                        collapse.value && fixedHeader.value,
-                      'w-[calc(100%-var(--left-menu-max-width))] !left-[var(--left-menu-max-width)] mt-[var(--logo-height)]':
-                        !collapse.value && fixedHeader.value
-                    }
-                  ]}
-                  style="transition: width var(--transition-time-02), left var(--transition-time-02);"
-                ></TagsView>
-              ) : undefined}
-
               <AppView></AppView>
             </ElScrollbar>
           </div>

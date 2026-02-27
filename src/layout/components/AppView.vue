@@ -36,11 +36,7 @@ provide('reload', reload)
 <template>
   <section
     :class="[
-      'p-[var(--app-content-padding)] w-full bg-[var(--app-content-bg-color)] dark:bg-[var(--el-bg-color)]',
-      {
-        '!min-h-[calc(100vh-var(--top-tool-height)-var(--tags-view-height)-var(--app-footer-height))] pb-0':
-          footer
-      }
+      'p-[var(--app-content-padding)] w-full bg-[var(--app-content-bg-color)] dark:bg-[var(--el-bg-color)] h-full'
     ]"
   >
     <router-view v-if="routerAlive">
@@ -51,5 +47,4 @@ provide('reload', reload)
       </template>
     </router-view>
   </section>
-  <Footer v-if="footer" />
 </template>

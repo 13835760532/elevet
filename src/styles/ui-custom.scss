@@ -1,0 +1,132 @@
+/* ==========================================================
+   全局 UI 样式规范控制 (UI Design Conventions)
+   主要用于覆盖 Element Plus 默认样式或统一定义常用组件的尺寸、颜色、圆角等
+   ========================================================== */
+
+/* ----------------------------------------------------------
+   1. 基础预设变量 (CSS Variables)
+---------------------------------------------------------- */
+:root {
+  /* 基础主色调覆盖（如需覆盖主题色，也可在此定义，这会覆盖 Element Plus 的默认值） */
+  /* --el-color-primary: #00B3ED; */
+  
+  /* 统一圆角规范 (border-radius) */
+  --el-border-radius-base: 6px; /* 默认主圆角组件，比如 Input, Select */
+  --el-border-radius-small: 4px; /* 小号圆角组件，比如 Tag, 小 Button */
+  --el-border-radius-round: 20px; /* 全圆角组件 */
+
+  /* 统一卡片或弹窗的圆角 */
+  --el-border-radius-circle: 10px; 
+}
+
+
+/* ----------------------------------------------------------
+   2. 按钮组件样式规范 (Button Styles)
+---------------------------------------------------------- */
+.el-button {
+  /* 统一按钮圆角 */
+  border-radius: var(--el-border-radius-base);
+  /* 设置字体加粗让按钮更有质感 */
+  font-weight: 500;
+  /* 统一按钮的横向内边距，确保文字不会太挤 */
+  padding-left: 20px;
+  padding-right: 20px;
+  /* 增加基础过渡动画 */
+  height: 40px;
+  transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
+  &:hover {
+    opacity: 0.88;
+  }
+}
+
+/* 针对小号按钮 (Small Size) */
+.el-button--small {
+  padding-left: 12px;
+  padding-right: 12px;
+  border-radius: var(--el-border-radius-small);
+}
+
+/* 针对大号粗体按钮 (Large Size) */
+.el-button--large {
+  padding-left: 24px;
+  padding-right: 24px;
+  border-radius: 8px; /* 大按钮稍微平滑一点 */
+  font-size: 15px;
+}
+
+/* 规范化不同状态下的基础尺寸或行高情况 */
+.el-button.is-round {
+  border-radius: var(--el-border-radius-round);
+}
+
+/* 主要操作按钮 Hover 效果优化加强（可在此扩展） */
+
+
+
+/* ----------------------------------------------------------
+   3. 输入框/选择器等表单组件规范
+---------------------------------------------------------- */
+.el-input__wrapper,
+.el-select .el-input__wrapper {
+  height: 40px;
+  /* 统一边框和圆角 */
+  border-radius: var(--el-border-radius-base);
+  /* 调整常规高度，使表单看起来更宽敞舒适 */
+  /* padding: 4px 12px; */
+}
+
+/* 让输入框在激活时边框颜色更柔和（可在此扩展） */
+
+
+
+/* ----------------------------------------------------------
+   4. 对话框/卡片等区块规范 (Dialog & Card)
+---------------------------------------------------------- */
+.el-dialog,
+.el-card {
+  /* 弹窗、卡片的圆角稍大一些，增强整齐柔和的视觉效果 */
+  border-radius: 12px;
+}
+
+.el-dialog__header {
+  border-bottom: 1px solid var(--el-border-color-lighter);
+  margin-right: 0;
+  padding-bottom: 15px;
+  font-weight: bold;
+}
+
+.el-dialog__footer {
+  border-top: 1px solid var(--el-border-color-lighter);
+  padding-top: 15px;
+}
+
+
+/* ----------------------------------------------------------
+   5. 表格样式微调 (Table Styles)
+---------------------------------------------------------- */
+.el-table {
+  /* 调整表头与表体字体的粗细区分 */
+  --el-table-header-bg-color: #f5f7fa;
+  --el-table-header-text-color: #333;
+}
+.el-table th.el-table__cell.is-leaf {
+  font-weight: bold;
+}
+
+/* ----------------------------------------------------------
+   6. 容器常用公共类 (Utility Classes)
+---------------------------------------------------------- */
+.page-container {
+  padding: 20px;
+  background-color: var(--el-bg-color-page);
+  border-radius: var(--el-border-radius-base);
+  min-height: calc(100vh - 120px);
+}
+
+
+.el-form{
+  .el-form-item__error{
+    font-size: 10px;
+    margin-top: 0;
+  }
+}

@@ -31,6 +31,8 @@ setDefaultTheme()
   </ConfigGlobal>
 </template>
 <style lang="scss">
+/* 引入公共查询表单样式 */
+@use '@/styles/query-form.scss';
 $prefix-cls: #{$namespace}-app;
 
 .size {
@@ -53,5 +55,17 @@ body {
 
 .#{$prefix-cls}-grey-mode {
   filter: grayscale(100%);
+}
+
+
+
+.login-container {
+  background: url("@/assets/imgs/login-bg.png") no-repeat center center !important;
+  background-size: cover !important;
+}
+
+.yy-container {
+  background: #F1F5F9 !important;
+  background-size: cover !important;
 }
 </style>

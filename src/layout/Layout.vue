@@ -25,22 +25,8 @@ const handleClickOutside = () => {
 }
 
 const renderLayout = () => {
-  switch (unref(layout)) {
-    case 'classic':
-      const { renderClassic } = useRenderLayout()
-      return renderClassic()
-    case 'topLeft':
-      const { renderTopLeft } = useRenderLayout()
-      return renderTopLeft()
-    case 'top':
-      const { renderTop } = useRenderLayout()
-      return renderTop()
-    case 'cutMenu':
-      const { renderCutMenu } = useRenderLayout()
-      return renderCutMenu()
-    default:
-      break
-  }
+  const { renderTopLeft } = useRenderLayout()
+  return renderTopLeft()
 }
 
 export default defineComponent({
@@ -58,8 +44,6 @@ export default defineComponent({
         {renderLayout()}
 
         <Backtop></Backtop>
-
-        <Setting></Setting>
       </section>
     )
   }

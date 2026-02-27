@@ -67,22 +67,23 @@ watch(
       to="/"
     >
       <img
-        class="h-[calc(var(--logo-height)-10px)] w-[calc(var(--logo-height)-10px)]"
-        src="@/assets/imgs/logo.png"
+        class="h-[calc(var(--logo-height)-26px)] w-[calc(var(--logo-height)-26px)]"
+        src="@/assets/logo/logo.png"
       />
-      <div
-        v-if="show"
-        :class="[
-          'ml-10px text-16px font-700',
-          {
-            'text-[var(--logo-title-text-color)]': layout === 'classic',
-            'text-[var(--top-header-text-color)]':
-              layout === 'topLeft' || layout === 'top' || layout === 'cutMenu'
-          }
-        ]"
-      >
-        {{ title }}
+      <div class="company-title" >
+        链安食检数智服务平台（专业版v2.0）
       </div>
     </router-link>
   </div>
 </template>
+
+<style lang="scss" scoped>
+
+  .company-title {
+    font-weight: 600;
+    font-size: 18px;
+    color: #00B3ED;
+    line-height: 26px;
+    margin-left: 10px;
+  }
+</style>

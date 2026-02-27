@@ -87,9 +87,9 @@ export default defineComponent({
             unref(layout) === 'top' || unref(layout) === 'cutMenu' ? false : unref(collapse)
           }
           uniqueOpened={unref(layout) === 'top' ? false : unref(uniqueOpened)}
-          backgroundColor="var(--left-menu-bg-color)"
-          textColor="var(--left-menu-text-color)"
-          activeTextColor="var(--left-menu-text-active-color)"
+          backgroundColor="#fff"
+          textColor="#333"
+          activeTextColor="#00B3ED"
           popperClass={
             unref(menuMode) === 'vertical'
               ? `${prefixCls}-popper--vertical`
@@ -112,7 +112,7 @@ export default defineComponent({
         id={prefixCls}
         class={[
           `${prefixCls} ${prefixCls}__${unref(menuMode)}`,
-          'h-[100%] overflow-hidden flex-col bg-[var(--left-menu-bg-color)]',
+          'h-[100%] overflow-hidden flex-col bg-[#fff]',
           {
             'w-[var(--left-menu-min-width)]': unref(collapse) && unref(layout) !== 'cutMenu',
             'w-[var(--left-menu-max-width)]': !unref(collapse) && unref(layout) !== 'cutMenu'
@@ -128,7 +128,6 @@ export default defineComponent({
 
 <style lang="scss" scoped>
 $prefix-cls: #{$namespace}-menu;
-
 .#{$prefix-cls} {
   position: relative;
   transition: width var(--transition-time-02);
@@ -140,7 +139,7 @@ $prefix-cls: #{$namespace}-menu;
     // 设置选中时子标题的颜色
     .is-active {
       & > .#{$elNamespace}-sub-menu__title {
-        color: var(--left-menu-text-active-color) !important;
+        color: #00B3ED !important;
       }
     }
 
@@ -148,18 +147,18 @@ $prefix-cls: #{$namespace}-menu;
     .#{$elNamespace}-sub-menu__title,
     .#{$elNamespace}-menu-item {
       &:hover {
-        color: var(--left-menu-text-active-color) !important;
-        background-color: var(--left-menu-bg-color) !important;
+        color: #00B3ED !important;
+        background-color: #F1F5F9 !important;
       }
     }
 
     // 设置选中时的高亮背景和高亮颜色
     .#{$elNamespace}-menu-item.is-active {
-      color: var(--left-menu-text-active-color) !important;
-      background-color: var(--left-menu-bg-active-color) !important;
+      color: #00B3ED !important;
+      background-color: #F1F5F9 !important;
 
       &:hover {
-        background-color: var(--left-menu-bg-active-color) !important;
+        background-color: #F1F5F9 !important;
       }
     }
 
@@ -169,10 +168,16 @@ $prefix-cls: #{$namespace}-menu;
 
     // 设置子菜单的背景颜色
     .#{$elNamespace}-menu {
+      background-color: #fff !important;
       .#{$elNamespace}-sub-menu__title,
       .#{$elNamespace}-menu-item:not(.is-active) {
-        background-color: var(--left-menu-bg-light-color) !important;
+        background-color: #fff !important;
+        color: #333 !important;
       }
+    }
+
+    .is-active + .is-opened > .el-sub-menu__title {
+      color: #00B3ED !important;
     }
   }
 
@@ -246,26 +251,29 @@ $prefix-cls: #{$namespace}-menu-popper;
   // 设置选中时子标题的颜色
   .is-active {
     & > .el-sub-menu__title {
-      color: var(--left-menu-text-active-color) !important;
+      color: #00B3ED !important;
     }
   }
 
   // 设置子菜单悬停的高亮和背景色
   .el-sub-menu__title,
   .el-menu-item {
+    background-color: #fff;
+    color: #333;
+    
     &:hover {
-      color: var(--left-menu-text-active-color) !important;
-      background-color: var(--left-menu-bg-color) !important;
+      color: #00B3ED !important;
+      background-color: #F1F5F9 !important;
     }
   }
 
   // 设置选中时的高亮背景
   .el-menu-item.is-active {
     position: relative;
-    background-color: var(--left-menu-bg-active-color) !important;
+    background-color: #F1F5F9 !important;
 
     &:hover {
-      background-color: var(--left-menu-bg-active-color) !important;
+      background-color: #F1F5F9 !important;
     }
   }
 }

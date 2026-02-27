@@ -53,6 +53,8 @@ const whiteList = [
   '/auth-redirect',
   '/bind',
   '/register',
+  '/forgotPassword',
+  '/reset-password',
   '/oauthLogin/gitee'
 ]
 

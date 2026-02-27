@@ -1,121 +1,442 @@
 <template>
-  <div
-    :class="prefixCls"
-    class="relative h-[100%] lt-md:px-10px lt-sm:px-10px lt-xl:px-10px lt-xl:px-10px"
-  >
-    <div class="relative mx-auto h-full flex">
-      <div
-        :class="`${prefixCls}__left flex-1 bg-gray-500 bg-opacity-20 relative p-30px lt-xl:hidden overflow-x-hidden overflow-y-auto`"
-      >
-        <!-- 左上角的 logo + 系统标题 -->
-        <div class="relative flex items-center text-white">
-          <img alt="" class="mr-10px h-48px w-48px" src="@/assets/imgs/logo.png" />
-          <span class="text-20px font-bold">{{ underlineToHump(appStore.getTitle) }}</span>
+  <div class="login-container">
+    <div class="login-card">
+      <!-- Header Area -->
+      <div class="login-header">
+        <div class="logo-box">
+          <img src="@/assets/logo/logo.png" alt="logo" class="logo-img" />
         </div>
-        <!-- 左边的背景图 + 欢迎语 -->
-        <div class="h-[calc(100%-60px)] flex items-center justify-center">
-          <TransitionGroup
-            appear
-            enter-active-class="animate__animated animate__bounceInLeft"
-            tag="div"
-          >
-            <img key="1" alt="" class="w-350px" src="@/assets/svgs/login-box-bg.svg" />
-            <div key="2" class="text-3xl text-white">{{ t('login.welcome') }}</div>
-            <div key="3" class="mt-5 text-14px font-normal text-white">
-              {{ t('login.message') }}
-            </div>
-          </TransitionGroup>
+        <div class="title-box">
+          <div class="main-title">链安食检数智服务平台</div>
+          <div class="sub-title">专业版(v2.0-2026)</div>
         </div>
       </div>
-      <div
-        class="relative flex-1 p-30px dark:bg-[var(--login-bg-color)] lt-sm:p-10px overflow-x-hidden overflow-y-auto"
-      >
-        <!-- 右上角的主题、语言选择 -->
-        <div
-          class="flex items-center justify-between at-2xl:justify-end at-xl:justify-end"
-          style="color: var(--el-text-color-primary);"
-        >
-          <div class="flex items-center at-2xl:hidden at-xl:hidden">
-            <img alt="" class="mr-10px h-48px w-48px" src="@/assets/imgs/logo.png" />
-            <span class="text-20px font-bold" >{{ underlineToHump(appStore.getTitle) }}</span>
-          </div>
-          <div class="flex items-center justify-end space-x-10px h-48px">
-            <ThemeSwitch />
-            <LocaleDropdown />
-          </div>
+
+      <!-- Tab Switcher -->
+      <div class="tab-switcher">
+        <div class="tab-item" :class="{ active: loginType === 'checking' }" @click="loginType = 'checking'">
+          监管检测机构
         </div>
-        <!-- 右边的登录界面 -->
-        <Transition appear enter-active-class="animate__animated animate__bounceInRight">
-          <div
-            class="m-auto h-[calc(100%-60px)] w-[100%] flex items-center at-2xl:max-w-500px at-lg:max-w-500px at-md:max-w-500px at-xl:max-w-500px"
-          >
-            <!-- 账号登录 -->
-            <LoginForm class="m-auto h-auto p-20px lt-xl:(rounded-3xl light:bg-white)" />
-            <!-- 手机登录 -->
-            <MobileForm class="m-auto h-auto p-20px lt-xl:(rounded-3xl light:bg-white)" />
-            <!-- 二维码登录 -->
-            <QrCodeForm class="m-auto h-auto p-20px lt-xl:(rounded-3xl light:bg-white)" />
-            <!-- 注册 -->
-            <RegisterForm class="m-auto h-auto p-20px lt-xl:(rounded-3xl light:bg-white)" />
-            <!-- 三方登录 -->
-            <SSOLoginVue class="m-auto h-auto p-20px lt-xl:(rounded-3xl light:bg-white)" />
-            <!-- 忘记密码 -->
-            <ForgetPasswordForm class="m-auto h-auto p-20px lt-xl:(rounded-3xl light:bg-white)" />
-          </div>
-        </Transition>
+        <div class="tab-item" :class="{ active: loginType === 'business' }" @click="loginType = 'business'">
+          生产经营主体
+        </div>
       </div>
+
+      <!-- Form Area -->
+      <el-form ref="loginRef" :model="loginForm" :rules="loginRules" class="login-form">
+        <el-form-item prop="username">
+          <el-input v-model="loginForm.username" type="text" placeholder="请输入手机号" class="custom-input" />
+        </el-form-item>
+        <el-form-item prop="password">
+          <el-input v-model="loginForm.password" type="password" show-password placeholder="请输入密码" class="custom-input">
+          </el-input>
+        </el-form-item>
+
+
+        <div class="policy-section">
+          <el-checkbox v-model="policyAgreed">
+            <span class="policy-text">我已阅读并同意
+              <a href="#" class="policy-link">《服务条款》</a>和
+              <a href="#" class="policy-link">《隐私政策》</a>
+            </span>
+          </el-checkbox>
+        </div>
+
+        <el-form-item>
+          <el-button :loading="loading" type="primary" class="login-submit-btn" @click.prevent="handleLoginPre">
+            {{ loading ? '登 录 中...' : '登录' }}
+          </el-button>
+        </el-form-item>
+      </el-form>
+
+      <!-- Footer Links -->
+      <div class="footer-links">
+        <router-link to="/register" class="link">注册</router-link>
+        <router-link to="/forgotPassword" class="link">忘记密码</router-link>
+      </div>
+
+      <Verify
+        v-if="captchaEnabled"
+        ref="verify"
+        :captchaType="captchaType"
+        :imgSize="{ width: '400px', height: '200px' }"
+        mode="pop"
+        @success="handleLogin"
+      />
     </div>
   </div>
 </template>
-<script lang="ts" setup>
-import { underlineToHump } from '@/utils'
 
-import { useDesign } from '@/hooks/web/useDesign'
-import { useAppStore } from '@/store/modules/app'
-import { ThemeSwitch } from '@/layout/components/ThemeSwitch'
-import { LocaleDropdown } from '@/layout/components/LocaleDropdown'
+<script setup>
+import { ref, onMounted, getCurrentInstance } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { ElMessage, ElLoading } from 'element-plus'
+import * as authUtil from '@/utils/auth'
+import { usePermissionStore } from '@/store/modules/permission'
+import * as LoginApi from '@/api/login'
 
-import { LoginForm, MobileForm, QrCodeForm, RegisterForm, SSOLoginVue, ForgetPasswordForm } from './components'
+const loginType = ref('checking') // checking | business
+const policyAgreed = ref(false)
+const loading = ref(false)
+const captchaEnabled = ref(import.meta.env.VITE_APP_CAPTCHA_ENABLE === 'true')
+const tenantEnabled = import.meta.env.VITE_APP_TENANT_ENABLE === 'true'
 
-defineOptions({ name: 'Login' })
+const { proxy } = getCurrentInstance()
+const router = useRouter()
+const route = useRoute()
+const permissionStore = usePermissionStore()
+const redirect = ref(route?.query?.redirect || '')
 
-const { t } = useI18n()
-const appStore = useAppStore()
-const { getPrefixCls } = useDesign()
-const prefixCls = getPrefixCls('login')
-</script>
+const verify = ref()
+const captchaType = ref('blockPuzzle')
 
-<style lang="scss" scoped>
-$prefix-cls: #{$namespace}-login;
+const loginForm = ref({
+  tenantName: import.meta.env.VITE_APP_DEFAULT_LOGIN_TENANT || '',
+  username: import.meta.env.VITE_APP_DEFAULT_LOGIN_USERNAME || '',
+  password: import.meta.env.VITE_APP_DEFAULT_LOGIN_PASSWORD || '',
+  captchaVerification: '',
+  rememberMe: false
+})
 
-.#{$prefix-cls} {
-  overflow: auto;
+const loginRules = {
+  username: [{ required: true, trigger: "blur", message: "请输入手机号" }],
+  password: [{ required: true, trigger: "blur", message: "请输入密码" }]
+}
 
-  &__left {
-    &::before {
-      position: absolute;
-      top: 0;
-      left: 0;
-      z-index: -1;
-      width: 100%;
-      height: 100%;
-      background-image: url('@/assets/svgs/login-bg.svg');
-      background-position: center;
-      background-repeat: no-repeat;
-      content: '';
+// 获取租户 ID
+const getTenantId = async () => {
+  if (tenantEnabled) {
+    const res = await LoginApi.getTenantIdByName(loginForm.value.tenantName)
+    authUtil.setTenantId(res)
+  }
+}
+
+// 记住我
+const getLoginFormCache = () => {
+  const cacheForm = authUtil.getLoginForm()
+  if (cacheForm) {
+    loginForm.value = {
+      ...loginForm.value,
+      username: cacheForm.username ? cacheForm.username : loginForm.value.username,
+      password: cacheForm.password ? cacheForm.password : loginForm.value.password,
+      rememberMe: cacheForm.rememberMe,
+      tenantName: cacheForm.tenantName ? cacheForm.tenantName : loginForm.value.tenantName
     }
   }
 }
-</style>
 
-<style lang="scss">
-.dark .login-form {
-  .el-divider__text {
-    background-color: var(--login-bg-color);
+// 根据域名，获得租户信息
+const getTenantByWebsite = async () => {
+  if (tenantEnabled) {
+    const website = location.host
+    const res = await LoginApi.getTenantByWebsite(website)
+    if (res) {
+      loginForm.value.tenantName = res.name
+      authUtil.setTenantId(res.id)
+    }
+  }
+}
+
+function handleLoginPre() {
+  if (!policyAgreed.value) {
+    ElMessage.warning('请阅读并勾选服务条款和隐私政策')
+    return
   }
 
-  .el-card {
-    background-color: var(--login-bg-color);
+  proxy.$refs.loginRef.validate(async valid => {
+    if (valid) {
+      if (captchaEnabled.value) {
+        verify.value.show()
+      } else {
+        await handleLogin({})
+      }
+    }
+  })
+}
+
+const handleLogin = async (params) => {
+  loading.value = true
+  try {
+    await getTenantId()
+    const loginDataForm = { ...loginForm.value }
+    loginDataForm.captchaVerification = params.captchaVerification
+    const res = await LoginApi.login(loginDataForm)
+    if (!res) {
+      return
+    }
+    const globalLoading = ElLoading.service({
+      lock: true,
+      text: '正在加载系统中...',
+      background: 'rgba(0, 0, 0, 0.7)'
+    })
+    
+    if (loginDataForm.rememberMe) {
+      authUtil.setLoginForm(loginDataForm)
+    } else {
+      authUtil.removeLoginForm()
+    }
+    authUtil.setToken(res)
+    
+    if (!redirect.value) {
+      redirect.value = '/'
+    }
+
+    // 判断是否为SSO登录
+    if (redirect.value.indexOf('sso') !== -1) {
+      window.location.href = window.location.href.replace('/login?redirect=', '')
+    } else {
+      await router.push({ path: redirect.value || permissionStore.addRouters[0].path })
+    }
+    globalLoading.close()
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(() => {
+  getLoginFormCache()
+  getTenantByWebsite()
+})
+</script>
+
+<style lang="scss" scoped>
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100vh;
+  background: linear-gradient(180deg, #D9EFFF 0%, #FFFFFF 100%);
+  font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+.login-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 467px;
+  height: auto;
+  background: #FFFFFF;
+  box-shadow: 0px 3 15px 0px rgba(0, 0, 0, 0.02);
+  border-radius: 12px;
+  padding-top: 76px;
+  padding-bottom: 83px;
+}
+
+.login-header {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 23px;
+  width: 100%;
+  justify-content: center;
+
+  .logo-box {
+    width: 54px;
+    height: 54px;
+    margin-right: 9px;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    .logo-img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+  }
+
+  .title-box {
+    .main-title {
+      font-size: 30px;
+      line-height: 34px;
+      color: #00B3ED;
+      margin: 0;
+      font-weight: 500;
+      letter-spacing: 2px;
+    }
+
+    .sub-title {
+      font-size: 14px;
+      line-height: 18px;
+      color: #82BF25;
+      margin: 5px 0 0 0;
+      font-weight: 400;
+      text-align: center;
+    }
+  }
+}
+
+.tab-switcher {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+  margin-bottom: 15px;
+  gap: 30px;
+
+  .tab-item {
+    font-size: 16px;
+    line-height: 20px;
+    color: #333333;
+    cursor: pointer;
+    position: relative;
+    padding-bottom: 8px;
+    transition: all 0.3s;
+
+    &.active {
+      color: #00B3ED;
+
+      &::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 3px;
+        background: #00B3ED;
+        border-radius: 2px;
+      }
+    }
+  }
+
+  .tab-item:not(.active) {
+    color: #666;
+  }
+}
+
+.login-form {
+  width: 100%;
+  max-width: 350px;
+
+  :deep(.custom-input) {
+    width: 100% !important;
+
+    .el-input__wrapper {
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      box-shadow: none !important;
+      transition: all 0.3s;
+
+      &:hover,
+      &.is-focus {
+        border-color: #00B3ED;
+        background-color: #fff;
+        box-shadow: none !important;
+      }
+    }
+
+    input {
+      font-size: 16px;
+      color: #333;
+
+      &::placeholder {
+        color: #999999;
+      }
+    }
+  }
+
+  .pwd-eye {
+    cursor: pointer;
+    color: #999999;
+  }
+
+  .code-item {
+    :deep(.el-form-item__content) {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .code-input {
+      flex: 1;
+    }
+
+    .login-code {
+      height: 50px;
+      width: 120px;
+      border-radius: 12px;
+      overflow: hidden;
+      cursor: pointer;
+      border: 1px solid #E4E7ED;
+      background: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+
+      .login-code-img {
+        height: 100%;
+        width: 100%;
+        object-fit: cover;
+      }
+    }
+  }
+
+  .el-form-item {
+    margin-bottom: 14px !important;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+}
+
+.policy-section {
+  margin: 11px 0 30px 0;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+
+  label {
+    height: 14px;
+  }
+
+  .policy-text {
+    font-size: 12px;
+    color: #999;
+    line-height: 14px;
+
+    .policy-link {
+      color: #00B3ED;
+      text-decoration: none;
+    }
+  }
+
+  :deep(.el-checkbox__label) {
+    padding-left: 8px;
+  }
+
+  :deep(.el-checkbox__inner) {
+    border-radius: 50%; // 圆形勾选框
+    width: 12px;
+    height: 12px;
+  }
+}
+
+.login-submit-btn {
+  width: 400px;
+  background: #00B3ED;
+  font-size: 14px;
+  border: none;
+  transition: all 0.3s;
+    color: #fff;
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+.footer-links {
+  margin-top: 15px;
+  display: flex;
+  gap: 30px;
+
+  .link {
+    font-size: 12px;
+    color: #666;
+    text-decoration: none;
+    transition: color 0.3s;
+
+    &:hover {
+      color: #3AB2F1;
+    }
   }
 }
 </style>

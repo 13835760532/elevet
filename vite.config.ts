@@ -3,6 +3,7 @@ import type {ConfigEnv, UserConfig} from 'vite'
 import {loadEnv} from 'vite'
 import {createVitePlugins} from './build/vite'
 import {exclude, include} from "./build/vite/optimize"
+import eslintPlugin from 'vite-plugin-eslint'
 // 当前执行node命令时文件夹的地址(工作目录)
 const root = process.cwd()
 
@@ -25,7 +26,7 @@ export default ({command, mode}: ConfigEnv): UserConfig => {
         root: root,
         // 服务端渲染
         server: {
-            port: env.VITE_PORT, // 端口号
+            port: 48080, // 端口号
             host: "0.0.0.0",
             open: env.VITE_OPEN === 'true',
             // 本地跨域代理. 目前注释的原因：暂时没有用途，server 端已经支持跨域
@@ -39,7 +40,13 @@ export default ({command, mode}: ConfigEnv): UserConfig => {
             // },
         },
         // 项目使用的vite插件。 单独提取到build/vite/plugin中管理
-        plugins: createVitePlugins(),
+        plugins: [...createVitePlugins(), eslintPlugin({
+      // 添加下面这些配置，防止终端崩溃
+      failOnError: false,
+      failOnWarning: false,
+      emitWarning: true,
+      emitError: true
+    })],
         css: {
             preprocessorOptions: {
                 scss: {

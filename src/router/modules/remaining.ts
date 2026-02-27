@@ -185,22 +185,32 @@ const remainingRouter: AppRouteRecordRaw[] = [
     }
   },
   {
-    path: '/sso',
-    component: () => import('@/views/Login/Login.vue'),
-    name: 'SSOLogin',
+    path: '/register',
+    component: () => import('@/views/Login/register.vue'),
+    name: 'Register',
     meta: {
       hidden: true,
-      title: t('router.login'),
+      title: '注册',
       noTagsView: true
     }
   },
   {
-    path: '/social-login',
-    component: () => import('@/views/Login/SocialLogin.vue'),
-    name: 'SocialLogin',
+    path: '/forgotPassword',
+    component: () => import('@/views/Login/forgot-password.vue'),
+    name: 'ForgotPassword',
     meta: {
       hidden: true,
-      title: t('router.socialLogin'),
+      title: '忘记密码',
+      noTagsView: true
+    }
+  },
+  {
+    path: '/reset-password',
+    component: () => import('@/views/Login/reset-password.vue'),
+    name: 'ResetPassword',
+    meta: {
+      hidden: true,
+      title: '重置密码',
       noTagsView: true
     }
   },

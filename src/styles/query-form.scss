@@ -1,0 +1,380 @@
+/**
+ * 公共查询表单样式 - custom-query-form
+ * 
+ * 以抽样检测页面的按钮大小和圆角为标准
+ * 统一项目中所有查询表单的样式规范
+ * 
+ * 使用方式：
+ *   在 Vue 组件的 <style> 中引入:
+ *   @import '@/assets/styles/query-form.scss';
+ * 
+ * 注意：由于使用了 :deep()，需要在 scoped 样式中引入
+ */
+
+/* ========== 主题变量 ========== */
+$theme-color: #00B3ED;
+$theme-color-light: rgba(0, 179, 237, 0.1);
+$border-color: #D1D5DB;
+$text-color: #333;
+$text-color-secondary: #666;
+$bg-white: #FFFFFF;
+
+/* 按钮标准尺寸（以抽样检测页面为基准） */
+$btn-width: 100px;
+$btn-height: 40px;
+$btn-border-radius: 8px;
+$btn-font-size: 14px;
+
+/* 输入框标准尺寸 */
+$input-height: 40px;
+$input-border-radius: 6px;
+$input-default-width: 150px;
+
+/* ========== 卡片头部样式 ========== */
+.guide-card {
+    .card-header {
+        margin-bottom: 0 !important;
+    }
+
+}
+
+.card-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+
+    .blue-line {
+        width: 4px;
+        height: 16px;
+        background: $theme-color;
+        border-radius: 2px;
+    }
+
+    .card-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: $text-color;
+        margin: 0;
+    }
+}
+
+/* ========== 查询表单主体样式 ========== */
+.custom-query-form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 8px;
+
+    /* 表单项 */
+    .el-form-item {
+        margin-right: 16px;
+        margin-bottom: 8px !important;
+        display: flex;
+        align-items: center;
+
+        .el-form-item__label {
+            height: $input-height;
+            line-height: $input-height;
+            font-size: 14px;
+            color: $text-color;
+            padding-right: 6px;
+        }
+
+        .el-form-item__content {
+            height: initial;
+        }
+    }
+
+    /* 查询按钮组 */
+    .query-btns {
+        width: 100%;
+        display: flex;
+        gap: 12px;
+        margin-bottom: 16px;
+        align-items: flex-end;
+        justify-content: flex-end;
+
+        /* 查询按钮 - 主色 */
+        .search-btn {
+            width: $btn-width;
+            height: $btn-height;
+            border-radius: $btn-border-radius;
+            font-size: $btn-font-size;
+            background-color: $theme-color;
+            border-color: $theme-color;
+        }
+
+        /* 重置按钮 - 默认样式 */
+        .reset-btn {
+            width: $btn-width;
+            height: $btn-height;
+            border-radius: $btn-border-radius;
+            font-size: $btn-font-size;
+        }
+
+        /* 导出按钮 */
+        .export-btn {
+            width: $btn-width;
+            height: $btn-height;
+            border-radius: $btn-border-radius;
+            font-size: $btn-font-size;
+            background-color: $theme-color;
+            border-color: $theme-color;
+        }
+
+        /* 所有按钮统一圆角 */
+        .el-button {
+            width: $btn-width;
+            height: $btn-height;
+            border-radius: $btn-border-radius;
+        }
+    }
+}
+
+.el-form .el-form-item__label {
+    font-weight: initial !important;
+}
+
+
+/* ========== 输入框宽度工具类 ========== */
+.custom-input {
+    width: $input-default-width;
+
+    &.w180 {
+        width: 180px;
+
+        .el-input__wrapper {
+            width: 180px;
+        }
+    }
+
+    &.w200 {
+        width: 200px;
+
+        .el-input__wrapper {
+            width: 200px;
+        }
+    }
+
+    &.w220 {
+        width: 220px;
+
+        .el-input__wrapper {
+            width: 220px;
+        }
+    }
+}
+
+/* ========== 选择器宽度 ========== */
+.custom-select {
+    width: 120px !important;
+
+    &.w160 {
+        width: 160px !important;
+    }
+
+    &.w180 {
+        width: 180px !important;
+
+        .el-select__wrapper {
+            width: 180px;
+        }
+    }
+}
+
+/* ========== 级联选择器 ========== */
+.custom-cascader {
+    width: $input-default-width;
+
+    .el-input__wrapper {
+        width: $input-default-width;
+        height: $input-height;
+        line-height: $input-height;
+        background: $bg-white;
+        border: 1px solid $border-color;
+        border-radius: $input-border-radius;
+        box-shadow: none !important;
+        padding: 0 12px;
+
+        &:hover {
+            border-color: $theme-color;
+        }
+
+        &.is-focus {
+            border-color: $theme-color;
+            box-shadow: 0 0 0 3px $theme-color-light !important;
+        }
+    }
+}
+
+/* ========== 日期范围选择器 ========== */
+.date-range-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 260px;
+
+    .el-input__wrapper {
+        flex: 1;
+        width: 120px;
+        height: $input-height;
+        line-height: $input-height;
+    }
+
+    .el-input {
+        height: $input-height;
+        line-height: $input-height;
+    }
+}
+
+/* ========== 操作按钮行 ========== */
+.table-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    padding-top: 16px;
+    border-top: 1px dashed #D1D5DB;
+
+    .action-left,
+    .action-right {
+        display: flex;
+        gap: 12px;
+    }
+
+    /* 主题色按钮 */
+    .primary-btn {
+        background-color: $theme-color;
+        border-color: $theme-color;
+        border-radius: $btn-border-radius;
+    }
+
+    /* 新建按钮 */
+    .add-btn {
+        height: $btn-height;
+        padding: 0 20px;
+        background-color: $theme-color;
+        border-color: $theme-color;
+        border-radius: $btn-border-radius;
+        font-weight: 500;
+
+        .el-icon {
+            margin-right: 6px;
+        }
+    }
+
+    /* 所有按钮统一圆角 */
+    .el-button {
+        border-radius: $btn-border-radius;
+    }
+}
+
+/* ========== 表格容器 ========== */
+.table-wrapper {
+    margin-bottom: 14px !important;
+}
+
+/* ========== 表格操作链接 ========== */
+.action-btns {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+}
+
+/* ========== 分页容器 ========== */
+.pagination-wrapper {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    padding: 0 !important;
+
+    .page-info {
+        font-size: 14px;
+        color: $text-color-secondary;
+    }
+}
+
+/* ========== 分页主题色 ========== */
+.custom-pagination {
+    .el-pager li.is-active {
+        background-color: $theme-color !important;
+        color: #fff !important;
+    }
+
+    .el-pager li:hover {
+        color: $theme-color;
+    }
+}
+
+/* ========== 页面容器公共样式 ========== */
+.table-container {
+    height: 100%;
+    overflow-y: auto;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px !important;
+    border: none !important;
+}
+
+.guide-card,
+.query-card {
+    background: #fff;
+    border-radius: 10px;
+    padding: 16px;
+}
+
+/* ========== 状态标签公共样式 ========== */
+.status-tag {
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+
+    &.status-not-started {
+        background-color: #E6F7FF;
+        color: $theme-color;
+    }
+
+    &.status-processing {
+        background-color: #FFF7E6;
+        color: #FA8C16;
+    }
+
+    &.status-delayed {
+        background-color: #FFF1F0;
+        color: #F5222D;
+    }
+
+    &.status-completed {
+        background-color: #F6FFED;
+        color: #52C41A;
+    }
+
+    &.status-finished {
+        background-color: #F5F5F5;
+        color: #8C8C8C;
+    }
+
+    &.status-pending {
+        color: #999;
+    }
+
+    &.status-done,
+    &.status-received {
+        color: #52C41A;
+    }
+
+    &.status-failed {
+        color: #F5222D;
+    }
+}
+
+/* ========== 响应式 ========== */
+@media (max-width: 1400px) {
+    .table-actions {
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+}

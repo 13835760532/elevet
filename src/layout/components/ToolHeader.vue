@@ -56,24 +56,15 @@ export default defineComponent({
         id={`${variables.namespace}-tool-header`}
         class={[
           prefixCls,
-          'h-[var(--top-tool-height)] relative px-[var(--top-tool-p-x)] flex items-center justify-between',
+          'h-[var(--top-tool-height)] relative px-[var(--top-tool-p-x)] flex items-center justify-end',
           'dark:bg-[var(--el-bg-color)]'
         ]}
       >
-        {layout.value !== 'top' ? (
-          <div class="h-full flex items-center">
-            {hamburger.value && layout.value !== 'cutMenu' ? (
-              <Collapse class="custom-hover" color="var(--top-header-text-color)"></Collapse>
-            ) : undefined}
-            {breadcrumb.value ? <Breadcrumb class="lt-md:hidden"></Breadcrumb> : undefined}
-          </div>
-        ) : undefined}
         <div class="h-full flex items-center">
-          {hasTenantVisitPermission.value ? <TenantVisit /> : undefined}
           {screenfull.value ? (
             <Screenfull class="custom-hover" color="var(--top-header-text-color)"></Screenfull>
           ) : undefined}
-          {search.value ? <RouterSearch isModal={false} color="var(--top-header-text-color)"/> : undefined}
+          {/* {search.value ? <RouterSearch isModal={false} color="var(--top-header-text-color)"/> : undefined}
           {size.value ? (
             <SizeDropdown class="custom-hover" color="var(--top-header-text-color)"></SizeDropdown>
           ) : undefined}
@@ -82,9 +73,9 @@ export default defineComponent({
               class="custom-hover"
               color="var(--top-header-text-color)"
             ></LocaleDropdown>
-          ) : undefined}
+          ) : undefined} */}
           {message.value ? (
-            <Message class="custom-hover" color="var(--top-header-text-color)"></Message>
+            <Message class="custom-hover mt-2" color="var(--top-header-text-color)"></Message>
           ) : undefined}
           <UserInfo></UserInfo>
         </div>
