@@ -5,7 +5,6 @@
         <!-- 顶部标题区 -->
         <div class="header-section">
             <div class="title-wrapper">
-                <div class="title-line"></div>
                 <h1 class="page-title">合格证开具（生产者/收购者）</h1>
             </div>
             <div class="desc-box">
@@ -14,21 +13,47 @@
         </div>
 
         <div class="content-card">
-            <!-- 步骤导航 -->
-            <div class="steps-wrapper">
-                <div class="step-item" :class="{ active: currentStep === 1, completed: currentStep > 1 }">
-                    <span class="step-number">1</span>
-                    <span class="step-text">创建产品档案</span>
-                </div>
-                <div class="step-line" :class="{ active: currentStep > 1 }"></div>
-                <div class="step-item" :class="{ active: currentStep === 2, completed: currentStep > 2 }">
-                    <span class="step-number">2</span>
-                    <span class="step-text">开具合格证</span>
-                </div>
-                <div class="step-line" :class="{ active: currentStep > 2 }"></div>
-                <div class="step-item" :class="{ active: currentStep === 3 }">
-                    <span class="step-number">3</span>
-                    <span class="step-text">查看合格证</span>
+            <!-- 步骤导航 (第四版：SaaS 现代流线型) -->
+            <div class="saas-stepper-flow">
+                <div class="stepper-track"></div>
+                <!-- 预设进度百分比 -->
+                <div class="stepper-progress" :style="{ width: currentStep === 1 ? '0%' : currentStep === 2 ? '50%' : '100%' }"></div>
+                
+                <div class="stepper-nodes">
+                    <!-- Step 1 -->
+                    <div class="stepper-node" :class="{ active: currentStep === 1, completed: currentStep > 1 }">
+                        <div class="node-icon-wrapper">
+                            <span v-if="currentStep <= 1">1</span>
+                            <el-icon v-else><Check /></el-icon>
+                        </div>
+                        <div class="node-info">
+                            <span class="node-title">选择产品</span>
+                            <span class="node-status">{{ currentStep > 1 ? '已完成' : '进行中' }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Step 2 -->
+                    <div class="stepper-node" :class="{ active: currentStep === 2, completed: currentStep > 2 }">
+                        <div class="node-icon-wrapper">
+                            <span v-if="currentStep <= 2">2</span>
+                            <el-icon v-else><Check /></el-icon>
+                        </div>
+                        <div class="node-info">
+                            <span class="node-title">合格证配置</span>
+                            <span class="node-status">{{ currentStep > 2 ? '已完成' : (currentStep === 2 ? '进行中' : '等待中') }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Step 3 -->
+                    <div class="stepper-node" :class="{ active: currentStep === 3 }">
+                        <div class="node-icon-wrapper">
+                            <span>3</span>
+                        </div>
+                        <div class="node-info">
+                            <span class="node-title">预览生成</span>
+                            <span class="node-status">{{ currentStep === 3 ? '进行中' : '等待中' }}</span>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -404,7 +429,7 @@
 <script setup>
 import { reactive, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { Search, Picture } from '@element-plus/icons-vue';
+import { Search, Picture, Check, ArrowRight } from '@element-plus/icons-vue';
 import { useCertificateStore } from '@/store/modules/certificate';
 import PageBack from '@/components/PageBack/index.vue';
 
@@ -483,7 +508,6 @@ const handlePrint = () => { window.print(); };
 .page-container {
     height: 100%;
     overflow-y: auto;
-    padding: 16px;
 }
 
 .header-section {
@@ -518,7 +542,6 @@ const handlePrint = () => { window.print(); };
 .desc-box {
     font-size: 14px;
     color: #666;
-    padding-left: 12px;
 }
 
 .content-card {
@@ -527,74 +550,115 @@ const handlePrint = () => { window.print(); };
     background: #fff;
     backdrop-filter: blur(10px);
     border-radius: 10px;
-    padding: 40px;
+    padding: var( --page-container-padding);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
 }
 
-/* 步骤条 */
-.steps-wrapper {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0;
-    margin-bottom: 40px;
-    padding: 20px 0;
+/* 步骤导航：SaaS 现代流线型 */
+.saas-stepper-flow {
+    position: relative;
+    max-width: 1000px;
+    margin: 0 auto 20px;
+    padding: 0 40px;
 }
 
-.step-item {
+.stepper-track {
+    position: absolute;
+    top: 24px;
+    left: 80px;
+    right: 80px;
+    height: 4px;
+    background: #F1F5F9;
+    border-radius: 2px;
+    z-index: 1;
+}
+
+.stepper-progress {
+    position: absolute;
+    top: 24px;
+    left: 80px;
+    height: 4px;
+    background: #00B3ED;
+    border-radius: 2px;
+    z-index: 2;
+    transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    
+    &::after {
+        content: '';
+        position: absolute;
+        right: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 12px;
+        height: 12px;
+        background: #fff;
+        border: 3px solid #00B3ED;
+        border-radius: 50%;
+        box-shadow: 0 0 10px rgba(0, 179, 237, 0.4);
+    }
+}
+
+.stepper-nodes {
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    z-index: 3;
+}
+
+.stepper-node {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 10px 24px;
-    border-radius: 24px;
-    font-size: 14px;
-    color: #666;
-    background: transparent;
+    gap: 16px;
+    background: #fff;
+    padding: 8px 16px;
+    border-radius: 12px;
     transition: all 0.3s;
 
-    .step-number {
-        width: 28px;
-        height: 28px;
-        border-radius: 50%;
-        background: #E5E7EB;
-        color: #666;
+    .node-icon-wrapper {
+        width: 40px;
+        height: 40px;
+        background: #F8FAFC;
+        border: 2px solid #E2E8F0;
+        border-radius: 12px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-weight: 600;
-        font-size: 13px;
+        font-size: 16px;
+        font-weight: 800;
+        color: #94A3B8;
+        transition: all 0.3s;
     }
 
-    .step-text {
-        font-weight: 500;
+    .node-info {
+        display: flex;
+        flex-direction: column;
+        .node-title { font-size: 15px; font-weight: 700; color: #475569; }
+        .node-status { font-size: 12px; color: #94A3B8; margin-top: 2px; }
     }
 
     &.active {
-        background: #00B3ED;
-        color: #fff;
-
-        .step-number {
-            background: #fff;
-            color: #00B3ED;
+        .node-icon-wrapper {
+            background: #00B3ED;
+            border-color: #00B3ED;
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(0, 179, 237, 0.3);
+        }
+        .node-info {
+            .node-title { color: #1E293B; }
+            .node-status { color: #00B3ED; font-weight: 600; }
         }
     }
 
     &.completed {
-        .step-number {
-            background: #52C41A;
-            color: #fff;
+        .node-icon-wrapper {
+            background: #E0F2FE;
+            border-color: #E0F2FE;
+            color: #0369A1;
         }
-    }
-}
-
-.step-line {
-    width: 60px;
-    height: 2px;
-    background: #E5E7EB;
-    margin: 0 8px;
-
-    &.active {
-        background: #00B3ED;
+        .node-info {
+            .node-title { color: #1E293B; }
+            .node-status { color: #10B981; }
+        }
     }
 }
 
@@ -1042,7 +1106,7 @@ const handlePrint = () => { window.print(); };
     min-width: 160px;
     height: 44px;
     font-weight: 600;
-    border-radius: 22px;
+    border-radius: var(--el-border-radius-base);
     transition: all 0.3s;
 
     &:hover {
@@ -1056,13 +1120,12 @@ const handlePrint = () => { window.print(); };
 .back-btn {
     min-width: 120px;
     height: 44px;
-    border-radius: 22px;
+    border-radius: var(--el-border-radius-base);
     border-color: #D1D5DB;
     color: #666;
 
     &:hover {
-        border-color: #00B3ED;
-        color: #00B3ED;
+        background: transparent;
     }
 }
 

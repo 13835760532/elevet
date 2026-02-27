@@ -471,6 +471,20 @@ const remainingRouter: AppRouteRecordRaw[] = [
       },
     ]
   },
+  {
+    path: '/productTraceability',
+    component: Layout,
+    name: 'ProductTraceability',
+    meta: { hidden: true },
+    children: [
+      {
+        path: 'index',
+        component: () => import('@/views/productTraceability/index.vue'),
+        name: 'ProductTraceabilityIndex',
+        meta: { title: '产品溯源', activeMenu: '/productTraceability' }
+      }
+    ]
+  },
   // 标准指标查询
   {
     path: '/standard',

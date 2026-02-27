@@ -5,7 +5,7 @@
         <!-- 头部标题 -->
         <div class="header-card">
             <div class="card-header">
-                <div class="blue-line"></div>
+             
                 <h2 class="card-title">创建检测方案</h2>
             </div>
             <p class="header-desc">配置新的农产品检测项目，包括项目名称、检测品种、时间要求及下发权限</p>

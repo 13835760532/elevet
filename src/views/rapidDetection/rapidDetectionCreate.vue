@@ -5,7 +5,7 @@
         <!-- 头部标题 -->
         <div class="header-card">
             <div class="card-header">
-                <div class="blue-line"></div>
+             
                 <h2 class="card-title">抽样检测</h2>
             </div>
             <p class="header-desc">请根据您的实际情况选择相应的备案类型，我们为企业和个人提供专业的备案服务，确保您的备案流程顺利进行。</p>

@@ -3,7 +3,7 @@
         <!-- 顶部标题区 -->
         <div class="guide-card">
             <div class="card-header">
-                <div class="blue-line"></div>
+             
                 <h2 class="card-title">合格证查验（生产者/收购者/销售者）</h2>
             </div>
         </div>
@@ -11,7 +11,7 @@
         <!-- 搜索区域 -->
         <div class="query-card">
             <div class="card-header">
-                <div class="blue-line"></div>
+             
                 <h2 class="card-title">合格证查验查询</h2>
             </div>
             <div class="query-form-wrapper">

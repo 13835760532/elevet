@@ -1,80 +1,150 @@
 <template>
-    <div class="page-container">
-        <!-- 顶部标题区 -->
-        <div class="header-section">
-            <div class="title-wrapper">
-                <div class="title-line"></div>
-                <h1 class="page-title">合格证查验</h1>
+    <div class="verify-page-wrapper">
+        <div class="page-header-minimal">
+            <PageBack />
+            <div class="header-main-info">
+                <h1 class="main-title">外部合格证查验进场</h1>
+                <p class="sub-title">录入其他平台或纸质合格证信息，建立数字化溯源链条</p>
             </div>
-            <p class="page-subtitle">显示合格证开具时信息</p>
         </div>
 
-        <!-- 内容区 -->
-        <div class="content-card">
-            <!-- 来源选择 -->
-            <el-select v-model="formData.source" placeholder="请选择来源" class="source-select">
-                <el-option label="农产品上游合格证为其他平台开具" value="other" />
-                <el-option label="农产品上游合格证为本平台开具" value="platform" />
-            </el-select>
-
-            <!-- 上传区域 -->
-            <div class="upload-row">
-                <el-input v-model="formData.uploadFile" placeholder="上传上游合格证照片" readonly class="upload-input" />
-                <el-button type="primary" class="upload-btn" @click="handleUpload">上传合格证</el-button>
-            </div>
-
-            <!-- 产品信息表单 -->
-            <div class="form-section">
-                <h3 class="section-title">产品信息</h3>
-
-                <el-form :model="formData" label-position="top" class="product-form">
-                    <el-form-item label="产品名称">
-                        <el-input v-model="formData.productName" placeholder="输入产品名称" />
-                    </el-form-item>
-
-                    <el-form-item label="产品类别">
-                        <el-select v-model="formData.category" placeholder="选择产品类别" class="full-width">
-                            <el-option label="蔬菜" value="vegetable" />
-                            <el-option label="水果" value="fruit" />
-                            <el-option label="畜禽" value="livestock" />
-                            <el-option label="水产品" value="aquatic" />
-                        </el-select>
-                    </el-form-item>
-
-                    <el-form-item label="产品产地">
-                        <el-input v-model="formData.origin" placeholder="输入产品的生产地" />
-                    </el-form-item>
-
-                    <el-form-item label="批次规模">
-                        <div class="batch-row">
-                            <el-input v-model="formData.batchSize" placeholder="输入产品数量" class="batch-input" />
-                            <el-select v-model="formData.unit" placeholder="选择计量单位" class="unit-select">
-                                <el-option label="吨" value="t" />
-                                <el-option label="千克" value="kg" />
-                                <el-option label="斤" value="jin" />
-                            </el-select>
+        <div class="main-container">
+            <div class="glass-form-card">
+                <!-- 第一部分：来源识别 -->
+                <div class="form-group-section">
+                    <div class="section-indicator">
+                        <span class="step-badge">01</span>
+                        <h3 class="group-title">识别来源与证据</h3>
+                    </div>
+                    
+                    <div class="source-selector-grid">
+                        <div 
+                            class="source-mode-item" 
+                            :class="{ active: formData.source === 'other' }"
+                            @click="formData.source = 'other'"
+                        >
+                            <el-icon class="mode-icon"><Link /></el-icon>
+                            <div class="mode-meta">
+                                <span class="m-title">其他平台电子版</span>
+                                <span class="m-desc">输入证号或上传电子档</span>
+                            </div>
                         </div>
-                    </el-form-item>
+                        <div 
+                            class="source-mode-item" 
+                            :class="{ active: formData.source === 'paper' }"
+                            @click="formData.source = 'paper'"
+                        >
+                            <el-icon class="mode-icon"><Camera /></el-icon>
+                            <div class="mode-meta">
+                                <span class="m-title">纸质凭证拍照</span>
+                                <span class="m-desc">自动 OCR 识别票面内容</span>
+                            </div>
+                        </div>
+                    </div>
 
-                    <el-form-item label="建档日期">
-                        <el-date-picker v-model="formData.createDate" type="date" placeholder="选择日期"
-                            class="full-width" />
-                    </el-form-item>
+                    <div class="upload-integrated-area mt-20">
+                        <el-upload
+                            drag
+                            action="#"
+                            class="clean-uploader"
+                            :auto-upload="false"
+                        >
+                            <div class="uploader-content">
+                                <div class="icon-circle">
+                                    <el-icon><Upload /></el-icon>
+                                </div>
+                                <div class="text-content">
+                                    <strong>点击或拖拽原合格证图片至此</strong>
+                                    <p>支持多图上传，系统将自动关联存证</p>
+                                </div>
+                            </div>
+                        </el-upload>
+                    </div>
+                </div>
 
-                    <el-form-item label="生产经营企业（主体名称）">
-                        <p class="field-tip">*从生产档案中选择，如果未查找到企业，支持主体建档</p>
-                        <el-select v-model="formData.entity" placeholder="选择企业" filterable class="full-width">
-                            <el-option label="北京物美商业集团股份有限公司（110201181788786816）" value="1" />
-                            <el-option label="北京福农生态科技有限公司（110201181788786817）" value="2" />
-                        </el-select>
-                    </el-form-item>
-                </el-form>
-            </div>
+                <el-divider />
 
-            <!-- 底部按钮 -->
-            <div class="form-footer">
-                <el-button class="btn-cancel" @click="handleCancel">取消</el-button>
-                <el-button type="primary" class="btn-submit" @click="handleSubmit">查验并存证</el-button>
+                <!-- 第二部分：产品与主体 -->
+                <div class="form-group-section">
+                    <div class="section-indicator">
+                        <span class="step-badge">02</span>
+                        <h3 class="group-title">详尽存档信息</h3>
+                    </div>
+
+                    <el-form :model="formData" label-position="top" class="standard-grid-form">
+                        <el-row :gutter="24">
+                            <el-col :span="12">
+                                <el-form-item label="农产品名称">
+                                    <el-input v-model="formData.productName" placeholder="录入产品完整名称" />
+                                </el-form-item>
+                            </el-col>
+                            <el-col :span="12">
+                                <el-form-item label="所属类别">
+                                    <el-select v-model="formData.category" placeholder="选择分类" class="w-full">
+                                        <el-option label="蔬菜类" value="1" />
+                                        <el-option label="水果类" value="2" />
+                                        <el-option label="畜牧水产" value="3" />
+                                    </el-select>
+                                </el-form-item>
+                            </el-col>
+                        </el-row>
+
+                        <el-form-item label="产地详情">
+                            <el-input v-model="formData.origin" placeholder="生产基地或具体产地地址" />
+                        </el-form-item>
+
+                        <el-row :gutter="24">
+                            <el-col :span="24">
+                                <el-form-item label="承诺主体（供应商/生产者）">
+                                    <div class="entity-search-box">
+                                        <el-select
+                                            v-model="formData.entity"
+                                            placeholder="输入名称搜索主体..."
+                                            filterable
+                                            class="w-full"
+                                        >
+                                            <el-option label="北京朝阳蔬菜基地" value="1" />
+                                            <el-option label="山东寿光联合农业" value="2" />
+                                        </el-select>
+                                        <el-button type="primary" link class="add-entity-btn">
+                                            <el-icon><Plus /></el-icon> 新增主体
+                                        </el-button>
+                                    </div>
+                                </el-form-item>
+                            </el-col>
+                        </el-row>
+
+                        <el-row :gutter="24">
+                            <el-col :span="8">
+                                <el-form-item label="数量/规模">
+                                    <el-input v-model="formData.batchSize" placeholder="0.00" />
+                                </el-form-item>
+                            </el-col>
+                            <el-col :span="6">
+                                <el-form-item label="单位">
+                                    <el-select v-model="formData.unit">
+                                        <el-option label="千克" value="kg" />
+                                        <el-option label="吨" value="t" />
+                                    </el-select>
+                                </el-form-item>
+                            </el-col>
+                            <el-col :span="10">
+                                <el-form-item label="原合格证开具日期">
+                                    <el-date-picker v-model="formData.createDate" type="date" class="w-full" />
+                                </el-form-item>
+                            </el-col>
+                        </el-row>
+                    </el-form>
+                </div>
+
+                <!-- 操作区 -->
+                <div class="form-actions-bar">
+                    <el-button class="btn-cancel" @click="handleCancel">取消并返回</el-button>
+                    <el-button type="primary" class="btn-submit-premium" @click="handleSubmit">
+                        <span>完成查验并入库档案</span>
+                        <el-icon class="icon-right"><ArrowRight /></el-icon>
+                    </el-button>
+                </div>
             </div>
         </div>
     </div>
@@ -83,203 +153,265 @@
 <script setup>
 import { reactive } from 'vue';
 import { useRouter } from 'vue-router';
+import { 
+    Link, Camera, Upload, Plus, ArrowRight
+} from '@element-plus/icons-vue';
 import { ElMessage } from 'element-plus';
+import PageBack from '@/components/PageBack/index.vue';
 
 const router = useRouter();
 
-// 表单数据
 const formData = reactive({
     source: 'other',
-    uploadFile: '',
     productName: '',
     category: '',
     origin: '',
     batchSize: '',
     unit: 'kg',
-    createDate: '2025-12-19',
+    createDate: new Date(),
     entity: ''
 });
 
-const handleUpload = () => {
-    ElMessage.info('上传合格证照片功能开发中');
-};
-
-const handleCancel = () => {
-    router.push('/certificate/verify');
-};
+const handleCancel = () => router.push('/certificate/verify');
 
 const handleSubmit = () => {
     if (!formData.productName) {
-        ElMessage.warning('请输入产品名称');
+        ElMessage.warning('请输入必要的产品名称信息');
         return;
     }
-    ElMessage.success('查验并存证成功');
+    ElMessage.success('外部合格证已成功入库备案');
     router.push('/certificate/verify');
 };
 </script>
 
 <style lang="scss" scoped>
-.page-container {
-    height: 100%;
-    overflow-y: auto;
-    padding: 16px;
+$theme-color: #00B3ED;
+$bg-faded: #F8FAFC;
+$text-dark: #1E293B;
+$text-light: #64748B;
+
+.verify-page-wrapper {
+    min-height: 100vh;
 }
 
-.header-section {
-    padding: 20px 24px;
-    margin-bottom: 16px;
+/* Header Minimal */
+.page-header-minimal {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+    margin-bottom: 30px;
+    padding-left: 10px;
+
+    .header-main-info {
+        .main-title {
+            font-size: 24px;
+            font-weight: 800;
+            color: $text-dark;
+            margin: 0 0 6px 0;
+            letter-spacing: -0.5px;
+        }
+        .sub-title {
+            font-size: 14px;
+            color: $text-light;
+            margin: 0;
+        }
+    }
+}
+
+.main-container {
+    max-width: 860px;
+    margin: 0 auto;
+}
+
+/* Glass Form Card */
+.glass-form-card {
     background: #fff;
-    backdrop-filter: blur(10px);
-    border-radius: 16px;
+    border-radius: 20px;
+    padding: 40px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
 }
 
-.title-wrapper {
+.form-group-section {
+    margin-bottom: 30px;
+}
+
+.section-indicator {
     display: flex;
     align-items: center;
-    gap: 10px;
-}
-
-.title-line {
-    width: 4px;
-    height: 20px;
-    background: #00B3ED;
-    border-radius: 2px;
-}
-
-.page-title {
-    font-size: 18px;
-    font-weight: 600;
-    color: #333;
-    margin: 0;
-}
-
-.page-subtitle {
-    font-size: 14px;
-    color: #666;
-    margin: 8px 0 0 14px;
-}
-
-/* 内容卡片 */
-.content-card {
-    background: #fff;
-    backdrop-filter: blur(10px);
-    border-radius: 16px;
-    padding: 32px;
-    max-width: 500px;
-}
-
-/* 来源选择 */
-.source-select {
-    width: 100%;
-    margin-bottom: 20px;
-}
-
-/* 上传区域 */
-.upload-row {
-    display: flex;
     gap: 12px;
-    margin-bottom: 32px;
-}
+    margin-bottom: 24px;
 
-.upload-input {
-    flex: 1;
-}
-
-.upload-btn {
-    min-width: 120px;
-    background: linear-gradient(135deg, #00B3ED 0%, #0099D6 100%);
-    border: none;
-}
-
-/* 表单区域 */
-.form-section {
-    margin-bottom: 32px;
-}
-
-.section-title {
-    font-size: 16px;
-    font-weight: 600;
-    color: #333;
-    margin: 0 0 20px 0;
-}
-
-.product-form {
-    :deep(.el-form-item) {
-        margin-bottom: 20px;
+    .step-badge {
+        width: 32px;
+        height: 32px;
+        background: rgba($theme-color, 0.1);
+        color: $theme-color;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        font-size: 14px;
     }
 
-    :deep(.el-form-item__label) {
-        font-weight: 600;
-        color: #333;
-        padding-bottom: 8px;
+    .group-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: $text-dark;
+        margin: 0;
     }
 }
 
-.full-width {
-    width: 100%;
-}
-
-.batch-row {
-    display: flex;
-    gap: 12px;
-}
-
-.batch-input {
-    flex: 1;
-}
-
-.unit-select {
-    width: 140px;
-}
-
-.field-tip {
-    font-size: 12px;
-    color: #999;
-    margin: 0 0 8px 0;
-}
-
-/* 底部按钮 */
-.form-footer {
-    display: flex;
-    justify-content: center;
+/* Source Selector */
+.source-selector-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     gap: 16px;
-    padding-top: 24px;
-    border-top: 1px solid #E5E7EB;
+    margin-bottom: 24px;
+}
+
+.source-mode-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 20px;
+    border: 2px solid #F1F5F9;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    .mode-icon {
+        font-size: 24px;
+        color: $text-light;
+        transition: color 0.2s;
+    }
+
+    .mode-meta {
+        display: flex;
+        flex-direction: column;
+        .m-title { font-weight: 700; color: $text-dark; font-size: 15px; }
+        .m-desc { font-size: 12px; color: $text-light; margin-top: 2px; }
+    }
+
+    &:hover {
+        background: #F8FAFC;
+        border-color: #E2E8F0;
+    }
+
+    &.active {
+        background: rgba($theme-color, 0.04);
+        border-color: $theme-color;
+        .mode-icon { color: $theme-color; }
+        .m-title { color: $theme-color; }
+    }
+}
+
+/* Uploader */
+.clean-uploader {
+    :deep(.el-upload-dragger) {
+        border: 2px dashed #E2E8F0;
+        background: #F8FAFC;
+        border-radius: 12px;
+        padding: 30px;
+        &:hover { border-color: $theme-color; }
+    }
+
+    .uploader-content {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        text-align: left;
+
+        .icon-circle {
+            width: 54px;
+            height: 54px;
+            background: #fff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            color: $theme-color;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .text-content {
+            strong { display: block; font-size: 15px; color: $text-dark; margin-bottom: 4px; }
+            p { font-size: 13px; color: $text-light; margin: 0; }
+        }
+    }
+}
+
+/* Form Layout */
+.standard-grid-form {
+    :deep(.el-form-item__label) {
+        font-weight: 700;
+        color: #475569;
+        font-size: 13px;
+        padding-bottom: 4px;
+    }
+
+    :deep(.el-input__wrapper) {
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 0 0 1px #E2E8F0 inset;
+        height: 40px;
+        
+        &.is-focus {
+            box-shadow: 0 0 0 1px $theme-color inset !important;
+        }
+    }
+}
+
+.entity-search-box {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.add-entity-btn {
+    white-space: nowrap;
+    font-weight: 600;
+}
+
+/* Actions */
+.form-actions-bar {
+    margin-top: 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .btn-cancel {
-    min-width: 100px;
-    height: 44px;
-    border-radius: 22px;
-    border-color: #D1D5DB;
-    color: #666;
+    border-radius: var(--el-border-radius-base);
+    color: $text-light;
+    border: 1px solid #E2E8F0;
 }
 
-.btn-submit {
-    min-width: 140px;
-    height: 44px;
-    border-radius: 22px;
-    background: linear-gradient(135deg, #00B3ED 0%, #0099D6 100%);
+.btn-submit-premium {
+    border-radius: var(--el-border-radius-base);
+    background: $theme-color;
     border: none;
-}
-
-/* 深度样式覆盖 */
-:deep(.el-input__wrapper) {
-    border-radius: 6px;
-    box-shadow: 0 0 0 1px #E5E7EB inset;
+    font-size: 15px;
+    font-weight: 700;
+    box-shadow: 0 8px 20px rgba(0, 179, 237, 0.2);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.3s;
 
     &:hover {
-        box-shadow: 0 0 0 1px #00B3ED inset;
+        transform: translateY(-2px);
+        box-shadow: 0 12px 24px rgba(0, 179, 237, 0.3);
+        background: lighten($theme-color, 3%);
     }
 
-    &.is-focus {
-        box-shadow: 0 0 0 1px #00B3ED inset;
+    .icon-right {
+        font-size: 18px;
     }
 }
 
-:deep(.el-select) {
-    .el-input__wrapper {
-        border-radius: 6px;
-    }
-}
+/* Utils */
+.w-full { width: 100%; }
+.mt-20 { margin-top: 20px; }
 </style>

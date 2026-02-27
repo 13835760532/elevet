@@ -14,7 +14,7 @@
                 <div class="tree-wrapper">
                     <el-tree :data="regionTree" :props="treeProps" default-expand-all highlight-current node-key="id"
                         @node-click="handleNodeClick">
-                        <template #default="{ node, data }">
+                        <template #default="{ node }">
                             <span class="custom-tree-node">
                                 <span class="node-label">{{ node.label }}</span>
                             </span>
@@ -28,7 +28,7 @@
                 <!-- 顶部标题区 -->
                 <div class="guide-card">
                     <div class="card-header">
-                        <div class="blue-line"></div>
+                     
                         <h2 class="card-title">辖区合格证</h2>
                     </div>
                     <p class="page-subtitle">本机构管辖地区合格证开具、查验、存证情况统计</p>
@@ -37,7 +37,7 @@
                 <!-- 统计卡片区 -->
                 <div class="query-card stats-section">
                     <div class="card-header">
-                        <div class="blue-line"></div>
+                     
                         <h2 class="card-title">辖区合格证概况</h2>
                     </div>
                     <div class="stats-cards">
@@ -59,7 +59,7 @@
                 <!-- 搜索查询区 -->
                 <div class="query-card">
                     <div class="card-header">
-                        <div class="blue-line"></div>
+                     
                         <h2 class="card-title">辖区合格证查询</h2>
                     </div>
                     <div class="query-form-wrapper">
@@ -121,14 +121,14 @@
                     <div class="table-wrapper">
                         <el-table :data="tableData">
                             <el-table-column type="index" label="序号" width="60" align="center" />
-                            <el-table-column prop="certNo" label="合格证编号" min-width="140" />
+                            <el-table-column prop="certNo" label="合格证编号" min-width="150" />
                             <el-table-column prop="certType" label="出证类型" width="100" align="center" />
                             <el-table-column prop="productName" label="产品名称" width="80" align="center" />
                             <el-table-column prop="productType" label="产品类别" width="80" align="center" />
                             <el-table-column prop="origin" label="产地" min-width="100" />
                             <el-table-column prop="entity" label="生产经营主体" min-width="140" />
                             <el-table-column prop="issueDate" label="开具日期" width="140" align="center" />
-                            <el-table-column prop="contact" label="联系人" width="100" align="center">
+                            <el-table-column prop="contact" label="联系人" width="120" align="center">
                                 <template #header>
                                     <div>联系人</div>
                                     <div class="sub-header">(生产经营企业/个人)</div>

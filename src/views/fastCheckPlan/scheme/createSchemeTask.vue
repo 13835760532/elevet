@@ -5,7 +5,7 @@
         <!-- 头部标题 -->
         <div class="header-card">
             <div class="card-header">
-                <div class="blue-line"></div>
+             
                 <h2 class="card-title">创建检测任务</h2>
             </div>
             <p class="header-desc">支持检测方案按承检机构和检测行任务拆分，配置任务执行时间、检测数量、检测结果提交要求（检测品种、检测项目、检测地区、检测频率）</p>

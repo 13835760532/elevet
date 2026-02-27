@@ -11,7 +11,7 @@
         <!-- 查询卡片 -->
         <div class="search-card guide-card">
             <div class="card-header">
-                <div class="blue-line"></div>
+             
                 <h2 class="card-title">抽样检测查询</h2>
             </div>
             <el-form :model="queryParams" ref="queryRef" :inline="true" class="custom-query-form">

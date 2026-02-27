@@ -3,7 +3,7 @@
         <!-- 标题卡 -->
         <div class="guide-card">
             <div class="card-header">
-                <div class="blue-line"></div>
+             
                 <h2 class="card-title">合格证开具（生产者/收购者/销售者）</h2>
             </div>
         </div>
@@ -11,7 +11,7 @@
         <!-- 查询卡 -->
         <div class="query-card">
             <div class="card-header">
-                <div class="blue-line"></div>
+             
                 <h2 class="card-title">合格证开具查询</h2>
             </div>
             <div class="query-form-wrapper">

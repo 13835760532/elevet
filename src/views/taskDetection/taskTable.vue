@@ -3,7 +3,7 @@
         <!-- 检测方案指南 -->
         <div class="guide-card">
             <div class="card-header">
-                <div class="blue-line"></div>
+             
                 <h2 class="card-title">检测方案指南</h2>
             </div>
             <div class="guide-steps">
@@ -24,7 +24,7 @@
         <!-- 检测方案查询 -->
         <div class="query-card">
             <div class="card-header">
-                <div class="blue-line"></div>
+             
                 <h2 class="card-title">检测方案查询</h2>
             </div>
             <div class="query-form-wrapper">

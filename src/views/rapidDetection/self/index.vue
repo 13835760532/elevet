@@ -3,7 +3,7 @@
         <!-- 快速检测标题 -->
         <div class="header-card">
             <div class="card-header">
-                <div class="blue-line"></div>
+             
                 <h2 class="card-title">快速检测</h2>
             </div>
             <div class="query-form-wrapper">

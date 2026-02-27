@@ -3,7 +3,7 @@
     <!-- 检测方案指南 -->
     <div class="guide-card">
       <div class="card-header">
-        <div class="blue-line"></div>
+     
         <h2 class="card-title">检测方案指南</h2>
       </div>
       <div class="guide-steps">
@@ -28,7 +28,7 @@
     <!-- 检测方案查询 -->
     <div class="query-card">
       <div class="card-header">
-        <div class="blue-line"></div>
+     
         <h2 class="card-title">检测方案查询</h2>
       </div>
       <div class="query-form-wrapper">
@@ -402,7 +402,7 @@ updateTableData(allData.value);
 
   &.is-focus {
     border-color: #00B3ED;
-    box-shadow: 0 0 0 3px rgba(0, 179, 237, 0.1) !important;
+    box-shadow: none !important;
   }
 }
 

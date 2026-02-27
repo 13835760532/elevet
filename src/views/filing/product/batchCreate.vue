@@ -4,66 +4,72 @@
         <!-- 顶部标题区 -->
         <div class="header-section">
             <div class="title-wrapper">
-                <div class="title-line"></div>
                 <h1 class="page-title">产品档案</h1>
             </div>
             <div class="desc-box">
-                支持批量上传多个受检背景信息进行建档
+                支持批量上传多个受检背景信息进行建档。
             </div>
         </div>
 
         <!-- 内容卡片 -->
         <div class="content-card">
-            <div class="section-title">批量上传产品档案：</div>
+            <div class="card-action-bar">
+                <div class="action-left">
+                    <div class="section-dot"></div>
+                    <span class="action-title">批量上传产品档案</span>
+                </div>
+                <el-button class="btn-download" @click="handleDownloadTemplate" plain>
+                    <el-icon class="mr4"><Download /></el-icon>
+                    下载导入模版
+                </el-button>
+            </div>
 
-            <!-- 拖拽上传区域 -->
+            <!-- 上传区域 -->
             <div class="upload-wrapper">
-                <el-upload class="batch-uploader" drag action="#" :auto-upload="false" multiple>
-                    <div class="upload-inner">
-                        <div class="icon-orb">
+                <el-upload class="batch-upload" drag action="#" :auto-upload="false" multiple>
+                    <div class="upload-content">
+                        <div class="upload-icon-circle">
                             <el-icon class="el-icon--upload">
                                 <UploadFilled />
                             </el-icon>
                         </div>
-                        <div class="upload-text">
+                        <div class="el-upload__text">
                             拖拽文件到此处或<span>点击选择</span>
                         </div>
                         <div class="upload-hint">
-                            <p>支持 Excel (.xlsx, .xls) 或 CSV (.csv) 格式</p>
-                            <p>**文件大小：单个文件不超过10MB，请确保文件格式正确、数据完整，系统将自动检验文件内容</p>
+                            <p class="format-tip">支持 Excel (.xlsx, .xls) 或 CSV (.csv) 格式</p>
+                            <p class="size-tip">单个文件不超过 10MB，请确保数据完整，系统将自动校验内容</p>
                         </div>
                     </div>
                 </el-upload>
             </div>
 
-            <!-- 示例展示区域 -->
-            <div class="example-section">
-                <div class="example-header">
-                    <span class="header-label">示例：</span>
-                    <el-button class="btn-download" @click="handleDownloadTemplate">
-                        下载导入模版
-                    </el-button>
+            <!-- 预览表格 -->
+            <div class="preview-section">
+                <div class="preview-header">
+                    <div class="header-flex">
+                        <div class="section-dot yellow"></div>
+                        <span class="preview-title">批量导入档案示例/预览</span>
+                    </div>
                 </div>
 
-                <div class="table-wrapper">
-                    <el-table :data="exampleData" border class="example-table">
+                <div class="table-container">
+                    <el-table :data="exampleData" border class="preview-table" header-row-class-name="table-header">
                         <el-table-column prop="index" label="序号" width="60" fixed="left" align="center" />
-                        <el-table-column prop="productName" label="产品名称" width="100" />
-                        <el-table-column prop="category" label="产品类别" width="100" />
-                        <el-table-column prop="origin" label="产品产地" width="100" />
-                        <el-table-column prop="batchScale" label="批次规模" width="100" />
-                        <el-table-column prop="promoPhoto" label="产品宣传图片" width="120" />
-                        <div class="subject-group">
-                            <el-table-column prop="subjectType" label="被检主体类型" width="100" />
-                            <el-table-column prop="subjectName" label="主体名称" width="150" />
-                            <el-table-column prop="idCode" label="信用代码/身份证号" width="140" />
-                            <el-table-column prop="enterpriseType" label="生产企业" width="100" />
-                            <el-table-column prop="mainProduct" label="主营产品" width="100" />
-                            <el-table-column prop="prodScale" label="生产规模" width="100" />
-                            <el-table-column prop="contact" label="联系人" width="100" />
-                            <el-table-column prop="phone" label="联系电话" width="140" />
-                            <el-table-column prop="region" label="所属地区" min-width="160" />
-                        </div>
+                        <el-table-column prop="productName" label="产品名称" width="120" />
+                        <el-table-column prop="category" label="产品类别" width="100" align="center" />
+                        <el-table-column prop="origin" label="产品产地" width="120" />
+                        <el-table-column prop="batchScale" label="批次规模" width="100" align="center" />
+                        <el-table-column prop="promoPhoto" label="产品宣传图片" width="120" align="center" />
+                        <el-table-column prop="subjectType" label="被检主体类型" width="110" align="center" />
+                        <el-table-column prop="subjectName" label="主体名称" min-width="150" show-overflow-tooltip />
+                        <el-table-column prop="idCode" label="信用代码/身份证号" width="180" align="center" />
+                        <el-table-column prop="enterpriseType" label="生产环节" width="100" align="center" />
+                        <el-table-column prop="mainProduct" label="主营产品" width="100" align="center" />
+                        <el-table-column prop="prodScale" label="生产规模" width="100" align="center" />
+                        <el-table-column prop="contact" label="联系人" width="100" align="center" />
+                        <el-table-column prop="phone" label="联系电话" width="140" align="center" />
+                        <el-table-column prop="region" label="所属地区" min-width="160" show-overflow-tooltip />
                     </el-table>
                 </div>
             </div>
@@ -73,12 +79,12 @@
 
 <script setup>
 import { ref } from 'vue';
-import { UploadFilled } from '@element-plus/icons-vue';
+import { UploadFilled, Download } from '@element-plus/icons-vue';
 
 const exampleData = ref([
     {
         index: 1,
-        productName: '晓辉农场',
+        productName: '白菜',
         category: '蔬菜',
         origin: '北京-海淀',
         batchScale: '10亩',
@@ -95,7 +101,7 @@ const exampleData = ref([
     },
     {
         index: 2,
-        productName: '李娜',
+        productName: '草莓',
         category: '水果',
         origin: '河北-廊坊',
         batchScale: '10亩',
@@ -118,35 +124,34 @@ const handleDownloadTemplate = () => {
 </script>
 
 <style lang="scss" scoped>
+$theme-color: #00B3ED;
+$text-dark: #1E293B;
+$text-light: #64748B;
+$bg-light: #F8FAFC;
+
 .page-container {
     height: 100%;
     overflow-y: auto;
     padding: 0;
-    background: transparent;
 }
 
-/* 页眉背景与毛玻璃 */
+.mr4 { margin-right: 4px; }
+
+/* 顶部标题区 */
 .header-section {
-    height: auco;
+    height: auto;
     padding: 16px;
     background: #fff;
     backdrop-filter: blur(10px);
     border-radius: 10px;
-    margin-bottom: 20px;
+    margin-bottom: 14px;
 }
 
 .title-wrapper {
     display: flex;
     align-items: center;
     gap: 8px;
-    margin-bottom: 12px;
-}
-
-.title-line {
-    width: 4px;
-    height: 18px;
-    background: #00B3ED;
-    border-radius: 2px;
+    margin-bottom: 14px;
 }
 
 .page-title {
@@ -158,120 +163,179 @@ const handleDownloadTemplate = () => {
 
 .desc-box {
     font-size: 14px;
-    color: #999;
-    padding-left: 12px;
+    color: #666666;
+    line-height: 1.6;
 }
 
-/* 核心内容卡片 */
+/* 内容卡片 */
 .content-card {
-    width: 100%;
-    margin: 0 auto;
-    padding: 40px;
     background: #fff;
-    backdrop-filter: blur(10px);
-    border-radius: 30px;
-    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
+    border-radius: 12px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+    padding: var(--page-container-padding);
+    margin-bottom: 24px;
+}
 
-    .section-title {
+.card-action-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 32px;
+
+    .action-left {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .section-dot {
+        width: 8px;
+        height: 8px;
+        background: $theme-color;
+        border-radius: 50%;
+        box-shadow: 0 0 0 4px rgba($theme-color, 0.1);
+    }
+
+    .action-title {
         font-size: 18px;
         font-weight: 700;
-        color: #333;
-        margin-bottom: 30px;
+        color: $text-dark;
     }
 }
 
-/* 上传容器适配 */
+.btn-download {
+    border-color: $theme-color;
+    color: $theme-color;
+    height: 40px;
+    padding: 0 24px;
+    border-radius: 8px;
+    font-weight: 500;
+
+    &:hover {
+        background: rgba($theme-color, 0.05);
+        color: $theme-color !important;
+        border-color: $theme-color !important;
+    }
+}
+
+/* 上传区域 */
 .upload-wrapper {
-    margin-bottom: 50px;
+    margin-bottom: 48px;
 
     :deep(.el-upload-dragger) {
-        height: 320px;
-        background: transparent;
-        border: 2px dashed #D1D5DB;
-        border-radius: 10px;
+        background: $bg-light;
+        border: 2px dashed #E2E8F0;
+        border-radius: 12px;
+        height: 280px;
         display: flex;
         flex-direction: column;
         justify-content: center;
         transition: all 0.3s ease;
 
         &:hover {
-            border-color: #3B82F6;
-            background: rgba(59, 130, 246, 0.02);
+            border-color: $theme-color;
+            background: rgba($theme-color, 0.02);
+            
+            .upload-icon-circle {
+                transform: scale(1.1);
+                background: rgba($theme-color, 0.1);
+                .el-icon { color: $theme-color; }
+            }
         }
     }
 }
 
-.upload-inner {
-    text-align: center;
-}
-
-.icon-orb {
+.upload-icon-circle {
     width: 80px;
     height: 80px;
-    background: #F3F4F6;
+    background: #fff;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin: 0 auto 20px;
+    margin: 0 auto 24px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.03);
 
     .el-icon {
-        font-size: 32px;
-        color: #9CA3AF;
+        font-size: 36px;
+        color: #94A3B8;
+        transition: all 0.3s ease;
     }
 }
 
-.upload-text {
-    font-size: 24px;
-    font-weight: 700;
-    color: #000;
-    margin-bottom: 16px;
+.el-upload__text {
+    font-size: 20px;
+    font-weight: 600;
+    color: $text-dark;
+    margin-bottom: 12px;
 
     span {
-        color: #3B82F6;
+        color: $theme-color;
         cursor: pointer;
+        &:hover { text-decoration: underline; }
     }
 }
 
 .upload-hint {
+    color: $text-light;
     font-size: 14px;
-    color: #6B7280;
-    line-height: 2;
-    font-weight: 500;
+    line-height: 1.8;
+
+    p { margin: 4px 0; }
+    .format-tip { font-weight: 500; color: #475569; }
 }
 
-/* 表格区域 */
-.example-section {
-    .example-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
+/* 预览表格区域 */
+.preview-section {
+    margin-top: 40px;
+}
 
-        .header-label {
-            font-size: 18px;
-            font-weight: 700;
-            color: #333;
+.preview-header {
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+
+    .header-flex {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-shrink: 0;
+    }
+
+    .section-dot.yellow {
+        background: #F59E0B;
+        box-shadow: 0 0 0 4px rgba(#F59E0B, 0.1);
+    }
+
+    .preview-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: $text-dark;
+    }
+}
+
+.table-container {
+}
+
+.preview-table {
+    :deep(.table-header) {
+        th {
+            background-color: #F8FAFC !important;
+            color: #475569;
+            font-weight: 600;
+            height: 52px;
+            font-size: 14px;
         }
     }
-}
 
-.btn-download {
-    border: 1px solid #3B82F6;
-    color: #3B82F6;
-    font-weight: 500;
-    padding: 8px 20px;
-    border-radius: 6px;
-    background: transparent;
-
-    &:hover {
-        background: rgba(59, 130, 246, 0.05);
+    :deep(.el-table__row) {
+        td {
+            padding: 12px 0;
+            font-size: 14px;
+            color: #334155;
+        }
     }
-}
-
-.table-wrapper {
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
 }
 </style>

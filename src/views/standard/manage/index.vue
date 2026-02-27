@@ -3,7 +3,7 @@
         <!-- 标准限量查询 - 仿照 taskTable.vue 风格 -->
         <div class="query-card">
             <div class="card-header">
-                <div class="blue-line"></div>
+             
                 <h2 class="card-title">国标限量</h2>
             </div>
             <div class="query-form-wrapper">

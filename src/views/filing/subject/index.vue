@@ -3,7 +3,7 @@
         <!-- 主体建档 标题 -->
         <div class="guide-card">
             <div class="card-header">
-                <div class="blue-line"></div>
+             
                 <h2 class="card-title">主体建档</h2>
             </div>
         </div>
@@ -11,11 +11,11 @@
         <!-- 主体建档查询 -->
         <div class="query-card">
             <div class="card-header">
-                <div class="blue-line"></div>
+             
                 <h2 class="card-title">主体建档查询</h2>
             </div>
             <div class="query-form-wrapper">
-                <el-form :inline="true" :model="queryParams" class="custom-query-form" label-position="left">
+                <el-form :inline="true" :model="queryParams" class="custom-query-form custom-query-form-row" label-position="left">
                     <el-form-item label="主体名称">
                         <el-input v-model="queryParams.entityName" placeholder="请输入主体名称" class="custom-input" />
                     </el-form-item>

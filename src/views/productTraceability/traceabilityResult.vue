@@ -240,7 +240,7 @@ const tableData = ref([
 
 <style scoped lang="scss">
 .result-container {
-    padding: 24px;
+    padding: var(--page-container-padding);
     background-color: #f5f7fa;
     min-height: calc(100vh - 84px);
 }

@@ -1,9 +1,9 @@
 <template>
     <div class="page-container">
+        <PageBack style="margin-bottom: 12px;"></PageBack>
         <!-- 顶部标题区 -->
         <div class="header-section">
             <div class="title-wrapper">
-                <div class="title-line"></div>
                 <h1 class="page-title">主体备案</h1>
             </div>
             <div class="desc-box">
@@ -14,8 +14,12 @@
         <!-- 内容卡片 -->
         <div class="content-card">
             <div class="card-action-bar">
-                <span class="action-title">批量上传企业备案：</span>
-                <el-button class="btn-download" @click="handleDownloadTemplate">
+                <div class="action-left">
+                    <div class="section-dot"></div>
+                    <span class="action-title">批量上传企业备案</span>
+                </div>
+                <el-button class="btn-download" @click="handleDownloadTemplate" plain>
+                    <el-icon class="mr4"><Download /></el-icon>
                     下载导入模版
                 </el-button>
             </div>
@@ -33,8 +37,8 @@
                             拖拽文件到此处或<span>点击选择</span>
                         </div>
                         <div class="upload-hint">
-                            <p>** 支持 Excel (.xlsx, .xls) 或 CSV (.csv) 格式</p>
-                            <p>**文件大小：单个文件不超过10MB，请确保文件格式正确、数据完整，系统将自动检验文件内容</p>
+                            <p class="format-tip">支持 Excel (.xlsx, .xls) 或 CSV (.csv) 格式</p>
+                            <p class="size-tip">单个文件不超过 10MB，请确保数据完整，系统将自动校验内容</p>
                         </div>
                     </div>
                 </el-upload>
@@ -43,32 +47,40 @@
             <!-- 预览表格 -->
             <div class="preview-section">
                 <div class="preview-header">
-                    <span class="preview-title">批量导入备案示例/预览：</span>
-                    <div class="decorative-line"></div>
+                    <div class="header-flex">
+                        <div class="section-dot yellow"></div>
+                        <span class="preview-title">批量导入备案示例/预览</span>
+                    </div>
                 </div>
 
-                <el-table :data="tableData" border class="preview-table" header-row-class-name="table-header">
-                    <el-table-column prop="index" label="序号" width="60" align="center" />
-                    <el-table-column prop="recordType" label="备案类型" width="100" />
-                    <el-table-column prop="subjectName" label="主体名称" min-width="120" />
-                    <el-table-column prop="subjectType" label="主体类型" width="100" />
-                    <el-table-column prop="mainProduct" label="主营产品" width="100" />
-                    <el-table-column prop="province" label="省" width="60" />
-                    <el-table-column prop="address" label="详细地址" min-width="120" />
-                    <el-table-column prop="contact" label="联系人" width="100" />
-                    <el-table-column prop="phone" label="联系电话" width="140" />
-                    <el-table-column prop="creditCode" label="企业信用代码" width="180" />
-                    <el-table-column prop="hasLicense" label="企业营业执照" width="120" align="center">
-                        <template #default="scope">
-                            <span>{{ scope.row.hasLicense ? '有' : '无' }}</span>
-                        </template>
-                    </el-table-column>
-                    <el-table-column prop="hasQualification" label="企业资质" width="100" align="center">
-                        <template #default="scope">
-                            <span>{{ scope.row.hasQualification ? '有' : '无' }}</span>
-                        </template>
-                    </el-table-column>
-                </el-table>
+                <div class="table-container">
+                    <el-table :data="tableData" border class="preview-table" header-row-class-name="table-header">
+                        <el-table-column prop="index" label="序号" width="60" align="center" />
+                        <el-table-column prop="recordType" label="备案类型" width="100" />
+                        <el-table-column prop="subjectName" label="主体名称" min-width="150" show-overflow-tooltip />
+                        <el-table-column prop="subjectType" label="主体类型" width="100" align="center" />
+                        <el-table-column prop="mainProduct" label="主营产品" width="100" align="center" />
+                        <el-table-column prop="province" label="地区" width="80" align="center" />
+                        <el-table-column prop="address" label="详细地址" min-width="150" show-overflow-tooltip />
+                        <el-table-column prop="contact" label="联系人" width="100" align="center" />
+                        <el-table-column prop="phone" label="联系电话" width="140" align="center" />
+                        <el-table-column prop="creditCode" label="企业信用代码" width="180" align="center" />
+                        <el-table-column prop="hasLicense" label="营业执照" width="100" align="center">
+                            <template #default="scope">
+                                <el-tag :type="scope.row.hasLicense ? 'success' : 'info'" size="small">
+                                    {{ scope.row.hasLicense ? '有' : '无' }}
+                                </el-tag>
+                            </template>
+                        </el-table-column>
+                        <el-table-column prop="hasQualification" label="企业资质" width="100" align="center">
+                            <template #default="scope">
+                                <el-tag :type="scope.row.hasQualification ? 'success' : 'info'" size="small">
+                                    {{ scope.row.hasQualification ? '有' : '无' }}
+                                </el-tag>
+                            </template>
+                        </el-table-column>
+                    </el-table>
+                </div>
             </div>
         </div>
     </div>
@@ -76,7 +88,7 @@
 
 <script setup>
 import { ref } from 'vue';
-import { UploadFilled } from '@element-plus/icons-vue';
+import { UploadFilled, Download } from '@element-plus/icons-vue';
 
 const tableData = ref([
     {
@@ -86,7 +98,7 @@ const tableData = ref([
         subjectType: '生产',
         mainProduct: '苹果',
         province: '北京',
-        address: 'XXXX',
+        address: '北京市朝阳区北辰路8号',
         contact: '秦艳萍',
         phone: '18513172770',
         creditCode: '1101982103300106',
@@ -100,7 +112,7 @@ const tableData = ref([
         subjectType: '加工',
         mainProduct: '西红柿',
         province: '北京',
-        address: 'XXXX',
+        address: '北京市朝阳区北辰路8号',
         contact: '秦艳萍',
         phone: '18513172770',
         creditCode: '1101982103300106',
@@ -114,7 +126,7 @@ const tableData = ref([
         subjectType: '流通',
         mainProduct: '草莓',
         province: '北京',
-        address: 'XXXX',
+        address: '北京市朝阳区北辰路8号',
         contact: '秦艳萍',
         phone: '18513172770',
         creditCode: '1101982103300106',
@@ -128,7 +140,7 @@ const tableData = ref([
         subjectType: '零售',
         mainProduct: '黄瓜',
         province: '北京',
-        address: 'XXXX',
+        address: '北京市朝阳区北辰路8号',
         contact: '秦艳萍',
         phone: '18513172770',
         creditCode: '1101982103300106',
@@ -143,21 +155,27 @@ const handleDownloadTemplate = () => {
 </script>
 
 <style lang="scss" scoped>
+$theme-color: #00B3ED;
+$text-dark: #1E293B;
+$text-light: #64748B;
+$bg-light: #F8FAFC;
+
 .page-container {
     height: 100%;
     overflow-y: auto;
     padding: 0;
-    background: transparent;
 }
+
+.mr4 { margin-right: 4px; }
 
 /* 顶部标题区 */
 .header-section {
-    height: auco;
+    height: auto;
     padding: 16px;
     background: #fff;
     backdrop-filter: blur(10px);
     border-radius: 10px;
-    margin-bottom: 20px;
+    margin-bottom: 14px;
 }
 
 .title-wrapper {
@@ -165,13 +183,6 @@ const handleDownloadTemplate = () => {
     align-items: center;
     gap: 8px;
     margin-bottom: 14px;
-}
-
-.title-line {
-    width: 4px;
-    height: 18px;
-    background: #00B3ED;
-    border-radius: 2px;
 }
 
 .page-title {
@@ -184,149 +195,189 @@ const handleDownloadTemplate = () => {
 .desc-box {
     font-size: 14px;
     color: #666666;
-    padding-left: 12px;
     line-height: 1.6;
 }
 
 /* 内容卡片 */
 .content-card {
-    width: 100%;
-    margin: 0 auto;
-    padding: 40px;
     background: #fff;
-    backdrop-filter: blur(10px);
-    border-radius: 30px;
-    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
+    border-radius: 12px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+    padding:var(--page-container-padding);
+    margin-bottom: 24px;
 }
 
 .card-action-bar {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 30px;
+    margin-bottom: 32px;
+
+    .action-left {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .section-dot {
+        width: 8px;
+        height: 8px;
+        background: $theme-color;
+        border-radius: 50%;
+        box-shadow: 0 0 0 4px rgba($theme-color, 0.1);
+    }
 
     .action-title {
         font-size: 18px;
         font-weight: 700;
-        color: #333;
+        color: $text-dark;
     }
 }
 
 .btn-download {
-    border: 1px solid #3B82F6;
-    color: #3B82F6;
+    border-color: $theme-color;
+    color: $theme-color;
+    height: 40px;
+    padding: 0 24px;
+    border-radius: 8px;
     font-weight: 500;
-    padding: 8px 24px;
-    border-radius: 6px;
 
     &:hover {
-        background: rgba(59, 130, 246, 0.05);
+        background: rgba($theme-color, 0.05);
+        color: $theme-color !important;
+        border-color: $theme-color !important;
     }
 }
 
 /* 上传区域 */
 .upload-wrapper {
-    margin-bottom: 50px;
+    margin-bottom: 48px;
 
     :deep(.el-upload-dragger) {
-        background: transparent;
-        border: 2px dashed #D1D5DB;
-        border-radius: 10px;
-        height: 300px;
+        background: $bg-light;
+        border: 2px dashed #E2E8F0;
+        border-radius: 12px;
+        height: 280px;
         display: flex;
         flex-direction: column;
         justify-content: center;
-        transition: all 0.3s;
+        transition: all 0.3s ease;
 
         &:hover {
-            border-color: #3B82F6;
-            background: rgba(59, 130, 246, 0.02);
+            border-color: $theme-color;
+            background: rgba($theme-color, 0.02);
+            
+            .upload-icon-circle {
+                transform: scale(1.1);
+                background: rgba($theme-color, 0.1);
+                .el-icon { color: $theme-color; }
+            }
         }
     }
-}
-
-.upload-content {
-    text-align: center;
 }
 
 .upload-icon-circle {
     width: 80px;
     height: 80px;
-    background: #F3F4F6;
+    background: #fff;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin: 0 auto 20px;
+    margin: 0 auto 24px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.03);
 
     .el-icon {
-        font-size: 32px;
-        color: #9CA3AF;
+        font-size: 36px;
+        color: #94A3B8;
+        transition: all 0.3s ease;
     }
 }
 
 .el-upload__text {
-    font-size: 24px;
-    font-weight: 700;
-    color: #000;
-    margin-bottom: 15px;
+    font-size: 20px;
+    font-weight: 600;
+    color: $text-dark;
+    margin-bottom: 12px;
 
     span {
-        color: #3B82F6;
+        color: $theme-color;
         cursor: pointer;
+        &:hover { text-decoration: underline; }
     }
 }
 
 .upload-hint {
-    color: #6B7280;
+    color: $text-light;
     font-size: 14px;
-    line-height: 2;
-    font-weight: 500;
+    line-height: 1.8;
+
+    p { margin: 4px 0; }
+    .format-tip { font-weight: 500; color: #475569; }
 }
 
 /* 预览表格区域 */
+.preview-section {
+    margin-top: 40px;
+}
+
 .preview-header {
-    margin-bottom: 20px;
-    position: relative;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+
+    .header-flex {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-shrink: 0;
+    }
+
+    .section-dot.yellow {
+        background: #F59E0B;
+        box-shadow: 0 0 0 4px rgba(#F59E0B, 0.1);
+    }
 
     .preview-title {
         font-size: 18px;
         font-weight: 700;
-        color: #333;
+        color: $text-dark;
     }
 
     .decorative-line {
-        position: absolute;
-        right: 0;
-        top: 50%;
-        width: 200px;
-        height: 2px;
-        background: #EAB308;
-        /* 原型图中的黄色线条 */
+        flex: 1;
+        height: 1px;
+        background: linear-gradient(to right, #E2E8F0, transparent);
     }
 }
 
+.table-container {
+}
+
 .preview-table {
-    border-radius: 8px;
-    overflow: hidden;
-
     :deep(.table-header) {
-        background-color: #F9FAFB !important;
-
         th {
-            background: #F9FAFB !important;
-            color: #000;
-            font-weight: 700;
-            height: 50px;
+            background-color: #F8FAFC !important;
+            color: #475569;
+            font-weight: 600;
+            height: 52px;
+            font-size: 14px;
         }
     }
 
     :deep(.el-table__row) {
-        height: 50px;
-
         td {
-            font-size: 13px;
+            padding: 12px 0;
+            font-size: 14px;
+            color: #334155;
         }
+    }
+
+    :deep(.el-tag) {
+        border-radius: 4px;
+        font-weight: 500;
     }
 }
 </style>

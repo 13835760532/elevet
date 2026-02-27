@@ -5,7 +5,7 @@
         <!-- 检测详情头部 -->
         <div class="header-card">
             <div class="card-header">
-                <div class="blue-line"></div>
+             
                 <h2 class="card-title">检测详情</h2>
             </div>
             <p class="header-desc">对检测结果进行拍照上传判读后的结果</p>

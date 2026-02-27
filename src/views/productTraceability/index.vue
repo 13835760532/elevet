@@ -1,18 +1,99 @@
 <template>
-    <div class="app-container traceability-container">
-        <div class="search-box">
-            <div class="title">农产品溯源查询</div>
-            <div class="input-group">
-                <el-input v-model="searchCode" placeholder="输入合格证编号，查询产品生命周期的合格证追溯信息" @keyup.enter="handleSearch">
-                    <template #suffix>
-                        <el-icon class="search-icon" @click="handleSearch">
-                            <Search />
-                        </el-icon>
-                    </template>
-                </el-input>
-                <button class="search-btn" @click="handleSearch">
-                    扫码查询/查询
-                </button>
+    <div class="page-container">
+        <!-- 1. 标题区 (遵循一致性原则) -->
+        <div class="header-section">
+            <div class="title-wrapper">
+                <div class="title-line"></div>
+                <h1 class="page-title">农产品溯源</h1>
+            </div>
+            <div class="desc-box">
+                输入合格证编号，追溯产品全生命周期的合格证与检测信息
+            </div>
+        </div>
+
+        <!-- 2. 搜索区 -->
+        <div class="search-container">
+            <el-input 
+                v-model="searchCode" 
+                placeholder="请输入 20 位合格证编号查询" 
+                class="main-search-input"
+                @keyup.enter="handleSearch"
+                clearable
+            >
+                <template #prefix>
+                    <el-icon><Search /></el-icon>
+                </template>
+            </el-input>
+            <el-button type="primary" class="search-btn" @click="handleSearch">
+                扫码/查询
+            </el-button>
+        </div>
+
+        <!-- 3. 数据展示区 (仅在有结果时显示) -->
+        <div v-if="hasSearched" class="content-body">
+            <!-- 基本信息卡片 -->
+            <div class="info-card section-card">
+                <div class="section-header">基本信息</div>
+                <div class="info-content">
+                    <el-descriptions :column="3" border direction="vertical" class="custom-desc">
+                        <el-descriptions-item label="农药名称">有机番茄</el-descriptions-item>
+                        <el-descriptions-item label="出证类型">生产企业</el-descriptions-item>
+                        <el-descriptions-item label="重量/数量">10 kg</el-descriptions-item>
+                        <el-descriptions-item label="生产经营主体">济南优选现代农业发展有限公司</el-descriptions-item>
+                        <el-descriptions-item label="联系人">秦艳萍</el-descriptions-item>
+                        <el-descriptions-item label="联系电话">185****2770</el-descriptions-item>
+                        <el-descriptions-item label="开具日期">2025-12-12</el-descriptions-item>
+                        <el-descriptions-item label="产品产地" :span="2">山东省济南市章丘区生产基地 A-04 区</el-descriptions-item>
+                    </el-descriptions>
+                </div>
+            </div>
+
+            <!-- 溯源轨迹 -->
+            <div class="timeline-card section-card">
+                <div class="section-header">溯源轨迹</div>
+                <div class="timeline-box">
+                    <el-timeline>
+                        <el-timeline-item
+                            v-for="(activity, index) in activities"
+                            :key="index"
+                            :type="activity.type"
+                            :color="activity.color"
+                            :size="activity.size"
+                            :timestamp="activity.timestamp"
+                        >
+                            <div class="timeline-item-content">
+                                <h4 class="item-title">{{ activity.content }}</h4>
+                                <p class="item-desc">{{ activity.desc }}</p>
+                                
+                                <!-- 检测结果辅助展示 -->
+                                <div v-if="activity.results" class="results-table">
+                                    <el-table :data="activity.results" size="small" border>
+                                        <el-table-column prop="name" label="检测项目" />
+                                        <el-table-column prop="value" label="检测值" width="100" />
+                                        <el-table-column prop="status" label="结论" width="80" align="center">
+                                            <template #default="scope">
+                                                <span :class="scope.row.status === '合格' ? 'text-success' : 'text-danger'">
+                                                    {{ scope.row.status }}
+                                                </span>
+                                            </template>
+                                        </el-table-column>
+                                    </el-table>
+                                </div>
+                                <div v-if="activity.showLink" class="item-links">
+                                    <el-button link type="primary">查看合格证图片</el-button>
+                                </div>
+                            </div>
+                        </el-timeline-item>
+                    </el-timeline>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. 空状态 (可选) -->
+        <div v-if="!hasSearched" class="empty-state">
+            <div class="empty-content">
+                <el-icon class="empty-icon"><Memo /></el-icon>
+                <p>请输入编号开始查询溯源信息</p>
             </div>
         </div>
     </div>
@@ -20,124 +101,189 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import { Search } from '@element-plus/icons-vue';
-import { useRouter } from 'vue-router';
+import { Search, Memo } from '@element-plus/icons-vue';
 import { ElMessage } from 'element-plus';
 
 defineOptions({
     name: 'ProductTraceability'
 });
 
-const router = useRouter();
 const searchCode = ref('');
+const hasSearched = ref(false);
 
 const handleSearch = () => {
     if (!searchCode.value.trim()) {
-        ElMessage.warning('请输入合格证编号');
+        ElMessage.warning('请输入编号');
         return;
     }
-    router.push({
-        path: '/productTraceability/traceabilityResult',
-        query: { code: searchCode.value.trim() }
-    });
+    hasSearched.value = true;
 };
+
+const activities = [
+    {
+        content: '终端入库检测',
+        timestamp: '2025-12-15 14:20',
+        type: 'primary',
+        color: '#00B3ED',
+        size: 'large',
+        desc: '北京朝悦店：入场快检，指标覆盖有机磷及氨基甲酸酯类。',
+        results: [
+            { name: '氟虫腈', value: '0.01', status: '合格' },
+            { name: '灭多威', status: '合格' }
+        ]
+    },
+    {
+        content: '冷链物流运输',
+        timestamp: '2025-12-13 02:00',
+        desc: '济南 -> 北京：全程冷链监控中，平均库温 4.2℃。'
+    },
+    {
+        content: '生产端开证',
+        timestamp: '2025-12-12 10:00',
+        desc: '济南基地：产品采摘完成，签发电子合格证（HGZ-2025-001）。',
+        showLink: true
+    }
+];
 </script>
 
 <style scoped lang="scss">
-.traceability-container {
+$primary-color: #00B3ED;
+$bg-color: #f5f7fa;
+$border-color: #e4e7ed;
+
+.page-container {
+    //padding: var( --page-container-padding);
+    background-color: $bg-color;
+    min-height: 100%;
     display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100%;
-    min-height: calc(100vh - 120px);
-    padding: 24px;
+    flex-direction: column;
+    gap: 14px;
 }
 
-.search-box {
-    background: #ffffff;
-    border-radius: 20px;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04);
-    padding: 100px 80px;
-    width: 100%;
-    max-width: 900px;
-    text-align: center;
+/* 顶部标题栏 */
+.header-section {
+    background: #fff;
+    padding: var(--page-container-padding);
+    border-radius: 8px;
 }
 
-.title {
-    font-size: 18px;
-    font-weight: bold;
-    color: #000;
-    margin-bottom: 60px;
-    letter-spacing: 1px;
-}
-
-.input-group {
+.title-wrapper {
     display: flex;
     align-items: center;
-    border: 1px solid #e4e7ed;
-    border-radius: 4px;
-    overflow: hidden;
-    transition: all 0.3s;
-    max-width: 800px;
-    margin: 0 auto;
+    margin-bottom: 12px;
 
-    &:focus-within {
-        border-color: var(--el-color-primary, #1a5cff);
+    .page-title {
+        font-size: 18px;
+        font-weight: 600;
+        margin: 0;
+        color: #333;
     }
+}
 
-    :deep(.el-input) {
-        flex: 1;
+.desc-box {
+    font-size: 14px;
+    color: #666;
+}
 
-        .el-input__wrapper {
-            box-shadow: none !important;
-            background: transparent;
-            padding-left: 20px;
-            padding-right: 15px;
-        }
+/* 搜索栏 */
+.search-container {
+    display: flex;
+    gap: 12px;
+    background: #fff;
+    padding: var( --page-container-padding);
+    border-radius: 8px;
 
-        .el-input__inner {
-            height: 54px;
-            font-size: 14px;
-            color: #333;
-
-            &::placeholder {
-                color: #909399;
-            }
-        }
-    }
-
-    .search-icon {
-        font-size: 20px;
-        color: #606266;
-        margin-right: 8px;
-        cursor: pointer;
-        transition: color 0.3s;
-
-        &:hover {
-            color: var(--el-color-primary, #1a5cff);
+    .main-search-input {
+        max-width: 600px;
+        :deep(.el-input__wrapper) {
+            height: 40px;
+            border-radius: 4px;
         }
     }
 
     .search-btn {
-        height: 56px; // Slightly taller to cover borders seamlessly
-        border-radius: 0;
-        padding: 0 40px;
+        height: 40px;
+        background-color: $primary-color;
+        border-color: $primary-color;
+        padding: 0 24px;
+    }
+}
+
+/* 内容卡片 */
+.section-card {
+    background: #fff;
+    border-radius: 8px;
+    padding: var( --page-container-padding);
+    margin-bottom: 20px;
+
+    .section-header {
+        font-size: 16px;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 20px;
+        padding-left: 12px;
+        border-left: 3px solid $primary-color;
+    }
+}
+
+/* 溯源轨迹样式 */
+.timeline-box {
+    padding: 10px 0;
+}
+
+.timeline-item-content {
+    .item-title {
+        font-size: 15px;
+        font-weight: 600;
+        color: #333;
+        margin: 0 0 8px 0;
+    }
+    .item-desc {
         font-size: 14px;
-        border: none;
-        background-color: #1a5cff; // The vibrant blue from the screenshot
-        color: #fff;
-        cursor: pointer;
-        transition: background-color 0.3s, opacity 0.3s;
-        outline: none;
-        white-space: nowrap;
+        color: #666;
+        margin-bottom: 12px;
+        line-height: 1.6;
+    }
+}
 
-        &:hover {
-            opacity: 0.9;
-        }
+.results-table {
+    margin: 12px 0;
+    max-width: 500px;
+}
 
-        &:active {
-            opacity: 0.8;
+.item-links {
+    margin-top: 10px;
+}
+
+/* 文字辅助色 */
+.text-success { color: #52c41a; font-weight: bold; }
+.text-danger { color: #f5222d; font-weight: bold; }
+
+/* 空状态 */
+.empty-state {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 400px;
+    background: #fff;
+    border-radius: 8px;
+
+    .empty-content {
+        text-align: center;
+        color: #999;
+        .empty-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
         }
+    }
+}
+
+/* 深度选择器适配 Description */
+:deep(.custom-desc) {
+    .el-descriptions__label {
+        background: #fafafa !important;
+        font-weight: bold;
+        color: #666;
     }
 }
 </style>

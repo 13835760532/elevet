@@ -4,7 +4,6 @@
         <!-- 顶部标题区 -->
         <div class="header-section">
             <div class="title-wrapper">
-                <div class="title-line"></div>
                 <h1 class="page-title">合格证查验12</h1>
             </div>
             <p class="page-subtitle">显示合格证开具时信息</p>
@@ -322,11 +321,10 @@ const handleVerifyAndSave = () => {
 .page-container {
     height: 100%;
     overflow-y: auto;
-    padding: 16px;
 }
 
 .header-section {
-    padding: 20px 24px;
+    padding: var( --page-container-padding);
     margin-bottom: 16px;
     background: #fff;
     backdrop-filter: blur(10px);
@@ -336,7 +334,7 @@ const handleVerifyAndSave = () => {
 .title-wrapper {
     display: flex;
     align-items: center;
-    gap: 10px;
+    margin-bottom: 10px;
 }
 
 .title-line {
@@ -356,7 +354,6 @@ const handleVerifyAndSave = () => {
 .page-subtitle {
     font-size: 14px;
     color: #666;
-    margin: 8px 0 0 14px;
 }
 
 /* 搜索区域 */
@@ -623,18 +620,14 @@ const handleVerifyAndSave = () => {
 }
 
 .btn-verify-only {
-    min-width: 120px;
-    height: 44px;
-    border-radius: 22px;
     border-color: #D1D5DB;
     color: #666;
+    &:hover {
+        background: transparent;
+    }
 }
 
 .btn-verify-save {
-    min-width: 140px;
-    height: 44px;
-    border-radius: 22px;
-    background: linear-gradient(135deg, #00B3ED 0%, #0099D6 100%);
     border: none;
     position: relative;
 }

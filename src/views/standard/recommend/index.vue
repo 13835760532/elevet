@@ -3,7 +3,6 @@
         <!-- 顶部标题区 - 沿用 taskManagement.vue 风格 -->
         <div class="header-section">
             <div class="title-wrapper">
-                <div class="title-line"></div>
                 <h1 class="page-title">农产品指标推荐</h1>
             </div>
             <div class="desc-box">
@@ -162,7 +161,6 @@ const handleSearch = () => {
     font-size: 16px;
     color: #333333;
     line-height: 21px;
-    padding-left: 16px;
 }
 
 /* 搜索区域 */
@@ -191,7 +189,6 @@ const handleSearch = () => {
 
         &.is-focus {
             border-color: #00B3ED;
-            box-shadow: 0 0 0 3px rgba(0, 179, 237, 0.1) !important;
         }
     }
 }

@@ -5,7 +5,7 @@
         <!-- 顶部标题 -->
         <div class="detail-header" style="margin-top: 12px;">
             <div class="title-bar">
-                <div class="blue-line"></div>
+             
                 <h1 class="main-title">检测详情</h1>
             </div>
             <div class="header-desc">
@@ -17,7 +17,7 @@
             <!-- 样品信息模块 -->
             <div class="section-block">
                 <div class="section-title">
-                    <div class="blue-line"></div>
+                 
                     <h2>样品信息</h2>
                 </div>
                 <div class="info-content relative">
@@ -51,7 +51,7 @@
             <!-- 主体信息模块 -->
             <div class="section-block">
                 <div class="section-title">
-                    <div class="blue-line"></div>
+                 
                     <h2>主体信息</h2>
                 </div>
                 <div class="info-content">

@@ -59,7 +59,7 @@
         <!-- 抽样检测查询 -->
         <div class="query-card">
             <div class="card-header">
-                <div class="blue-line"></div>
+             
                 <h2 class="card-title">抽样检测查询</h2>
             </div>
 

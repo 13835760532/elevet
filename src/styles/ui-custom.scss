@@ -68,18 +68,26 @@
    3. 输入框/选择器等表单组件规范
 ---------------------------------------------------------- */
 .el-input__wrapper,
-.el-select .el-input__wrapper {
+.el-select__wrapper,
+.el-textarea__inner {
   height: 40px;
   /* 统一边框和圆角 */
   border-radius: var(--el-border-radius-base);
-  /* 调整常规高度，使表单看起来更宽敞舒适 */
-  /* padding: 4px 12px; */
+  /* 基础状态使用真实边框替换默认的 box-shadow 阴影（内发光） */
+  box-shadow: none !important;
+  border: 1px solid var(--el-input-border-color, var(--el-border-color));
+  
+  &:hover {
+    border-color: var(--el-input-hover-border-color, var(--el-border-color-hover));
+  }
+
+  /* 移除高亮时的内发光和外发光，只使用纯色实线边框 */
+  &.is-focus,
+  &:focus {
+    box-shadow: none !important;
+    border-color: var(--el-color-primary) !important;
+  }
 }
-
-/* 让输入框在激活时边框颜色更柔和（可在此扩展） */
-
-
-
 /* ----------------------------------------------------------
    4. 对话框/卡片等区块规范 (Dialog & Card)
 ---------------------------------------------------------- */
