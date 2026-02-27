@@ -160,19 +160,15 @@ const handleSetAsTarget = () => {
     padding-bottom: 10px;
 
     .action-btn {
-        background-color: #b8b8b8;
-        border-color: #b8b8b8;
         color: #333;
         padding: 12px 24px;
         height: auto;
-        border-radius: 2px;
-        border: none;
         font-weight: 500;
         font-size: 14px;
-
         &:hover {
-            background-color: #a3a3a3;
-            color: #222;
+            background-color: transparent;
+            color: #333;
+            border-color: #dcdfe6;
         }
     }
 }

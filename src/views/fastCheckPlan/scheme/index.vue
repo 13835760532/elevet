@@ -32,7 +32,7 @@
         <h2 class="card-title">检测方案查询</h2>
       </div>
       <div class="query-form-wrapper">
-        <el-form :inline="true" :model="queryParams" class="custom-query-form" label-position="left">
+        <el-form :inline="true" :model="queryParams" class="custom-query-form custom-query-form-row" label-position="left">
           <el-form-item label="方案">
             <el-input v-model="queryParams.scheme" placeholder="输入方案编号或方案名称" class="custom-input" />
           </el-form-item>
@@ -97,7 +97,7 @@
           </el-table-column>
           <el-table-column label="操作" width="180" align="center" fixed="right">
             <template #default="scope">
-              <div class="action-btns">
+              <div class="table-operate-action-btns">
                 <span class="table-edit-operate" @click="handleEdit(scope.row)" v-if="scope.row.status < 2">编辑</span>
                 <span class="table-delete-operate" @click="handleDelete(scope.row)">删除</span>
                 <span class="table-view-operate" @click="handleView(scope.row)">查看</span>
@@ -428,6 +428,8 @@ updateTableData(allData.value);
 /* 操作行 */
 .table-actions {
   margin-bottom: 24px;
+  display: flex;
+  justify-content: flex-end;
 
   .add-btn {
     padding: 0 20px;

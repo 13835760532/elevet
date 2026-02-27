@@ -105,7 +105,7 @@
                         </el-table-column>
                         <el-table-column label="操作" width="180" align="center" fixed="right">
                             <template #default="scope">
-                                <div class="action-btns">
+                                <div class="table-operate-action-btns">
                                     <span class="table-edit-operate" @click="handleEditTask(scope.row)">编辑</span>
                                     <span class="table-delete-operate" @click="handleDeleteTask(scope.row)">删除</span>
                                     <span class="table-view-operate" @click="handleViewTask(scope.row)">查看</span>
@@ -381,7 +381,7 @@ const handleViewTask = (row) => {
 .scheme-info-card {
     background: #fff;
     border-radius: 10px;
-    padding: 32px;
+    padding: var( --page-container-padding);
 }
 
 .info-header {
@@ -564,7 +564,7 @@ const handleViewTask = (row) => {
 /* 标签页内容 */
 .tab-content {
     flex: 1;
-    padding: 32px;
+    padding: var(--page-container-padding);
 }
 
 /* 空状态 */

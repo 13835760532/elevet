@@ -56,7 +56,7 @@
             <div class="tabs-row">
                 <div class="tab-group">
                 </div>
-                <div class="action-btns-row">
+                <div class="table-operate-action-btns-row">
                     <el-button @click="handleExport">导出</el-button>
                     <el-button @click="handleSetRule">设置数据上报规则</el-button>
                     <el-button type="primary" @click="handleBatchImport" class="primary-btn">检测批量导入</el-button>
@@ -90,7 +90,7 @@
                     </el-table-column>
                     <el-table-column label="操作" width="120" align="center" fixed="right">
                         <template #default="scope">
-                            <div class="action-btns">
+                            <div class="table-operate-action-btns">
                                 <template v-if="scope.row.testStatus === 0">
                                     <span class="table-edit-operate" @click="handleTest(scope.row)">去检测</span>
                                     <span class="table-delete-operate" @click="handleDelete(scope.row)">删除</span>
@@ -416,7 +416,7 @@ const handleRetest = (row) => {
         }
     }
 
-    .action-btns-row {
+    .table-operate-action-btns-row {
         display: flex;
         gap: 12px;
 

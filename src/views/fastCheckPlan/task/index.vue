@@ -85,7 +85,7 @@
                     </el-table-column>
                     <el-table-column label="操作" width="140" align="center" fixed="right">
                         <template #default="scope">
-                            <div class="action-btns">
+                            <div class="table-operate-action-btns">
                                 <span class="table-edit-operate" @click="handleReceive(scope.row)"
                                     v-if="scope.row.status === 0">接收</span>
                                 <span class="table-edit-operate" @click="handleTransfer(scope.row)"
@@ -399,7 +399,7 @@ const handleView = (row) => {
     }
 }
 
-.action-btns {
+.table-operate-action-btns {
     display: flex;
     justify-content: center;
     gap: 8px;

@@ -8,7 +8,7 @@
 ---------------------------------------------------------- */
 :root {
   /* 基础主色调覆盖（如需覆盖主题色，也可在此定义，这会覆盖 Element Plus 的默认值） */
-  /* --el-color-primary: #00B3ED; */
+  --el-color-primary: #00B3ED;
   
   /* 统一圆角规范 (border-radius) */
   --el-border-radius-base: 6px; /* 默认主圆角组件，比如 Input, Select */
@@ -17,6 +17,7 @@
 
   /* 统一卡片或弹窗的圆角 */
   --el-border-radius-circle: 10px; 
+  --page-container-padding: 16px;
 }
 
 
@@ -117,10 +118,7 @@
    6. 容器常用公共类 (Utility Classes)
 ---------------------------------------------------------- */
 .page-container {
-  padding: 20px;
-  background-color: var(--el-bg-color-page);
-  border-radius: var(--el-border-radius-base);
-  min-height: calc(100vh - 120px);
+  gap: 14px!important;
 }
 
 
@@ -128,5 +126,30 @@
   .el-form-item__error{
     font-size: 10px;
     margin-top: 0;
+  }
+}
+
+// 表格操作按钮
+.table-operate-action-btns {
+  display: flex;
+  justify-content: center;
+  column-gap: 14px;
+
+  .table-edit-operate {
+    font-weight: 500;
+    color: #00B3ED;
+    cursor: pointer;
+  }
+
+  .table-delete-operate {
+    font-weight: 500;
+    color: #F5222D;
+    cursor: pointer;
+  }
+
+  .table-view-operate {
+    font-weight: 500;
+    color: rgb(144, 190, 69);
+    cursor: pointer;
   }
 }

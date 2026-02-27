@@ -46,6 +46,7 @@ import VueDOMPurifyHTML from 'vue-dompurify-html' // 解决v-html 的安全隐�
 import { setupWangEditorPlugin } from '@/views/bpm/model/form/PrintTemplate'
 
 import print from 'vue3-print-nb' // 打印插件
+import pageback from '@/components/PageBack/index.vue'
 
 // 创建实例
 const setupAll = async () => {
@@ -76,6 +77,8 @@ const setupAll = async () => {
 
   // 打印
   app.use(print)
+
+  app.component('PageBack', pageback)
 
   app.mount('#app')
 }

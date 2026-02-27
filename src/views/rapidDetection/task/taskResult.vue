@@ -225,7 +225,7 @@ const handleDownloadReport = () => {
 .content-card {
     background: #fff;
     border-radius: 10px;
-    padding: 32px 40px;
+    padding: var(--page-container-padding);
     flex: 1;
 }
 

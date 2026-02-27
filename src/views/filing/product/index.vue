@@ -71,7 +71,7 @@
                     <el-table-column label="创建机构" prop="createOrg" min-width="140" show-overflow-tooltip />
                     <el-table-column label="操作" width="160" align="center" fixed="right">
                         <template #default="scope">
-                            <div class="action-btns">
+                            <div class="table-operate-action-btns">
                                 <span class="table-edit-operate" @click="handleEdit(scope.row)">编辑</span>
                                 <span class="table-delete-operate" @click="handleDelete(scope.row)">删除</span>
                                 <span class="table-view-operate" @click="handleView(scope.row)">详情</span>

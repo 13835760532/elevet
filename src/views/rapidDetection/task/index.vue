@@ -92,7 +92,7 @@
                     </el-table-column>
                     <el-table-column label="操作" align="center" width="180" fixed="right">
                         <template #default="{ row }">
-                            <div class="action-btns">
+                            <div class="table-operate-action-btns">
                                 <span class="table-edit-operate" @click="handleCheck(row)">抽样检测</span>
                                 <span class="table-view-operate" @click="handleDetail(row)">查看结果</span>
                             </div>

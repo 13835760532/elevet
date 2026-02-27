@@ -85,7 +85,7 @@
                     <el-table-column label="开具日期" prop="issueDate" width="160" align="center" />
                     <el-table-column label="操作" width="200" align="center" fixed="right">
                         <template #default="scope">
-                            <div class="action-btns">
+                            <div class="table-operate-action-btns">
                                 <span class="table-edit-operate" @click="handleEdit(scope.row)">编辑</span>
                                 <span class="table-delete-operate" @click="handleDelete(scope.row)">删除</span>
                                 <span class="table-view-operate" @click="handleView(scope.row)">查看</span>

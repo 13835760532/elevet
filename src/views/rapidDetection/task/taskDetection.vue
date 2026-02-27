@@ -139,7 +139,7 @@
                     </el-table-column>
                     <el-table-column label="操作" width="140" align="center" fixed="right">
                         <template #default="scope">
-                            <div class="action-btns">
+                            <div class="table-operate-action-btns">
                                 <template v-if="scope.row.testStatus === 0">
                                     <span class="table-edit-operate" @click="handleTest(scope.row)">去检测</span>
                                     <span class="table-delete-operate" @click="handleDelete(scope.row)">删除</span>

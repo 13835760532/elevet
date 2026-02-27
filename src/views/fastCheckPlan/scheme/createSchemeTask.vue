@@ -229,7 +229,7 @@ import { ref, reactive, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { Search, CirclePlusFilled } from '@element-plus/icons-vue';
 import { ElMessage } from 'element-plus';
-import RequirementDialog from '@/components/RequirementDialog';
+import RequirementDialog from '@/components/RequirementDialog/index.vue';
 import HighRiskDialog from '@/components/HighRiskDialog/index.vue';
 
 const router = useRouter();
@@ -395,7 +395,7 @@ const handleSubmit = () => {
 .scheme-info-card {
     background: #fff;
     border-radius: 10px;
-    padding: 16px 32px;
+    padding: var( --page-container-padding);
 }
 
 .info-grid {
@@ -433,7 +433,7 @@ const handleSubmit = () => {
 .content-card {
     background: #fff;
     border-radius: 10px;
-    padding: 32px 40px;
+    padding: var(--page-container-padding);
     flex: 1;
 }
 

@@ -20,7 +20,7 @@ $text-color-secondary: #666;
 $bg-white: #FFFFFF;
 
 /* 按钮标准尺寸（以抽样检测页面为基准） */
-$btn-width: 100px;
+$btn-width: 80px;
 $btn-height: 40px;
 $btn-border-radius: 8px;
 $btn-font-size: 14px;
@@ -30,6 +30,7 @@ $input-height: 40px;
 $input-border-radius: 6px;
 $input-default-width: 150px;
 
+
 /* ========== 卡片头部样式 ========== */
 .guide-card {
     .card-header {
@@ -38,18 +39,55 @@ $input-default-width: 150px;
 
 }
 
+.header-section{
+    position: relative;
+    border-radius: 10px!important;
+    &::before{
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background: #00B3ED;
+        border-radius: 2px;
+    }
+}
+
+.header-card{
+    padding: var(--page-container-padding)!important;
+    position: relative;
+    border-radius: 10px!important;
+    overflow: hidden;
+    background: #fff;
+    &::before{
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background: #00B3ED;
+    }
+    
+    .header-desc{
+        padding-left: 0!important;
+    }
+
+}
+
 .card-header {
     display: flex;
     align-items: center;
-    gap: 8px;
+    row-gap: 8px;
     margin-bottom: 16px;
 
-    .blue-line {
-        width: 4px;
-        height: 16px;
-        background: $theme-color;
-        border-radius: 2px;
-    }
+    // .blue-line {
+    //     width: 4px;
+    //     height: 16px;
+    //     background: $theme-color;
+    //     border-radius: 2px;
+    // }
 
     .card-title {
         font-size: 18px;
@@ -58,13 +96,24 @@ $input-default-width: 150px;
         margin: 0;
     }
 }
-
+/* 统一输入框、下拉框、日期、按钮的高度为 40px */
+.el-input,
+.el-input__wrapper,
+.el-select,
+.el-select__wrapper,
+.el-date-editor,
+.el-button {
+    height: 40px !important;
+    line-height: normal; /* 确保内部居中对齐 */
+}
 /* ========== 查询表单主体样式 ========== */
 .custom-query-form {
     display: flex;
     flex-wrap: wrap;
     align-items: flex-start;
     gap: 8px;
+
+
 
     /* 表单项 */
     .el-form-item {
@@ -129,6 +178,15 @@ $input-default-width: 150px;
             height: $btn-height;
             border-radius: $btn-border-radius;
         }
+    }
+}
+
+.custom-query-form-row{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    .query-btns{
+       width: auto;   
     }
 }
 
@@ -276,7 +334,7 @@ $input-default-width: 150px;
 }
 
 /* ========== 表格操作链接 ========== */
-.action-btns {
+.table-operate-action-btns {
     display: flex;
     justify-content: center;
     gap: 8px;
@@ -377,4 +435,151 @@ $input-default-width: 150px;
         flex-wrap: wrap;
         gap: 12px;
     }
+}
+
+
+
+.el-table {
+  border-radius: 4px;
+  overflow: hidden;
+  --el-table-header-bg-color: #FAFAFA !important;
+  --el-table-header-text-color: #666 !important;
+  --el-table-border-color: #D8D8D8 !important;
+  --el-table-row-hover-bg-color: rgba(0, 179, 237, 0.05) !important;
+
+  background-color: transparent !important;
+  border: 1px solid var(--el-table-border-color) !important;
+
+  .el-table__border-bottom-patch,
+  .el-table__border-left-patch {
+    width: inherit !important;
+    border: none !important;
+  }
+
+  &::before,
+  &::after {
+    display: none !important;
+  }
+
+  .el-table__inner-wrapper::before {
+    display: none !important;
+  }
+
+  tr {
+    background-color: transparent !important;
+  }
+
+  .el-table__header-wrapper,
+  .el-table__fixed-header-wrapper {
+    th {
+      background-color: #fafafa !important;
+      color: #666 !important;
+      font-weight: 600;
+    //   padding: 12px 0;
+      border-bottom: 1px solid var(--el-table-border-color) !important;
+
+      .cell {
+        padding: 0!important;
+        justify-content: center;
+        font-weight: 600;
+      }
+    }
+  }
+
+  .el-table__body-wrapper {
+    td {
+      padding: 12px 0;
+      color: #333 !important;
+      border-bottom: 1px solid var(--el-table-border-color) !important;
+      background-color: #fff !important;
+    }
+  }
+
+  // 修复侧边：最后一列单元格不带右边线，由容器边界闭合
+  .el-table__cell:last-child {
+    border-right: none !important;
+  }
+
+  // 悬停效果
+  .el-table__body tr:hover>td.el-table__cell {
+    background-color: #fafafa !important;
+  }
+
+  .el-table__empty {
+    padding: 32px 0;
+    color: var(--el-text-color-secondary);
+    background-color: transparent !important;
+  }
+
+  // 修复：最后一行去掉底边线（靠容器边框闭合）
+  .el-table__row:last-child td {
+    border-bottom: none !important;
+  }
+
+  // 核心：外层容器提供 border，内部所有包装器和单元格必须移除靠边的冗余线条
+  .el-table__inner-wrapper {
+    border: none !important;
+
+    &::before,
+    &::after {
+      display: none !important;
+    }
+  }
+
+  // 移除所有单元格的左边框，确保左侧只有容器边框
+  .el-table__cell {
+    border-left: none !important;
+  }
+
+  // 移除最后一列的右边框
+  th.el-table__cell:last-child,
+  td.el-table__cell:last-child {
+    border-right: none !important;
+  }
+
+  // 移除最后一行的底边框
+  .el-table__row:last-child td.el-table__cell {
+    border-bottom: none !important;
+  }
+
+  // 处理固定列场景（防止固定列自带边框导致双线）
+  .el-table__fixed,
+  .el-table__fixed-right {
+    border: none !important;
+
+    &::before {
+      display: none !important;
+    }
+  }
+}
+
+// 表格带边框模式下的内部处理
+.el-table--border {
+
+
+
+  // 移除 border: none，保留 .el-table 统一设置的边框
+  .el-table__inner-wrapper {
+    &::after {
+      display: none !important;
+    }
+  }
+
+  .el-table__cell {
+    //border-right: 1px solid var(--el-table-border-color) !important;
+    border-right: none !important;
+    border-left: none !important; // 防止左侧双线
+  }
+
+  // 第一列单元格移除左边框（由容器边框替代）
+  th.el-table__cell:first-child,
+  td.el-table__cell:first-child {
+    border-left: none !important;
+  }
+
+  // 最后一列单元格移除右边框（由容器边框替代）
+  th.el-table__cell:last-child,
+  td.el-table__cell:last-child {
+    border-right: none !important;
+  }
 }

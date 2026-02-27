@@ -203,7 +203,7 @@ const handleCancel = () => {
     background: #fff;
     backdrop-filter: blur(10px);
     border-radius: 10px;
-    margin-bottom: 20px;
+    margin-bottom: 14px;
 }
 
 .title-wrapper {
@@ -211,13 +211,6 @@ const handleCancel = () => {
     align-items: center;
     gap: 8px;
     margin-bottom: 14px;
-}
-
-.title-line {
-    width: 4px;
-    height: 18px;
-    background: #00B3ED;
-    border-radius: 2px;
 }
 
 .page-title {
@@ -246,6 +239,12 @@ const handleCancel = () => {
 
 .card-header {
     margin-bottom: 30px;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: flex-start;
+    gap: 12px;
 
     .header-title {
         font-size: 20px;
@@ -253,17 +252,19 @@ const handleCancel = () => {
         color: #333;
         display: block;
         margin-bottom: 12px;
+        text-align: left;
+    }
+    .dashed-line {
+        width: 100%;
+        height: 1px;
+        background-image: linear-gradient(to right, #ccc 50%, rgba(255, 255, 255, 0) 0%);
+        background-position: bottom;
+        background-size: 10px 1px;
+        background-repeat: repeat-x;
     }
 }
 
-.dashed-line {
-    width: 100%;
-    height: 1px;
-    background-image: linear-gradient(to right, #ccc 50%, rgba(255, 255, 255, 0) 0%);
-    background-position: bottom;
-    background-size: 10px 1px;
-    background-repeat: repeat-x;
-}
+
 
 .product-form {
     max-width: 600px;
@@ -353,7 +354,7 @@ const handleCancel = () => {
 }
 
 .btn-submit {
-    width: 180px;
+    width: 120px;
     height: 44px;
     background: #00B3ED;
     border-radius: 8px;
@@ -366,7 +367,7 @@ const handleCancel = () => {
 }
 
 .btn-cancel {
-    width: 180px;
+    width: 120px;
     height: 44px;
     border-radius: 8px;
     font-size: 16px;
