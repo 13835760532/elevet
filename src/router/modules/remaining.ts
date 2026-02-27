@@ -245,201 +245,6 @@ const remainingRouter: AppRouteRecordRaw[] = [
     }
   },
   {
-    path: '/bpm',
-    component: Layout,
-    name: 'bpm',
-    meta: {
-      hidden: true
-    },
-    children: [
-      {
-        path: 'manager/form/edit',
-        component: () => import('@/views/bpm/form/editor/index.vue'),
-        name: 'BpmFormEditor',
-        meta: {
-          noCache: true,
-          hidden: true,
-          canTo: true,
-          title: '设计流程表单',
-          activeMenu: '/bpm/manager/form'
-        }
-      },
-      {
-        path: 'manager/definition',
-        component: () => import('@/views/bpm/model/definition/index.vue'),
-        name: 'BpmProcessDefinition',
-        meta: {
-          noCache: true,
-          hidden: true,
-          canTo: true,
-          title: '流程定义',
-          activeMenu: '/bpm/manager/model'
-        }
-      },
-      {
-        path: 'process-instance/detail',
-        component: () => import('@/views/bpm/processInstance/detail/index.vue'),
-        name: 'BpmProcessInstanceDetail',
-        meta: {
-          noCache: true,
-          hidden: true,
-          canTo: true,
-          title: '流程详情',
-          activeMenu: '/bpm/task/my'
-        },
-        props: (route) => ({
-          id: route.query.id,
-          taskId: route.query.taskId,
-          activityId: route.query.activityId
-        })
-      },
-      {
-        path: 'process-instance/report',
-        component: () => import('@/views/bpm/processInstance/report/index.vue'),
-        name: 'BpmProcessInstanceReport',
-        meta: {
-          noCache: true,
-          hidden: true,
-          canTo: true,
-          title: '数据报表',
-          activeMenu: '/bpm/manager/model'
-        }
-      },
-      {
-        path: 'oa/leave/create',
-        component: () => import('@/views/bpm/oa/leave/create.vue'),
-        name: 'OALeaveCreate',
-        meta: {
-          noCache: true,
-          hidden: true,
-          canTo: true,
-          title: '发起 OA 请假',
-          activeMenu: '/bpm/oa/leave'
-        }
-      },
-      {
-        path: 'oa/leave/detail',
-        component: () => import('@/views/bpm/oa/leave/detail.vue'),
-        name: 'OALeaveDetail',
-        meta: {
-          noCache: true,
-          hidden: true,
-          canTo: true,
-          title: '查看 OA 请假',
-          activeMenu: '/bpm/oa/leave'
-        }
-      },
-      {
-        path: 'manager/model/create',
-        component: () => import('@/views/bpm/model/form/index.vue'),
-        name: 'BpmModelCreate',
-        meta: {
-          noCache: true,
-          hidden: true,
-          canTo: true,
-          title: '创建流程',
-          activeMenu: '/bpm/manager/model'
-        }
-      },
-      {
-        path: 'manager/model/:type/:id',
-        component: () => import('@/views/bpm/model/form/index.vue'),
-        name: 'BpmModelUpdate',
-        meta: {
-          noCache: true,
-          hidden: true,
-          canTo: true,
-          title: '修改流程',
-          activeMenu: '/bpm/manager/model'
-        }
-      }
-    ]
-  },
-  {
-    path: '/mall/product', // 商品中心
-    component: Layout,
-    name: 'ProductCenter',
-    meta: {
-      hidden: true
-    },
-    children: [
-      {
-        path: 'spu/add',
-        component: () => import('@/views/mall/product/spu/form/index.vue'),
-        name: 'ProductSpuAdd',
-        meta: {
-          noCache: false, // 需要缓存
-          hidden: true,
-          canTo: true,
-          icon: 'ep:edit',
-          title: '商品添加',
-          activeMenu: '/mall/product/spu'
-        }
-      },
-      {
-        path: 'spu/edit/:id(\\d+)',
-        component: () => import('@/views/mall/product/spu/form/index.vue'),
-        name: 'ProductSpuEdit',
-        meta: {
-          noCache: true,
-          hidden: true,
-          canTo: true,
-          icon: 'ep:edit',
-          title: '商品编辑',
-          activeMenu: '/mall/product/spu'
-        }
-      },
-      {
-        path: 'spu/detail/:id(\\d+)',
-        component: () => import('@/views/mall/product/spu/form/index.vue'),
-        name: 'ProductSpuDetail',
-        meta: {
-          noCache: true,
-          hidden: true,
-          canTo: true,
-          icon: 'ep:view',
-          title: '商品详情',
-          activeMenu: '/mall/product/spu'
-        }
-      },
-      {
-        path: 'property/value/:propertyId(\\d+)',
-        component: () => import('@/views/mall/product/property/value/index.vue'),
-        name: 'ProductPropertyValue',
-        meta: {
-          noCache: true,
-          hidden: true,
-          canTo: true,
-          icon: 'ep:view',
-          title: '商品属性值',
-          activeMenu: '/product/property'
-        }
-      }
-    ]
-  },
-  {
-    path: '/mall/trade', // 交易中心
-    component: Layout,
-    name: 'TradeCenter',
-    meta: {
-      hidden: true
-    },
-    children: [
-      {
-        path: 'order/detail/:id(\\d+)',
-        component: () => import('@/views/mall/trade/order/detail/index.vue'),
-        name: 'TradeOrderDetail',
-        meta: { title: '订单详情', icon: 'ep:view', activeMenu: '/mall/trade/order' }
-      },
-      {
-        path: 'after-sale/detail/:id(\\d+)',
-        component: () => import('@/views/mall/trade/afterSale/detail/index.vue'),
-        name: 'TradeAfterSaleDetail',
-        meta: { title: '退款详情', icon: 'ep:view', activeMenu: '/mall/trade/after-sale' }
-      }
-    ]
-  },
-  {
     path: '/member',
     component: Layout,
     name: 'MemberCenter',
@@ -458,249 +263,238 @@ const remainingRouter: AppRouteRecordRaw[] = [
     ]
   },
   {
-    path: '/pay',
+    path: '/fastCheckPlan',
     component: Layout,
-    name: 'pay',
+    name: 'FastCheckPlan',
     meta: { hidden: true },
     children: [
       {
-        path: 'cashier',
-        name: 'PayCashier',
-        meta: {
-          title: '收银台',
-          noCache: true,
-          hidden: true
-        },
-        component: () => import('@/views/pay/cashier/index.vue')
-      }
-    ]
-  },
-  {
-    path: '/diy',
-    name: 'DiyCenter',
-    meta: { hidden: true },
-    component: Layout,
-    children: [
-      {
-        path: 'template/decorate/:id',
-        name: 'DiyTemplateDecorate',
-        meta: {
-          title: '模板装修',
-          noCache: false,
-          hidden: true,
-          activeMenu: '/mall/promotion/diy-template/diy-template'
-        },
-        component: () => import('@/views/mall/promotion/diy/template/decorate.vue')
+        path: 'scheme',
+        component: () => import('@/views/fastCheckPlan/scheme/index.vue'),
+        name: 'CheckScheme',
+        meta: { title: '快检方案管理', activeMenu: '/fastCheckPlan/scheme' }
       },
       {
-        path: 'page/decorate/:id',
-        name: 'DiyPageDecorate',
-        meta: {
-          title: '页面装修',
-          noCache: false,
-          hidden: true,
-          activeMenu: '/mall/promotion/diy-template/diy-page'
-        },
-        component: () => import('@/views/mall/promotion/diy/page/decorate.vue')
+        path: 'schemeCreate',
+        component: () => import('@/views/fastCheckPlan/scheme/createScheme.vue'),
+        name: 'CheckSchemeCreate',
+        meta: { title: '创建方案', activeMenu: '/fastCheckPlan/scheme' }
+      },
+      {
+        path: 'schemeTask',
+        component: () => import('@/views/fastCheckPlan/scheme/schemeTask.vue'),
+        name: 'CheckSchemeTask',
+        meta: { title: '任务分配', activeMenu: '/fastCheckPlan/scheme' }
+      },
+      {
+        path: 'createSchemeTask',
+        component: () => import('@/views/fastCheckPlan/scheme/createSchemeTask.vue'),
+        name: 'CreateSchemeTask',
+        meta: { title: '创建任务', activeMenu: '/fastCheckPlan/scheme' }
+      },
+      {
+        path: 'task',
+        component: () => import('@/views/fastCheckPlan/task/index.vue'),
+        name: 'CheckTask',
+        meta: { title: '快检任务接收', activeMenu: '/fastCheckPlan/task' }
+      },
+      {
+        path: 'taskAllocate',
+        component: () => import('@/views/fastCheckPlan/task/taskAllocate.vue'),
+        name: 'CheckTaskAllocate',
+        meta: { title: '任务转派', activeMenu: '/fastCheckPlan/task' }
       }
     ]
   },
+  // 2-建档备案
   {
-    path: '/crm',
+    path: '/filing',
     component: Layout,
-    name: 'CrmCenter',
+    name: 'Filing',
     meta: { hidden: true },
     children: [
       {
-        path: 'clue/detail/:id',
-        name: 'CrmClueDetail',
-        meta: {
-          title: '线索详情',
-          noCache: true,
-          hidden: true,
-          activeMenu: '/crm/clue'
-        },
-        component: () => import('@/views/crm/clue/detail/index.vue')
+        path: 'filingForm',
+        component: () => import('@/views/filing/filingForm.vue'),
+        name: 'FilingForm',
+        meta: { title: '主体建档表单', activeMenu: '/filing/subject' }
       },
       {
-        path: 'customer/detail/:id',
-        name: 'CrmCustomerDetail',
-        meta: {
-          title: '客户详情',
-          noCache: true,
-          hidden: true,
-          activeMenu: '/crm/customer'
-        },
-        component: () => import('@/views/crm/customer/detail/index.vue')
+        path: 'filingSuccess',
+        component: () => import('@/views/filing/filingSuccess.vue'),
+        name: 'FilingSuccess',
+        meta: { title: '备案成功', activeMenu: '/filing/subject' }
       },
       {
-        path: 'business/detail/:id',
-        name: 'CrmBusinessDetail',
-        meta: {
-          title: '商机详情',
-          noCache: true,
-          hidden: true,
-          activeMenu: '/crm/business'
-        },
-        component: () => import('@/views/crm/business/detail/index.vue')
+        path: 'subject',
+        component: () => import('@/views/filing/subject/index.vue'),
+        name: 'FilingSubject',
+        meta: { title: '主体建档', activeMenu: '/filing/subject' },
       },
       {
-        path: 'contract/detail/:id',
-        name: 'CrmContractDetail',
-        meta: {
-          title: '合同详情',
-          noCache: true,
-          hidden: true,
-          activeMenu: '/crm/contract'
-        },
-        component: () => import('@/views/crm/contract/detail/index.vue')
+        path: 'subjectBatch',
+        component: () => import('@/views/filing/subject/batchFiling.vue'),
+        name: 'FilingSubjectBatch',
+        meta: { title: '批量建档', activeMenu: '/filing/subject' }
       },
       {
-        path: 'receivable-plan/detail/:id',
-        name: 'CrmReceivablePlanDetail',
-        meta: {
-          title: '回款计划详情',
-          noCache: true,
-          hidden: true,
-          activeMenu: '/crm/receivable-plan'
-        },
-        component: () => import('@/views/crm/receivable/plan/detail/index.vue')
+        path: 'subjectCreate',
+        component: () => import('@/views/filing/subject/create.vue'),
+        name: 'FilingSubjectCreate',
+        meta: { title: '主体建档', activeMenu: '/filing/subject' }
       },
       {
-        path: 'receivable/detail/:id',
-        name: 'CrmReceivableDetail',
-        meta: {
-          title: '回款详情',
-          noCache: true,
-          hidden: true,
-          activeMenu: '/crm/receivable'
-        },
-        component: () => import('@/views/crm/receivable/detail/index.vue')
+        path: 'subjectDetail',
+        component: () => import('@/views/filing/subject/productDetail.vue'),
+        name: 'FilingSubjectDetail',
+        meta: { title: '主体详情', activeMenu: '/filing/subject' }
       },
       {
-        path: 'contact/detail/:id',
-        name: 'CrmContactDetail',
-        meta: {
-          title: '联系人详情',
-          noCache: true,
-          hidden: true,
-          activeMenu: '/crm/contact'
-        },
-        component: () => import('@/views/crm/contact/detail/index.vue')
+        path: 'product',
+        component: () => import('@/views/filing/product/index.vue'),
+        name: 'FilingProduct',
+        meta: { title: '产品建档', activeMenu: '/filing/product' }
       },
       {
-        path: 'product/detail/:id',
-        name: 'CrmProductDetail',
-        meta: {
-          title: '产品详情',
-          noCache: true,
-          hidden: true,
-          activeMenu: '/crm/product'
-        },
-        component: () => import('@/views/crm/product/detail/index.vue')
-      }
+        path: 'productBatch',
+        component: () => import('@/views/filing/product/batchCreate.vue'),
+        name: 'FilingProductBatch',
+        meta: { title: '批量建档', activeMenu: '/filing/product' }
+      },
+      {
+        path: 'productCreate',
+        component: () => import('@/views/filing/product/create.vue'),
+        name: 'FilingProductCreate',
+        meta: { title: '产品建档', activeMenu: '/filing/product' }
+      },
+      {
+        path: 'productDetail',
+        component: () => import('@/views/filing/product/productDetail.vue'),
+        name: 'FilingProductDetail',
+        meta: { title: '产品详情', activeMenu: '/filing/product' }
+      },
     ]
   },
+  // 快速检测
   {
-    path: '/ai',
+    path: '/rapidDetection',
     component: Layout,
-    name: 'Ai',
-    meta: {
-      hidden: true
-    },
+    name: 'RapidDetection',
+    meta: { hidden: true },
     children: [
       {
-        path: 'image/square',
-        component: () => import('@/views/ai/image/square/index.vue'),
-        name: 'AiImageSquare',
-        meta: {
-          title: '绘图作品',
-          icon: 'ep:home-filled',
-          noCache: false
-        }
+        path: 'task',
+        component: () => import('@/views/rapidDetection/task/index.vue'),
+        name: 'RapidTask',
+        meta: { title: '任务检测管理', activeMenu: '/rapidDetection/task' }
       },
       {
-        path: 'knowledge/document',
-        component: () => import('@/views/ai/knowledge/document/index.vue'),
-        name: 'AiKnowledgeDocument',
-        meta: {
-          title: '知识库文档',
-          icon: 'ep:document',
-          noCache: false,
-          activeMenu: '/ai/knowledge'
-        }
+        path: 'taskDetection',
+        component: () => import('@/views/rapidDetection/task/taskDetection.vue'),
+        name: 'RapidTaskDetection',
+        meta: { title: '任务检测', activeMenu: '/rapidDetection/task' }
       },
       {
-        path: 'knowledge/document/create',
-        component: () => import('@/views/ai/knowledge/document/form/index.vue'),
-        name: 'AiKnowledgeDocumentCreate',
-        meta: {
-          title: '创建文档',
-          icon: 'ep:plus',
-          noCache: true,
-          hidden: true,
-          activeMenu: '/ai/knowledge'
-        }
+        path: 'taskResult',
+        component: () => import('@/views/rapidDetection/task/taskResult.vue'),
+        name: 'RapidTaskResult',
+        meta: { title: '任务结果', activeMenu: '/rapidDetection/task' }
       },
       {
-        path: 'knowledge/document/update',
-        component: () => import('@/views/ai/knowledge/document/form/index.vue'),
-        name: 'AiKnowledgeDocumentUpdate',
-        meta: {
-          title: '修改文档',
-          icon: 'ep:edit',
-          noCache: true,
-          hidden: true,
-          activeMenu: '/ai/knowledge'
-        }
+        path: 'self',
+        component: () => import('@/views/rapidDetection/self/index.vue'),
+        name: 'RapidSelf',
+        meta: { title: '自主检测管理', activeMenu: '/rapidDetection/self' }
       },
       {
-        path: 'knowledge/retrieval',
-        component: () => import('@/views/ai/knowledge/knowledge/retrieval/index.vue'),
-        name: 'AiKnowledgeRetrieval',
-        meta: {
-          title: '文档召回测试',
-          icon: 'ep:search',
-          noCache: true,
-          hidden: true,
-          activeMenu: '/ai/knowledge'
-        }
+        path: 'create',
+        component: () => import('@/views/rapidDetection/rapidDetectionCreate.vue'),
+        name: 'RapidDetectionCreate',
+        meta: { title: '检测录入', activeMenu: '/rapidDetection/self' }
       },
       {
-        path: 'knowledge/segment',
-        component: () => import('@/views/ai/knowledge/segment/index.vue'),
-        name: 'AiKnowledgeSegment',
-        meta: {
-          title: '知识库分段',
-          icon: 'ep:tickets',
-          noCache: true,
-          hidden: true,
-          activeMenu: '/ai/knowledge'
-        }
+        path: 'batchImportData',
+        component: () => import('@/views/rapidDetection/batchImportData.vue'),
+        name: 'RapidBatchImportData',
+        meta: { title: '检测批量导入', activeMenu: '/rapidDetection/self' }
+      },
+    ]
+  },
+  // 合格证
+  {
+    path: '/certificate',
+    component: Layout,
+    name: 'Certificate',
+    meta: { hidden: true },
+    children: [
+      {
+        path: 'issue',
+        component: () => import('@/views/certificate/issue/index.vue'),
+        name: 'CertificateIssue',
+        meta: { title: '合格证开具', activeMenu: '/certificate/issue' }
       },
       {
-        path: 'console/workflow/create',
-        component: () => import('@/views/ai/workflow/form/index.vue'),
-        name: 'AiWorkflowCreate',
-        meta: {
-          noCache: true,
-          hidden: true,
-          canTo: true,
-          title: '设计 AI 工作流',
-          activeMenu: '/ai/console/workflow'
-        }
+        path: 'issue/create',
+        component: () => import('@/views/certificate/issue/createIssue.vue'),
+        name: 'CertificateCreate',
+        meta: { title: '合格证开具详细', activeMenu: '/certificate/issue' }
       },
       {
-        path: 'console/workflow/:type/:id',
-        component: () => import('@/views/ai/workflow/form/index.vue'),
-        name: 'AiWorkflowUpdate',
-        meta: {
-          noCache: true,
-          hidden: true,
-          canTo: true,
-          title: '设计 AI 工作流',
-          activeMenu: '/ai/console/workflow'
-        }
+        path: 'issue/detail/:id',
+        component: () => import('@/views/certificate/issue/issueDetail.vue'),
+        name: 'CertificateDetail',
+        meta: { hidden: true, title: '合格证详情', activeMenu: '/certificate/issue' }
+      },
+      {
+        path: 'verify',
+        component: () => import('@/views/certificate/verify/index.vue'),
+        name: 'CertificateVerify',
+        meta: { title: '合格证查验', activeMenu: '/certificate/verify' }
+      },
+      {
+        path: 'verify/detail',
+        component: () => import('@/views/certificate/verify/verifyDetail.vue'),
+        name: 'CertificateVerifyDetail',
+        meta: { hidden: true, title: '合格证查验-本平台', activeMenu: '/certificate/verify' }
+      },
+      {
+        path: 'verify/other',
+        component: () => import('@/views/certificate/verify/verifyOther.vue'),
+        name: 'CertificateVerifyOther',
+        meta: { hidden: true, title: '合格证查验-其他平台', activeMenu: '/certificate/verify' }
+      },
+      {
+        path: 'jurisdiction',
+        component: () => import('@/views/certificate/jurisdiction/index.vue'),
+        name: 'CertificateJurisdiction',
+        meta: { title: '辖区合格证', activeMenu: '/certificate/jurisdiction' }
+      },
+    ]
+  },
+  // 标准指标查询
+  {
+    path: '/standard',
+    component: Layout,
+    name: 'Standard',
+    meta: { hidden: true },
+    children: [
+      {
+        path: 'limit',
+        component: () => import('@/views/standard/limit/index.vue'),
+        name: 'StandardLimit',
+        meta: { title: '国标限量', activeMenu: '/standard/limit' }
+      },
+      {
+        path: 'recommend',
+        component: () => import('@/views/standard/recommend/index.vue'),
+        name: 'StandardRecommend',
+        meta: { title: '指标推荐', activeMenu: '/standard/recommend' }
+      },
+      {
+        path: 'manage',
+        component: () => import('@/views/standard/manage/index.vue'),
+        name: 'StandardManage',
+        meta: { title: '指标限量管理', activeMenu: '/standard/manage' }
       }
     ]
   },
