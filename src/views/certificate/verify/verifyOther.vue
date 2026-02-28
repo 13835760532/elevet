@@ -403,7 +403,7 @@ $text-light: #64748B;
     &:hover {
         transform: translateY(-2px);
         box-shadow: 0 12px 24px rgba(0, 179, 237, 0.3);
-        background: lighten($theme-color, 3%);
+        opacity: 0.8;
     }
 
     .icon-right {

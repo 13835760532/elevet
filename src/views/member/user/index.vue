@@ -198,8 +198,6 @@
   <UserPointUpdateForm ref="updatePointFormRef" @success="getList" />
   <!-- 修改用户余额弹窗 -->
   <UserBalanceUpdateForm ref="UpdateBalanceFormRef" @success="getList" />
-  <!-- 发送优惠券弹窗 -->
-  <CouponSendForm ref="couponSendFormRef" />
 </template>
 <script lang="ts" setup>
 import { dateFormatter } from '@/utils/formatTime'
@@ -212,7 +210,6 @@ import MemberGroupSelect from '@/views/member/group/components/MemberGroupSelect
 import UserLevelUpdateForm from './components/UserLevelUpdateForm.vue'
 import UserPointUpdateForm from './components/UserPointUpdateForm.vue'
 import UserBalanceUpdateForm from './components/UserBalanceUpdateForm.vue'
-import { CouponSendForm } from '@/views/mall/promotion/coupon/components'
 import { checkPermi } from '@/utils/permission'
 
 defineOptions({ name: 'MemberUser' })

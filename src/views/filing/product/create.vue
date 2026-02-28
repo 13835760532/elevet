@@ -419,7 +419,7 @@ $border-color: #E2E8F0;
 
         &:hover {
             background-color: lighten($theme-color, 5%);
-            border-color: lighten($theme-color, 5%);
+            opacity: 0.8;
             color: #fff;
         }
     }

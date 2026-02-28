@@ -162,24 +162,7 @@
 
   <!-- 列表 -->
   <ContentWrap>
-    <!-- 添加 row-key="id" 解决列数据中的 table#header 数据不刷新的问题  -->
-    <el-table v-loading="loading" :data="list" row-key="id">
-      <OrderTableColumn :list="list" :pick-up-store-list="pickUpStoreList">
-        <template #default="{ row }">
-          <el-button link type="primary" @click="openDetail(row.id)">
-            <Icon icon="ep:notification" />
-            详情
-          </el-button>
-        </template>
-      </OrderTableColumn>
-    </el-table>
-    <!-- 分页 -->
-    <Pagination
-      v-model:limit="queryParams.pageSize"
-      v-model:page="queryParams.pageNo"
-      :total="total"
-      @pagination="getList"
-    />
+
   </ContentWrap>
 </template>
 <script lang="ts" setup>
@@ -188,7 +171,6 @@ import { DICT_TYPE, getIntDictOptions, getStrDictOptions } from '@/utils/dict'
 import * as PickUpStoreApi from '@/api/mall/trade/delivery/pickUpStore'
 import * as DeliveryExpressApi from '@/api/mall/trade/delivery/express'
 import { FormInstance } from 'element-plus'
-import { OrderTableColumn } from '@/views/mall/trade/order/components'
 import { DeliveryTypeEnum } from '@/utils/constants'
 
 const { push } = useRouter() // 路由跳转
