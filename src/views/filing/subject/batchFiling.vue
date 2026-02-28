@@ -1,16 +1,9 @@
 <template>
-    <div class="page-container">
-        <PageBack style="margin-bottom: 12px;"></PageBack>
+    <div class="page-container yy-detail-container">
         <!-- 顶部标题区 -->
-        <div class="header-section">
-            <div class="title-wrapper">
-                <h1 class="page-title">主体备案</h1>
-            </div>
-            <div class="desc-box">
-                请先下载导入模版，将辖区内需要备案主体按照模版整理，并将整理后文档上传至本平台，完成待检主体备案；
-            </div>
-        </div>
+        <PageHeader title="主体备案" desc="请先下载导入模版，将辖区内需要备案主体按照模版整理，并将整理后文档上传至本平台，完成待检主体备案；" />
 
+        <div class="page-scrollable">
         <!-- 内容卡片 -->
         <div class="content-card">
             <div class="card-action-bar">
@@ -83,12 +76,14 @@
                 </div>
             </div>
         </div>
+        </div>
     </div>
 </template>
 
 <script setup>
 import { ref } from 'vue';
 import { UploadFilled, Download } from '@element-plus/icons-vue';
+import PageHeader from '@/components/PageHeader/index.vue';
 
 const tableData = ref([
     {
@@ -162,41 +157,18 @@ $bg-light: #F8FAFC;
 
 .page-container {
     height: 100%;
-    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
     padding: 0;
+}
+
+.page-scrollable {
+    flex: 1;
+    overflow-y: auto;
 }
 
 .mr4 { margin-right: 4px; }
 
-/* 顶部标题区 */
-.header-section {
-    height: auto;
-    padding: 16px;
-    background: #fff;
-    backdrop-filter: blur(10px);
-    border-radius: 10px;
-    margin-bottom: 14px;
-}
-
-.title-wrapper {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 14px;
-}
-
-.page-title {
-    font-size: 18px;
-    font-weight: 600;
-    color: #333333;
-    margin: 0;
-}
-
-.desc-box {
-    font-size: 14px;
-    color: #666666;
-    line-height: 1.6;
-}
 
 /* 内容卡片 */
 .content-card {

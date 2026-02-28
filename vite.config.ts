@@ -82,6 +82,27 @@ export default ({command, mode}: ConfigEnv): UserConfig => {
             },
             rollupOptions: {
                 output: {
+                    chunkFileNames: 'assets/js/[name]-[hash].js', // 将 chunk 文件放入 js 文件夹
+                    entryFileNames: 'assets/js/[name]-[hash].js', // 将入口文件放入 js 文件夹
+                    assetFileNames: (assetInfo) => {
+                        const name = assetInfo.name || ''
+                        if (name.endsWith('.css')) {
+                            return 'assets/css/[name]-[hash][extname]' // css 文件
+                        }
+                        const imgExts = ['.png', '.jpg', '.jpeg', '.webp', '.gif', '.svg', '.ico']
+                        if (imgExts.some(ext => name.toLowerCase().endsWith(ext))) {
+                            return 'assets/images/[name]-[hash][extname]' // 图片文件
+                        }
+                        const fontExts = ['.woff2', '.woff', '.ttf', '.eot', '.otf']
+                        if (fontExts.some(ext => name.toLowerCase().endsWith(ext))) {
+                            return 'assets/fonts/[name]-[hash][extname]' // 字体文件
+                        }
+                        const mediaExts = ['.mp4', '.webm', '.ogg', '.mp3', '.wav', '.flac', '.aac']
+                        if (mediaExts.some(ext => name.toLowerCase().endsWith(ext))) {
+                            return 'assets/media/[name]-[hash][extname]' // 媒体视频/音频文件
+                        }
+                        return 'assets/others/[name]-[hash][extname]' // 其余资产
+                    },
                     manualChunks: {
                       echarts: ['echarts'], // 将 echarts 单独打包，参考 https://gitee.com/yudaocode/yudao-ui-admin-vue3/issues/IAB1SX 讨论
                       'form-create': ['@form-create/element-ui'], // 参考 https://github.com/yudaocode/yudao-ui-admin-vue3/issues/148 讨论

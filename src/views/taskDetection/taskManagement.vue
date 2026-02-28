@@ -122,7 +122,7 @@
 import { ref, reactive } from 'vue';
 import { useRouter } from 'vue-router';
 import { Upload } from '@element-plus/icons-vue';
-import { Package } from 'lucide-vue-next';
+
 
 const router = useRouter();
 const formRef = ref(null);

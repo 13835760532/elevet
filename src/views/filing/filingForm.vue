@@ -108,7 +108,7 @@
 import { ref, reactive } from 'vue';
 import { useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
-import ImageUpload from '@/components/ImageUpload';
+import ImageUpload from '@/components/ImageUpload/index.vue';
 
 const router = useRouter();
 const filingFormRef = ref(null);

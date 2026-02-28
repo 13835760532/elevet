@@ -1,17 +1,9 @@
 <template>
-    <div class="page-container">
-        <PageBack style="margin-bottom: 12px;"></PageBack>
-        
+    <div class="page-container yy-detail-container">
         <!-- 顶部标题区 -->
-        <div class="header-section">
-            <div class="title-wrapper">
-                <h1 class="page-title">产品档案</h1>
-            </div>
-            <div class="desc-box">
-                填写农产品档案，上传产品宣传照片，并关联所属生产经营主体。
-            </div>
-        </div>
+        <PageHeader title="产品档案" desc="填写农产品档案，上传产品宣传照片，并关联所属生产经营主体。" />
 
+        <div class="page-scrollable">
         <!-- 内容卡片 -->
         <div class="content-card">
             <div class="form-header">
@@ -169,6 +161,7 @@
                 </div>
             </el-form>
         </div>
+        </div>
     </div>
 </template>
 
@@ -176,6 +169,7 @@
 import { ref, reactive } from 'vue';
 import { useRouter } from 'vue-router';
 import { Plus, Picture, Search, OfficeBuilding, View, Download } from '@element-plus/icons-vue';
+import PageHeader from '@/components/PageHeader/index.vue';
 
 const router = useRouter();
 const formRef = ref(null);
@@ -219,40 +213,18 @@ $border-color: #E2E8F0;
 
 .page-container {
     height: 100%;
-    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
     padding: 0;
+}
+
+.page-scrollable {
+    flex: 1;
+    overflow-y: auto;
 }
 
 .mr4 { margin-right: 4px; }
 .mt24 { margin-top: 24px; }
-
-/* 顶部标题区 */
-.header-section {
-    padding: 16px;
-    background: #fff;
-    border-radius: 10px;
-    margin-bottom: 14px;
-}
-
-.title-wrapper {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 14px;
-}
-
-.page-title {
-    font-size: 18px;
-    font-weight: 600;
-    color: #333333;
-    margin: 0;
-}
-
-.desc-box {
-    font-size: 14px;
-    color: #666666;
-    line-height: 1.6;
-}
 
 /* 内容卡片 */
 .content-card {
@@ -292,6 +264,7 @@ $border-color: #E2E8F0;
 .product-archive-form {
     max-width: 900px;
     margin: 0 auto;
+    margin-left: 0;
 
     .form-grid {
         display: grid;

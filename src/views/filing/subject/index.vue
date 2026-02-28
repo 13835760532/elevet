@@ -44,9 +44,9 @@
             <!-- 操作按钮行 -->
             <div class="table-actions">
                 <div class="action-left">
-                    <el-button @click="handleExport">导出</el-button>
                 </div>
                 <div class="action-right">
+                    <el-button @click="handleExport">导出</el-button>
                     <el-button type="primary" @click="handleBatchFiling" class="primary-btn">批量建档</el-button>
                     <el-button type="primary" @click="handleSingleFiling" class="primary-btn">单条建档</el-button>
                 </div>
@@ -62,7 +62,7 @@
                             <div style="font-size: 12px; color: #999; font-weight: normal;">（企业信用代码/身份证）</div>
                         </template>
                     </el-table-column>
-                    <el-table-column label="主体名称" prop="entityName" min-width="120" show-overflow-tooltip />
+                    <el-table-column label="主体名称" prop="entityName" width="120" show-overflow-tooltip />
                     <el-table-column label="备案类型" prop="filingType" width="100" align="center" />
                     <el-table-column label="主体类型" prop="entityType" width="100" align="center" />
                     <el-table-column label="主营产品" prop="mainProduct" width="100" align="center" />

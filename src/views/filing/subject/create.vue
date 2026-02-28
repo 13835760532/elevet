@@ -1,17 +1,9 @@
 <template>
-    <div class="page-container">
-        <PageBack style="margin-bottom: 12px;"></PageBack>
+    <div class="page-container yy-detail-container">
         <!-- 顶部标题区 -->
-        <div class="header-section">
-            <div class="title-wrapper">
-                <div class="title-line"></div>
-                <h1 class="page-title">主体建档</h1>
-            </div>
-            <div class="desc-box">
-                快速建立产品主体档案，完善资质信息，提升品牌公信力。
-            </div>
-        </div>
+        <PageHeader title="主体建档" desc="快速建立产品主体档案，完善资质及背景信息，提升品牌公信力。" />
 
+        <div class="page-scrollable">
         <!-- 内容卡片 -->
         <div class="content-card">
             <div class="card-header">
@@ -140,6 +132,7 @@
                 </div>
             </el-form>
         </div>
+        </div>
     </div>
 </template>
 
@@ -147,6 +140,7 @@
 import { ref, reactive } from 'vue';
 import { useRouter } from 'vue-router';
 import { Picture, UploadFilled } from '@element-plus/icons-vue';
+import PageHeader from '@/components/PageHeader/index.vue';
 
 const router = useRouter();
 const formRef = ref(null);
@@ -191,46 +185,22 @@ const handleCancel = () => {
 <style lang="scss" scoped>
 .page-container {
     height: 100%;
-    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
     padding: 0;
     background: transparent;
 }
 
-/* 顶部标题区 */
-.header-section {
-    height: auco;
-    padding: 16px;
-    background: #fff;
-    backdrop-filter: blur(10px);
-    border-radius: 10px;
-    margin-bottom: 14px;
-}
-
-.title-wrapper {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 14px;
-}
-
-.page-title {
-    font-size: 18px;
-    font-weight: 600;
-    color: #333333;
-    margin: 0;
-}
-
-.desc-box {
-    font-size: 14px;
-    color: #666666;
-    padding-left: 12px;
+.page-scrollable {
+    flex: 1;
+    overflow-y: auto;
 }
 
 /* 内容卡片 */
 .content-card {
     width: 100%;
     margin: 0 auto;
-    padding: 40px;
+    padding: var(--page-container-padding);
     background: #fff;
     backdrop-filter: blur(10px);
     border-radius: 10px;
@@ -268,7 +238,7 @@ const handleCancel = () => {
 
 .product-form {
     max-width: 600px;
-    margin: 0 auto;
+    margin-left: 0;
 
     :deep(.el-form-item) {
         margin-bottom: 24px;

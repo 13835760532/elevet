@@ -30,6 +30,11 @@ $input-height: 40px;
 $input-border-radius: 6px;
 $input-default-width: 150px;
 
+.custom-hover{
+    &:hover{
+        background: transparent!important;
+    }
+}
 
 /* ========== 卡片头部样式 ========== */
 .guide-card {
@@ -43,16 +48,16 @@ $input-default-width: 150px;
     position: relative;
     border-radius: 10px!important;
     overflow: hidden;
-    &::before{
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 4px;
-        height: 100%;
-        background: #00B3ED;
-        border-radius: 2px;
-    }
+    // &::before{
+    //     content: '';
+    //     position: absolute;
+    //     top: 0;
+    //     left: 0;
+    //     width: 4px;
+    //     height: 100%;
+    //     background: #00B3ED;
+    //     border-radius: 2px;
+    // }
 }
 
 .header-card{
