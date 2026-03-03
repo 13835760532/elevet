@@ -1,11 +1,8 @@
 <template>
     <div class="header-section">
-        <div class="header-left-part" @click="handleCancel">
-            <el-icon><ArrowLeft /></el-icon>
-            <span>返回</span>
-        </div>
+    
         <div class="header-main-part">
-            <div class="brand-tag"></div>
+            <!-- <div class="brand-tag"></div> -->
             <div class="header-info">
                 <h1 class="page-title">{{ title }}</h1>
                 <p class="page-desc" v-if="desc">{{ desc }}</p>
@@ -14,6 +11,10 @@
             <div class="header-right-part" v-if="$slots.right">
                 <slot name="right"></slot>
             </div>
+        </div>
+        <div class="header-left-part" @click="handleCancel">
+            <el-icon><ArrowLeft /></el-icon>
+            <span>返回</span>
         </div>
     </div>
 </template>
@@ -44,8 +45,10 @@ const handleCancel = () => {
 <style lang="scss" scoped>
 /* 顶部标题区 - 扁平高级版 */
 .header-section {
+    padding-left: 16px;
     display: flex;
     align-items: stretch;
+    justify-content: space-between;
     background: #fff;
     height: 88px;
     flex-shrink: 0;

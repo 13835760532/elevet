@@ -123,7 +123,7 @@ $input-default-width: 150px;
 
     /* 表单项 */
     .el-form-item {
-        margin-right: 16px;
+        margin-right: 12px;
         margin-bottom: 8px !important;
         display: flex;
         align-items: center;
@@ -190,10 +190,17 @@ $input-default-width: 150px;
 .custom-query-form-row{
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 0px;
+    width: 100%;
     .query-btns{
        width: auto;
+       flex: 1;
+       display: flex;
+       justify-content: flex-end;
        margin-bottom: 8px;
+       .el-button+.el-button {
+        margin-left: 0;
+       }
     }
 }
 
@@ -395,6 +402,8 @@ $input-default-width: 150px;
     border-radius: 4px;
     font-size: 12px;
     font-weight: 500;
+    display: inline-block;
+    text-align: center;
 
     &.status-not-started {
         background-color: #E6F7FF;
@@ -456,6 +465,11 @@ $input-default-width: 150px;
   background-color: transparent !important;
   border: 1px solid var(--el-table-border-color) !important;
 
+
+    .el-table__cell .cell{
+        padding: 0!important;
+    }
+
   .el-table__border-bottom-patch,
   .el-table__border-left-patch {
     width: inherit !important;
@@ -488,6 +502,7 @@ $input-default-width: 150px;
         padding: 0!important;
         justify-content: center;
         font-weight: 600;
+        text-align: center;
       }
     }
   }
@@ -499,6 +514,7 @@ $input-default-width: 150px;
       border-bottom: 1px solid var(--el-table-border-color) !important;
       background-color: #fff !important;
     }
+   
   }
 
   // 修复侧边：最后一列单元格不带右边线，由容器边界闭合
@@ -535,6 +551,7 @@ $input-default-width: 150px;
   // 移除所有单元格的左边框，确保左侧只有容器边框
   .el-table__cell {
     border-left: none !important;
+    text-align: center;
   }
 
   // 移除最后一列的右边框

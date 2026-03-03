@@ -1,13 +1,8 @@
 <template>
-    <div class="page-container">
-        <page-back style="margin-bottom: 14px;"></page-back>
-        <!-- 顶部标题区 -->
-        <div class="header-section">
-            <div class="title-wrapper">
-                <div class="title-line"></div>
-                <h1 class="page-title">产品档案</h1>
-            </div>
-        </div>
+    <div class="page-container yy-detail-container">
+        <PageHeader title="产品档案" desc="查看农产品的详细档案信息。" />
+
+        <div class="page-scrollable">
 
         <!-- 详情大卡片 -->
         <div class="content-card">
@@ -109,12 +104,14 @@
                     </div>
                 </div>
             </div>
+            </div>
         </div>
     </div>
 </template>
 
 <script setup>
 import { useRouter } from 'vue-router';
+import PageHeader from '@/components/PageHeader/index.vue';
 
 const router = useRouter();
 
@@ -125,37 +122,13 @@ const handleBack = () => {
 
 <style lang="scss" scoped>
 .page-container {
-    height: 100%;
-    overflow-y: auto;
-}
-
-/* 顶部标题区 */
-.header-section {
-    padding: 16px;
-    background: #fff;
-    backdrop-filter: blur(10px);
-    border-radius: 10px;
-    margin-bottom: 14px;
-}
-
-.title-wrapper {
     display: flex;
-    align-items: center;
-    gap: 8px;
+    flex-direction: column;
 }
 
-.title-line {
-    width: 4px;
-    height: 18px;
-    background: #00B3ED;
-    border-radius: 2px;
-}
-
-.page-title {
-    font-size: 18px;
-    font-weight: 600;
-    color: #333333;
-    margin: 0;
+.page-scrollable {
+    flex: 1;
+    overflow-y: auto;
 }
 
 /* 内容卡片 */
@@ -178,10 +151,7 @@ const handleBack = () => {
     // border-bottom: 1px solid #F3F4F6;
 }
 
-.detail-list {
-    // display: flex;
-    // flex-direction: column;
-}
+
 
 .detail-row {
     display: flex;
@@ -238,18 +208,5 @@ const handleBack = () => {
     margin-top: 40px;
 }
 
-.footer-actions {
-    display: flex;
-    justify-content: flex-end;
-    margin-top: 50px;
-    padding-top: 30px;
-    // border-top: 1px dashed #E5E7EB;
-}
 
-.btn-back {
-    width: 120px;
-    height: 40px;
-    border-radius: 6px;
-    border: 1px solid #D1D5DB;
-}
 </style>

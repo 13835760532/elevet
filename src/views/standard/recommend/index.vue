@@ -1,19 +1,28 @@
 <template>
     <div class="page-container">
-        <!-- 顶部标题区 - 沿用 taskManagement.vue 风格 -->
-        <div class="header-section">
-            <div class="title-wrapper">
-                <h1 class="page-title">农产品指标推荐</h1>
+        <!-- 顶部标题区 -->
+        <div class="guide-card" style="margin-bottom: 12px;">
+            <div class="card-header">
+                <h2 class="card-title">农产品指标推荐</h2>
             </div>
-            <div class="desc-box">
+            <div class="header-desc" style="color: #666; font-size: 14px;">
                 根据产品名称或分类推荐不同的检测指标
             </div>
         </div>
 
         <!-- 搜索区域 -->
-        <div class="search-container">
-            <el-input v-model="searchQuery" placeholder="搜索农产品名称或关键词查询产品对应的指标" class="main-search-input" />
-            <el-button type="primary" class="search-btn" @click="handleSearch">搜索</el-button>
+        <div class="query-card">
+            <div class="query-form-wrapper">
+                <el-form :inline="true" class="custom-query-form custom-query-form-row">
+                    <el-form-item label="" style="margin-bottom: 0!important;">
+                        <el-input :prefix-icon="Search" v-model="searchQuery" placeholder="搜索农产品名称或关键词查询产品对应的指标"
+                            class="custom-input" style="width: 480px" clearable @keyup.enter="handleSearch" />
+                    </el-form-item>
+                    <div class="query-btns" style="margin-bottom: 0!important;">
+                        <el-button type="primary" class="search-btn" @click="handleSearch">搜索</el-button>
+                    </div>
+                </el-form>
+            </div>
         </div>
 
         <!-- 数据网格区域 - 3列展示 -->
@@ -66,6 +75,7 @@
 
 <script setup>
 import { ref } from 'vue';
+import { Search } from '@element-plus/icons-vue';
 
 const searchQuery = ref('');
 
@@ -125,93 +135,12 @@ const handleSearch = () => {
     border-radius: 10px;
 }
 
-/* 顶部标题区 - 沿用 taskManagement.vue 风格 */
-.header-section {
-    height: auco;
-    padding: 16px;
-    margin-bottom: 20px;
-    background: #fff;
-    backdrop-filter: blur(10px);
-    border-radius: 10px;
-}
-
-.title-wrapper {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 14px;
-}
-
-.title-line {
-    width: 4px;
-    height: 16px;
-    background: #00B3ED;
-    border-radius: 2px;
-}
-
-.page-title {
-    font-size: 18px;
-    line-height: 20px;
-    font-weight: 600;
-    color: #333;
-    margin: 0;
-}
-
-.desc-box {
-    font-size: 16px;
-    color: #333333;
-    line-height: 21px;
-}
-
-/* 搜索区域 */
-.search-container {
-    display: flex;
-    gap: 12px;
-    margin-bottom: 24px;
-    padding: 0 2px;
-}
-
-.main-search-input {
-    flex: 1;
-
-    :deep(.el-input__wrapper) {
-        background: #FFFFFF;
-        border: 1px solid #D1D5DB;
-        border-radius: 6px;
-        box-shadow: none !important;
-        padding: 0 16px;
-        height: 56px;
-        font-size: 16px;
-
-        &:hover {
-            border-color: #00B3ED;
-        }
-
-        &.is-focus {
-            border-color: #00B3ED;
-        }
-    }
-}
-
-.search-btn {
-    width: auto;
-    background: #00B3ED;
-    border-color: #00B3ED;
-    border-radius: 6px;
-    font-size: 16px;
-    font-weight: 600;
-
-    &:hover {
-        background: #0099D1;
-        border-color: #0099D1;
-    }
-}
-
 /* 数据网格区域 - 3列 */
 .data-grid {
+    margin-top: 8px;
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 20px;
+    gap: 12px;
 }
 
 .data-card {
@@ -242,7 +171,6 @@ const handleSearch = () => {
         .label {}
 
         .value {
-            font-weight: 600;
             margin-left: 4px;
         }
     }

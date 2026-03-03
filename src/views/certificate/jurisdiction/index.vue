@@ -63,47 +63,38 @@
                         <h2 class="card-title">辖区合格证查询</h2>
                     </div>
                     <div class="query-form-wrapper">
-                        <el-form :model="queryParams" :inline="true" class="custom-query-form" label-position="left">
-                            <el-form-item label="统计周期">
+                        <el-form :model="queryParams" :inline="true" class="custom-query-form custom-query-form-row" label-position="left">
+                            <el-form-item label="" prop="dateRange">
                                 <el-date-picker v-model="queryParams.dateRange" type="daterange" range-separator="至"
                                     start-placeholder="开始日期" end-placeholder="结束日期" value-format="YYYY-MM-DD"
-                                    class="date-picker" />
+                                    class="date-picker custom-input" />
                             </el-form-item>
-                            <el-form-item label="合格证编号">
-                                <el-input v-model="queryParams.certNo" placeholder="请输入" clearable
-                                    class="custom-input" />
+                            <el-form-item label="" prop="certNo">
+                                <el-input :prefix-icon="Search" v-model="queryParams.certNo" placeholder="搜索合格证编号" clearable
+                                    class="custom-input w220" />
                             </el-form-item>
-                            <el-form-item label="产品名称">
-                                <el-input v-model="queryParams.productName" placeholder="请输入名称" clearable
-                                    class="custom-input" />
+                            <el-form-item label="" prop="productName">
+                                <el-input :prefix-icon="Search" v-model="queryParams.productName" placeholder="搜索产品名称" clearable
+                                    class="custom-input w220" />
                             </el-form-item>
-                            <el-form-item label="生产经营企业/个人">
-                                <el-input v-model="queryParams.entity" placeholder="请输入名称" clearable
-                                    class="custom-input w200" />
+                            <el-form-item label="" prop="entity">
+                                <el-input :prefix-icon="Search" v-model="queryParams.entity" placeholder="搜索生产经营企业/个人" clearable
+                                    class="custom-input w220" />
                             </el-form-item>
-                            <el-form-item label="出证类型">
-                                <el-select v-model="queryParams.certType" placeholder="请选择" clearable
+                            <el-form-item label="" prop="certType">
+                                <el-select v-model="queryParams.certType" placeholder="出证类型" clearable
                                     class="custom-select">
                                     <el-option label="生产者出证" value="produce" />
                                     <el-option label="分销商出证" value="sell" />
                                     <el-option label="批发市场" value="wholesale" />
                                 </el-select>
                             </el-form-item>
-                            <el-form-item label="产品产地">
-                                <el-select v-model="queryParams.province" placeholder="省" clearable
-                                    class="custom-select">
-                                    <el-option label="山东省" value="shandong" />
-                                </el-select>
-                                <el-select v-model="queryParams.city" placeholder="市" clearable class="custom-select">
-                                    <el-option label="胶州市" value="jiaozhou" />
-                                </el-select>
-                                <el-select v-model="queryParams.county" placeholder="县" clearable class="custom-select">
-                                    <el-option label="胶州区" value="jiaozhouqu" />
-                                </el-select>
+                            <el-form-item label="" prop="province">
+                                <el-cascader placeholder="产品产地" v-model="queryParams.province" :options="provinceAndCityData" :props="{label: 'name', value: 'code'}" clearable class="custom-select" />
                             </el-form-item>
-                            <el-form-item label="联系人">
-                                <el-input v-model="queryParams.contact" placeholder="请输入联系电话" clearable
-                                    class="custom-input" />
+                            <el-form-item label="" prop="contact">
+                                <el-input :prefix-icon="Search" v-model="queryParams.contact" placeholder="搜索联系人" clearable
+                                    class="custom-input w220" />
                             </el-form-item>
                             <div class="query-btns">
                                 <el-button @click="handleReset" class="reset-btn">重置</el-button>
@@ -119,7 +110,7 @@
                     </div>
 
                     <div class="table-wrapper">
-                        <el-table :data="tableData">
+                        <el-table :data="tableData" v-loading="loading">
                             <el-table-column type="index" label="序号" width="60" align="center" />
                             <el-table-column prop="certNo" label="合格证编号" min-width="150" />
                             <el-table-column prop="certType" label="出证类型" width="100" align="center" />
@@ -154,10 +145,30 @@
     </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue';
 import { ElMessage } from 'element-plus';
 import { Search, Plus } from '@element-plus/icons-vue';
+import * as CertificateApi from '@/api/agri/certificate';
+
+const provinceAndCityData = [
+    {
+        "name": "山东省",
+        "code": "370000",
+        "children": [
+            {
+                "name": "青岛市",
+                "code": "370200",
+                "children": [
+                    {
+                        "name": "胶州市",
+                        "code": "370281"
+                    }
+                ]
+            }
+        ]
+    }
+]
 
 // 搜索区域
 const searchRegion = ref('');
@@ -258,55 +269,34 @@ const total = ref(0);
 
 // 表格数据
 const tableData = ref([]);
+const loading = ref(false);
 
-// 模拟数据
-const mockData = [
-    {
-        id: 1,
-        certNo: 'HGZ20205121290',
-        certType: '生产者出证',
-        productName: '白菜',
-        productType: '蔬菜',
-        origin: '山东省胶州市',
-        entity: '山东胶州XXX合作社',
-        issueDate: '2025-12-12 16:00',
-        contact: '秦地萍',
-        phone: '19812319980'
-    },
-    {
-        id: 2,
-        certNo: 'HGZ20205121290',
-        certType: '分销商出证',
-        productName: '黄瓜',
-        productType: '蔬菜',
-        origin: '山东省胶州市',
-        entity: '北京福农生态科技有限公司',
-        issueDate: '2025-12-12 16:00',
-        contact: '秦地萍',
-        phone: '19812319980'
-    },
-    {
-        id: 3,
-        certNo: 'HGZ20205121290',
-        certType: '批发市场',
-        productName: '黄瓜',
-        productType: '蔬菜',
-        origin: '山东省胶州市',
-        entity: '北京福农生态科技有限公司',
-        issueDate: '2025-12-12 16:00',
-        contact: '秦地萍',
-        phone: '19812319980'
+const loadData = async () => {
+    loading.value = true;
+    try {
+        const params: any = {
+            pageNo: pageNum.value,
+            pageSize: pageSize.value,
+            certificateCode: queryParams.certNo || undefined,
+            productName: queryParams.productName || undefined
+        };
+        const data = await CertificateApi.getCertificatePage(params);
+        const list = data.list || [];
+        tableData.value = list.map((item: any) => ({
+            ...item,
+            certNo: item.certificateCode,
+            productName: item.productName,
+            issueDate: item.issueDate
+        }));
+        total.value = data.total || 0;
+    } finally {
+        loading.value = false;
     }
-];
+};
 
 onMounted(() => {
     loadData();
 });
-
-const loadData = () => {
-    tableData.value = mockData;
-    total.value = mockData.length;
-};
 
 const handleSearch = () => {
     pageNum.value = 1;

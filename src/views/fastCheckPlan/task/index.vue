@@ -8,15 +8,19 @@
             </div>
             <!-- 第一行: 方案创建 -> 任务拆分 -> 任务下达 -->
             <div class="guide-steps">
-                <div v-for="(step, index) in stepsRow1" :key="'row1-' + index" class="step-wrapper">
-                    <div class="step-item"
-                        :class="{ 'step-highlight': step.highlight, 'step-disabled': step.disabled }">
-                        <span class="step-text">{{ step.title }}</span>
+                <div v-for="(step, index) in stepsRow1" :key="'row1-' + index" class="step-container">
+                    <div class="step-wrapper" :class="{ 'is-highlight': step.highlight, 'is-disabled': step.disabled }">
+                        <div class="step-icon">{{ step.id }}</div>
+                        <div class="step-content">
+                            <div class="step-title">{{ step.title }}</div>
+                            <div class="step-desc">{{ step.description }}</div>
+                        </div>
                     </div>
                     <div v-if="index < stepsRow1.length - 1" class="step-arrow">
-                        <el-icon :size="18" color="#333">
-                            <ArrowRight />
-                        </el-icon>
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="arrow-svg">
+                            <path d="M5 12H19M19 12L13 6M19 12L13 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" />
+                        </svg>
                     </div>
                 </div>
             </div>
@@ -29,26 +33,24 @@
                 <h2 class="card-title">快检任务查询</h2>
             </div>
             <div class="query-form-wrapper">
-                <el-form :inline="true" :model="queryParams" class="custom-query-form" label-position="left">
-                    <el-form-item label="所属方案">
-                        <el-input v-model="queryParams.scheme" placeholder="输入方案名称或编号" class="custom-input" />
+                <el-form :inline="true" :model="queryParams" class="custom-query-form custom-query-form-row" label-position="left">
+                    <el-form-item label="">
+                        <el-input :prefix-icon="Search" v-model="queryParams.scheme" placeholder="搜索所属方案名称或编号" class="custom-input w220" />
                     </el-form-item>
-                    <el-form-item label="任务名称">
-                        <el-input v-model="queryParams.taskName" placeholder="请输入任务编号或任务名称" class="custom-input w220" />
+                    <el-form-item label="">
+                        <el-input :prefix-icon="Search" v-model="queryParams.taskName" placeholder="搜索任务名称或编号" class="custom-input w220" />
                     </el-form-item>
-                    <el-form-item label="执行时间">
-                        <div class="date-range-box">
-                            <el-date-picker v-model="queryParams.startDate" type="date" placeholder="开始日期" />
-                            <el-date-picker v-model="queryParams.endDate" type="date" placeholder="结束日期" />
-                        </div>
-                    </el-form-item>
-                    <el-form-item label="任务状态">
-                        <el-select v-model="queryParams.status" placeholder="请选择" class="custom-select">
+                    <el-form-item label="">
+                        <el-select v-model="queryParams.status" placeholder="全部状态" class="custom-select">
                             <el-option label="全部" value="" />
                             <el-option label="待接收" value="0" />
                             <el-option label="已接收" value="1" />
                             <el-option label="待接收" value="2" />
                         </el-select>
+                    </el-form-item>
+                    <el-form-item label="">
+                        <el-date-picker v-model="queryParams.time" type="daterange" range-separator="至"
+                            start-placeholder="执行开始时间" end-placeholder="执行结束时间" />
                     </el-form-item>
                     <div class="query-btns">
                         <el-button @click="handleReset" class="reset-btn">重置</el-button>
@@ -109,25 +111,26 @@
 <script setup>
 import { reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { ArrowRight } from '@element-plus/icons-vue';
+import { ArrowRight, Search } from '@element-plus/icons-vue';
 import { ElMessage } from 'element-plus'
 
 const router = useRouter();
 
 // 第一行步骤
 const stepsRow1 = [
-    { title: '方案创建', disabled: true },
-    { title: '任务拆分', disabled: true },
-    { title: '任务下达', disabled: true },
-    { title: '任务接收', highlight: true },
-    { title: '任务转派（按需拆分）', },
-    { title: '检测结果查看', },
-    { title: '任务进度监控' }
+    { id: '01', title: '方案创建', description: '创建工作方案(如年度、专项)', disabled: true },
+    { id: '02', title: '任务拆分', description: '按承建机构拆分检测任务', disabled: true },
+    { id: '03', title: '任务下达', description: '任务下达至承检机构', disabled: true },
+    { id: '04', title: '任务接收', description: '承检机构接收任务', highlight: true },
+    { id: '05', title: '任务转派（按需拆分）', description: '按需向下转派或拆分任务' },
+    { id: '06', title: '检测结果查看', description: '任务内检测结果查看' },
+    { id: '07', title: '任务进度监控', description: '任务执行进度跟踪统计' }
 ];
 const queryParams = reactive({
     scheme: '',
     taskName: '',
     status: '',
+    time: [],
     startDate: '',
     endDate: ''
 });
@@ -269,71 +272,111 @@ const handleView = (row) => {
     padding: 16px;
 }
 
-/* 指南步骤样式 - 圆角矩形按钮风格 */
+/* 指南步骤样式 - 忠实还原设计图 */
 .guide-steps {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: flex-start;
-    gap: 16px;
+    gap: 12px;
     margin-top: 18px;
+    padding: 8px 0;
+    overflow-x: auto;
+
+    &::-webkit-scrollbar {
+        width: 0;
+    }
+
+    .step-container {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
 
     .step-wrapper {
         display: flex;
-        align-items: center;
-        gap: 16px;
+        align-items: flex-start;
+        gap: 12px;
+        flex-shrink: 0;
+        
+        &.is-disabled {
+            .step-icon {
+                border-color: #d9d9d9;
+                color: #d9d9d9;
+            }
+            .step-title {
+                color: #999;
+            }
+            .step-desc {
+                color: #bfbfbf;
+            }
+        }
+        
+        &.is-highlight {
+            .step-icon {
+                background: #00B3ED;
+                color: #fff;
+                border-color: #00B3ED;
+            }
+            .step-title {
+                color: #00B3ED;
+                font-weight: 600;
+            }
+        }
     }
 
-    .step-item {
-        padding: 10px 28px;
-        border: 1px solid #d9d9d9;
+    .step-icon {
+        width: 38px;
+        height: 38px;
+        border: 2px solid #71D1F5;
         background: #fff;
-        border-radius: 10px;
+        border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
+        font-size: 14px;
+        color: #71D1F5;
+        font-weight: 600;
+        margin-top: 2px;
+    }
 
-        &.step-highlight {
-            background: #00B3ED;
-            border-color: #00B3ED;
+    .step-content {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
 
-            .step-text {
-                color: #fff;
-            }
-        }
+    .step-title {
+        font-size: 14px;
+        color: #00B3ED;
+        font-weight: 500;
+        white-space: nowrap;
+    }
 
-        .step-text {
-            font-size: 14px;
-            color: #333;
-            font-weight: 400;
-            white-space: nowrap;
-        }
+    .step-desc {
+        font-size: 10px;
+        color: #999;
+        line-height: 1.4;
+        white-space: nowrap;
     }
 
     .step-arrow {
         display: flex;
         align-items: center;
         justify-content: center;
-    }
-}
+        padding: 0 4px;
+        margin-top: 12px; // 对齐圆圈中心
+        align-self: flex-start;
 
-/* 连接线 */
-.guide-connector {
-    display: flex;
-    align-items: center;
-    padding-left: 60px;
-    height: 30px;
-
-    .connector-line {
-        width: 1px;
-        height: 100%;
-        background: #d9d9d9;
-        margin-left: 80px;
+        .arrow-svg {
+            width: 24px;
+            height: 24px;
+            color: #ccc;
+        }
     }
 }
 
 :deep(.el-input__wrapper),
 :deep(.el-select__wrapper) {
-    width: 150px;
     background: #FFFFFF;
     border: 1px solid #D1D5DB;
     border-radius: 6px;
@@ -346,31 +389,6 @@ const handleView = (row) => {
 
     &.is-focus {
         border-color: #00B3ED;
-        box-shadow: 0 0 0 3px rgba(0, 179, 237, 0.1) !important;
-    }
-}
-
-.custom-input {
-    width: 180px;
-
-    &.w220 {
-        width: 220px;
-    }
-}
-
-.custom-select {
-    width: 120px !important;
-}
-
-.date-range-box {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    width: 260px;
-
-    :deep(.el-input__wrapper) {
-        flex: 1;
-        width: 120px;
     }
 }
 

@@ -177,7 +177,7 @@ function goBack() {
             line-height: 34px;
             color: #00B3ED;
             margin: 0;
-            font-weight: 500;
+            font-weight: 600;
             letter-spacing: 2px;
         }
 

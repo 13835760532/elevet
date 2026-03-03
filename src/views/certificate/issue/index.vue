@@ -15,36 +15,37 @@
                 <h2 class="card-title">合格证开具查询</h2>
             </div>
             <div class="query-form-wrapper">
-                <el-form :model="queryParams" :inline="true" class="custom-query-form" label-position="left">
-                    <el-form-item label="合格证编号">
-                        <el-input v-model="queryParams.certNo" placeholder="请输入" clearable class="custom-input" />
+                <el-form :model="queryParams" :inline="true" class="custom-query-form custom-query-form-row" label-position="left">
+                    <el-form-item label="" prop="certNo">
+                        <el-input :prefix-icon="Search" v-model="queryParams.certNo" placeholder="搜索合格证编号" clearable class="custom-input w220" />
                     </el-form-item>
-                    <el-form-item label="产品名称">
-                        <el-input v-model="queryParams.productName" placeholder="请输入" clearable class="custom-input" />
+                    <el-form-item label="" prop="productName">
+                        <el-input :prefix-icon="Search" v-model="queryParams.productName" placeholder="搜索产品名称" clearable class="custom-input w220" />
                     </el-form-item>
-                    <el-form-item label="生产经营企业/个人">
-                        <el-input v-model="queryParams.entity" placeholder="请输入" clearable class="custom-input w200" />
+                    <el-form-item label="" prop="entity">
+                        <el-input :prefix-icon="Search" v-model="queryParams.entity" placeholder="搜索生产经营企业/个人" clearable class="custom-input w220" />
                     </el-form-item>
-                    <el-form-item label="出证类型">
-                        <el-select v-model="queryParams.issueType" placeholder="请选择" clearable class="custom-select">
+                    <el-form-item label="" prop="issueType">
+                        <el-select v-model="queryParams.issueType" placeholder="出证类型" clearable class="custom-select">
                             <el-option label="生产者" value="producer" />
                             <el-option label="收购者" value="buyer" />
                             <el-option label="销售者" value="seller" />
                         </el-select>
                     </el-form-item>
-                    <el-form-item label="产品产地">
-                        <el-select v-model="queryParams.province" placeholder="省" clearable class="custom-select">
+                    <el-form-item label="" prop="province">
+                        <el-cascader placeholder="产品产地" v-model="queryParams.province" :options="provinceAndCityData" :props="{label: 'name', value: 'code'}" clearable class="custom-select" />
+                        <!-- <el-select v-show="false" v-model="queryParams.province" placeholder="省" clearable class="custom-select">
                             <el-option label="山东省" value="shandong" />
                         </el-select>
-                        <el-select v-model="queryParams.city" placeholder="市" clearable class="custom-select">
+                        <el-select v-model="queryParams.city" placeholder="产品产地/市" clearable class="custom-select">
                             <el-option label="青岛市" value="qingdao" />
                         </el-select>
                         <el-select v-model="queryParams.county" placeholder="县" clearable class="custom-select">
                             <el-option label="胶州市" value="jiaozhou" />
-                        </el-select>
+                        </el-select> -->
                     </el-form-item>
-                    <el-form-item label="联系电话">
-                        <el-input v-model="queryParams.phone" placeholder="请输入联系电话" clearable class="custom-input" />
+                    <el-form-item label="" prop="phone">
+                        <el-input :prefix-icon="Search" v-model="queryParams.phone" placeholder="搜索联系电话" clearable class="custom-input w220" />
                     </el-form-item>
                     <div class="query-btns">
                         <el-button @click="handleReset" class="reset-btn">重置</el-button>
@@ -63,13 +64,13 @@
                     </el-button>
                 </div>
                 <div class="action-right">
-                    <el-button @click="handleExport">导出</el-button>
+                    <el-button @click="handleExport" :loading="exportLoading">导出</el-button>
                 </div>
             </div>
 
             <!-- 数据表格 -->
             <div class="table-wrapper">
-                <el-table :data="tableList">
+                <el-table :data="tableList" v-loading="loading">
                     <el-table-column label="序号" type="index" width="70" align="center" />
                     <el-table-column label="合格证编号" prop="certNo" width="150" align="center" />
                     <el-table-column label="出证类型" prop="issueType" width="100" align="center">
@@ -98,18 +99,42 @@
             <!-- 分页区域 -->
             <div class="pagination-wrapper">
                 <el-pagination v-model:current-page="pageParams.pageNum" v-model:page-size="pageParams.pageSize"
-                    :total="total" layout="prev, pager, next" background class="custom-pagination" />
+                    :total="total" layout="prev, pager, next" background class="custom-pagination"
+                    @current-change="handleCurrentChange" />
             </div>
         </div>
     </div>
 </template>
 
-<script setup>
-import { reactive, ref } from 'vue';
+<script setup lang="ts">
+import { reactive, ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { Edit } from '@element-plus/icons-vue';
+import { Edit, Search } from '@element-plus/icons-vue';
+import { useMessage } from '@/hooks/web/useMessage';
+import download from '@/utils/download';
+import * as CertificateApi from '@/api/agri/certificate';
 
 const router = useRouter();
+const message = useMessage();
+
+const provinceAndCityData = [
+    {
+        "name": "山东省",
+        "code": "370000",
+        "children": [
+            {
+                "name": "青岛市",
+                "code": "370200",
+                "children": [
+                    {
+                        "name": "胶州市",
+                        "code": "370281"
+                    }
+                ]
+            }
+        ]
+    }
+]
 
 const queryParams = reactive({
     certNo: '',
@@ -127,53 +152,90 @@ const pageParams = reactive({
     pageSize: 10
 });
 
-const total = ref(60);
+const loading = ref(false);
+const exportLoading = ref(false);
+const total = ref(0);
 
-const tableList = ref([
-    {
-        certNo: 'HGZ2025121290',
-        issueType: '生产者',
-        productName: '白菜',
-        productCategory: '蔬菜',
-        origin: '山东省胶州市',
-        entity: '山东胶州XXX合作社',
-        issueDate: '2025-12-12 15:00',
-        contact: '秦艳萍',
-        phone: '19812319980'
-    },
-    {
-        certNo: 'HGZ2025121290',
-        issueType: '收购者',
-        productName: '黄瓜',
-        productCategory: '蔬菜',
-        origin: '山东省胶州市',
-        entity: '北京福莱生态科技有限公司',
-        issueDate: '2025-12-12 15:00',
-        contact: '秦艳萍',
-        phone: '19812319980'
-    },
-    {
-        certNo: 'HGZ2025121290',
-        issueType: '收购者',
-        productName: '黄瓜',
-        productCategory: '蔬菜',
-        origin: '山东省胶州市',
-        entity: '北京福莱生态科技有限公司',
-        issueDate: '2025-12-12 15:00',
-        contact: '秦艳萍',
-        phone: '19812319980'
+const tableList = ref([]);
+
+const getList = async () => {
+    loading.value = true;
+    try {
+        const params: any = {
+            pageNo: pageParams.pageNum,
+            pageSize: pageParams.pageSize,
+            certificateCode: queryParams.certNo || undefined,
+            productName: queryParams.productName || undefined
+        };
+        const data = await CertificateApi.getCertificatePage(params);
+        const list = data.list || [];
+        tableList.value = list.map((item: any) => ({
+            ...item,
+            certNo: item.certificateCode,
+            productName: item.productName,
+            issueDate: item.issueDate
+        }));
+        total.value = data.total || 0;
+    } finally {
+        loading.value = false;
     }
-]);
+};
 
+onMounted(() => {
+    getList();
+});
 
+const handleQuery = () => {
+    pageParams.pageNum = 1;
+    getList();
+};
 
-const handleQuery = () => { console.log('Query:', queryParams); };
-const handleReset = () => { Object.keys(queryParams).forEach(key => (queryParams[key] = '')); };
-const handleExport = () => { console.log('Export'); };
-const handleAdd = () => { router.push('/certificate/issue/create'); };
-const handleEdit = (row) => { console.log('Edit', row); };
-const handleView = (row) => { router.push(`/certificate/issue/detail/${row.certNo}`); };
-const handleDelete = (row) => { console.log('Delete', row); };
+const handleReset = () => {
+    Object.keys(queryParams).forEach(key => (queryParams[key] = ''));
+    handleQuery();
+};
+
+const handleExport = async () => {
+    try {
+        await message.exportConfirm();
+        exportLoading.value = true;
+        const params: any = {
+            certificateCode: queryParams.certNo || undefined,
+            productName: queryParams.productName || undefined
+        };
+        const data = await CertificateApi.exportCertificate(params);
+        download.excel(data, '合格证记录.xls');
+    } catch {
+    } finally {
+        exportLoading.value = false;
+    }
+};
+
+const handleAdd = () => {
+    router.push('/certificate/issue/create');
+};
+
+const handleEdit = (row: any) => {
+    router.push({ path: '/certificate/issue/create', query: { id: row.id } });
+};
+
+const handleView = (row: any) => {
+    router.push(`/certificate/issue/detail/${row.id}`);
+};
+
+const handleDelete = async (row: any) => {
+    try {
+        await message.delConfirm();
+        await CertificateApi.deleteCertificate(row.id);
+        message.success('删除成功');
+        getList();
+    } catch {
+    }
+};
+
+const handleCurrentChange = () => {
+    getList();
+};
 </script>
 
 <style lang="scss" scoped>

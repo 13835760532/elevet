@@ -57,7 +57,7 @@
                         <el-table-column prop="subjectType" label="被检主体类型" width="110" align="center" />
                         <el-table-column prop="subjectName" label="主体名称" min-width="150" show-overflow-tooltip />
                         <el-table-column prop="idCode" label="信用代码/身份证号" width="180" align="center" />
-                        <el-table-column prop="enterpriseType" label="生产环节" width="100" align="center" />
+                        <el-table-column prop="enterpriseType" label="生产企业" width="100" align="center" />
                         <el-table-column prop="mainProduct" label="主营产品" width="100" align="center" />
                         <el-table-column prop="prodScale" label="生产规模" width="100" align="center" />
                         <el-table-column prop="contact" label="联系人" width="100" align="center" />
@@ -87,7 +87,7 @@ const exampleData = ref([
         subjectType: '企业备案',
         subjectName: '北京三快信息技术有限公司',
         idCode: '1102011818788786816',
-        enterpriseType: '生产环节',
+        enterpriseType: '生产企业',
         mainProduct: '白菜',
         prodScale: '10',
         contact: '秦艳萍',

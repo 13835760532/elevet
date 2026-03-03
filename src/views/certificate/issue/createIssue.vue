@@ -13,45 +13,55 @@
         </div>
 
         <div class="content-card">
-            <!-- 步骤导航 (第四版：SaaS 现代流线型) -->
-            <div class="saas-stepper-flow">
-                <div class="stepper-track"></div>
-                <!-- 预设进度百分比 -->
-                <div class="stepper-progress" :style="{ width: currentStep === 1 ? '0%' : currentStep === 2 ? '50%' : '100%' }"></div>
-                
-                <div class="stepper-nodes">
-                    <!-- Step 1 -->
-                    <div class="stepper-node" :class="{ active: currentStep === 1, completed: currentStep > 1 }">
-                        <div class="node-icon-wrapper">
+            <!-- 步骤导航 (参考 guide-steps) -->
+            <div class="guide-steps">
+                <!-- Step 1 -->
+                <div class="step-container">
+                    <div class="step-wrapper" :class="{ active: currentStep === 1, completed: currentStep > 1 }">
+                        <div class="step-icon">
                             <span v-if="currentStep <= 1">1</span>
                             <el-icon v-else><Check /></el-icon>
                         </div>
-                        <div class="node-info">
-                            <span class="node-title">选择产品</span>
-                            <span class="node-status">{{ currentStep > 1 ? '已完成' : '进行中' }}</span>
+                        <div class="step-content">
+                            <div class="step-title">选择产品</div>
+                            <div class="step-desc">{{ currentStep > 1 ? '已完成' : '进行中' }}</div>
                         </div>
                     </div>
+                    <div class="step-arrow">
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="arrow-svg">
+                            <path d="M5 12H19M19 12L13 6M19 12L13 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                    </div>
+                </div>
 
-                    <!-- Step 2 -->
-                    <div class="stepper-node" :class="{ active: currentStep === 2, completed: currentStep > 2 }">
-                        <div class="node-icon-wrapper">
+                <!-- Step 2 -->
+                <div class="step-container">
+                    <div class="step-wrapper" :class="{ 'waiting': currentStep < 2, active: currentStep === 2, completed: currentStep > 2 }">
+                        <div class="step-icon">
                             <span v-if="currentStep <= 2">2</span>
                             <el-icon v-else><Check /></el-icon>
                         </div>
-                        <div class="node-info">
-                            <span class="node-title">合格证配置</span>
-                            <span class="node-status">{{ currentStep > 2 ? '已完成' : (currentStep === 2 ? '进行中' : '等待中') }}</span>
+                        <div class="step-content">
+                            <div class="step-title">合格证配置</div>
+                            <div class="step-desc">{{ currentStep > 2 ? '已完成' : (currentStep === 2 ? '进行中' : '等待中') }}</div>
                         </div>
                     </div>
+                    <div class="step-arrow">
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="arrow-svg">
+                            <path d="M5 12H19M19 12L13 6M19 12L13 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                    </div>
+                </div>
 
-                    <!-- Step 3 -->
-                    <div class="stepper-node" :class="{ active: currentStep === 3 }">
-                        <div class="node-icon-wrapper">
+                <!-- Step 3 -->
+                <div class="step-container">
+                    <div class="step-wrapper" :class="{ 'waiting': currentStep < 3, active: currentStep === 3 }">
+                        <div class="step-icon">
                             <span>3</span>
                         </div>
-                        <div class="node-info">
-                            <span class="node-title">预览生成</span>
-                            <span class="node-status">{{ currentStep === 3 ? '进行中' : '等待中' }}</span>
+                        <div class="step-content">
+                            <div class="step-title">预览生成</div>
+                            <div class="step-desc">{{ currentStep === 3 ? '进行中' : '等待中' }}</div>
                         </div>
                     </div>
                 </div>
@@ -554,110 +564,127 @@ const handlePrint = () => { window.print(); };
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
 }
 
-/* 步骤导航：SaaS 现代流线型 */
-.saas-stepper-flow {
-    position: relative;
-    max-width: 1000px;
-    margin: 0 auto 20px;
-    padding: 0 40px;
-}
-
-.stepper-track {
-    position: absolute;
-    top: 24px;
-    left: 80px;
-    right: 80px;
-    height: 4px;
-    background: #F1F5F9;
-    border-radius: 2px;
-    z-index: 1;
-}
-
-.stepper-progress {
-    position: absolute;
-    top: 24px;
-    left: 80px;
-    height: 4px;
-    background: #00B3ED;
-    border-radius: 2px;
-    z-index: 2;
-    transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-    
-    &::after {
-        content: '';
-        position: absolute;
-        right: 0;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 12px;
-        height: 12px;
-        background: #fff;
-        border: 3px solid #00B3ED;
-        border-radius: 50%;
-        box-shadow: 0 0 10px rgba(0, 179, 237, 0.4);
-    }
-}
-
-.stepper-nodes {
-    position: relative;
-    display: flex;
-    justify-content: space-between;
-    z-index: 3;
-}
-
-.stepper-node {
+/* 指南步骤样式（替换原有的 SaaS 导航） */
+.guide-steps {
     display: flex;
     align-items: center;
-    gap: 16px;
-    background: #fff;
-    padding: 8px 16px;
-    border-radius: 12px;
-    transition: all 0.3s;
+    justify-content: center;
+    gap: 40px;
+    margin-bottom: 24px;
+    padding: 8px 24px 24px;
+    border-bottom: 1px dashed #E5E7EB;
+    overflow-x: auto;
 
-    .node-icon-wrapper {
-        width: 40px;
-        height: 40px;
-        background: #F8FAFC;
-        border: 2px solid #E2E8F0;
-        border-radius: 12px;
+    &::-webkit-scrollbar {
+        width: 0;
+    }
+
+    .step-container {
+        display: flex;
+        align-items: center;
+        gap: 40px;
+    }
+
+    .step-wrapper {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        flex-shrink: 0;
+        transition: all 0.3s;
+
+        &.waiting {
+            .step-icon {
+                border-color: #E2E8F0;
+                color: #94A3B8;
+            }
+            .step-title {
+                color: #475569;
+            }
+            .step-desc {
+                color: #94A3B8;
+            }
+        }
+
+        &.active {
+            .step-icon {
+                border-color: #00B3ED;
+                // background: #00B3ED;
+                color: #00B3ED;
+            }
+            .step-title {
+                color: #00B3ED;
+                font-weight: 600;
+            }
+            .step-desc {
+                color: #00B3ED;
+            }
+        }
+
+        &.completed {
+            .step-icon {
+                border-color: #10B981;
+                background: #10B981;
+                color: #fff;
+            }
+            .step-title {
+                color: #1E293B;
+            }
+            .step-desc {
+                color: #10B981;
+            }
+        }
+    }
+
+    .step-icon {
+        width: 38px;
+        height: 38px;
+        border: 2px solid #71D1F5;
+        background: #fff;
+        border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 16px;
-        font-weight: 800;
-        color: #94A3B8;
+        font-size: 14px;
+        color: #71D1F5;
+        font-weight: 600;
+        margin-top: 2px;
         transition: all 0.3s;
     }
 
-    .node-info {
+    .step-content {
         display: flex;
         flex-direction: column;
-        .node-title { font-size: 15px; font-weight: 700; color: #475569; }
-        .node-status { font-size: 12px; color: #94A3B8; margin-top: 2px; }
+        gap: 4px;
     }
 
-    &.active {
-        .node-icon-wrapper {
-            background: #00B3ED;
-            border-color: #00B3ED;
-            color: #fff;
-            box-shadow: 0 4px 12px rgba(0, 179, 237, 0.3);
-        }
-        .node-info {
-            .node-title { color: #1E293B; }
-            .node-status { color: #00B3ED; font-weight: 600; }
-        }
+    .step-title {
+        font-size: 14px;
+        color: #00B3ED;
+        font-weight: 500;
+        white-space: nowrap;
+        transition: all 0.3s;
     }
 
-    &.completed {
-        .node-icon-wrapper {
-            background: #E0F2FE;
-            border-color: #E0F2FE;
-            color: #0369A1;
-        }
-        .node-info {
-            .node-title { color: #1E293B; }
-            .node-status { color: #10B981; }
+    .step-desc {
+        font-size: 10px;
+        color: #999;
+        line-height: 1.4;
+        white-space: nowrap;
+        transition: all 0.3s;
+    }
+
+    .step-arrow {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 4px;
+        margin-top: 12px;
+        align-self: flex-start;
+
+        .arrow-svg {
+            width: 24px;
+            height: 24px;
+            color: #ccc;
         }
     }
 }

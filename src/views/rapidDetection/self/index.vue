@@ -1,41 +1,41 @@
 <template>
     <div class="page-container table-container">
         <!-- 快速检测标题 -->
-        <div class="header-card">
+        <div class="header-card self-card">
             <div class="card-header">
              
                 <h2 class="card-title">快速检测</h2>
             </div>
             <div class="query-form-wrapper">
-                <el-form :inline="true" :model="queryParams" class="custom-query-form" label-position="left">
-                    <el-form-item label="样品">
-                        <el-input v-model="queryParams.sampleName" placeholder="请输入样品编号或样品名称"
-                            class="custom-input w180" />
+                <el-form :inline="true" :model="queryParams" class="custom-query-form custom-query-form-row" label-position="left">
+                    <el-form-item label="">
+                        <el-input :prefix-icon="Search" v-model="queryParams.sampleName" placeholder="搜索样品编号或样品名称"
+                            class="custom-input w220" />
                     </el-form-item>
-                    <el-form-item label="承担单位">
-                        <el-select v-model="queryParams.unit" placeholder="请选择" class="custom-select w180">
+                    <el-form-item label="">
+                        <el-select v-model="queryParams.unit" placeholder="承担单位" class="custom-select">
                             <el-option label="全部" value="" />
                             <el-option label="检测机构A" value="1" />
                             <el-option label="检测机构B" value="2" />
                         </el-select>
                     </el-form-item>
-                    <el-form-item label="产品分类">
-                        <el-select v-model="queryParams.category" placeholder="请选择" class="custom-select w180">
+                    <el-form-item label="">
+                        <el-select v-model="queryParams.category" placeholder="产品分类" class="custom-select">
                             <el-option label="全部" value="" />
                             <el-option label="蔬菜" value="vegetable" />
                             <el-option label="水果" value="fruit" />
                             <el-option label="水产品" value="seafood" />
                         </el-select>
                     </el-form-item>
-                    <el-form-item label="抽检机构">
-                        <el-select v-model="queryParams.testOrg" placeholder="请选择" class="custom-select w180">
+                    <el-form-item label="">
+                        <el-select v-model="queryParams.testOrg" placeholder="抽检机构" class="custom-select">
                             <el-option label="全部" value="" />
                             <el-option label="机构一" value="1" />
                             <el-option label="机构二" value="2" />
                         </el-select>
                     </el-form-item>
-                    <el-form-item label="检测状态">
-                        <el-select v-model="queryParams.status" placeholder="请选择" class="custom-select w180">
+                    <el-form-item label="">
+                        <el-select v-model="queryParams.status" placeholder="检测状态" class="custom-select">
                             <el-option label="全部" value="" />
                             <el-option label="未检测" value="0" />
                             <el-option label="已检测" value="1" />
@@ -153,6 +153,7 @@
 <script setup>
 import { reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
+import { Search } from '@element-plus/icons-vue';
 
 const router = useRouter();
 const activeTab = ref('self');
@@ -314,6 +315,14 @@ const handleRetest = (row) => {
     padding: 16px;
 }
 
+.self-card {
+    &::before {
+        content: ' ';
+        width: 0;
+        height: 0;
+    }
+}
+
 .card-header {
     display: flex;
     align-items: center;
@@ -332,46 +341,6 @@ const handleRetest = (row) => {
         font-weight: 600;
         color: #333;
         margin: 0;
-    }
-}
-
-
-:deep(.el-input__wrapper),
-:deep(.el-select__wrapper) {
-    width: 120px;
-    background: #FFFFFF;
-    border: 1px solid #D1D5DB;
-    border-radius: 6px;
-    box-shadow: none !important;
-    padding: 0 12px;
-
-    &:hover {
-        border-color: #00B3ED;
-    }
-
-    &.is-focus {
-        border-color: #00B3ED;
-        box-shadow: 0 0 0 3px rgba(0, 179, 237, 0.1) !important;
-    }
-}
-
-.custom-input {
-    &.w180 {
-        width: 180px;
-
-        :deep(.el-input__wrapper) {
-            width: 180px;
-        }
-    }
-}
-
-.custom-select {
-    &.w180 {
-        width: 180px !important;
-
-        :deep(.el-select__wrapper) {
-            width: 180px;
-        }
     }
 }
 

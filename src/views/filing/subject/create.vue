@@ -242,6 +242,8 @@ const handleCancel = () => {
 
     :deep(.el-form-item) {
         margin-bottom: 24px;
+        display: flex;
+        align-items: center;
     }
 
     :deep(.el-form-item__label) {
@@ -342,5 +344,8 @@ const handleCancel = () => {
     border-radius: 8px;
     font-size: 16px;
     border: 1px solid #D1D5DB;
+}
+.upload-demo{
+    margin-left: 80px;
 }
 </style>

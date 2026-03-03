@@ -3,7 +3,6 @@
     <!-- 检测方案指南 -->
     <div class="guide-card">
       <div class="card-header">
-     
         <h2 class="card-title">检测方案指南</h2>
       </div>
       <div class="guide-steps">
@@ -33,18 +32,18 @@
       </div>
       <div class="query-form-wrapper">
         <el-form :inline="true" :model="queryParams" class="custom-query-form custom-query-form-row" label-position="left">
-          <el-form-item label="方案">
-            <el-input v-model="queryParams.scheme" placeholder="输入方案编号或方案名称" class="custom-input" />
+          <el-form-item label="">
+            <el-input :prefix-icon="Search" width="200" v-model="queryParams.scheme" placeholder="搜索方案编号或方案名称" class="custom-input w220" />
           </el-form-item>
-          <el-form-item label="产品分类">
-            <el-select v-model="queryParams.category" placeholder="默认全部" class="custom-select">
+          <el-form-item label="">
+            <el-select v-model="queryParams.category" placeholder="产品分类" class="custom-select">
               <el-option label="全部" value="" />
               <el-option label="蔬菜" value="vegetable" />
               <el-option label="水果" value="fruit" />
             </el-select>
           </el-form-item>
-          <el-form-item label="方案状态">
-            <el-select v-model="queryParams.status" placeholder="请选择" class="custom-select">
+          <el-form-item label="">
+            <el-select v-model="queryParams.status" placeholder="全部状态" class="custom-select">
               <el-option label="未开始" value="0" />
               <el-option label="进行中" value="1" />
               <el-option label="已延期" value="2" />
@@ -52,11 +51,14 @@
               <el-option label="已结束" value="4" />
             </el-select>
           </el-form-item>
-          <el-form-item label="方案时间">
-            <div class="date-range-box">
-              <el-date-picker v-model="queryParams.startDate" type="date" placeholder="开始时间" />
-              <el-date-picker v-model="queryParams.endDate" type="date" placeholder="结束时间" />
-            </div>
+          <el-form-item label="">
+            <el-date-picker
+              v-model="queryParams.time"
+              type="daterange"
+              range-separator="至"
+              start-placeholder="开始时间"
+              end-placeholder="结束时间"
+            />
           </el-form-item>
           <div class="query-btns">
             <el-button @click="handleReset" class="reset-btn">重置</el-button>
@@ -99,7 +101,7 @@
             <template #default="scope">
               <div class="table-operate-action-btns">
                 <span class="table-edit-operate" @click="handleEdit(scope.row)" v-if="scope.row.status < 2">编辑</span>
-                <span class="table-delete-operate" @click="handleDelete(scope.row)">删除</span>
+                <span class="table-delete-operate" v-if="scope.row.status == 0" @click="handleDelete(scope.row)">删除</span>
                 <span class="table-view-operate" @click="handleView(scope.row)">查看</span>
               </div>
             </template>
@@ -122,15 +124,16 @@ import { reactive, ref, computed, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { Plus } from '@element-plus/icons-vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
+import { Calendar, Search } from '@element-plus/icons-vue'
 
 const router = useRouter();
 
 const steps = [
-  { id: '01', title: '方案创建', description: '根据项目创建总体工作方案' },
-  { id: '02', title: '任务拆分', description: '将工作方案拆分具体检测任务' },
-  { id: '03', title: '任务下达', description: '任务下发至执行机构' },
-  { id: '04', title: '检测结果查看', description: '任务下检测结果查看' },
-  { id: '05', title: '方案进度跟踪', description: '任务执行进度统计' }
+  { id: '01', title: '方案创建', description: '创建工作方案(如年度、专项)' },
+  { id: '02', title: '任务拆分', description: '按承建机构拆分检测任务' },
+  { id: '03', title: '任务下达', description: '任务下达至承检机构' },
+  { id: '04', title: '检测结果查看', description: '任务内检测结果查看' },
+  { id: '05', title: '方案进度跟踪', description: '任务执行进度跟踪统计' }
 ];
 
 const queryParams = reactive({
@@ -322,6 +325,10 @@ updateTableData(allData.value);
   gap: 12px;
   margin-top: 18px;
   padding: 8px 0;
+  overflow-x: auto;
+  &::-webkit-scrollbar{
+    width: 0;
+  }
 
   .step-container {
     display: flex;
@@ -339,7 +346,7 @@ updateTableData(allData.value);
   .step-icon {
     width: 38px;
     height: 38px;
-    border: 1px solid #71D1F5;
+    border: 2px solid #71D1F5;
     background: #fff;
     border-radius: 50%;
     display: flex;
@@ -347,7 +354,7 @@ updateTableData(allData.value);
     justify-content: center;
     font-size: 14px;
     color: #71D1F5;
-    font-weight: 500;
+    font-weight: 600;
     margin-top: 2px;
   }
 
@@ -365,7 +372,7 @@ updateTableData(allData.value);
   }
 
   .step-desc {
-    font-size: 12px;
+    font-size: 10px;
     color: #999;
     line-height: 1.4;
     white-space: nowrap;
@@ -406,14 +413,6 @@ updateTableData(allData.value);
   }
 }
 
-.custom-input {
-  width: 150x;
-}
-
-.custom-select {
-  width: 120px !important;
-}
-
 .date-range-box {
   display: flex;
   align-items: center;
@@ -429,7 +428,7 @@ updateTableData(allData.value);
 .table-actions {
   margin-bottom: 24px;
   display: flex;
-  justify-content: flex-end;
+  justify-content: flex-start;
 
   .add-btn {
     padding: 0 20px;

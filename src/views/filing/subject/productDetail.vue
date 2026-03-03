@@ -1,16 +1,8 @@
 <template>
-    <div class="page-container">
-        <page-back style="margin-bottom: 14px;"></page-back>
-        <!-- 顶部标题区 -->
-        <div class="header-section">
-            <div class="title-wrapper">
-                <div class="title-line"></div>
-                <h1 class="page-title">主体建档</h1>
-            </div>
-            <div class="desc-box">
-                查看产品主体的详细档案信息。
-            </div>
-        </div>
+    <div class="page-container yy-detail-container">
+        <PageHeader title="主体建档" desc="查看产品主体的详细档案信息。" />
+
+        <div class="page-scrollable">
 
         <!-- 详情卡片容器 -->
         <div class="content-card">
@@ -136,6 +128,7 @@
                     <div class="value">产品介绍产品介绍</div>
                 </div>
             </div>
+            </div>
         </div>
     </div>
 </template>
@@ -144,6 +137,7 @@
 import { reactive } from 'vue';
 import { useRouter } from 'vue-router';
 import { Picture, Postcard } from '@element-plus/icons-vue';
+import PageHeader from '@/components/PageHeader/index.vue';
 
 const router = useRouter();
 
@@ -158,47 +152,13 @@ const handleBack = () => {
 
 <style lang="scss" scoped>
 .page-container {
-    height: 100%;
-    overflow-y: auto;
-    padding: 0;
-    background: transparent;
-}
-
-/* 顶部标题区 */
-.header-section {
-    height: auco;
-    padding: 16px;
-    background: #fff;
-    backdrop-filter: blur(10px);
-    border-radius: 10px;
-    margin-bottom: 20px;
-}
-
-.title-wrapper {
     display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 14px;
+    flex-direction: column;
 }
 
-.title-line {
-    width: 4px;
-    height: 18px;
-    background: #00B3ED;
-    border-radius: 2px;
-}
-
-.page-title {
-    font-size: 18px;
-    font-weight: 600;
-    color: #333333;
-    margin: 0;
-}
-
-.desc-box {
-    font-size: 14px;
-    color: #666666;
-    padding-left: 12px;
+.page-scrollable {
+    flex: 1;
+    overflow-y: auto;
 }
 
 /* 内容卡片 */
@@ -310,24 +270,5 @@ const handleBack = () => {
     font-size: 14px;
 }
 
-.footer-actions {
-    display: flex;
-    justify-content: center;
-    margin-top: 50px;
-}
 
-.btn-back {
-    width: 200px;
-    height: 48px;
-    border-radius: 8px;
-    border: 1px solid #D1D5DB;
-    font-size: 16px;
-    background: #fff;
-    color: #333;
-
-    &:hover {
-        background: #F9FAFB;
-        border-color: #9CA3AF;
-    }
-}
 </style>

@@ -14,37 +14,36 @@
              
                 <h2 class="card-title">抽样检测查询</h2>
             </div>
-            <el-form :model="queryParams" ref="queryRef" :inline="true" class="custom-query-form">
-
-                <el-form-item label="样品" prop="sampleName">
-                    <el-input v-model="queryParams.sampleName" placeholder="请输入样品编号或样品名称" clearable />
+            <el-form :model="queryParams" ref="queryRef" :inline="true" class="custom-query-form custom-query-form-row">
+                <el-form-item label="" prop="sampleName">
+                    <el-input :prefix-icon="Search" v-model="queryParams.sampleName" placeholder="搜索样品编号或样品名称" class="custom-input w220" clearable />
                 </el-form-item>
 
-                <el-form-item label="产品分类" prop="productCategory">
-                    <el-select v-model="queryParams.productCategory" placeholder="请选择" clearable style="width: 160px">
+                <el-form-item label="" prop="productCategory">
+                    <el-select v-model="queryParams.productCategory" placeholder="产品分类" clearable class="custom-select">
                         <el-option label="蔬菜" value="1" />
                         <el-option label="水果" value="2" />
                     </el-select>
                 </el-form-item>
 
-                <el-form-item label="采样场所" prop="samplingLocation">
-                    <el-select v-model="queryParams.samplingLocation" placeholder="请选择" clearable style="width: 160px">
+                <el-form-item label="" prop="samplingLocation">
+                    <el-select v-model="queryParams.samplingLocation" placeholder="采样场所" clearable class="custom-select">
                         <el-option label="农贸市场" value="1" />
                         <el-option label="超市" value="2" />
                     </el-select>
                 </el-form-item>
-                <el-form-item label="抽检状态" prop="checkStatus">
-                    <el-select v-model="queryParams.checkStatus" placeholder="请选择" clearable style="width: 160px">
+                <el-form-item label="" prop="checkStatus">
+                    <el-select v-model="queryParams.checkStatus" placeholder="抽检状态" clearable class="custom-select">
                         <el-option label="进行中" value="1" />
                         <el-option label="已完成" value="2" />
                     </el-select>
                 </el-form-item>
-                <el-form-item label="任务" prop="taskName">
-                    <el-input v-model="queryParams.taskName" placeholder="请输入任务编号或任务名称" clearable />
+                <el-form-item label="" prop="taskName">
+                    <el-input :prefix-icon="Search" v-model="queryParams.taskName" placeholder="搜索任务编号或任务名称" class="custom-input w220" clearable />
                 </el-form-item>
-                <el-form-item label="执行时间">
+                <el-form-item label="">
                     <el-date-picker v-model="dateRange" type="daterange" range-separator="至" start-placeholder="开始日期"
-                        end-placeholder="结束日期" value-format="YYYY-MM-DD" style="width: 100%" />
+                        end-placeholder="结束日期" value-format="YYYY-MM-DD" />
                 </el-form-item>
 
                 <div class="query-btns">
@@ -113,6 +112,7 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { Search } from '@element-plus/icons-vue'
 import { useTableData } from '@/hooks/useTableData'
 import { useRouter } from 'vue-router'
 
@@ -252,15 +252,6 @@ function handleDetail(row) {
         font-weight: bold;
         color: #333333;
         margin-bottom: 16px !important;
-    }
-
-    .mt10 {
-        margin-top: 10px;
-    }
-
-    :deep(.el-form-item__label) {
-        font-weight: bold;
-        color: #333333;
     }
 
     .search-buttons {

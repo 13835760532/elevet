@@ -64,34 +64,34 @@
             </div>
 
             <div class="query-form-wrapper">
-                <el-form :inline="true" :model="queryParams" class="custom-query-form" label-position="left">
-                    <el-form-item label="样品">
-                        <el-input v-model="queryParams.sampleName" placeholder="请输入样品编号或样品名称"
-                            class="custom-input w180" />
+                <el-form :inline="true" :model="queryParams" class="custom-query-form custom-query-form-row" label-position="left">
+                    <el-form-item label="">
+                        <el-input :prefix-icon="Search" v-model="queryParams.sampleName" placeholder="搜索样品编号或样品名称"
+                            class="custom-input w220" />
                     </el-form-item>
-                    <el-form-item label="承担单位">
-                        <el-select v-model="queryParams.unit" placeholder="请选择" class="custom-select">
+                    <el-form-item label="">
+                        <el-select v-model="queryParams.unit" placeholder="承担单位" class="custom-select">
                             <el-option label="全部" value="" />
                             <el-option label="检测机构A" value="1" />
                             <el-option label="检测机构B" value="2" />
                         </el-select>
                     </el-form-item>
-                    <el-form-item label="产品分类">
-                        <el-select v-model="queryParams.category" placeholder="请选择" class="custom-select">
+                    <el-form-item label="">
+                        <el-select v-model="queryParams.category" placeholder="产品分类" class="custom-select">
                             <el-option label="全部" value="" />
                             <el-option label="蔬菜" value="vegetable" />
                             <el-option label="水果" value="fruit" />
                         </el-select>
                     </el-form-item>
-                    <el-form-item label="采样场所">
-                        <el-select v-model="queryParams.location" placeholder="请选择" class="custom-select">
+                    <el-form-item label="">
+                        <el-select v-model="queryParams.location" placeholder="采样场所" class="custom-select">
                             <el-option label="全部" value="" />
                             <el-option label="农贸市场" value="market" />
                             <el-option label="超市" value="supermarket" />
                         </el-select>
                     </el-form-item>
-                    <el-form-item label="检测状态">
-                        <el-select v-model="queryParams.status" placeholder="请选择" class="custom-select">
+                    <el-form-item label="">
+                        <el-select v-model="queryParams.status" placeholder="检测状态" class="custom-select">
                             <el-option label="全部" value="" />
                             <el-option label="未检测" value="0" />
                             <el-option label="已检测" value="1" />
@@ -168,6 +168,7 @@
 <script setup>
 import { reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
+import { Search } from '@element-plus/icons-vue';
 
 const router = useRouter();
 const activeTab = ref('task');
@@ -410,40 +411,6 @@ const handleRetest = (row) => {
     border-radius: 10px;
     padding: 16px;
     flex: 1;
-}
-
-
-:deep(.el-input__wrapper),
-:deep(.el-select__wrapper) {
-    width: 120px;
-    background: #FFFFFF;
-    border: 1px solid #D1D5DB;
-    border-radius: 6px;
-    box-shadow: none !important;
-    padding: 0 12px;
-
-    &:hover {
-        border-color: #00B3ED;
-    }
-
-    &.is-focus {
-        border-color: #00B3ED;
-        box-shadow: 0 0 0 3px rgba(0, 179, 237, 0.1) !important;
-    }
-}
-
-.custom-input {
-    &.w180 {
-        width: 180px;
-
-        :deep(.el-input__wrapper) {
-            width: 180px;
-        }
-    }
-}
-
-.custom-select {
-    width: 120px !important;
 }
 
 /* 操作按钮行 */

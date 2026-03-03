@@ -252,7 +252,7 @@ onMounted(() => {
       line-height: 34px;
       color: #00B3ED;
       margin: 0;
-      font-weight: 500;
+      font-weight: 600;
       letter-spacing: 2px;
     }
 
@@ -383,7 +383,8 @@ onMounted(() => {
   margin: 11px 0 30px 0;
   width: 100%;
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
+  align-items: flex-start;
 
   label {
     height: 14px;
@@ -424,8 +425,10 @@ onMounted(() => {
 }
 
 .footer-links {
-  margin-top: 15px;
+  width: 350px;
+  margin: 15px auto 0;
   display: flex;
+  justify-content: space-between;
   gap: 30px;
 
   .link {

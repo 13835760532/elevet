@@ -42,6 +42,8 @@ module.exports = defineConfig({
     '@typescript-eslint/explicit-module-boundary-types': 'off',
     '@typescript-eslint/no-unused-vars': 'off',
     'no-unused-vars': 'off',
+    'prefer-const': 'off',
+    'no-const-assign': 'off',
     'space-before-function-paren': 'off',
 
     'vue/attributes-order': 'off',

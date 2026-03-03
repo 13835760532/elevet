@@ -5,6 +5,7 @@
       <div class="welcome-section">
         <div class="welcome-header">
           <h2 class="welcome-title">欢迎您，{{ userNickname || '管理员' }}！</h2>
+          <div class="welcome-line"></div>
           <p class="welcome-subtitle">完成账号备案后，可使用更多核心业务功能......</p>
         </div>
       </div>
@@ -116,10 +117,16 @@ const handleBeian = () => {
       letter-spacing: 2px;
     }
 
+    .welcome-line {
+      border-top: 1px dashed #00B3ED;
+      margin: 10px 0;
+      width: 100%;
+    }
+
     .welcome-subtitle {
       font-size: 24px;
       line-height: 32px;
-      color: #82BF25;
+      color: #333;
       /* 品牌绿 */
       margin: 10px 0 0 0;
       font-weight: 400;
@@ -170,7 +177,7 @@ const handleBeian = () => {
 
     .card-info {
       .card-title {
-        font-size: 20px;
+        font-size: 16px;
         font-weight: 600;
         color: #333333;
         margin: 0 0 10px 0;
@@ -193,10 +200,10 @@ const handleBeian = () => {
   justify-content: center;
 
   .beian-submit-btn {
-    width: 300px;
+    width: 420px;
     height: 48px;
     background: #00B3ED;
-    border-radius: 8px;
+    border-radius: 4px;
     font-size: 14px;
     font-weight: 500;
     border: none;

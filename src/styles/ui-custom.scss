@@ -26,7 +26,7 @@
 ---------------------------------------------------------- */
 .el-button {
   /* 统一按钮圆角 */
-  border-radius: var(--el-border-radius-base);
+  border-radius: 4px!important;
   /* 设置字体加粗让按钮更有质感 */
   font-weight: 500;
   /* 统一按钮的横向内边距，确保文字不会太挤 */
@@ -38,6 +38,9 @@
   &:hover {
     opacity: 0.88;
   }
+}
+.el-button+.el-button {
+  margin-left: 0px;
 }
 
 /* 针对小号按钮 (Small Size) */

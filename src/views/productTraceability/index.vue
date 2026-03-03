@@ -1,32 +1,30 @@
 <template>
     <div class="page-container">
-        <!-- 1. 标题区 (遵循一致性原则) -->
-        <div class="header-section">
-            <div class="title-wrapper">
-                <div class="title-line"></div>
-                <h1 class="page-title">农产品溯源</h1>
+        <!-- 1. 标题区 -->
+        <div class="guide-card" style="margin-bottom: 12px;">
+            <div class="card-header">
+                <h2 class="card-title">农产品溯源</h2>
             </div>
-            <div class="desc-box">
+            <div class="header-desc" style="color: #666; font-size: 14px;">
                 输入合格证编号，追溯产品全生命周期的合格证与检测信息
             </div>
         </div>
 
         <!-- 2. 搜索区 -->
-        <div class="search-container">
-            <el-input 
-                v-model="searchCode" 
-                placeholder="请输入 20 位合格证编号查询" 
-                class="main-search-input"
-                @keyup.enter="handleSearch"
-                clearable
-            >
-                <template #prefix>
-                    <el-icon><Search /></el-icon>
-                </template>
-            </el-input>
-            <el-button type="primary" class="search-btn" @click="handleSearch">
-                扫码/查询
-            </el-button>
+        <div class="query-card">
+            <div class="query-form-wrapper">
+                <el-form :inline="true" class="custom-query-form custom-query-form-row">
+                    <el-form-item label="" style="margin-bottom: 0!important;">
+                        <el-input :prefix-icon="Search" v-model="searchCode" placeholder="请输入 20 位合格证编号查询"
+                            class="custom-input" style="width: 480px" clearable @keyup.enter="handleSearch" />
+                    </el-form-item>
+                    <div class="query-btns" style="margin-bottom: 0!important;">
+                        <el-button type="primary" class="search-btn" @click="handleSearch">
+                            扫码/查询
+                        </el-button>
+                    </div>
+                </el-form>
+            </div>
         </div>
 
         <!-- 3. 数据展示区 (仅在有结果时显示) -->
@@ -152,77 +150,39 @@ $bg-color: #f5f7fa;
 $border-color: #e4e7ed;
 
 .page-container {
-    //padding: var( --page-container-padding);
-    background-color: $bg-color;
-    min-height: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
+    height: 100%;
+    overflow-y: auto;
 }
 
-/* 顶部标题栏 */
-.header-section {
-    background: #fff;
-    padding: var(--page-container-padding);
-    border-radius: 8px;
-}
-
-.title-wrapper {
-    display: flex;
-    align-items: center;
-    margin-bottom: 12px;
-
-    .page-title {
-        font-size: 18px;
-        font-weight: 600;
-        margin: 0;
-        color: #333;
-    }
-}
-
-.desc-box {
-    font-size: 14px;
-    color: #666;
-}
-
-/* 搜索栏 */
-.search-container {
-    display: flex;
-    gap: 12px;
-    background: #fff;
-    padding: var( --page-container-padding);
-    border-radius: 8px;
-
-    .main-search-input {
-        max-width: 600px;
-        :deep(.el-input__wrapper) {
-            height: 40px;
-            border-radius: 4px;
-        }
-    }
-
-    .search-btn {
-        height: 40px;
-        background-color: $primary-color;
-        border-color: $primary-color;
-        padding: 0 24px;
-    }
+.content-body {
+    margin-top: 12px;
 }
 
 /* 内容卡片 */
 .section-card {
     background: #fff;
-    border-radius: 8px;
-    padding: var( --page-container-padding);
-    margin-bottom: 20px;
+    border-radius: 10px;
+    padding: 24px;
+    margin-bottom: 12px;
 
     .section-header {
-        font-size: 16px;
+        font-size: 18px;
         font-weight: 600;
         color: #333;
-        margin-bottom: 20px;
-        padding-left: 12px;
-        border-left: 3px solid $primary-color;
+        margin-bottom: 24px;
+        position: relative;
+        padding-left: 14px;
+
+        &::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 4px;
+            width: 4px;
+            height: 18px;
+            background: $primary-color;
+            border-radius: 2px;
+        }
     }
 }
 

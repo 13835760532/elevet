@@ -20,11 +20,11 @@
                     <el-checkbox v-model="isSelected1" />
                 </div>
 
-                <div class="cert-display-box">
+                <div class="cert-display-box" v-loading="loading">
                     <!-- 合格证票据样式 (左侧) -->
                     <div class="cert-ticket">
                         <div class="cert-header">
-                            <span class="cert-id-tag">合格证编号－HGZ91919911111</span>
+                            <span class="cert-id-tag">合格证编号－{{ certificate?.certificateCode || '--' }}</span>
                         </div>
                         <div class="cert-body">
                             <h2 class="main-title">承诺达标合格证</h2>
@@ -52,27 +52,29 @@
                         <div class="custom-table">
                             <div class="table-row">
                                 <div class="label">产品名称</div>
-                                <div class="val">白菜</div>
+                                <div class="val">{{ certificate?.productName || '--' }}</div>
                             </div>
                             <div class="table-row">
                                 <div class="label">产品数量</div>
-                                <div class="val">500kg</div>
+                                <div class="val">
+                                    {{ certificate?.quantity ?? '--' }}{{ certificate?.unit || '' }}
+                                </div>
                             </div>
                             <div class="table-row">
                                 <div class="label">产品产地</div>
-                                <div class="val">山东省胶州市</div>
+                                <div class="val">--</div>
                             </div>
                             <div class="table-row">
                                 <div class="label">承诺主体</div>
-                                <div class="val">山东胶州XXX合作社</div>
+                                <div class="val">--</div>
                             </div>
                             <div class="table-row">
                                 <div class="label">联系方式</div>
-                                <div class="val">19812319980</div>
+                                <div class="val">--</div>
                             </div>
                             <div class="table-row">
                                 <div class="label">开具时间</div>
-                                <div class="val">2025-12-12 15:00</div>
+                                <div class="val">{{ certificate?.issueDate || '--' }}</div>
                             </div>
                         </div>
                         <p class="footer-tip">*电子合格证由链安食检数智服务平台承载展示</p>
@@ -190,11 +192,35 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
+import { useRoute } from 'vue-router';
 import { Picture } from '@element-plus/icons-vue';
+import { useMessage } from '@/hooks/web/useMessage';
+import * as CertificateApi from '@/api/agri/certificate';
 
 const isSelected1 = ref(true);
 const isSelected2 = ref(true);
+
+const route = useRoute();
+const message = useMessage();
+const loading = ref(false);
+const certificate = ref<any | null>(null);
+
+onMounted(async () => {
+    const id = Number(route.params.id);
+    if (!id) {
+        return;
+    }
+    loading.value = true;
+    try {
+        const data = await CertificateApi.getCertificate(id);
+        certificate.value = data;
+    } catch {
+        message.error('获取合格证详情失败');
+    } finally {
+        loading.value = false;
+    }
+});
 
 const handlePrint = () => {
     window.print();

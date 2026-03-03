@@ -14,24 +14,24 @@
                 <h2 class="card-title">产品建档查询</h2>
             </div>
             <div class="query-form-wrapper">
-                <el-form :inline="true" :model="queryParams" :class="['custom-query-form', queryFormClass]" label-position="left">
-                    <el-form-item label="主体名称">
-                        <el-input v-model="queryParams.entityName" placeholder="请输入主体名称" class="custom-input" />
+                <el-form :inline="true" :model="queryParams" class="custom-query-form custom-query-form-row" label-position="left">
+                    <el-form-item label="">
+                        <el-input :prefix-icon="Search" v-model="queryParams.entityName" placeholder="搜索主体名称" class="custom-input w220" />
                     </el-form-item>
-                    <el-form-item label="备案类型">
-                        <el-select v-model="queryParams.filingType" placeholder="请选择" class="custom-select">
+                    <el-form-item label="">
+                        <el-select v-model="queryParams.filingType" placeholder="备案类型" class="custom-select">
                             <el-option label="全部" value="" />
                             <el-option label="企业备案" value="enterprise" />
                             <el-option label="个人备案" value="personal" />
                         </el-select>
                     </el-form-item>
-                    <el-form-item label="所属地">
-                        <el-cascader v-model="queryParams.region" :options="regionOptions" placeholder="请选择"
+                    <el-form-item label="">
+                        <el-cascader v-model="queryParams.region" :options="regionOptions" placeholder="所属地区"
                             class="custom-cascader" clearable />
                     </el-form-item>
-                    <el-form-item label="主体代码">
-                        <el-input v-model="queryParams.entityCode" placeholder="请输入企业代码或身份证"
-                            class="custom-input w200" />
+                    <el-form-item label="">
+                        <el-input :prefix-icon="Search" v-model="queryParams.entityCode" placeholder="搜索主体代码/身份证"
+                            class="custom-input w220" />
                     </el-form-item>
                     <div class="query-btns">
                         <el-button @click="handleReset" class="reset-btn">重置</el-button>
@@ -92,6 +92,7 @@
 <script setup>
 import { reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
+import { Search } from '@element-plus/icons-vue';
 import { useFormLayout } from '@/hooks/web/useFormLayout';
 
 const { queryFormClass } = useFormLayout();

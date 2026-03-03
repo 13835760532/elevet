@@ -245,7 +245,16 @@ $prefix-cls: #{$namespace}-menu;
 
 <style lang="scss">
 $prefix-cls: #{$namespace}-menu-popper;
-
+  .el-menu-item {
+    background-color: #fff;
+    color: #333;
+    .v-menu__title {
+      display: inline-block;
+      min-width: 58px;
+      text-align: justify;
+      text-align-last: justify;
+    }
+  }
 .#{$prefix-cls}--vertical,
 .#{$prefix-cls}--horizontal {
   // 设置选中时子标题的颜色
