@@ -1,20 +1,13 @@
 <template>
     <div class="page-container">
-        <PageBack style="margin-bottom: 12px;" />
-        <!-- 顶部标题区 -->
-        <div class="header-section">
-            <div class="title-wrapper">
-                <h1 class="page-title">合格证查验12</h1>
-            </div>
-            <p class="page-subtitle">显示合格证开具时信息</p>
-        </div>
+        <pageHeader title="合格证查验" desc="显示合格证开具时信息" />
 
         <!-- 搜索区域 -->
         <div class="search-area">
-            <el-select v-model="searchForm.source" placeholder="请选择来源" class="source-select">
-                <el-option label="农产品上游合格证为本平台开具" value="platform" />
-                <el-option label="其他来源" value="other" />
-            </el-select>
+            <el-tabs v-model="searchForm.source" class="source-tabs">
+                <el-tab-pane label="农产品上游合格证为本平台开具" name="platform" />
+                <el-tab-pane label="其他来源" name="other" />
+            </el-tabs>
 
             <div class="search-row">
                 <el-input v-model="searchForm.certNo" placeholder="112245677(输入上游合格证编号)" class="cert-input" />
@@ -23,7 +16,7 @@
 
 
             <!-- 主内容区 -->
-            <div class="main-content" v-if="searchForm.certNo">
+            <div class="main-content" v-if="searchForm.certNo && searchForm.source === 'platform'">
                 <!-- 左侧：合格证详情 -->
                 <div class="cert-detail-card">
                     <!-- 合格证头部 -->
@@ -127,10 +120,11 @@
             <div class="dialog-content">
                 <!-- 左侧内容 -->
                 <div class="dialog-left">
+                    <div class="dialog-left-title">非本平合开具的合格证</div>
                     <!-- 来源选择 -->
-                    <el-select v-model="searchForm.source" class="source-select" disabled>
+                    <!-- <el-select v-model="searchForm.source" class="source-select" disabled>
                         <el-option label="农产品上游合格证为其他平台开具" value="other" />
-                    </el-select>
+                    </el-select> -->
 
                     <!-- 上传按钮 -->
                     <el-button type="primary" class="upload-cert-btn" @click="handleUploadCert">
@@ -262,7 +256,7 @@ const otherCertInfo = reactive({
 // 监听来源变化，选择其他来源时弹出弹窗
 watch(() => searchForm.source, (newVal) => {
     if (newVal === 'other') {
-        otherSourceDialogVisible.value = true;
+         otherSourceDialogVisible.value = true;
     }
 });
 
@@ -366,16 +360,36 @@ const handleVerifyAndSave = () => {
     min-height: 600px;
 }
 
-.source-select {
-    width: 100%;
-    max-width: 400px;
-    margin-bottom: 16px;
+.source-tabs {
+    margin-bottom: 24px;
+    :deep(.el-tabs__header) {
+        margin-bottom: 0;
+        border-bottom: none;
+    }
+    :deep(.el-tabs__item) {
+        font-size: 15px;
+        font-weight: 500;
+        color: #666;
+        padding: 0 20px;
+        height: 44px;
+        line-height: 44px;
+        
+        &.is-active {
+            color: #00B3ED;
+            font-weight: 600;
+        }
+    }
+    :deep(.el-tabs__active-bar) {
+        background-color: #00B3ED;
+        height: 3px;
+        border-radius: 2px;
+    }
 }
 
 .search-row {
     display: flex;
     gap: 12px;
-    max-width: 500px;
+    max-width: 514px;
 }
 
 .cert-input {
@@ -615,7 +629,7 @@ const handleVerifyAndSave = () => {
     display: flex;
     justify-content: center;
     gap: 16px;
-    margin-top: 32px;
+    margin-top: 88px;
     border-radius: 16px;
 }
 
@@ -665,12 +679,23 @@ const handleVerifyAndSave = () => {
 
 .dialog-content {
     display: flex;
-    gap: 24px;
+    gap: 12px;
+    margin-bottom: 12px;
+    
 }
 
 .dialog-left {
-    flex: 1;
-    max-width: 450px;
+    width: 50%;
+    .dialog-left-title {
+        font-size: 16px;
+        line-height: 18px;
+        font-weight: 600;
+        color: #333;
+        text-align: left;
+        margin: 0 0 16px 0;
+        padding: 12px 0;
+        border-bottom: 1px dashed #D1D5DB;
+    }
 
     .source-select {
         width: 100%;
@@ -735,15 +760,17 @@ const handleVerifyAndSave = () => {
 }
 
 .dialog-right {
-    width: 280px;
+    width: 50%;
     display: flex;
     flex-direction: column;
     gap: 16px;
+    margin-top: 12px;
+    border: 1px solid #E5E7EB;
+    border-radius: 12px;
 }
 
 .source-badge-card {
     background: #fff;
-    border: 1px solid #E5E7EB;
     border-radius: 12px;
     padding: 16px;
     position: relative;
@@ -783,7 +810,6 @@ const handleVerifyAndSave = () => {
 
 .cert-image-placeholder {
     background: #fff;
-    border: 1px solid #E5E7EB;
     border-radius: 8px;
     padding: 16px;
     font-size: 11px;

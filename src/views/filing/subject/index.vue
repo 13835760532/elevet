@@ -44,11 +44,11 @@
             <!-- 操作按钮行 -->
             <div class="table-actions">
                 <div class="action-left">
+                    <el-button type="primary" @click="handleBatchFiling" class="primary-btn">批量建档</el-button>
+                    <el-button type="primary" @click="handleSingleFiling" class="primary-btn">单条建档</el-button>
                 </div>
                 <div class="action-right">
                     <el-button @click="handleExport">导出</el-button>
-                    <el-button type="primary" @click="handleBatchFiling" class="primary-btn">批量建档</el-button>
-                    <el-button type="primary" @click="handleSingleFiling" class="primary-btn">单条建档</el-button>
                 </div>
             </div>
 

@@ -164,9 +164,15 @@ const formData = reactive({
 });
 
 const formRules = {
+    recordType: [{ required: true, message: '请选择备案类型', trigger: 'change' }],
     name: [{ required: true, message: '请输入主体名称', trigger: 'blur' }],
+    type: [{ required: true, message: '请选择主体类型', trigger: 'change' }],
+    mainProducts: [{ required: true, message: '请输入主营产品', trigger: 'blur' }],
+    region: [{ required: true, message: '请选择所属地区', trigger: 'change' }],
+    address: [{ required: true, message: '请输入详细地址', trigger: 'blur' }],
     contact: [{ required: true, message: '请输入联系人', trigger: 'blur' }],
-    phone: [{ required: true, message: '请输入联系电话', trigger: 'blur' }]
+    phone: [{ required: true, message: '请输入联系电话', trigger: 'blur' }],
+    scale: [{ required: true, message: '请输入生产规模', trigger: 'blur' }]
 };
 
 const handleSubmit = () => {

@@ -118,7 +118,7 @@ const handleBeian = () => {
     }
 
     .welcome-line {
-      border-top: 1px dashed #00B3ED;
+      border-top: 1px dashed #D1D5DB;
       margin: 10px 0;
       width: 100%;
     }

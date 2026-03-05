@@ -1,18 +1,9 @@
 <template>
-    <div class="page-container">
-        <!-- 顶部 Tab 区域 -->
-        <!-- <div class="tab-header">
-            <div class="tab-group">
-                <div class="tab-item" :class="{ active: activeTab === 'task' }" @click="activeTab = 'task'">任务抽检</div>
-                <div class="tab-item" :class="{ active: activeTab === 'self' }" @click="activeTab = 'self'">自主检测</div>
-            </div>
-            <el-button @click="handleBack" class="back-btn">返回上一级</el-button>
-        </div> -->
-        <PageBack>
-        </PageBack>
+    <div class="table-container">
+        <PageBack />
 
         <!-- 任务信息卡片 -->
-        <div class="task-info-card">
+        <div class="guide-card task-info-card">
             <h2 class="task-title">
                 2026年1月北京市、天津市蔬菜快速检测-任务1
                 <span class="task-code">（编号：RW20251101）</span>
@@ -59,7 +50,6 @@
         <!-- 抽样检测查询 -->
         <div class="query-card">
             <div class="card-header">
-             
                 <h2 class="card-title">抽样检测查询</h2>
             </div>
 
@@ -116,8 +106,10 @@
                 </div>
             </div>
             <p class="import-tip">*支持第三方检测结果批量导入</p>
+        </div>
 
-            <!-- 数据表格 -->
+        <!-- 数据表格区域 -->
+        <div class="content-card">
             <div class="table-wrapper">
                 <el-table :data="tableList" border="false">
                     <el-table-column label="序号" type="index" width="60" align="center" />
@@ -130,9 +122,9 @@
                     <el-table-column label="检测机构" prop="testOrg" min-width="140" show-overflow-tooltip />
                     <el-table-column label="检测时间" prop="testTime" width="100" align="center" />
                     <el-table-column label="检测结果" prop="testResult" width="100" align="center" />
-                    <el-table-column label="检测状态" prop="testStatus" width="80" align="center">
+                    <el-table-column label="检测状态" prop="testStatus" width="100" align="center">
                         <template #default="scope">
-                            <span :class="['status-tag', statusMap[scope.row.testStatus]?.class]">
+                            <span :class="['status-tag', statusMap[scope.row.testStatus]?.apiClass]">
                                 {{ statusMap[scope.row.testStatus]?.text }}
                             </span>
                         </template>
@@ -189,9 +181,9 @@ const pageParams = reactive({
 const total = ref(28);
 
 const statusMap = {
-    0: { text: '未检测', class: 'status-pending' },
-    1: { text: '已检测', class: 'status-done' },
-    2: { text: '失败', class: 'status-failed' }
+    0: { text: '未检测', class: 'status-pending', apiClass: 'status-pending' },
+    1: { text: '已检测', class: 'status-done', apiClass: 'status-completed' },
+    2: { text: '失败', class: 'status-failed', apiClass: 'status-delayed' }
 };
 
 const tableList = ref([
@@ -279,59 +271,9 @@ const handleRetest = (row) => {
 </script>
 
 <style lang="scss" scoped>
-.page-container {
-    height: 100%;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
+/* 容器样式继承自全局 .table-container */
 
-/* 顶部 Tab */
-.tab-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: #fff;
-    border-radius: 10px;
-    padding: 16px 24px;
-
-    .tab-group {
-        display: flex;
-        gap: 0;
-    }
-
-    .tab-item {
-        padding: 10px 32px;
-        cursor: pointer;
-        background: #E5E7EB;
-        color: #333;
-        font-size: 14px;
-        transition: all 0.3s;
-
-        &:first-child {
-            border-radius: 4px 0 0 4px;
-        }
-
-        &:last-child {
-            border-radius: 0 4px 4px 0;
-        }
-
-        &.active {
-            background: #00B3ED;
-            color: #fff;
-        }
-    }
-
-    .back-btn {
-        border-radius: 8px;
-    }
-}
-
-/* 任务信息卡片 */
 .task-info-card {
-    background: #fff;
-    border-radius: 10px;
     padding: 16px;
 }
 
@@ -405,69 +347,24 @@ const handleRetest = (row) => {
     }
 }
 
-/* 查询卡片 */
-.query-card {
+/* 内容卡片 */
+.content-card {
     background: #fff;
     border-radius: 10px;
     padding: 16px;
     flex: 1;
 }
 
-/* 操作按钮行 */
-.table-actions {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 8px;
-    padding-top: 16px;
-    border-top: 1px dashed #D1D5DB;
-
-    .action-left,
-    .action-right {
-        display: flex;
-        gap: 12px;
-    }
-
-    .primary-btn {
-        background-color: #00B3ED;
-        border-color: #00B3ED;
-        border-radius: 8px;
-    }
-
-    .el-button {
-        border-radius: 8px;
-    }
-}
-
 .import-tip {
     font-size: 12px;
     color: #999;
-    margin: 0 0 16px 0;
+    margin: 0;
     text-align: right;
 }
 
 /* 表格 */
 .table-wrapper {
-    margin-bottom: 24px;
-}
-
-
-
-/* 状态标签 */
-.status-tag {
-    font-size: 12px;
-
-    &.status-pending {
-        color: #999;
-    }
-
-    &.status-done {
-        color: #52C41A;
-    }
-
-    &.status-failed {
-        color: #F5222D;
-    }
+    margin-bottom: 0;
 }
 
 /* 分页 */

@@ -27,28 +27,23 @@
     <!-- 检测方案查询 -->
     <div class="query-card">
       <div class="card-header">
-     
         <h2 class="card-title">检测方案查询</h2>
       </div>
       <div class="query-form-wrapper">
         <el-form :inline="true" :model="queryParams" class="custom-query-form custom-query-form-row" label-position="left">
           <el-form-item label="">
-            <el-input :prefix-icon="Search" width="200" v-model="queryParams.scheme" placeholder="搜索方案编号或方案名称" class="custom-input w220" />
+            <el-input :prefix-icon="Search" width="200" v-model="queryParams.keyword" placeholder="搜索方案编号或方案名称" class="custom-input w220" />
           </el-form-item>
           <el-form-item label="">
-            <el-select v-model="queryParams.category" placeholder="产品分类" class="custom-select">
-              <el-option label="全部" value="" />
-              <el-option label="蔬菜" value="vegetable" />
-              <el-option label="水果" value="fruit" />
-            </el-select>
+            <el-input v-model="queryParams.targetCategory" placeholder="目标品种" class="custom-input" />
           </el-form-item>
           <el-form-item label="">
-            <el-select v-model="queryParams.status" placeholder="全部状态" class="custom-select">
-              <el-option label="未开始" value="0" />
-              <el-option label="进行中" value="1" />
-              <el-option label="已延期" value="2" />
-              <el-option label="已完成" value="3" />
-              <el-option label="已结束" value="4" />
+            <el-select v-model="queryParams.status" placeholder="全部状态" class="custom-select" clearable>
+              <el-option label="未开始" :value="0" />
+              <el-option label="进行中" :value="1" />
+              <el-option label="已延期" :value="2" />
+              <el-option label="已完成" :value="3" />
+              <el-option label="已结束" :value="4" />
             </el-select>
           </el-form-item>
           <el-form-item label="">
@@ -58,6 +53,7 @@
               range-separator="至"
               start-placeholder="开始时间"
               end-placeholder="结束时间"
+              value-format="YYYY-MM-DD"
             />
           </el-form-item>
           <div class="query-btns">
@@ -69,32 +65,52 @@
 
       <!-- 操作按钮行 -->
       <div class="table-actions">
-        <el-button type="primary" @click="handleAdd" class="add-btn">
-          <el-icon>
-            <Plus />
-          </el-icon>
-          <span>创建方案</span>
+        <div class="action-left">
+          <el-button type="primary" @click="handleAdd" class="add-btn">
+            <el-icon>
+              <Plus />
+            </el-icon>
+            <span>创建方案</span>
         </el-button>
+        <el-button type="danger" plain @click="handleBatchDelete" :disabled="selectedIds.length === 0" class="batch-delete-btn">
+          <el-icon><Delete /></el-icon>
+          <span>批量删除</span>
+        </el-button>
+        </div>
+        <div class="action-right">
+          <el-button @click="handleExport" :loading="exportLoading" class="export-btn">
+            <el-icon><Download /></el-icon>
+            <span>导出</span>
+          </el-button>
+        </div>
       </div>
 
       <!-- 数据表格 -->
       <div class="table-wrapper">
-        <el-table :data="tableList" border="false">
+        <el-table :data="tableList" border="false" v-loading="loading" @selection-change="handleSelectionChange">
+          <el-table-column type="selection" width="55" align="center" />
           <el-table-column label="序号" type="index" width="60" align="center" />
-          <el-table-column label="方案编号" prop="schemeNo" width="160" />
-          <el-table-column label="方案名称" prop="schemeName" min-width="200" show-overflow-tooltip />
-          <el-table-column label="产品分类" prop="category" width="100" align="center" />
-          <el-table-column label="检测区域" prop="region" width="100" align="center" />
-          <el-table-column label="主管单位" prop="dept" min-width="150" show-overflow-tooltip />
-          <el-table-column label="方案检测总量" prop="total" width="120" align="center" />
-          <el-table-column label="方案开始日期" prop="startDate" width="120" align="center" />
-          <el-table-column label="方案结束日期" prop="endDate" width="120" align="center" />
-          <el-table-column label="任务方案完成率" prop="rate" width="120" align="center" />
+          <el-table-column label="方案编号" prop="planCode" width="160" />
+          <el-table-column label="方案名称" prop="planName" min-width="200" show-overflow-tooltip />
+          <el-table-column label="目标品种" prop="targetCategory" width="100" align="center" />
+          <el-table-column label="目标区域" prop="targetArea" width="100" align="center" />
+          <el-table-column label="计划样品数量" prop="sampleCount" width="120" align="center" />
+          <el-table-column label="方案开始日期" prop="planStartDate" width="120" align="center" />
+          <el-table-column label="方案结束日期" prop="planEndDate" width="120" align="center" />
+          <el-table-column label="任务完成率" width="120" align="center">
+            <template #default="scope">
+              <span v-if="scope.row.completionRate != null">
+                {{ scope.row.completionRate }}% ({{ scope.row.taskCompletedCount || 0 }}/{{ scope.row.taskTotalCount || 0 }})
+              </span>
+              <span v-else>-</span>
+            </template>
+          </el-table-column>
           <el-table-column label="状态" prop="status" width="100" align="center">
             <template #default="scope">
-              <span :class="['status-tag', statusMap[scope.row.status].class]">
+              <span v-if="statusMap[scope.row.status]" :class="['status-tag', statusMap[scope.row.status].class]">
                 {{ statusMap[scope.row.status].text }}
               </span>
+              <span v-else>-</span>
             </template>
           </el-table-column>
           <el-table-column label="操作" width="180" align="center" fixed="right">
@@ -111,8 +127,8 @@
 
       <!-- 分页区域 -->
       <div class="pagination-wrapper">
-        <div class="page-info">显示第{{ pageParams.pageNum }}页，共{{ totalPage }}页</div>
-        <el-pagination v-model:current-page="pageParams.pageNum" v-model:page-size="pageParams.pageSize" :total="total"
+        <div class="page-info">显示第{{ pageParams.pageNo }}页，共{{ totalPage }}页</div>
+        <el-pagination v-model:current-page="pageParams.pageNo" v-model:page-size="pageParams.pageSize" :total="total"
           background layout="prev, pager, next" class="custom-pagination" />
       </div>
     </div>
@@ -120,13 +136,20 @@
 </template>
 
 <script setup>
-import { reactive, ref, computed, watch } from 'vue';
+import { reactive, ref, computed, watch, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { Plus } from '@element-plus/icons-vue';
+import { Plus, Delete, Download } from '@element-plus/icons-vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
-import { Calendar, Search } from '@element-plus/icons-vue'
+import { Search } from '@element-plus/icons-vue'
+import * as DetectionPlanApi from '@/api/agri/detectionPlan'
+import download from '@/utils/download'
 
 const router = useRouter();
+
+// 加载状态
+const loading = ref(false)
+const exportLoading = ref(false) // 导出加载状态
+const selectedIds = ref([]) // 批量选中的 ID 列表
 
 const steps = [
   { id: '01', title: '方案创建', description: '创建工作方案(如年度、专项)' },
@@ -136,22 +159,24 @@ const steps = [
   { id: '05', title: '方案进度跟踪', description: '任务执行进度跟踪统计' }
 ];
 
+// 查询参数（keyword 同时搜索方案编码和名称）
 const queryParams = reactive({
-  scheme: '',
-  category: '',
-  status: '',
-  startDate: '',
-  endDate: ''
+  keyword: '',
+  targetCategory: '',
+  status: undefined,
+  time: []
 });
 
+// 分页参数（对接 API 使用 pageNo / pageSize）
 const pageParams = reactive({
-  pageNum: 1,
-  pageSize: 5
+  pageNo: 1,
+  pageSize: 10
 });
 
-const total = ref(28);
-const totalPage = computed(() => Math.ceil(total.value / pageParams.pageSize));
+const total = ref(0);
+const totalPage = computed(() => Math.ceil(total.value / pageParams.pageSize) || 1);
 
+// 状态映射
 const statusMap = {
   0: { text: '未开始', class: 'status-not-started' },
   1: { text: '进行中', class: 'status-processing' },
@@ -160,86 +185,66 @@ const statusMap = {
   4: { text: '已结束', class: 'status-finished' }
 };
 
-// 模拟完整数据
-const allData = ref([
-  { schemeNo: 'FA-SC-202512-001', schemeName: '2025年全国大豆专项检查', category: '蔬菜', region: '全国', dept: '农业农村部农产品质量安全监管司', total: '9000', startDate: '2025-10-1', endDate: '2025-12-28', rate: '100%', status: 0 },
-  { schemeNo: 'FA-SC-202512-002', schemeName: '2025年北京市蔬菜快速检测', category: '蔬菜', region: '北京', dept: '北京市农业农村局', total: '5000', startDate: '2025-11-1', endDate: '2025-12-30', rate: '80%', status: 1 },
-  { schemeNo: 'FA-SC-202512-003', schemeName: '2025年上海市水果质量检测', category: '水果', region: '上海', dept: '上海市农业农村委员会', total: '3000', startDate: '2025-09-1', endDate: '2025-11-30', rate: '95%', status: 2 },
-  { schemeNo: 'FA-SC-202512-004', schemeName: '2025年广东省农产品抽检', category: '蔬菜', region: '广东', dept: '广东省农业农村厅', total: '7000', startDate: '2025-08-1', endDate: '2025-10-31', rate: '100%', status: 3 },
-  { schemeNo: 'FA-SC-202512-005', schemeName: '2025年浙江省水产品检测', category: '水产品', region: '浙江', dept: '浙江省农业农村厅', total: '4000', startDate: '2025-07-1', endDate: '2025-09-30', rate: '100%', status: 4 },
-  { schemeNo: 'FA-SC-202512-006', schemeName: '2025年江苏省粮食质量检测', category: '粮食', region: '江苏', dept: '江苏省农业农村厅', total: '6000', startDate: '2025-10-15', endDate: '2025-12-15', rate: '60%', status: 1 }
-]);
-
+// 表格数据
 const tableList = ref([]);
 
-const headerCellStyle = {
-  backgroundColor: '#FFFFFF',
-  color: '#333',
-  fontWeight: '500',
-  height: '50px',
-  borderBottom: '1px solid #f0f0f0'
-};
+/** 获取列表数据 */
+const getList = async () => {
+  loading.value = true
+  try {
+    // 组装请求参数
+    const params = {
+      pageNo: pageParams.pageNo,
+      pageSize: pageParams.pageSize
+    }
+    // 关键词搜索：同时传入 planCode 和 planName（后端会做 OR 查询，或根据实际逻辑处理）
+    if (queryParams.keyword) {
+      params.planCode = queryParams.keyword
+      params.planName = queryParams.keyword
+    }
+    // 目标品种
+    if (queryParams.targetCategory) {
+      params.targetCategory = queryParams.targetCategory
+    }
+    // 状态筛选
+    if (queryParams.status !== undefined && queryParams.status !== null && queryParams.status !== '') {
+      params.status = queryParams.status
+    }
+    // 日期范围
+    if (queryParams.time && queryParams.time.length === 2) {
+      params.planStartDate = queryParams.time[0]
+      params.planEndDate = queryParams.time[1]
+    }
+
+    const res = await DetectionPlanApi.getDetectionPlanPage(params)
+    tableList.value = res.list || []
+    total.value = res.total || 0
+  } catch (error) {
+    console.error('获取检测方案列表失败：', error)
+  } finally {
+    loading.value = false
+  }
+}
 
 // 查询功能
 const handleQuery = () => {
-  let filteredData = [...allData.value];
-
-  // 方案筛选
-  if (queryParams.scheme) {
-    filteredData = filteredData.filter(item =>
-      item.schemeNo.includes(queryParams.scheme) ||
-      item.schemeName.includes(queryParams.scheme)
-    );
-  }
-
-  // 产品分类筛选
-  if (queryParams.category) {
-    filteredData = filteredData.filter(item => item.category === queryParams.category);
-  }
-
-  // 状态筛选
-  if (queryParams.status !== '') {
-    filteredData = filteredData.filter(item => item.status === parseInt(queryParams.status));
-  }
-
-  // 日期筛选
-  if (queryParams.startDate) {
-    filteredData = filteredData.filter(item =>
-      new Date(item.startDate) >= new Date(queryParams.startDate)
-    );
-  }
-
-  if (queryParams.endDate) {
-    filteredData = filteredData.filter(item =>
-      new Date(item.endDate) <= new Date(queryParams.endDate)
-    );
-  }
-
-  total.value = filteredData.length;
-  pageParams.pageNum = 1;
-  updateTableData(filteredData);
-  ElMessage.success(`查询成功，共找到 ${filteredData.length} 条记录`);
+  pageParams.pageNo = 1
+  getList()
 };
 
 // 重置功能
 const handleReset = () => {
-  Object.keys(queryParams).forEach(key => (queryParams[key] = ''));
-  pageParams.pageNum = 1;
-  total.value = allData.value.length;
-  updateTableData(allData.value);
-  ElMessage.info('已重置查询条件');
-};
-
-// 更新表格数据（分页）
-const updateTableData = (data) => {
-  const start = (pageParams.pageNum - 1) * pageParams.pageSize;
-  const end = start + pageParams.pageSize;
-  tableList.value = data.slice(start, end);
+  queryParams.keyword = ''
+  queryParams.targetCategory = ''
+  queryParams.status = undefined
+  queryParams.time = []
+  pageParams.pageNo = 1
+  getList()
 };
 
 // 监听分页变化
-watch(() => pageParams.pageNum, () => {
-  handleQuery();
+watch(() => pageParams.pageNo, () => {
+  getList()
 });
 
 // 创建方案
@@ -251,45 +256,124 @@ const handleAdd = () => {
 const handleEdit = (row) => {
   router.push({
     path: '/fastCheckPlan/schemeCreate',
-    query: { id: row.schemeNo, mode: 'edit' }
+    query: { id: row.id, mode: 'edit' }
   });
 };
 
 // 删除方案（带二次确认）
-const handleDelete = (row) => {
-  ElMessageBox.confirm(
-    `确定要删除方案"${row.schemeName}"吗？删除后将无法恢复。`,
-    '删除确认',
-    {
-      confirmButtonText: '确定删除',
-      cancelButtonText: '取消',
-      type: 'warning',
-      confirmButtonClass: 'el-button--danger'
+const handleDelete = async (row) => {
+  try {
+    await ElMessageBox.confirm(
+      `确定要删除方案"${row.planName}"吗？删除后将无法恢复。`,
+      '删除确认',
+      {
+        confirmButtonText: '确定删除',
+        cancelButtonText: '取消',
+        type: 'warning',
+        confirmButtonClass: 'el-button--danger'
+      }
+    )
+    // 调用删除接口
+    await DetectionPlanApi.deleteDetectionPlan(row.id)
+    ElMessage.success('删除成功')
+    // 刷新列表
+    getList()
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('删除检测方案失败：', error)
     }
-  ).then(() => {
-    // 执行删除操作
-    const index = allData.value.findIndex(item => item.schemeNo === row.schemeNo);
-    if (index > -1) {
-      allData.value.splice(index, 1);
-      total.value = allData.value.length;
-      handleQuery();
-      ElMessage.success('删除成功');
-    }
-  }).catch(() => {
-    ElMessage.info('已取消删除');
-  });
+  }
 };
 
 // 查看方案详情
 const handleView = (row) => {
   router.push({
     path: '/fastCheckPlan/schemeTask',
-    query: { id: row.schemeNo }
+    query: { id: row.id }
   });
 };
 
-// 初始化数据
-updateTableData(allData.value);
+/** 表格多选变化 */
+const handleSelectionChange = (rows) => {
+  selectedIds.value = rows.map(row => row.id)
+}
+
+/** 批量删除 */
+const handleBatchDelete = async () => {
+  if (selectedIds.value.length === 0) {
+    ElMessage.warning('请先选择要删除的方案')
+    return
+  }
+  try {
+    await ElMessageBox.confirm(
+      `确定要删除选中的 ${selectedIds.value.length} 个方案吗？删除后将无法恢复。`,
+      '批量删除确认',
+      {
+        confirmButtonText: '确定删除',
+        cancelButtonText: '取消',
+        type: 'warning',
+        confirmButtonClass: 'el-button--danger'
+      }
+    )
+    // 调用批量删除接口
+    await DetectionPlanApi.deleteDetectionPlanList(selectedIds.value)
+    selectedIds.value = []
+    ElMessage.success('批量删除成功')
+    // 刷新列表
+    getList()
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('批量删除检测方案失败：', error)
+    }
+  }
+}
+
+/** 导出 Excel */
+const handleExport = async () => {
+  try {
+    await ElMessageBox.confirm(
+      '确定要导出检测方案数据吗？',
+      '导出确认',
+      {
+        confirmButtonText: '确定导出',
+        cancelButtonText: '取消',
+        type: 'info'
+      }
+    )
+    exportLoading.value = true
+    // 组装导出参数（与查询参数一致）
+    const params = {}
+    if (queryParams.keyword) {
+      params.planCode = queryParams.keyword
+      params.planName = queryParams.keyword
+    }
+    if (queryParams.targetCategory) {
+      params.targetCategory = queryParams.targetCategory
+    }
+    if (queryParams.status !== undefined && queryParams.status !== null && queryParams.status !== '') {
+      params.status = queryParams.status
+    }
+    if (queryParams.time && queryParams.time.length === 2) {
+      params.planStartDate = queryParams.time[0]
+      params.planEndDate = queryParams.time[1]
+    }
+    // 调用导出接口
+    const data = await DetectionPlanApi.exportDetectionPlan(params)
+    download.excel(data, '检测方案.xls')
+    ElMessage.success('导出成功')
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('导出检测方案失败：', error)
+    }
+  } finally {
+    exportLoading.value = false
+  }
+}
+
+// 页面初始化时加载数据
+onMounted(() => {
+  getList()
+})
 </script>
 
 <style lang="scss" scoped>
@@ -342,20 +426,33 @@ updateTableData(allData.value);
     gap: 12px;
     flex-shrink: 0;
   }
+  .step-wrapper-active{
+
+    .step-title {
+      font-size: 14px;
+      color: #00B3ED;
+      white-space: nowrap;
+      font-weight: 600;
+    }
+    .step-icon{
+      opacity: 1;
+    }
+  }
 
   .step-icon {
     width: 38px;
     height: 38px;
-    border: 2px solid #71D1F5;
+    border: 2px solid #00B3ED;
     background: #fff;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 14px;
-    color: #71D1F5;
+    color: #00B3ED;
     font-weight: 600;
     margin-top: 2px;
+    opacity: 0.8;
   }
 
   .step-content {
@@ -367,12 +464,12 @@ updateTableData(allData.value);
   .step-title {
     font-size: 14px;
     color: #00B3ED;
-    font-weight: 500;
     white-space: nowrap;
+    font-weight: 600;
   }
 
   .step-desc {
-    font-size: 10px;
+    font-size: 12px;
     color: #999;
     line-height: 1.4;
     white-space: nowrap;
@@ -428,12 +525,29 @@ updateTableData(allData.value);
 .table-actions {
   margin-bottom: 24px;
   display: flex;
-  justify-content: flex-start;
+  width: 100%;
+  justify-content: space-between;
+  gap: 12px;
+
+  .table-actions-left{
+    display: flex;
+    gap: 12px;
+  }
 
   .add-btn {
     padding: 0 20px;
     background-color: #00B3ED;
     border-color: #00B3ED;
+    border-radius: 8px;
+    font-weight: 500;
+
+    .el-icon {
+      margin-right: 6px;
+    }
+  }
+
+  .batch-delete-btn,
+  .export-btn {
     border-radius: 8px;
     font-weight: 500;
 

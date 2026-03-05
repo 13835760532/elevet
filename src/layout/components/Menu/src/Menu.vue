@@ -140,6 +140,11 @@ $prefix-cls: #{$namespace}-menu;
     .is-active {
       & > .#{$elNamespace}-sub-menu__title {
         color: #00B3ED !important;
+      }  
+    }
+    .el-menu-item.is-active{
+      .v-menu__title{
+        font-weight: 600;
       }
     }
 

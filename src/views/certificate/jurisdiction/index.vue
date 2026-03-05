@@ -63,42 +63,46 @@
                         <h2 class="card-title">辖区合格证查询</h2>
                     </div>
                     <div class="query-form-wrapper">
-                        <el-form :model="queryParams" :inline="true" class="custom-query-form custom-query-form-row" label-position="left">
-                            <el-form-item label="" prop="dateRange">
-                                <el-date-picker v-model="queryParams.dateRange" type="daterange" range-separator="至"
-                                    start-placeholder="开始日期" end-placeholder="结束日期" value-format="YYYY-MM-DD"
-                                    class="date-picker custom-input" />
-                            </el-form-item>
-                            <el-form-item label="" prop="certNo">
-                                <el-input :prefix-icon="Search" v-model="queryParams.certNo" placeholder="搜索合格证编号" clearable
-                                    class="custom-input w220" />
-                            </el-form-item>
-                            <el-form-item label="" prop="productName">
-                                <el-input :prefix-icon="Search" v-model="queryParams.productName" placeholder="搜索产品名称" clearable
-                                    class="custom-input w220" />
-                            </el-form-item>
-                            <el-form-item label="" prop="entity">
-                                <el-input :prefix-icon="Search" v-model="queryParams.entity" placeholder="搜索生产经营企业/个人" clearable
-                                    class="custom-input w220" />
-                            </el-form-item>
-                            <el-form-item label="" prop="certType">
-                                <el-select v-model="queryParams.certType" placeholder="出证类型" clearable
-                                    class="custom-select">
-                                    <el-option label="生产者出证" value="produce" />
-                                    <el-option label="分销商出证" value="sell" />
-                                    <el-option label="批发市场" value="wholesale" />
-                                </el-select>
-                            </el-form-item>
-                            <el-form-item label="" prop="province">
-                                <el-cascader placeholder="产品产地" v-model="queryParams.province" :options="provinceAndCityData" :props="{label: 'name', value: 'code'}" clearable class="custom-select" />
-                            </el-form-item>
-                            <el-form-item label="" prop="contact">
-                                <el-input :prefix-icon="Search" v-model="queryParams.contact" placeholder="搜索联系人" clearable
-                                    class="custom-input w220" />
-                            </el-form-item>
-                            <div class="query-btns">
-                                <el-button @click="handleReset" class="reset-btn">重置</el-button>
-                                <el-button type="primary" @click="handleSearch" class="search-btn">查询</el-button>
+                        <el-form :model="queryParams" class="custom-query-form" label-position="left">
+                            <div class="query-row" style="margin-bottom: 0;">
+                                <el-form-item label="" prop="certNo">
+                                    <el-input :prefix-icon="Search" v-model="queryParams.certNo" placeholder="搜索合格证编号" clearable
+                                        class="custom-input w220" />
+                                </el-form-item>
+                                <el-form-item label="" prop="productName">
+                                    <el-input :prefix-icon="Search" v-model="queryParams.productName" placeholder="搜索产品名称" clearable
+                                        class="custom-input w220" />
+                                </el-form-item>
+                                <el-form-item label="" prop="entity">
+                                    <el-input :prefix-icon="Search" v-model="queryParams.entity" placeholder="搜索生产经营企业/个人" clearable
+                                        class="custom-input w220" />
+                                </el-form-item>
+                                <el-form-item label="" prop="contact">
+                                    <el-input :prefix-icon="Search" v-model="queryParams.contact" placeholder="搜索联系人" clearable
+                                        class="custom-input w220" />
+                                </el-form-item>
+                            </div>
+                            <div class="query-row" style="width: 100%;display: flex; align-items: center; justify-content: space-between;">
+                                <el-form-item label="" prop="dateRange">
+                                    <el-date-picker v-model="queryParams.dateRange" type="daterange" range-separator="至"
+                                        start-placeholder="开始日期" end-placeholder="结束日期" value-format="YYYY-MM-DD"
+                                        class="date-picker custom-input" />
+                                </el-form-item>
+                                <el-form-item label="" prop="certType">
+                                    <el-select v-model="queryParams.certType" placeholder="出证类型" clearable
+                                        class="custom-select">
+                                        <el-option label="生产者出证" value="produce" />
+                                        <el-option label="分销商出证" value="sell" />
+                                        <el-option label="批发市场" value="wholesale" />
+                                    </el-select>
+                                </el-form-item>
+                                <el-form-item label="" prop="province">
+                                    <el-cascader placeholder="产品产地" v-model="queryParams.province" :options="provinceAndCityData" :props="{label: 'name', value: 'code'}" clearable class="custom-select" />
+                                </el-form-item>
+                                <div class="query-btns flex-1" style="margin-bottom: 8px">
+                                    <el-button @click="handleReset" class="reset-btn">重置</el-button>
+                                    <el-button type="primary" @click="handleSearch" class="search-btn">查询</el-button>
+                                </div>
                             </div>
                         </el-form>
                     </div>
@@ -107,17 +111,20 @@
                             <div class="section-indicator"></div>
                             <h3 class="table-section-title">辖区合格证列表</h3>
                         </div>
+                        <div class="action-right">
+                            <el-button class="add-btn">导出</el-button>
+                        </div>
                     </div>
 
                     <div class="table-wrapper">
                         <el-table :data="tableData" v-loading="loading">
                             <el-table-column type="index" label="序号" width="60" align="center" />
-                            <el-table-column prop="certNo" label="合格证编号" min-width="150" />
+                            <el-table-column prop="certNo" label="合格证编号" width="150" />
                             <el-table-column prop="certType" label="出证类型" width="100" align="center" />
                             <el-table-column prop="productName" label="产品名称" width="80" align="center" />
                             <el-table-column prop="productType" label="产品类别" width="80" align="center" />
-                            <el-table-column prop="origin" label="产地" min-width="100" />
-                            <el-table-column prop="entity" label="生产经营主体" min-width="140" />
+                            <el-table-column prop="origin" label="产地" width="100" />
+                            <el-table-column prop="entity" label="生产经营主体" width="140" />
                             <el-table-column prop="issueDate" label="开具日期" width="140" align="center" />
                             <el-table-column prop="contact" label="联系人" width="120" align="center">
                                 <template #header>
@@ -412,7 +419,31 @@ const handleCurrentChange = (val) => {
 .page-subtitle {
     font-size: 14px;
     color: #666;
-    margin: 8px 0 0 14px;
+    margin: 8px 0 0 0;
+}
+
+/* 查询表单行布局 */
+.query-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 12px;
+
+    &:last-child {
+        margin-bottom: 0;
+        align-items: center;
+    }
+
+    :deep(.el-form-item) {
+        margin-bottom: 0;
+        margin-right: 0;
+    }
+}
+
+.query-btns {
+    margin-left: auto;
+    display: flex;
+    gap: 12px;
 }
 
 /* 统计卡片 */

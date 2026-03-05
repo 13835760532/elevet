@@ -1,10 +1,16 @@
 <template>
-    <div class="page-container table-container">
+    <div class="table-container">
         <!-- 快速检测标题 -->
-        <div class="header-card self-card">
+        <div class="guide-card">
             <div class="card-header">
-             
                 <h2 class="card-title">快速检测</h2>
+            </div>
+        </div>
+
+        <!-- 自主检测查询 -->
+        <div class="query-card" style="flex: 1;">
+            <div class="card-header">
+                <h2 class="card-title">自主检测查询</h2>
             </div>
             <div class="query-form-wrapper">
                 <el-form :inline="true" :model="queryParams" class="custom-query-form custom-query-form-row" label-position="left">
@@ -49,70 +55,72 @@
                     </div>
                 </el-form>
             </div>
-        </div>
 
-        <!-- Tabs 和数据区域 -->
-        <div class="content-card">
-            <div class="tabs-row">
-                <div class="tab-group">
-                </div>
-                <div class="table-operate-action-btns-row">
-                    <el-button @click="handleExport">导出</el-button>
-                    <el-button @click="handleSetRule">设置数据上报规则</el-button>
+            <!-- 操作按钮行 -->
+            <div class="table-actions">
+                <div class="action-left">
                     <el-button type="primary" @click="handleBatchImport" class="primary-btn">检测批量导入</el-button>
                     <el-button type="primary" @click="handleSingleInput" class="primary-btn">检测单条录入</el-button>
                 </div>
+                <div class="action-right">
+                    <el-button @click="handleExport">导出</el-button>
+                    <el-button @click="handleSetRule">设置数据上报规则</el-button>
+                </div>
             </div>
-            <p class="import-tip">*支持第三方检测结果批量 导入</p>
-
-            <!-- 数据表格 -->
-            <div class="table-wrapper">
-                <el-table :data="tableList" border="false">
-                    <el-table-column label="序号" type="index" width="60" align="center" />
-                    <el-table-column label="样品编号" prop="sampleNo" width="130" align="center" />
-                    <el-table-column label="样品名称" prop="sampleName" width="80" align="center" />
-                    <el-table-column label="样品来源" prop="source" width="100" align="center" />
-                    <el-table-column label="产品分类" prop="category" width="80" align="center" />
-                    <el-table-column label="产地" prop="origin" width="80" align="center" />
-                    <el-table-column label="被检主体名称" prop="subjectName" min-width="110" show-overflow-tooltip />
-                    <el-table-column label="抽检地区" prop="region" width="100" align="center" />
-                    <el-table-column label="检测机构" prop="testOrg" min-width="130" show-overflow-tooltip />
-                    <el-table-column label="检测时间" prop="testTime" width="100" align="center" />
-                    <el-table-column label="检测项目" prop="testItem" min-width="100" show-overflow-tooltip />
-                    <el-table-column label="检测结果" prop="testResult" width="100" align="center" show-overflow-tooltip />
-                    <el-table-column label="是否公开" prop="isPublic" width="80" align="center" />
-                    <el-table-column label="检测状态" prop="testStatus" width="80" align="center">
-                        <template #default="scope">
-                            <span :class="['status-tag', statusMap[scope.row.testStatus]?.class]">
-                                {{ statusMap[scope.row.testStatus]?.text }}
-                            </span>
-                        </template>
-                    </el-table-column>
-                    <el-table-column label="操作" width="120" align="center" fixed="right">
-                        <template #default="scope">
-                            <div class="table-operate-action-btns">
-                                <template v-if="scope.row.testStatus === 0">
-                                    <span class="table-edit-operate" @click="handleTest(scope.row)">去检测</span>
-                                    <span class="table-delete-operate" @click="handleDelete(scope.row)">删除</span>
-                                </template>
-                                <template v-else-if="scope.row.testStatus === 1">
-                                    <span class="table-view-operate" @click="handleView(scope.row)">查看详情</span>
-                                </template>
-                                <template v-else>
-                                    <span class="table-edit-operate" @click="handleRetest(scope.row)">重新检测</span>
-                                </template>
-                            </div>
-                        </template>
-                    </el-table-column>
-                </el-table>
-            </div>
-
-            <!-- 分页区域 -->
-            <div class="pagination-wrapper">
-                <el-pagination v-model:current-page="pageParams.pageNum" v-model:page-size="pageParams.pageSize"
-                    :total="total" background layout="prev, pager, next" class="custom-pagination" />
+            <p class="import-tip">*支持第三方检测结果批量导入</p>
+            <!-- 数据表格区域 -->
+            <div class="content-card">
+    
+                <!-- 数据表格 -->
+                <div class="table-wrapper">
+                    <el-table :data="tableList" border="false">
+                        <el-table-column label="序号" type="index" width="60" align="center" />
+                        <el-table-column label="样品编号" prop="sampleNo" width="130" align="center" />
+                        <el-table-column label="样品名称" prop="sampleName" width="80" align="center" />
+                        <el-table-column label="样品来源" prop="source" width="100" align="center" />
+                        <el-table-column label="产品分类" prop="category" width="80" align="center" />
+                        <el-table-column label="产地" prop="origin" width="80" align="center" />
+                        <el-table-column label="被检主体名称" prop="subjectName" min-width="110" show-overflow-tooltip />
+                        <el-table-column label="抽检地区" prop="region" width="100" align="center" />
+                        <el-table-column label="检测机构" prop="testOrg" min-width="130" show-overflow-tooltip />
+                        <el-table-column label="检测时间" prop="testTime" width="100" align="center" />
+                        <el-table-column label="检测项目" prop="testItem" min-width="100" show-overflow-tooltip />
+                        <el-table-column label="检测结果" prop="testResult" width="100" align="center" show-overflow-tooltip />
+                        <el-table-column label="是否公开" prop="isPublic" width="80" align="center" />
+                        <el-table-column label="检测状态" prop="testStatus" width="80" align="center">
+                            <template #default="scope">
+                                <span :class="['status-tag', statusMap[scope.row.testStatus]?.class]">
+                                    {{ statusMap[scope.row.testStatus]?.text }}
+                                </span>
+                            </template>
+                        </el-table-column>
+                        <el-table-column label="操作" width="120" align="center" fixed="right">
+                            <template #default="scope">
+                                <div class="table-operate-action-btns">
+                                    <template v-if="scope.row.testStatus === 0">
+                                        <span class="table-edit-operate" @click="handleTest(scope.row)">去检测</span>
+                                        <span class="table-delete-operate" @click="handleDelete(scope.row)">删除</span>
+                                    </template>
+                                    <template v-else-if="scope.row.testStatus === 1">
+                                        <span class="table-view-operate" @click="handleView(scope.row)">查看详情</span>
+                                    </template>
+                                    <template v-else>
+                                        <span class="table-edit-operate" @click="handleRetest(scope.row)">重新检测</span>
+                                    </template>
+                                </div>
+                            </template>
+                        </el-table-column>
+                    </el-table>
+                </div>
+    
+                <!-- 分页区域 -->
+                <div class="pagination-wrapper">
+                    <el-pagination v-model:current-page="pageParams.pageNum" v-model:page-size="pageParams.pageSize"
+                        :total="total" background layout="prev, pager, next" class="custom-pagination" />
+                </div>
             </div>
         </div>
+
 
         <!-- 设置数据上报规则弹窗 -->
         <el-dialog v-model="ruleDialogVisible" width="500px" :show-close="true" class="rule-dialog">
@@ -300,110 +308,10 @@ const handleRetest = (row) => {
 </script>
 
 <style lang="scss" scoped>
-.page-container {
-    height: 100%;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
-
-/* 头部查询卡片 */
-.header-card {
-    background: #fff;
-    border-radius: 10px;
-    padding: 16px;
-}
-
-.self-card {
-    &::before {
-        content: ' ';
-        width: 0;
-        height: 0;
-    }
-}
-
-.card-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 20px;
-
-    .blue-line {
-        width: 4px;
-        height: 16px;
-        background: #00B3ED;
-        border-radius: 2px;
-    }
-
-    .card-title {
-        font-size: 18px;
-        font-weight: 600;
-        color: #333;
-        margin: 0;
-    }
-}
-
-/* 内容卡片 */
-.content-card {
-    background: #fff;
-    border-radius: 10px;
-    padding: 16px;
-    flex: 1;
-}
-
-.tabs-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 8px;
-
-    .tab-group {
-        display: flex;
-        gap: 0;
-    }
-
-    .tab-item {
-        padding: 10px 32px;
-        cursor: pointer;
-        background: #E5E7EB;
-        color: #333;
-        font-size: 14px;
-        transition: all 0.3s;
-
-        &:first-child {
-            border-radius: 4px 0 0 4px;
-        }
-
-        &:last-child {
-            border-radius: 0 4px 4px 0;
-        }
-
-        &.active {
-            background: #00B3ED;
-            color: #fff;
-        }
-    }
-
-    .table-operate-action-btns-row {
-        display: flex;
-        gap: 12px;
-
-        .el-button {
-            border-radius: 8px;
-        }
-
-        .primary-btn {
-            background-color: #00B3ED;
-            border-color: #00B3ED;
-        }
-    }
-}
-
 .import-tip {
     font-size: 12px;
     color: #999;
-    margin: 0 0 16px 0;
+    margin: 0;
     text-align: right;
 }
 
@@ -413,23 +321,6 @@ const handleRetest = (row) => {
 }
 
 
-
-/* 状态标签 */
-.status-tag {
-    font-size: 12px;
-
-    &.status-pending {
-        color: #999;
-    }
-
-    &.status-done {
-        color: #52C41A;
-    }
-
-    &.status-failed {
-        color: #F5222D;
-    }
-}
 
 /* 分页 */
 .pagination-wrapper {

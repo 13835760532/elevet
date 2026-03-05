@@ -6,54 +6,52 @@
         <div class="page-scrollable">
         <!-- 内容卡片 -->
         <div class="content-card">
-            <div class="form-header">
-                <div class="section-dot"></div>
-                <span class="section-title">基础信息登记</span>
+            <div class="card-header">
+                <span class="header-title">产品基本信息</span>
+                <div class="dashed-line"></div>
             </div>
 
-            <el-form ref="formRef" :model="formData" :rules="formRules" label-position="top"
+            <el-form ref="formRef" :model="formData" :rules="formRules" label-width="130px"
                 class="product-archive-form">
                 
-                <div class="form-grid">
-                    <!-- 产品名称 -->
-                    <el-form-item label="产品名称" prop="productName">
-                        <el-input v-model="formData.productName" placeholder="请选择或输入产品名称" />
-                    </el-form-item>
+                <!-- 产品名称 -->
+                <el-form-item label="产品名称" prop="productName">
+                    <el-input v-model="formData.productName" placeholder="请选择或输入产品名称" />
+                </el-form-item>
 
-                    <!-- 产品类别 -->
-                    <el-form-item label="产品类别" prop="productCategory">
-                        <el-select v-model="formData.productCategory" placeholder="请选择产品类别" class="full-width">
-                            <el-option label="蔬菜" value="vegetable" />
-                            <el-option label="水果" value="fruit" />
-                            <el-option label="肉类" value="meat" />
-                            <el-option label="水产品" value="aquatic" />
+                <!-- 产品类别 -->
+                <el-form-item label="产品类别" prop="productCategory">
+                    <el-select v-model="formData.productCategory" placeholder="请选择产品类别" class="full-width">
+                        <el-option label="蔬菜" value="vegetable" />
+                        <el-option label="水果" value="fruit" />
+                        <el-option label="肉类" value="meat" />
+                        <el-option label="水产品" value="aquatic" />
+                    </el-select>
+                </el-form-item>
+
+                <!-- 产品产地 -->
+                <el-form-item label="产品产地" prop="origin">
+                    <el-input v-model="formData.origin" placeholder="请填写详细产地（省/市/县/镇）" />
+                </el-form-item>
+
+                <!-- 批次规模 -->
+                <el-form-item label="批次规模" prop="batchSize">
+                    <div class="compound-input">
+                        <el-input v-model="formData.batchSize" placeholder="数量" style="flex: 1;" />
+                        <el-select class="prefix-select" v-model="formData.batchUnit" placeholder="单位" style="width: 100px;">
+                            <el-option label="kg" value="kg" />
+                            <el-option label="吨" value="ton" />
+                            <el-option label="箱" value="box" />
+                            <el-option label="亩" value="mu" />
                         </el-select>
-                    </el-form-item>
+                    </div>
+                </el-form-item>
 
-                    <!-- 产品产地 -->
-                    <el-form-item label="产品产地" prop="origin" class="span-2">
-                        <el-input v-model="formData.origin" placeholder="请填写详细产地（省/市/县/镇）" />
-                    </el-form-item>
-
-                    <!-- 批次规模 -->
-                    <el-form-item label="批次规模" prop="batchSize">
-                        <div class="compound-input">
-                            <el-input v-model="formData.batchSize" placeholder="数量" />
-                            <el-select v-model="formData.batchUnit" placeholder="单位" style="width: 100px">
-                                <el-option label="kg" value="kg" />
-                                <el-option label="吨" value="ton" />
-                                <el-option label="箱" value="box" />
-                                <el-option label="亩" value="mu" />
-                            </el-select>
-                        </div>
-                    </el-form-item>
-
-                    <!-- 建档日期 -->
-                    <el-form-item label="建档日期" prop="archiveDate">
-                        <el-date-picker v-model="formData.archiveDate" type="date" placeholder="选择建档日期"
-                            class="full-width" />
-                    </el-form-item>
-                </div>
+                <!-- 建档日期 -->
+                <el-form-item label="建档日期" prop="archiveDate">
+                    <el-date-picker v-model="formData.archiveDate" type="date" placeholder="选择建档日期"
+                        class="full-width" />
+                </el-form-item>
 
                 <!-- 产品宣传照片 -->
                 <el-form-item label="产品宣传照片" class="upload-item">
@@ -83,12 +81,11 @@
                 </el-form-item>
 
                 <!-- 分割线 -->
-                <div class="form-divider"></div>
+                <div class="dashed-line mt32 mb32"></div>
 
                 <!-- 所属主体 -->
-                <div class="form-header mt24">
-                    <div class="section-dot yellow"></div>
-                    <span class="section-title">所属主体关联</span>
+                <div class="card-header mt24">
+                    <span class="header-title" style="font-size: 16px;">所属主体关联</span>
                 </div>
 
                 <el-form-item label="生产经营主体" prop="subjectId">
@@ -230,70 +227,70 @@ $border-color: #E2E8F0;
 .content-card {
     background: #fff;
     border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
     padding: var(--page-container-padding);
-    margin-bottom: 24px;
+    margin-bottom: 12px;
 }
 
-.form-header {
+.card-header {
+    margin-bottom: 32px;
     display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 24px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
 
-    .section-dot {
-        width: 8px;
-        height: 8px;
-        background: $theme-color;
-        border-radius: 50%;
-        box-shadow: 0 0 0 4px rgba($theme-color, 0.1);
+    .header-title {
+        font-size: 20px;
+        font-weight: 600;
+        color: #333;
+    }
+}
 
-        &.yellow {
-            background: #F59E0B;
-            box-shadow: 0 0 0 4px rgba(#F59E0B, 0.1);
+.dashed-line {
+    width: 100%;
+    height: 1px;
+    background-image: linear-gradient(to right, #e2e8f0 50%, rgba(255, 255, 255, 0) 0%);
+    background-position: bottom;
+    background-size: 10px 1px;
+    background-repeat: repeat-x;
+}
+
+.mb32 { margin-bottom: 32px; }
+.mt32 { margin-top: 32px; }
+
+.product-archive-form {
+    max-width: 650px;
+    margin-left: 0;
+
+    :deep(.el-form-item) {
+        margin-bottom: 24px;
+        display: flex;
+        align-items: center;
+
+        .el-form-item__content {
+            flex: 1;
+            display: flex;
         }
     }
 
-    .section-title {
-        font-size: 16px;
-        font-weight: 700;
-        color: $text-dark;
-    }
-}
-
-.product-archive-form {
-    max-width: 900px;
-    margin: 0 auto;
-    margin-left: 0;
-
-    .form-grid {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 0 32px;
-    }
-
-    .span-2 {
-        grid-column: span 2;
-    }
-
-    :deep(.el-form-item) {
-        margin-bottom: 28px;
+    :deep(.el-select),
+    :deep(.el-date-editor) {
+        width: 100% !important;
     }
 
     :deep(.el-form-item__label) {
         font-weight: 600;
-        color: $text-dark;
-        padding-bottom: 10px;
+        color: #344155;
+        padding-right: 20px;
+        padding-bottom: 0;
     }
 
     :deep(.el-input__wrapper),
     :deep(.el-select__wrapper) {
-        border-radius: 8px;
-        height: 44px;
+        height: 40px;
         box-shadow: 0 0 0 1px #CBD5E1 inset;
         
         &.is-focus {
-            box-shadow: 0 0 0 2px rgba($theme-color, 0.2) inset, 0 0 0 1px $theme-color inset !important;
+            box-shadow: 0 0 0 1px $theme-color inset !important;
         }
     }
 }
@@ -305,16 +302,30 @@ $border-color: #E2E8F0;
 .compound-input {
     display: flex;
     gap: 8px;
+    width: 100%;
+
+    :deep(.el-input) {
+        flex: 1;
+    }
+    .prefix-select {
+        width: 100px !important;
+        flex-shrink: 0;
+
+        :deep(.el-select__wrapper) {
+            width: 100px;
+        }
+    }
 }
 
 /* 照片上传优化 */
 .upload-container {
+    width: 520px;
     display: flex;
     align-items: flex-start;
     gap: 20px;
     background: $bg-light;
     padding: 24px;
-    border-radius: 12px;
+    border-radius: 4px;
     border: 1px solid $border-color;
 }
 
@@ -404,6 +415,7 @@ $border-color: #E2E8F0;
     display: flex;
     gap: 12px;
     align-items: center;
+    width: 100%;
 
     .subject-select {
         flex: 1;
@@ -428,7 +440,7 @@ $border-color: #E2E8F0;
 .subject-card {
     background: #fff;
     border: 1px solid #E2E8F0;
-    border-radius: 12px;
+    border-radius: 4px;
     padding: 24px;
     margin-top: 16px;
     background-image: radial-gradient(at 100% 0%, rgba($theme-color, 0.03) 0%, transparent 50%);

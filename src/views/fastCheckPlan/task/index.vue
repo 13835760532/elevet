@@ -55,9 +55,17 @@
                     <div class="query-btns">
                         <el-button @click="handleReset" class="reset-btn">重置</el-button>
                         <el-button type="primary" @click="handleQuery" class="search-btn">查询</el-button>
-                        <el-button type="primary" @click="handleExport" class="export-btn">导出</el-button>
                     </div>
                 </el-form>
+            </div>
+
+            <!-- 操作按钮行 -->
+            <div class="table-actions">
+                <div class="actions-left">
+                </div>
+                <div class="actions-right">
+                    <el-button  @click="handleExport" class="export-btn">导出</el-button>
+                </div>
             </div>
 
             <!-- 数据表格 -->

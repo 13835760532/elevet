@@ -1,18 +1,10 @@
 <template>
-    <div class="page-container">
-
-        <PageBack />
-        <!-- 检测详情头部 -->
-        <div class="header-card">
-            <div class="card-header">
-             
-                <h2 class="card-title">检测详情</h2>
-            </div>
-            <p class="header-desc">对检测结果进行拍照上传判读后的结果</p>
-        </div>
-
-        <!-- 样品检测信息 -->
+    <div class="table-container">
+        <PageHeader title="检测详情" desc="对检测结果进行拍照上传判读后的结果" />
+        
+        <!-- 卡片内容区域 -->
         <div class="content-card">
+            <!-- 样品检测信息 -->
             <div class="section-header">
                 <h3 class="section-title">样品检测信息</h3>
                 <div class="stamp" :class="{ 'stamp-fail': !isQualified }">
@@ -22,51 +14,51 @@
 
             <div class="info-grid">
                 <div class="info-row">
-                    <span class="label">样品编号：</span>
+                    <span class="label">样品编号</span>
                     <span class="value">{{ sampleInfo.sampleNo }}</span>
                 </div>
                 <div class="info-row">
-                    <span class="label">样品来源：</span>
+                    <span class="label">样品来源</span>
                     <span class="value">{{ sampleInfo.source }}</span>
                 </div>
                 <div class="info-row">
-                    <span class="label">样品名称：</span>
+                    <span class="label">样品名称</span>
                     <span class="value">{{ sampleInfo.sampleName }}</span>
                 </div>
                 <div class="info-row">
-                    <span class="label">样品产地：</span>
+                    <span class="label">样品产地</span>
                     <span class="value">{{ sampleInfo.origin }}</span>
                 </div>
                 <div class="info-row">
-                    <span class="label">样品数量（重量）：</span>
+                    <span class="label">数量（重量）</span>
                     <span class="value">{{ sampleInfo.quantity }}</span>
                 </div>
                 <div class="info-row">
-                    <span class="label">抽检区域：</span>
+                    <span class="label">抽检区域</span>
                     <span class="value">{{ sampleInfo.checkArea }}</span>
                 </div>
                 <div class="info-row">
-                    <span class="label">生产经营主体：</span>
+                    <span class="label">生产经营主体</span>
                     <span class="value">{{ sampleInfo.producer }}</span>
                 </div>
                 <div class="info-row">
-                    <span class="label">抽检区域：</span>
+                    <span class="label">抽检区域</span>
                     <span class="value">{{ sampleInfo.region }}</span>
                 </div>
                 <div class="info-row">
-                    <span class="label">检测机构：</span>
+                    <span class="label">检测机构</span>
                     <span class="value">{{ sampleInfo.testOrg }}</span>
                 </div>
                 <div class="info-row">
-                    <span class="label">检测人员：</span>
+                    <span class="label">检测人员</span>
                     <span class="value">{{ sampleInfo.tester }}</span>
                 </div>
                 <div class="info-row">
-                    <span class="label">检测日期：</span>
+                    <span class="label">检测日期</span>
                     <span class="value">{{ sampleInfo.testDate }}</span>
                 </div>
                 <div class="info-row photo-row">
-                    <span class="label">检测照片：</span>
+                    <span class="label">检测照片</span>
                     <div class="photo-preview">
                         <el-image :src="sampleInfo.photo" fit="cover" :preview-src-list="[sampleInfo.photo]" />
                     </div>
@@ -78,7 +70,7 @@
                 <h3 class="section-title">检测结果详情</h3>
             </div>
             <div class="result-table-wrapper">
-                <el-table :data="resultList" class="result-table" border>
+                <el-table :data="resultList" class="result-table" border="false">
                     <el-table-column label="通道" prop="channel" width="100" align="center" />
                     <el-table-column label="检测项目" prop="item" min-width="150" align="center" />
                     <el-table-column label="检测值（T/C值）" prop="tcValue" width="150" align="center" />
@@ -110,7 +102,7 @@
             <!-- 底部按钮 -->
             <div class="footer-actions">
                 <el-button @click="handleBack" class="btn-back">返回</el-button>
-                <el-button @click="handleContinueTest" class="btn-continue">继续检测</el-button>
+                <el-button type="primary" @click="handleContinueTest" class="btn-continue">继续检测</el-button>
             </div>
         </div>
     </div>
@@ -178,62 +170,21 @@ const handleDownloadReport = () => {
 </script>
 
 <style lang="scss" scoped>
-.page-container {
-    height: 100%;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
-
-/* 头部卡片 */
-.header-card {
-    background: #fff;
-    border-radius: 10px;
-    padding: 16px;
-}
-
-.card-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 8px;
-
-    .blue-line {
-        width: 4px;
-        height: 16px;
-        background: #00B3ED;
-        border-radius: 2px;
-    }
-
-    .card-title {
-        font-size: 18px;
-        font-weight: 600;
-        color: #333;
-        margin: 0;
-    }
-}
-
-.header-desc {
-    font-size: 14px;
-    color: #00B3ED;
-    margin: 0;
-    padding-left: 12px;
-}
+/* 容器样式继承自全局 .table-container */
 
 /* 内容卡片 */
 .content-card {
     background: #fff;
     border-radius: 10px;
-    padding: var(--page-container-padding);
+    padding: 24px;
     flex: 1;
 }
 
 .section-header {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     justify-content: space-between;
-    margin-bottom: 20px;
+    margin-bottom: 24px;
 
     &.mt-40 {
         margin-top: 40px;
@@ -242,24 +193,40 @@ const handleDownloadReport = () => {
     .section-title {
         font-size: 16px;
         font-weight: 600;
-        color: #333;
+        color: #00B3ED;
         margin: 0;
+        position: relative;
+        padding-left: 12px;
+
+        &::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 16px;
+            background: #00B3ED;
+            border-radius: 2px;
+        }
     }
 }
 
 /* 印章样式 */
 .stamp {
-    width: 70px;
-    height: 70px;
+    width: 80px;
+    height: 80px;
     border: 3px solid #52C41A;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 14px;
-    font-weight: 600;
+    font-size: 16px;
+    font-weight: 700;
     color: #52C41A;
-    transform: rotate(-15deg);
+    transform: rotate(-20deg);
+    opacity: 0.8;
+    user-select: none;
 
     &.stamp-fail {
         border-color: #F5222D;
@@ -269,19 +236,26 @@ const handleDownloadReport = () => {
 
 /* 信息网格 */
 .info-grid {
-    max-width: 600px;
+    max-width: 800px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px 40px;
 
     .info-row {
         display: flex;
         align-items: flex-start;
-        margin-bottom: 12px;
         font-size: 14px;
 
         .label {
-            min-width: 130px;
+            min-width: 100px;
             color: #666;
             text-align: right;
-            padding-right: 8px;
+            padding-right: 12px;
+            font-weight: 500;
+
+            &::after {
+                content: '：';
+            }
         }
 
         .value {
@@ -290,15 +264,17 @@ const handleDownloadReport = () => {
         }
 
         &.photo-row {
+            grid-column: span 2;
             align-items: flex-start;
-            margin-top: 16px;
+            margin-top: 8px;
 
             .photo-preview {
-                width: 60px;
-                height: 80px;
+                width: 80px;
+                height: 50px;
                 border: 1px solid #E5E7EB;
                 border-radius: 4px;
                 overflow: hidden;
+                background: #F3F4F6;
 
                 .el-image {
                     width: 100%;
@@ -311,17 +287,17 @@ const handleDownloadReport = () => {
 
 /* 结果表格 */
 .result-table-wrapper {
-    max-width: 700px;
+    margin-bottom: 24px;
 }
-
-
 
 .result-negative {
     color: #52C41A;
+    font-weight: 500;
 }
 
 .result-positive {
     color: #F5222D;
+    font-weight: 500;
 }
 
 /* 报告区域 */
@@ -333,12 +309,13 @@ const handleDownloadReport = () => {
 }
 
 .report-preview {
-    width: 200px;
-    height: 280px;
+    width: 180px;
+    height: 250px;
     border: 1px solid #E5E7EB;
     border-radius: 4px;
     overflow: hidden;
     background: #F9FAFB;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 
     .report-image {
         width: 100%;
@@ -354,10 +331,11 @@ const handleDownloadReport = () => {
         font-size: 14px;
         color: #00B3ED;
         cursor: pointer;
-        text-decoration: underline;
+        transition: opacity 0.2s;
 
         &:hover {
-            color: #0095c8;
+            opacity: 0.8;
+            text-decoration: underline;
         }
     }
 }
@@ -367,26 +345,16 @@ const handleDownloadReport = () => {
     display: flex;
     justify-content: center;
     gap: 24px;
-    margin-top: 50px;
+    margin-top: 60px;
     padding-top: 30px;
     border-top: 1px dashed #D1D5DB;
 
-    .btn-back,
-    .btn-continue {
-        width: 120px;
+    .el-button {
+        min-width: 140px;
         height: 44px;
-        border-radius: 8px;
-        font-size: 14px;
     }
 
     .btn-back {
-        background: #00B3ED;
-        border-color: #00B3ED;
-        color: #fff;
-    }
-
-    .btn-continue {
-        background: #fff;
         border-color: #D1D5DB;
         color: #333;
     }

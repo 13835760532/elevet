@@ -25,7 +25,7 @@
                     <div class="info-row">
                         <div class="info-item">
                             <span class="info-label">主管单位</span>
-                            <span class="info-value link-text">{{ schemeInfo.dept }}</span>
+                            <span class="info-value link-text">{{ schemeInfo.deptName }}</span>
                         </div>
                         <div class="info-item">
                             <span class="info-label">方案类型</span>
@@ -137,10 +137,12 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed } from 'vue';
+import { ref, reactive, computed, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { Document, TrendCharts, Clock } from '@element-plus/icons-vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
+import * as DetectionPlanApi from '@/api/agri/detectionPlan';
+import { useDict, DICT_TYPE } from '@/hooks/web/useDict';
 import DetectionProgress from '@/components/DetectionProgress/index.vue';
 import ProgressHistory from '@/components/ProgressHistory/index.vue';
 
@@ -149,33 +151,118 @@ const route = useRoute();
 
 const activeTab = ref('list');
 
+const { getLabel: getPlanTypeLabel } = useDict(DICT_TYPE.AGRI_PLAN_TYPE);
+
 const schemeInfo = reactive({
-    name: '2026年1月北京市蔬菜快速检测工作方案',
-    no: 'FA-SC-202601-001',
-    dept: '农业农村部农产品质量监督检验测试中心（上海）',
-    type: '快速检测',
-    period: '2026年 1月',
-    region: '北京市、天津市',
-    category: '蔬菜',
-    executionTime: '2024年12月1日至2024年12月28日',
-    status: '进行中',
-    progress: 60,
-    completed: 600,
-    total: 1000
+    id: null,
+    name: '--',
+    no: '--',
+    deptId: null,
+    deptName: '--',
+    type: '--',
+    period: '--',
+    region: '--',
+    category: '--',
+    executionTime: '--',
+    status: '--',
+    statusValue: null,
+    progress: 0,
+    completed: 0,
+    total: 0
 });
 
+// 状态映射
+const statusMap = {
+    0: { text: '未开始', class: 'status-not-started' },
+    1: { text: '进行中', class: 'status-processing' },
+    2: { text: '已延期', class: 'status-delayed' },
+    3: { text: '已完成', class: 'status-completed' },
+    4: { text: '已结束', class: 'status-finished' }
+};
+
 const statusClass = computed(() => {
-    const statusMap = {
-        '未开始': 'status-not-started',
-        '进行中': 'status-processing',
-        '已延期': 'status-delayed',
-        '已完成': 'status-completed',
-        '已结束': 'status-finished'
+    return statusMap[schemeInfo.statusValue]?.class || '';
+});
+
+// 部门列表映射（模拟，实际可从后端获取）
+const getDeptLabel = (value) => {
+    const map = {
+        1: '北京市农业农村局',
+        2: '农业农村部（上海）',
+        3: '天津市农业农村委员会',
+        4: '重庆市农业局'
     };
-    return statusMap[schemeInfo.status] || '';
+    return map[value] || '--';
+};
+
+/** 组装周期文本 */
+const formatPeriod = (data) => {
+    const typeMap = { 1: '年度', 2: '月度', 3: '周度' };
+    const parts = [];
+    if (data.planPeriodType) parts.push(typeMap[data.planPeriodType] || '');
+    if (data.planPeriodYear) parts.push(data.planPeriodYear + '年');
+    if (data.planPeriodMonth) parts.push(data.planPeriodMonth + '月');
+    if (data.planPeriodWeek) parts.push('第' + data.planPeriodWeek + '周');
+    return parts.join(' ') || '--';
+};
+
+const loadPlanData = async (id) => {
+    try {
+        const data = await DetectionPlanApi.getDetectionPlan(id);
+        if (data) {
+            schemeInfo.id = data.id;
+            schemeInfo.name = data.planName;
+            schemeInfo.no = data.planCode;
+            schemeInfo.deptId = data.issuerDeptId;
+            schemeInfo.deptName = getDeptLabel(data.issuerDeptId);
+            schemeInfo.type = getPlanTypeLabel(data.planType);
+            schemeInfo.period = formatPeriod(data);
+            schemeInfo.region = data.targetArea || '--';
+            schemeInfo.category = data.targetCategory || '--';
+            schemeInfo.executionTime = `${data.planStartDate} 至 ${data.planEndDate}`;
+            schemeInfo.status = statusMap[data.status]?.text || '未知';
+            schemeInfo.statusValue = data.status;
+            schemeInfo.progress = data.completionRate || 0;
+            schemeInfo.completed = data.taskCompletedCount || 0;
+            schemeInfo.total = data.taskTotalCount || 0;
+        }
+    } catch (error) {
+        console.error('获取方案详情失败：', error);
+        ElMessage.error('获取方案详情失败');
+    }
+};
+
+const loadTaskList = async (id) => {
+    try {
+        const tasks = await DetectionPlanApi.getPlanTasks(id);
+        taskList.value = tasks.map(t => ({
+            id: t.id,
+            taskNo: t.taskCode,
+            taskName: t.taskName,
+            dept: getDeptLabel(t.assignDeptId), // 假设后端返回了承担部门ID
+            quantity: t.sampleCount,
+            completed: t.completedCount || 0, // 假设后端返回了完成数
+            status: t.status === 3 ? '已完成' : (t.status === 1 ? '进行中' : '未开始')
+        }));
+        total.value = taskList.value.length;
+    } catch (error) {
+        console.error('获取任务列表失败：', error);
+    }
+};
+
+onMounted(async () => {
+    const id = route.query.id;
+    if (id) {
+        await loadPlanData(Number(id));
+        await loadTaskList(Number(id));
+    } else {
+        ElMessage.warning('方案参数错误');
+        router.back();
+    }
 });
 
 const taskList = ref([]);
+const total = ref(0);
 
 const pageParams = reactive({
     pageNum: 1,

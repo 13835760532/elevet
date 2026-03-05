@@ -37,16 +37,12 @@
                         <span class="label">产品分类：</span>
                         <span class="value">{{ item.categoryPath }}</span>
                     </div>
-                    <div class="info-row">
-                        <span class="label">检测指标：</span>
-                        <span class="value"></span>
-                    </div>
                 </div>
 
                 <div class="card-content">
                     <!-- 常规残留部分 -->
                     <div class="section-container">
-                        <div class="tag-label gray">常规残留</div>
+                        <div class="tag-label gray">常规残留：</div>
                         <el-table :data="item.normalIndexes" style="width: 100%" border>
                             <el-table-column prop="id" label="序号" width="60" align="center" />
                             <el-table-column prop="type" label="指标类型" align="center" />
@@ -58,7 +54,7 @@
 
                     <!-- 禁用农药部分 -->
                     <div class="section-container">
-                        <div class="tag-label blue">禁用农药</div>
+                        <div class="tag-label blue">禁用农药：</div>
                         <el-table :data="item.forbiddenIndexes" style="width: 100%" border>
                             <el-table-column prop="id" label="序号" width="60" align="center" />
                             <el-table-column prop="type" label="指标类型" align="center" />
@@ -137,7 +133,7 @@ const handleSearch = () => {
 
 /* 数据网格区域 - 3列 */
 .data-grid {
-    margin-top: 8px;
+    margin-top: 12px;
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 12px;

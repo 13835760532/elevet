@@ -43,11 +43,11 @@
             <!-- 操作按钮行 -->
             <div class="table-actions">
                 <div class="action-left">
+                    <el-button type="primary" @click="handleBatchFiling" class="primary-btn">批量建档</el-button>
+                    <el-button type="primary" @click="handleSingleFiling" class="primary-btn">单条建档</el-button>
                 </div>
                 <div class="action-right">
                     <el-button @click="handleExport">导出</el-button>
-                    <el-button type="primary" @click="handleBatchFiling" class="primary-btn">批量建档</el-button>
-                    <el-button type="primary" @click="handleSingleFiling" class="primary-btn">单条建档</el-button>
                 </div>
             </div>
 
@@ -55,7 +55,7 @@
             <div class="table-wrapper">
                 <el-table :data="tableList" border="false">
                     <el-table-column label="序号" type="index" width="60" align="center" />
-                    <el-table-column prop="entityCode" width="170" align="center">
+                    <el-table-column prop="entityCode" width="170" align="center" show-overflow-tooltip>
                         <template #header>
                             <div>主体代码</div>
                             <div style="font-size: 12px; color: #999; font-weight: normal;">（企业信用代码/身份证）</div>
@@ -137,8 +137,8 @@ const regionOptions = [
 
 const tableList = ref([
     {
-        entityCode: '110201181878878686816',
-        entityName: '晓辉农场',
+        entityCode: '110201181878878686816110201181878878686816',
+        entityName: '晓辉农场晓辉农场晓辉农场晓辉农场晓辉农场晓辉农场',
         filingType: '企业备案',
         entityType: '生产',
         mainProduct: '黄瓜、西红柿',

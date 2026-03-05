@@ -1,16 +1,7 @@
 <template>
     <div class="page-container">
-        <PageBack style="margin-bottom: 12px;" />
 
-        <!-- 顶部标题区 -->
-        <div class="header-section">
-            <div class="title-wrapper">
-                <h1 class="page-title">合格证开具（生产者/收购者）</h1>
-            </div>
-            <div class="desc-box">
-                填写产品档案，关联上游合格证，关联检测信息开具合格证
-            </div>
-        </div>
+        <pageHeader title="合格证开具（生产者/收购者）" desc="填写产品档案，关联上游合格证，关联检测信息开具合格证" />
 
         <div class="content-card">
             <!-- 步骤导航 (参考 guide-steps) -->

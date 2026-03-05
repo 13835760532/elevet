@@ -115,7 +115,7 @@ const handleSearch = () => {
 
 /* 数据网格区域 */
 .data-grid {
-    margin-top: 8px;
+    margin-top: 12px;
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 12px;

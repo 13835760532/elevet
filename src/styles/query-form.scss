@@ -314,6 +314,16 @@ $input-default-width: 150px;
         display: flex;
         gap: 12px;
     }
+    .action-left{
+        .el-button+.el-button {
+            margin-left: 0px;
+        }
+    }
+    .action-right{
+        .el-button+.el-button {
+            margin-left: 0px;
+        }
+    }
 
     /* 主题色按钮 */
     .primary-btn {
@@ -351,7 +361,7 @@ $input-default-width: 150px;
 .table-operate-action-btns {
     display: flex;
     justify-content: center;
-    gap: 8px;
+    gap: 20px;
 }
 
 /* ========== 分页容器 ========== */
