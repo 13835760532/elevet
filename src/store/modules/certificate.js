@@ -20,8 +20,14 @@ export const useCertificateStore = defineStore('certificate', {
             unit: 'kg',
             createDate: '',
             entity: '',
+            productId: undefined,
+            subjectId: undefined,
             linkUpstream: 'no',
-            upstreamCertNo: ''
+            upstreamType: 'platform',
+            upstreamCertNo: '',
+            p1: true,
+            p2: false,
+            p3: false
         },
 
         // Step 2: 开具信息
@@ -80,8 +86,14 @@ export const useCertificateStore = defineStore('certificate', {
                 unit: 'kg',
                 createDate: '',
                 entity: '',
+                productId: undefined,
+                subjectId: undefined,
                 linkUpstream: 'no',
-                upstreamCertNo: ''
+                upstreamType: 'platform',
+                upstreamCertNo: '',
+                p1: true,
+                p2: false,
+                p3: false
             }
             this.issueInfo = {
                 issueType: 'buy',

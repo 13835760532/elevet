@@ -28,6 +28,11 @@ export const getCertificate = (id: number) => {
   return request.get({ url: '/agri/certificate/get?id=' + id })
 }
 
+// 根据编号查询合格证详情
+export const getCertificateByCode = (certificateCode: string) => {
+  return request.get({ url: '/agri/certificate/get-by-code?certificateCode=' + certificateCode })
+}
+
 // 新增合格证记录
 export const createCertificate = (data: CertificateVO) => {
   return request.post({ url: '/agri/certificate/create', data })

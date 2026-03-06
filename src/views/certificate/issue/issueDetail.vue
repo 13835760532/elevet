@@ -1,16 +1,6 @@
 <template>
     <div class="page-container">
-        <!-- 顶部标题区 -->
-        <div class="header-section">
-            <div class="title-wrapper">
-                <div class="title-line"></div>
-                <h1 class="page-title">合格证详情</h1>
-            </div>
-            <div class="desc-box">
-                显示合格证开具时信息
-            </div>
-        </div>
-
+        <pageHeader title="合格证详情" desc="显示合格证开具时信息" />
         <!-- 详情卡片容器 -->
         <div class="detail-content">
             <!-- 农产品合格证信息 -->
@@ -34,12 +24,12 @@
                             <div class="middle-flex">
                                 <div class="basis-info">
                                     <h4 class="small-title">承诺依据：</h4>
-                                    <el-checkbox label="质量安全控制符合要求" checked disabled />
-                                    <el-checkbox label="自行检测合格" disabled />
-                                    <el-checkbox label="委托检测合格" disabled />
+                                    <el-checkbox label="质量安全控制符合要求" :checked="commitmentBasis.includes(1)" disabled />
+                                    <el-checkbox label="自行检测合格" :checked="commitmentBasis.includes(2)" disabled />
+                                    <el-checkbox label="委托检测合格" :checked="commitmentBasis.includes(3)" disabled />
                                 </div>
                                 <div class="qr-code">
-                                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=HGZ9191991111"
+                                    <img :src="certificate?.qrCode"
                                         alt="QR" />
                                 </div>
                             </div>
@@ -62,15 +52,15 @@
                             </div>
                             <div class="table-row">
                                 <div class="label">产品产地</div>
-                                <div class="val">--</div>
+                                <div class="val">{{ product?.productionArea || '--' }}</div>
                             </div>
                             <div class="table-row">
                                 <div class="label">承诺主体</div>
-                                <div class="val">--</div>
+                                <div class="val">{{ subject?.name || '--' }}</div>
                             </div>
                             <div class="table-row">
                                 <div class="label">联系方式</div>
-                                <div class="val">--</div>
+                                <div class="val">{{ subject?.contactPhone || '--' }}</div>
                             </div>
                             <div class="table-row">
                                 <div class="label">开具时间</div>
@@ -87,7 +77,10 @@
                 <div class="images-section">
                     <div class="section-title">产品图片</div>
                     <div class="image-grid">
-                        <div class="image-placeholder">
+                        <div v-if="product?.productImageUrl" class="image-box">
+                            <img :src="product.productImageUrl" class="product-img" />
+                        </div>
+                        <div v-else class="image-placeholder">
                             <el-icon class="icon">
                                 <Picture />
                             </el-icon>
@@ -106,26 +99,26 @@
                     <el-checkbox v-model="isSelected2" />
                 </div>
 
-                <div class="cert-display-box">
+                <div class="cert-display-box" v-if="upstreamCertificate">
                     <!-- 合格证票据样式 (左侧) -->
                     <div class="cert-ticket orange-border">
                         <div class="cert-header">
-                            <span class="cert-id-tag">合格证编号－HGZ91919911111</span>
+                            <span class="cert-id-tag">合格证编号－{{ upstreamCertificate?.certificateCode || '--' }}</span>
                         </div>
                         <div class="cert-body">
                             <h2 class="main-title">承诺达标合格证</h2>
                             <h3 class="sub-title">我承诺生产销售的食用农产品</h3>
                             <p class="declaration">未使用禁用农药、兽药及其他化合物；使用的常规农药、兽药残留不超标。</p>
-
                             <div class="middle-flex">
                                 <div class="basis-info">
                                     <h4 class="small-title">承诺依据：</h4>
-                                    <el-checkbox label="质量安全控制符合要求" checked disabled />
-                                    <el-checkbox label="自行检测合格" disabled />
-                                    <el-checkbox label="委托检测合格" disabled />
+                                    <!-- 这里通常也是依据该合格证本身的承诺依据 -->
+                                    <el-checkbox label="质量安全控制符合要求" :checked="upstreamCommitmentBasis.includes(1)" disabled />
+                                    <el-checkbox label="自行检测合格" :checked="upstreamCommitmentBasis.includes(2)" disabled />
+                                    <el-checkbox label="委托检测合格" :checked="upstreamCommitmentBasis.includes(3)" disabled />
                                 </div>
                                 <div class="qr-code">
-                                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=HGZ9191991111"
+                                    <img :src="upstreamCertificate?.qrCode"
                                         alt="QR" />
                                 </div>
                             </div>
@@ -138,31 +131,32 @@
                         <div class="custom-table">
                             <div class="table-row">
                                 <div class="label">产品名称</div>
-                                <div class="val">白菜 (上游)</div>
+                                <div class="val">{{ upstreamCertificate?.productName || '--' }}</div>
                             </div>
                             <div class="table-row">
                                 <div class="label">产品数量</div>
-                                <div class="val">1000kg</div>
+                                <div class="val">{{ upstreamCertificate?.quantity ?? '--' }}{{ upstreamCertificate?.unit || '' }}</div>
                             </div>
                             <div class="table-row">
                                 <div class="label">产品产地</div>
-                                <div class="val">山东省潍坊市</div>
+                                <div class="val">{{ upstreamProduct?.productionArea || '--' }}</div>
                             </div>
                             <div class="table-row">
                                 <div class="label">承诺主体</div>
-                                <div class="val">某上游基地</div>
+                                <div class="val">{{ upstreamSubject?.name || '--' }}</div>
                             </div>
                             <div class="table-row">
                                 <div class="label">联系方式</div>
-                                <div class="val">138XXXXXXXX</div>
+                                <div class="val">{{ upstreamSubject?.contactPhone || '--' }}</div>
                             </div>
                             <div class="table-row">
                                 <div class="label">开具时间</div>
-                                <div class="val">2025-12-10 10:00</div>
+                                <div class="val">{{ upstreamCertificate?.issueDate || '--' }}</div>
                             </div>
                         </div>
                     </div>
                 </div>
+                <div v-else class="empty-tip">暂无关联的上游合格证</div>
 
                 <div class="divider"></div>
 
@@ -170,7 +164,10 @@
                 <div class="images-section">
                     <div class="section-title">产品图片</div>
                     <div class="image-grid">
-                        <div class="image-placeholder">
+                        <div v-if="upstreamProduct?.productImageUrl" class="image-box">
+                            <img :src="upstreamProduct.productImageUrl" class="product-img" />
+                        </div>
+                        <div v-else class="image-placeholder">
                             <el-icon class="icon">
                                 <Picture />
                             </el-icon>
@@ -185,18 +182,20 @@
             <!-- 底部操作按钮 -->
             <div class="footer-actions">
                 <el-button type="primary" class="print-btn" @click="handlePrint">打印</el-button>
-                <el-button type="primary" class="print-btn" @click="handlePrint">打印</el-button>
+                <el-button class="close-btn" @click="() => $router.back()">返回</el-button>
             </div>
         </div>
     </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { Picture } from '@element-plus/icons-vue';
 import { useMessage } from '@/hooks/web/useMessage';
 import * as CertificateApi from '@/api/agri/certificate';
+import * as SubjectApi from '@/api/agri/subject';
+import * as ProductApi from '@/api/agri/product';
 
 const isSelected1 = ref(true);
 const isSelected2 = ref(true);
@@ -205,20 +204,76 @@ const route = useRoute();
 const message = useMessage();
 const loading = ref(false);
 const certificate = ref<any | null>(null);
+const subject = ref<any | null>(null);
+const product = ref<any | null>(null);
+const commitmentBasis = ref<number[]>([]);
 
-onMounted(async () => {
-    const id = Number(route.params.id);
-    if (!id) {
-        return;
-    }
+// 上游信息
+const upstreamCertificate = ref<any | null>(null);
+const upstreamSubject = ref<any | null>(null);
+const upstreamProduct = ref<any | null>(null);
+const upstreamCommitmentBasis = ref<number[]>([]);
+
+const loadDetail = async (id: number) => {
     loading.value = true;
     try {
         const data = await CertificateApi.getCertificate(id);
         certificate.value = data;
+        
+        // 解析承诺依据
+        if (data.commitmentBasis) {
+            try {
+                commitmentBasis.value = JSON.parse(data.commitmentBasis);
+            } catch (e) {
+                console.error('解析承诺依据失败', e);
+            }
+        }
+
+        // 获取主体和产品详情
+        if (data.subjectId) {
+            SubjectApi.getSubject(data.subjectId).then(res => subject.value = res);
+        }
+        if (data.productId) {
+            ProductApi.getProduct(data.productId).then(res => product.value = res);
+        }
+
+        // 如果存在上游合格证编号，获取上游信息
+        if (data.upstreamCertificateCode) {
+            loadUpstreamDetail(data.upstreamCertificateCode);
+        }
     } catch {
         message.error('获取合格证详情失败');
     } finally {
         loading.value = false;
+    }
+};
+
+const loadUpstreamDetail = async (code: string) => {
+    try {
+        const data = await CertificateApi.getCertificateByCode(code);
+        if (data) {
+            upstreamCertificate.value = data;
+            if (data.commitmentBasis) {
+                try {
+                    upstreamCommitmentBasis.value = JSON.parse(data.commitmentBasis);
+                } catch (e) {}
+            }
+            if (data.subjectId) {
+                SubjectApi.getSubject(data.subjectId).then(res => upstreamSubject.value = res);
+            }
+            if (data.productId) {
+                ProductApi.getProduct(data.productId).then(res => upstreamProduct.value = res);
+            }
+        }
+    } catch (e) {
+        console.error('获取上游合格证详情失败', e);
+    }
+};
+
+onMounted(async () => {
+    const id = route.query.id as unknown as number;
+    if (id) {
+        loadDetail(id);
     }
 });
 
@@ -231,12 +286,11 @@ const handlePrint = () => {
 .page-container {
     height: 100%;
     overflow-y: auto;
-    padding: 16px;
 }
 
 .header-section {
     padding: 16px;
-    margin-bottom: 20px;
+    margin-bottom: 14px;
     background: #fff;
     backdrop-filter: blur(10px);
     border-radius: 10px;
@@ -270,15 +324,15 @@ const handlePrint = () => {
 }
 
 .detail-content {
-    max-width: 1200px;
+   width: 100%;
     margin: 0 auto;
 }
 
 .info-card {
     background: #fff;
     backdrop-filter: blur(10px);
-    border-radius: 24px;
-    padding: 32px;
+    border-radius: 12px;
+    padding: 16px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
 
     .card-title-row {
@@ -499,5 +553,32 @@ const handlePrint = () => {
         border-color: #00B3ED;
         font-weight: 700;
     }
+
+    .close-btn {
+        width: 120px;
+        height: 44px;
+    }
+}
+
+.image-box {
+    width: 250px;
+    height: 160px;
+    border-radius: 8px;
+    overflow: hidden;
+
+    .product-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+}
+
+.empty-tip {
+    text-align: center;
+    padding: 40px;
+    color: #999;
+    font-size: 14px;
+    background: #f9fafb;
+    border-radius: 8px;
 }
 </style>

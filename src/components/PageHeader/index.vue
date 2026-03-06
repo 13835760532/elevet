@@ -66,7 +66,7 @@ const handleCancel = () => {
     color: #1E293B;
     font-size: 16px;
     font-weight: 500;
-    border-right: 1px solid #F1F5F9;
+    // border-right: 1px solid #F1F5F9;
     transition: all 0.2s;
 
     &:hover {

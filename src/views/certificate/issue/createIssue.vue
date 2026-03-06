@@ -11,7 +11,9 @@
                     <div class="step-wrapper" :class="{ active: currentStep === 1, completed: currentStep > 1 }">
                         <div class="step-icon">
                             <span v-if="currentStep <= 1">1</span>
-                            <el-icon v-else><Check /></el-icon>
+                            <el-icon v-else>
+                                <Check />
+                            </el-icon>
                         </div>
                         <div class="step-content">
                             <div class="step-title">选择产品</div>
@@ -20,26 +22,32 @@
                     </div>
                     <div class="step-arrow">
                         <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="arrow-svg">
-                            <path d="M5 12H19M19 12L13 6M19 12L13 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                            <path d="M5 12H19M19 12L13 6M19 12L13 18" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round" />
                         </svg>
                     </div>
                 </div>
 
                 <!-- Step 2 -->
                 <div class="step-container">
-                    <div class="step-wrapper" :class="{ 'waiting': currentStep < 2, active: currentStep === 2, completed: currentStep > 2 }">
+                    <div class="step-wrapper"
+                        :class="{ 'waiting': currentStep < 2, active: currentStep === 2, completed: currentStep > 2 }">
                         <div class="step-icon">
                             <span v-if="currentStep <= 2">2</span>
-                            <el-icon v-else><Check /></el-icon>
+                            <el-icon v-else>
+                                <Check />
+                            </el-icon>
                         </div>
                         <div class="step-content">
                             <div class="step-title">合格证配置</div>
-                            <div class="step-desc">{{ currentStep > 2 ? '已完成' : (currentStep === 2 ? '进行中' : '等待中') }}</div>
+                            <div class="step-desc">{{ currentStep > 2 ? '已完成' : (currentStep === 2 ? '进行中' : '等待中') }}
+                            </div>
                         </div>
                     </div>
                     <div class="step-arrow">
                         <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="arrow-svg">
-                            <path d="M5 12H19M19 12L13 6M19 12L13 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                            <path d="M5 12H19M19 12L13 6M19 12L13 18" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round" />
                         </svg>
                     </div>
                 </div>
@@ -76,14 +84,18 @@
 
                         <div v-if="formData.linkProfile === 'yes'" class="form-row">
                             <el-form-item class="form-col full">
-                                <el-input v-model="formData.searchProfile" placeholder="查询产品名称 or 编号，完成产品档案管理"
-                                    class="search-input">
-                                    <template #suffix>
+                                <el-select v-model="formData.searchProfile" filterable remote reserve-keyword
+                                    placeholder="查询产品名称 or 编号，完成产品档案管理" class="search-input" style="width: 100%"
+                                    :remote-method="searchProduct" :loading="productLoading"
+                                    @change="handleProductSelect">
+                                    <template #prefix>
                                         <el-icon>
                                             <Search />
                                         </el-icon>
                                     </template>
-                                </el-input>
+                                    <el-option v-for="item in productOptions" :key="item.id"
+                                        :label="`${item.productName} (${item.productCode})`" :value="item.id" />
+                                </el-select>
                             </el-form-item>
                         </div>
 
@@ -92,23 +104,27 @@
                         <!-- 两列布局：产品编号 + 产品名称 -->
                         <div class="form-row two-cols">
                             <el-form-item label="*产品编号" class="form-col">
-                                <el-input v-model="formData.productNo" placeholder="DP20251238000001" />
+                                <el-input v-model="formData.productNo" placeholder="DP20251238000001"
+                                    :disabled="formData.linkProfile === 'yes'" />
                             </el-form-item>
                             <el-form-item label="产品名称" class="form-col">
-                                <el-input v-model="formData.productName" placeholder="输入产品名称" />
+                                <el-input v-model="formData.productName" placeholder="输入产品名称"
+                                    :disabled="formData.linkProfile === 'yes'" />
                             </el-form-item>
                         </div>
 
                         <!-- 两列布局：产品类别 + 产品产地 -->
                         <div class="form-row two-cols">
                             <el-form-item label="产品类别" class="form-col">
-                                <el-select v-model="formData.category" placeholder="选择产品类别" class="full-width">
+                                <el-select v-model="formData.category" placeholder="选择产品类别" class="full-width"
+                                    :disabled="formData.linkProfile === 'yes'">
                                     <el-option label="蔬菜" value="vegetable" />
                                     <el-option label="水果" value="fruit" />
                                 </el-select>
                             </el-form-item>
                             <el-form-item label="产品产地" class="form-col">
-                                <el-input v-model="formData.origin" placeholder="输入产品的生产地" />
+                                <el-input v-model="formData.origin" placeholder="输入产品的生产地"
+                                    :disabled="formData.linkProfile === 'yes'" />
                             </el-form-item>
                         </div>
 
@@ -136,13 +152,15 @@
                         <p class="section-tip">*从生产档案中选择，或直接搜索到企业，支持多项建档</p>
 
                         <div class="entity-selector">
-                            <el-select v-model="formData.entity" placeholder="北京颐发隆鑫集团股份有限公司（190318616766073685X）"
-                                class="full-width" filterable>
+                            <el-select v-model="formData.subjectId" placeholder="搜索企业名称或信用代码查询主体" class="full-width"
+                                filterable remote :remote-method="searchEntity" @change="handleEntityChange">
                                 <template #prefix>
                                     <el-icon>
                                         <Search />
                                     </el-icon>
                                 </template>
+                                <el-option v-for="item in entityOptions" :key="item.id" :label="item.name"
+                                    :value="item.id" />
                             </el-select>
                             <div class="entity-info-card">
                                 <div class="info-line">主体名称: {{ formData.entity || '-' }}</div>
@@ -150,7 +168,8 @@
                                 <div class="info-line">法人: -</div>
                                 <div class="info-actions">
                                     <el-button class="btn-close">关闭</el-button>
-                                    <el-button type="primary" class="btn-select">主体建档</el-button>
+                                    <el-button type="primary" class="btn-select"
+                                        @click="handleGotoSubjectFiling">主体建档</el-button>
                                 </div>
                             </div>
                         </div>
@@ -162,34 +181,39 @@
                     <div class="form-section">
                         <div class="section-header-row">
                             <h3 class="section-title no-margin">关联上游合格证</h3>
-                            <el-radio-group v-model="formData.linkUpstream">
+                            <el-radio-group v-model="formData.linkUpstream" style="margin-top: -14px;">
                                 <el-radio label="yes">是</el-radio>
                                 <el-radio label="no">否</el-radio>
                             </el-radio-group>
                         </div>
+                        <template v-if="formData.linkUpstream === 'yes'">
 
-                        <el-form-item class="mt16">
-                            <el-select v-model="formData.upstreamType" placeholder="农产品上游合格证为本平台开具" class="full-width">
-                                <el-option label="本平台开具" value="platform" />
-                            </el-select>
-                        </el-form-item>
+                            <el-form-item class="mt16">
+                                <el-select v-model="formData.upstreamType" placeholder="农产品上游合格证为本平台开具"
+                                    class="full-width">
+                                    <el-option label="本平台开具" value="platform" />
+                                </el-select>
+                            </el-form-item>
 
-                        <div class="search-row">
-                            <el-input v-model="formData.upstreamCertNo" placeholder="10245567(输入上游合格证编号)"
-                                style="flex: 1">
-                                <template #suffix>
-                                    <el-icon>
-                                        <Search />
-                                    </el-icon>
-                                </template>
-                            </el-input>
-                            <el-button type="primary" class="btn-cyan">查询</el-button>
-                        </div>
+                            <div class="search-row">
+                                <el-input v-model="formData.upstreamCertNo" placeholder="10245567(输入上游合格证编号)"
+                                    style="flex: 1">
+                                    <template #suffix>
+                                        <el-icon>
+                                            <Search />
+                                        </el-icon>
+                                    </template>
+                                </el-input>
+                                <el-button type="primary" class="btn-cyan" :loading="upstreamLoading"
+                                    @click="handleSearchUpstream">查询</el-button>
+                            </div>
+                        </template>
                     </div>
 
                     <!-- 合格证预览区 -->
-                    <div class="certificate-preview-mini">
-                        <div class="cert-no">合格证编号：HGZ993199XXXX</div>
+                    <div class="certificate-preview-mini"
+                        v-if="formData.linkUpstream == 'yes' && formData.upstreamType == 'platform' && formData.upstreamCertNo">
+                        <div class="cert-no">合格证编号：{{ formData.upstreamCertNo }}</div>
                         <div class="cert-inner-card">
                             <h2 class="cert-main-title">承诺达标合格</h2>
                             <div class="cert-sub-title">我承诺生产销售的食用农产品</div>
@@ -255,8 +279,8 @@
                 <el-form :model="formData" label-position="top" class="step-form">
                     <el-form-item label="合格证出证类型" class="nowrap-item">
                         <el-select v-model="formData.issueType" placeholder="请选择" class="custom-select-large">
-                            <el-option label="收购出证" value="buy" />
-                            <el-option label="生产出证" value="produce" />
+                            <el-option v-for="dict in certificateTypeOptions" :key="dict.value" :label="dict.label"
+                                :value="dict.value" />
                         </el-select>
                     </el-form-item>
 
@@ -284,61 +308,79 @@
                     </el-form-item>
 
                     <div class="association-grid">
+                        <!-- 左侧：第三方结果 -->
                         <div class="assoc-col">
-                            <h3 class="col-title">关联样品检测结果 (第三方)</h3>
+                            <h3 class="col-title">关联样品检测结果 {{ formData.thirdPartyType === 'third' ? '第三方' : '平台' }}</h3>
                             <div class="col-content-box">
                                 <el-select v-model="formData.thirdPartyType" placeholder="第三方检测结果" class="full-width">
                                     <el-option label="第三方检测结果" value="third" />
-                                </el-select>
-                                <el-button type="primary" class="upload-btn full-width">上传检测报告/检测结果</el-button>
-                                <div class="image-preview-placeholder">
-                                    <el-icon class="placeholder-icon">
-                                        <Picture />
-                                    </el-icon>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="assoc-col">
-                            <h3 class="col-title">关联样品检测结果 (平台)</h3>
-                            <div class="col-content-box">
-                                <el-select v-model="formData.platformType" placeholder="本平台检测结果" class="full-width">
                                     <el-option label="本平台检测结果" value="platform" />
                                 </el-select>
-                                <div class="search-row">
-                                    <el-input v-model="formData.searchKey" placeholder="查询样品检测结果" />
-                                    <el-button type="primary" class="link-btn">关联</el-button>
-                                </div>
-                                <div class="results-preview">
-                                    <h4 class="preview-title">检测结果预览</h4>
-                                    <div class="kv-grid">
-                                        <div class="kv-row"><span class="label">样品名称：</span><span class="val">{{
-                                            formData.productName || '暂无' }}</span></div>
-                                        <div class="kv-row"><span class="label">检测人员：</span><span class="val">李娜</span>
-                                        </div>
+                                <template v-if="formData.thirdPartyType === 'third'">
+
+                                    <UploadImg v-model="formData.thirdPartyReportUrl" :limit="1" height="200px" />
+                                    <div class="upload-tip">上传检测报告/检测结果</div>
+                                </template>
+
+                                <template v-else>
+                                    <div class="search-row" style="margin-top: 0;">
+                                        <el-select v-model="formData.platformRecordId" filterable remote
+                                            :remote-method="searchPlatformRecords" placeholder="查询样品检测结果完成关联"
+                                            class="flex-input" :loading="searchLoading">
+                                            <el-option v-for="item in recordOptions" :key="item.id"
+                                                :label="item.recordCode" :value="item.id">
+                                                <span>{{ item.recordCode }} ({{ item.subjectName }})</span>
+                                            </el-option>
+                                        </el-select>
+                                        <el-button type="primary" class="link-btn" @click="handleLinkRecord"
+                                            :loading="linkLoading">关联</el-button>
                                     </div>
-                                    <table class="nested-table">
-                                        <thead>
-                                            <tr>
-                                                <th>通道</th>
-                                                <th>检测项目</th>
-                                                <th>结果</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr>
-                                                <td>1</td>
-                                                <td>氟虫腈</td>
-                                                <td>阴性</td>
-                                            </tr>
-                                            <tr>
-                                                <td>2</td>
-                                                <td>灭多威</td>
-                                                <td>阳性</td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
+
+                                    <div class="results-preview" v-if="currentRecord">
+                                        <h4 class="preview-title">检测结果预览</h4>
+
+                                        <div class="kv-grid">
+                                            <div class="kv-row"><span class="label">样品编号：</span><span class="val">{{
+                                                    currentRecord.recordCode }}</span></div>
+                                            <div class="kv-row"><span class="label">样品名称：</span><span class="val">{{
+                                                    currentRecord.subjectName }}</span></div>
+                                            <div class="kv-row"><span class="label">检测人员：</span><span class="val">{{
+                                                    currentRecord.detector }}</span></div>
+                                            <div class="kv-row"><span class="label">检测日期：</span><span class="val">{{
+                                                    currentRecord.detectionDate }}</span></div>
+                                        </div>
+
+                                        <table class="nested-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>通道</th>
+                                                    <th>检测项目</th>
+                                                    <th>检测结果</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr v-for="(item, index) in detectionItems" :key="index">
+                                                    <td>{{ index + 1 }}</td>
+                                                    <td>{{ item.detectionItem }}</td>
+                                                    <td>
+                                                        <el-tag :type="item.result === 1 ? 'success' : 'danger'"
+                                                            size="small">
+                                                            {{ item.result === 1 ? '阴性' : '阳性' }}
+                                                        </el-tag>
+                                                    </td>
+                                                </tr>
+                                                <tr v-if="detectionItems.length === 0">
+                                                    <td colspan="3" class="text-center">无检测细项</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div v-else class="preview-empty">
+                                        <el-empty description="请先搜索并选择检测记录进行关联" :image-size="80" />
+                                    </div>
+                                </template>
+
+
                             </div>
                         </div>
                     </div>
@@ -428,50 +470,209 @@
 </template>
 
 <script setup>
-import { reactive, computed, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
+import { reactive, computed, onMounted, ref } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import { Search, Picture, Check, ArrowRight } from '@element-plus/icons-vue';
 import { useCertificateStore } from '@/store/modules/certificate';
 import PageBack from '@/components/PageBack/index.vue';
+import * as CertificateApi from '@/api/agri/certificate';
+import * as ProductApi from '@/api/agri/product';
+import * as SubjectApi from '@/api/agri/subject';
+import { useMessage } from '@/hooks/web/useMessage';
+import { DICT_TYPE, getIntDictOptions } from '@/utils/dict';
 
 const router = useRouter();
+const route = useRoute();
+const message = useMessage();
 const certStore = useCertificateStore();
 
+const id = route.query.id;
+const isUpdate = !!id;
 const currentStep = computed(() => certStore.currentStep);
+
+// 字典数据
+const certificateTypeOptions = getIntDictOptions(DICT_TYPE.AGRI_CERTIFICATE_TYPE);
 
 const formData = reactive({
     // Step 1
     linkProfile: 'yes',
     searchProfile: '',
-    productNo: 'DP20251231000001',
+    productNo: '',
     productName: '',
     category: '',
     origin: '',
     batchSize: '',
     unit: 'kg',
-    createDate: '2025-12-19',
+    createDate: '',
     entity: '',
-    linkUpstream: 'yes',
+    productId: undefined,
+    subjectId: undefined, // 新增：保存主体ID
+    linkUpstream: 'no',
     upstreamType: 'platform',
     upstreamCertNo: '',
     p1: true,
     p2: false,
     p3: false,
+    productId: undefined,
     // Step 2
-    issueType: 'buy',
+    issueType: undefined,
     quantity: 0,
     basis: ['quality'],
     thirdPartyType: 'third',
     platformType: 'platform',
-    searchKey: ''
+    searchKey: '',
+    qrCode: ''
 });
 
-onMounted(() => {
-    // 每次进入页面重置到第一步
+const upstreamLoading = ref(false);
+const handleSearchUpstream = async () => {
+    if (!formData.upstreamCertNo) {
+        message.warning('请输入上游合格证编号');
+        return;
+    }
+    upstreamLoading.value = true;
+    try {
+        const data = await CertificateApi.getCertificateByCode(formData.upstreamCertNo);
+        if (data) {
+            message.success('查询成功');
+            // 回填信息
+            formData.productName = data.productName || formData.productName;
+            formData.origin = data.origin || formData.origin;
+            formData.entity = data.entityName || formData.entity;
+            formData.subjectId = data.subjectId || formData.subjectId;
+            formData.productId = data.productId || formData.productId;
+
+            // 如果有主体信息，更新选项
+            if (data.subjectId && data.entityName) {
+                entityOptions.value = [{ id: data.subjectId, name: data.entityName }];
+            }
+        } else {
+            message.warning('未找到对应的合格证信息');
+        }
+    } catch (error) {
+        console.error('查询上游合格证失败', error);
+        // message.error('查询失败，请检查编号是否正确');
+    } finally {
+        upstreamLoading.value = false;
+    }
+};
+
+const handleEntityChange = (val) => {
+    const selected = entityOptions.value.find(item => item.id === val);
+    if (selected) {
+        formData.entity = selected.name;
+        formData.subjectId = selected.id;
+    }
+};
+
+const loadDetails = async () => {
+    if (!id) return;
+    try {
+        const data = await CertificateApi.getCertificate(id);
+        Object.assign(formData, {
+            productNo: data.certificateCode,
+            productName: data.productName,
+            category: 'vegetable', // 示例映射
+            origin: data.origin || '',
+            batchSize: data.quantity,
+            unit: data.unit || 'kg',
+            createDate: data.issueDate,
+            entity: data.entityName || '',
+            subjectId: data.subjectId, // 设置 ID
+            productId: data.productId,
+            issueType: data.certificateType,
+            quantity: data.quantity,
+            qrCode: data.qrCode
+        });
+        // 为确保 select 显示名称，如果有 ID 则构造一个 option
+        if (data.subjectId && data.entityName) {
+            entityOptions.value = [{ id: data.subjectId, name: data.entityName }];
+        }
+        // 更新 store 以同步其它步骤
+        certStore.updateProductInfo(formData);
+        certStore.updateIssueInfo(formData);
+    } catch (error) {
+        console.error('加载详情失败', error);
+    }
+};
+
+const entityOptions = ref([]);
+const searchEntity = async (query) => {
+    if (query !== '') {
+        try {
+            const data = await SubjectApi.getSubjectPage({ name: query, pageNo: 1, pageSize: 50 });
+            entityOptions.value = data.list;
+        } catch (error) {
+            console.error('搜索主体失败', error);
+        }
+    } else {
+        entityOptions.value = [];
+    }
+};
+
+const productLoading = ref(false);
+const productOptions = ref([]);
+
+const searchProduct = async (query) => {
+    if (query !== '') {
+        productLoading.value = true;
+        try {
+            const data = await ProductApi.getProductPage({ productCode: query, pageNo: 1, pageSize: 50 });
+            productOptions.value = data.list;
+        } finally {
+            productLoading.value = false;
+        }
+    } else {
+        productOptions.value = [];
+    }
+};
+
+const handleProductSelect = async (id) => {
+    if (!id) return;
+    try {
+        const data = await ProductApi.getProduct(id);
+        formData.productNo = data.productCode || '';
+        formData.productName = data.productName || '';
+        formData.category = data.category || '';
+        formData.origin = data.productionArea || '';
+        formData.productId = data.id;
+    } catch (error) {
+        console.error('获取产品档案失败', error);
+    }
+};
+
+onMounted(async () => {
     certStore.setStep(1);
-    // 从 store 恢复数据 (如果有)
-    // Object.assign(formData, certStore.productInfo, certStore.issueInfo);
+    if (id) {
+        loadDetails();
+    } else {
+        // 如果是从主体建档回跳，尝试从 store 恢复现场
+        Object.assign(formData, certStore.productInfo);
+
+        // 处理回跳后的新主体自动选中
+        const newSubjectId = route.query.newSubjectId;
+        if (newSubjectId) {
+            try {
+                const subject = await SubjectApi.getSubject(newSubjectId);
+                formData.subjectId = subject.id;
+                formData.entity = subject.name;
+                entityOptions.value = [subject];
+            } catch (err) {
+                console.error('获取新主体信息失败', err);
+            }
+        }
+    }
 });
+
+const handleGotoSubjectFiling = () => {
+    // 离开前保存当前填写的所有信息到 store
+    certStore.updateProductInfo(formData);
+    // 跳转到主体建档页面，并告知回跳地址
+    router.push({
+        path: '/filing/subjectCreate',
+        query: { redirect: route.fullPath }
+    });
+};
 
 const handleAdd = () => formData.quantity++;
 const handleSub = () => { if (formData.quantity > 0) formData.quantity-- };
@@ -481,15 +682,67 @@ const goToStep = (step) => {
 };
 
 const goNextToStep2 = () => {
-    // 同步到 store
     certStore.updateProductInfo(formData);
     goToStep(2);
 };
 
-const handleGenerate = () => {
-    certStore.updateIssueInfo(formData);
-    certStore.generateCertificate();
-    goToStep(3);
+// 提交数据
+const handleGenerate = async () => {
+    try {
+        const basisMapping = {
+            quality: 1,
+            self: 2,
+            entrust: 3
+        };
+        const mappedBasis = formData.basis.map(key => basisMapping[key]).filter(Boolean);
+
+        let currentProductId = formData.productId || 15707; // 回退使用默认值
+
+        if (formData.linkProfile === 'no') {
+            const productData = {
+                productCode: formData.productNo,
+                productName: formData.productName,
+                category: formData.category,
+                productionArea: formData.origin,
+                subjectId: formData.subjectId || 1, // 使用正确的主体ID，回退1
+            };
+            try {
+                currentProductId = await ProductApi.createProduct(productData);
+                formData.productId = currentProductId;
+            } catch (err) {
+                console.error('创建产品失败', err);
+                message.error('创建产品档案失败，无法继续生成合格证');
+                return;
+            }
+        }
+
+        const submitData = {
+            id: isUpdate ? id : undefined,
+            certificateType: formData.issueType,
+            productId: currentProductId,
+            quantity: Number(formData.quantity) || 0,
+            unit: formData.unit || 'kg',
+            commitmentContent: '我承诺生产销售的食用农产品未使用禁用的农药、兽药及其他化合物，使用的常规农药、兽药残留不超标。',
+            commitmentBasis: JSON.stringify(mappedBasis),
+            productionDate: formData.createDate ? new Date(formData.createDate).toISOString().split('T')[0] + ' 00:00:00' : undefined,
+            batchNo: formData.batchSize || undefined,
+            upstreamCertificateCode: formData.upstreamCertNo || undefined
+        };
+
+        if (isUpdate) {
+            await CertificateApi.updateCertificate(submitData);
+            message.success('更新成功');
+        } else {
+            await CertificateApi.createCertificate(submitData);
+            message.success('创建成功');
+        }
+
+        certStore.updateIssueInfo(formData);
+        certStore.generateCertificate();
+        goToStep(3);
+    } catch (error) {
+        console.error('保存失败', error);
+    }
 };
 
 const handleCancel = () => {
@@ -517,6 +770,7 @@ const handlePrint = () => { window.print(); };
     background: #fff;
     backdrop-filter: blur(10px);
     border-radius: 10px;
+    padding-right: 0;
 }
 
 .title-wrapper {
@@ -551,7 +805,7 @@ const handlePrint = () => { window.print(); };
     background: #fff;
     backdrop-filter: blur(10px);
     border-radius: 10px;
-    padding: var( --page-container-padding);
+    padding: var(--page-container-padding);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
 }
 
@@ -588,9 +842,11 @@ const handlePrint = () => { window.print(); };
                 border-color: #E2E8F0;
                 color: #94A3B8;
             }
+
             .step-title {
                 color: #475569;
             }
+
             .step-desc {
                 color: #94A3B8;
             }
@@ -602,10 +858,12 @@ const handlePrint = () => { window.print(); };
                 // background: #00B3ED;
                 color: #00B3ED;
             }
+
             .step-title {
                 color: #00B3ED;
                 font-weight: 600;
             }
+
             .step-desc {
                 color: #00B3ED;
             }
@@ -617,9 +875,11 @@ const handlePrint = () => { window.print(); };
                 background: #10B981;
                 color: #fff;
             }
+
             .step-title {
                 color: #1E293B;
             }
+
             .step-desc {
                 color: #10B981;
             }
@@ -650,16 +910,18 @@ const handlePrint = () => { window.print(); };
 
     .step-title {
         font-size: 14px;
+        line-height: 18px;
         color: #00B3ED;
         font-weight: 500;
         white-space: nowrap;
         transition: all 0.3s;
+        margin-top: 4px;
     }
 
     .step-desc {
-        font-size: 10px;
+        font-size: 12px;
         color: #999;
-        line-height: 1.4;
+        line-height: 16px;
         white-space: nowrap;
         transition: all 0.3s;
     }

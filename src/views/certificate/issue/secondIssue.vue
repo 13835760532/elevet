@@ -11,27 +11,29 @@
             <el-form :model="formData" label-position="top" class="step-form">
                 <!-- 基础配置区 -->
                 <div class="top-configs">
-                    <el-form-item label="合格证出证类型" class="nowrap-item">
-                        <el-select v-model="formData.issueType" placeholder="请选择" class="custom-select-large">
-                            <el-option label="收购出证" value="buy" />
-                            <el-option label="生产出证" value="produce" />
-                        </el-select>
-                    </el-form-item>
-
-                    <el-form-item label="数量 (重量)">
-                        <div class="quantity-input">
-                            <div class="stepper">
-                                <button type="button" class="step-btn" @click="handleSub">-</button>
-                                <div class="step-val">{{ formData.quantity }}</div>
-                                <button type="button" class="step-btn yellow" @click="handleAdd">+</button>
-                            </div>
-                            <el-select v-model="formData.unit" class="unit-select">
-                                <el-option label="单位" value="unit" />
-                                <el-option label="千克" value="kg" />
-                                <el-option label="吨" value="t" />
+                    <div class="form-row">
+                        <el-form-item label="合格证出证类型" class="nowrap-item">
+                            <el-select v-model="formData.issueType" placeholder="请选择" class="custom-select-large">
+                                <el-option label="收购出证" value="buy" />
+                                <el-option label="生产出证" value="produce" />
                             </el-select>
-                        </div>
-                    </el-form-item>
+                        </el-form-item>
+
+                        <el-form-item label="数量 (重量)">
+                            <div class="quantity-input">
+                                <div class="stepper">
+                                    <button type="button" class="step-btn" @click="handleSub">-</button>
+                                    <div class="step-val">{{ formData.quantity }}</div>
+                                    <button type="button" class="step-btn yellow" @click="handleAdd">+</button>
+                                </div>
+                                <el-select v-model="formData.unit" class="unit-select">
+                                    <el-option label="单位" value="unit" />
+                                    <el-option label="千克" value="kg" />
+                                    <el-option label="吨" value="t" />
+                                </el-select>
+                            </div>
+                        </el-form-item>
+                    </div>
 
                     <el-form-item label="承诺依据">
                         <el-checkbox-group v-model="formData.basis">
@@ -46,57 +48,37 @@
                 <div class="association-grid">
                     <!-- 左侧：第三方结果 -->
                     <div class="assoc-col">
-                        <h3 class="col-title">关联样品检测结果</h3>
+                        <h3 class="col-title">关联样品检测结果 {{ formData.thirdPartyType === 'third' ? '第三方' : '平台' }}</h3>
                         <div class="col-content-box">
                             <el-select v-model="formData.thirdPartyType" placeholder="第三方检测结果" class="full-width">
                                 <el-option label="第三方检测结果" value="third" />
+                                      <el-option label="本平台检测结果" value="platform" />
                             </el-select>
+                            <template v-if="formData.thirdPartyType === 'third'">    
 
-                            <el-button type="primary" class="upload-btn full-width">上传检测报告/检测结果</el-button>
+                                 <UploadImg v-model="formData.thirdPartyReportUrl" :limit="1" height="200px" />
+                                  <div class="upload-tip">上传检测报告/检测结果</div>
+                            </template>
 
-                            <div class="image-preview-placeholder">
-                                <el-icon class="placeholder-icon">
-                                    <Picture />
-                                </el-icon>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 右侧：平台结果 -->
-                    <div class="assoc-col">
-                        <h3 class="col-title">关联样品检测结果</h3>
-                        <div class="col-content-box">
-                            <el-select v-model="formData.platformType" placeholder="本平台检测结果" class="full-width">
-                                <el-option label="本平台检测结果" value="platform" />
-                            </el-select>
-
-                            <div class="search-row">
-                                <el-input v-model="formData.searchKey" placeholder="查询样品检测结果完成关联" class="flex-input" />
-                                <el-button type="primary" class="link-btn">关联</el-button>
+                            <template v-else>
+     <div class="search-row">
+                                <el-select v-model="formData.platformRecordId" filterable remote :remote-method="searchPlatformRecords"
+                                    placeholder="查询样品检测结果完成关联" class="flex-input" :loading="searchLoading">
+                                    <el-option v-for="item in recordOptions" :key="item.id" :label="item.recordCode" :value="item.id">
+                                        <span>{{ item.recordCode }} ({{ item.subjectName }})</span>
+                                    </el-option>
+                                </el-select>
+                                <el-button type="primary" class="link-btn" @click="handleLinkRecord" :loading="linkLoading">关联</el-button>
                             </div>
 
-                            <div class="results-preview">
-                                <h4 class="preview-title">样品检测结果预览</h4>
+                            <div class="results-preview" v-if="currentRecord">
+                                <h4 class="preview-title">检测结果预览</h4>
 
                                 <div class="kv-grid">
-                                    <div class="kv-row"><span class="label">样品编号：</span><span
-                                            class="val">YP20251230000001</span></div>
-                                    <div class="kv-row"><span class="label">样品名称：</span><span class="val">桂鱼</span>
-                                    </div>
-                                    <div class="kv-row"><span class="label">样品产地：</span><span class="val">广东省-佛山市</span>
-                                    </div>
-                                    <div class="kv-row"><span class="label">样品数量 (重量)：</span><span
-                                            class="val">10亩</span></div>
-                                    <div class="kv-row"><span class="label">抽检区域：</span><span
-                                            class="val">北京-朝阳-高碑店</span></div>
-                                    <div class="kv-row"><span class="label">主体名称：</span><span
-                                            class="val">佛山市山水区合洋水产有限公司</span></div>
-                                    <div class="kv-row"><span class="label">检测机构：</span><span
-                                            class="val">北京市平谷区农业综合检验检测中心</span></div>
-                                    <div class="kv-row"><span class="label">检测人员：</span><span class="val">李娜</span>
-                                    </div>
-                                    <div class="kv-row"><span class="label">检测日期：</span><span
-                                            class="val">2025-12-30</span></div>
+                                    <div class="kv-row"><span class="label">样品编号：</span><span class="val">{{ currentRecord.recordCode }}</span></div>
+                                    <div class="kv-row"><span class="label">样品名称：</span><span class="val">{{ currentRecord.subjectName }}</span></div>
+                                    <div class="kv-row"><span class="label">检测人员：</span><span class="val">{{ currentRecord.detector }}</span></div>
+                                    <div class="kv-row"><span class="label">检测日期：</span><span class="val">{{ currentRecord.detectionDate }}</span></div>
                                 </div>
 
                                 <table class="nested-table">
@@ -108,19 +90,27 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <tr>
-                                            <td>1</td>
-                                            <td>氟虫腈</td>
-                                            <td>阴性</td>
+                                        <tr v-for="(item, index) in detectionItems" :key="index">
+                                            <td>{{ index + 1 }}</td>
+                                            <td>{{ item.detectionItem }}</td>
+                                            <td>
+                                                <el-tag :type="item.result === 1 ? 'success' : 'danger'" size="small">
+                                                    {{ item.result === 1 ? '阴性' : '阳性' }}
+                                                </el-tag>
+                                            </td>
                                         </tr>
-                                        <tr>
-                                            <td>2</td>
-                                            <td>灭多威</td>
-                                            <td>阳性</td>
+                                        <tr v-if="detectionItems.length === 0">
+                                            <td colspan="3" class="text-center">无检测细项</td>
                                         </tr>
                                     </tbody>
                                 </table>
                             </div>
+                            <div v-else class="preview-empty">
+                                <el-empty description="请先搜索并选择检测记录进行关联" :image-size="80" />
+                            </div>
+                            </template>
+
+                     
                         </div>
                     </div>
                 </div>
@@ -136,12 +126,16 @@
 </template>
 
 <script setup>
-import { reactive, computed, onMounted } from 'vue';
+import { reactive, computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { Picture } from '@element-plus/icons-vue';
 import { useCertificateStore } from '@/store/modules/certificate';
+import * as DetectionRecordApi from '@/api/agri/detectionRecord';
+import * as DetectionResultItemApi from '@/api/agri/detectionResultItem';
+import UploadImg from '@/components/UploadFile/src/UploadImg.vue';
+import { useMessage } from '@/hooks/web/useMessage';
 
 const router = useRouter();
+const message = useMessage();
 const certStore = useCertificateStore();
 
 // 当前步骤
@@ -150,16 +144,79 @@ const currentStep = computed(() => certStore.currentStep);
 const formData = reactive({
     issueType: 'buy',
     quantity: 0,
-    unit: 'unit',
+    unit: 'kg',
     basis: ['quality'],
     thirdPartyType: 'third',
+    thirdPartyReportUrl: '',
     platformType: 'platform',
-    searchKey: ''
+    platformRecordId: undefined
 });
 
-// 初始化时设置步骤
+// 平台数据管理
+const searchLoading = ref(false);
+const linkLoading = ref(false);
+const recordOptions = ref([]);
+const currentRecord = ref(null);
+const detectionItems = ref([]);
+
+// 远程搜索检测记录
+const searchPlatformRecords = async (query) => {
+    if (query !== '') {
+        searchLoading.value = true;
+        try {
+            const data = await DetectionRecordApi.getDetectionRecordPage({
+                recordCode: query,
+                pageNo: 1,
+                pageSize: 50
+            });
+            recordOptions.value = data.list;
+        } catch (error) {
+            console.error('搜索检测记录失败', error);
+        } finally {
+            searchLoading.value = false;
+        }
+    } else {
+        recordOptions.value = [];
+    }
+};
+
+// 关联详细信息
+const handleLinkRecord = async () => {
+    if (!formData.platformRecordId) {
+        message.warning('请先搜索并选择一个检测记录');
+        return;
+    }
+    linkLoading.value = true;
+    try {
+        const record = await DetectionRecordApi.getDetectionRecord(formData.platformRecordId);
+        currentRecord.value = record;
+        
+        // 获取检测细项
+        const items = await DetectionResultItemApi.getDetectionResultItemPage({
+            recordId: formData.platformRecordId,
+            pageNo: 1,
+            pageSize: 100
+        });
+        detectionItems.value = items.list;
+        message.success('已成功关联检测结果');
+    } catch (error) {
+        console.error('获取记录详情失败', error);
+        message.error('由于网络或服务异常，关联失败');
+    } finally {
+        linkLoading.value = false;
+    }
+};
+
+// 初始化时从 store 恢复
 onMounted(() => {
     certStore.setStep(2);
+    // 从 store 中合并已有的 issueInfo
+    Object.assign(formData, certStore.issueInfo);
+    
+    // 如果有已选中的 ID，尝试加载它
+    if (formData.platformRecordId) {
+        handleLinkRecord();
+    }
 });
 
 const handleAdd = () => formData.quantity++;
@@ -173,17 +230,22 @@ const handleBack = () => {
 
 // 生成合格证
 const handleGenerate = () => {
+    if (formData.quantity <= 0) {
+        message.warning('请输入有效的产品数量');
+        return;
+    }
+    if (formData.basis.length === 0) {
+        message.warning('请至少选择一项承诺依据');
+        return;
+    }
+
     // 保存开具信息到 store
     certStore.updateIssueInfo({
-        issueType: formData.issueType,
-        quantity: formData.quantity,
-        unit: formData.unit,
-        basis: formData.basis,
-        thirdPartyType: formData.thirdPartyType,
-        platformType: formData.platformType
+        ...formData,
+        testResultId: formData.platformRecordId // 映射 ID 到 store 指定字段
     });
 
-    // 生成合格证
+    // 这里执行生成逻辑
     certStore.generateCertificate();
 
     // 跳转到第三步
@@ -248,7 +310,13 @@ const handleGenerate = () => {
 }
 
 .top-configs {
-    margin-bottom: 40px;
+    margin-bottom: 30px;
+
+    .form-row {
+        display: flex;
+        gap: 40px;
+        margin-bottom: 10px;
+    }
 
     :deep(.el-form-item__label) {
         font-size: 14px;
@@ -343,10 +411,10 @@ const handleGenerate = () => {
     width: 100% !important;
 }
 
-.upload-btn {
-    background: #00B3ED;
-    border-color: #00B3ED;
-    height: 40px;
+.upload-tip {
+    text-align: center;
+    font-size: 12px;
+    color: #00B3ED;
     font-weight: 600;
 }
 
@@ -380,7 +448,9 @@ const handleGenerate = () => {
     background: #fff;
     border: 1px solid #E5E7EB;
     padding: 16px;
-    border-radius: 4px;
+    border-radius: 8px;
+    max-height: 320px;
+    overflow-y: auto;
 
     .preview-title {
         font-size: 14px;
@@ -389,6 +459,15 @@ const handleGenerate = () => {
         padding-left: 8px;
         border-left: 3px solid #00B3ED;
     }
+}
+
+.preview-empty {
+    flex: 1;
+    background: #fff;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .kv-grid {

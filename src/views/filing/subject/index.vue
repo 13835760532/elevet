@@ -17,21 +17,21 @@
             <div class="query-form-wrapper">
                 <el-form :inline="true" :model="queryParams" class="custom-query-form custom-query-form-row" label-position="left">
                     <el-form-item label="">
-                        <el-input :prefix-icon="Search" v-model="queryParams.entityName" placeholder="搜索主体名称" class="custom-input w220" />
+                        <el-input :prefix-icon="Search" v-model="queryParams.name" placeholder="搜索主体名称" class="custom-input w220" />
                     </el-form-item>
                     <el-form-item label="">
-                        <el-select v-model="queryParams.filingType" placeholder="备案类型" class="custom-select">
+                        <el-select v-model="queryParams.type" placeholder="备案类型" class="custom-select" clearable>
                             <el-option label="全部" value="" />
-                            <el-option label="企业备案" value="enterprise" />
-                            <el-option label="个人备案" value="personal" />
+                            <el-option label="企业备案" :value="1" />
+                            <el-option label="个人备案" :value="2" />
                         </el-select>
                     </el-form-item>
                     <el-form-item label="">
-                        <el-cascader v-model="queryParams.region" :options="regionOptions" placeholder="所属地区"
-                            class="custom-cascader" clearable />
+                        <!-- <el-cascader v-model="queryParams.region" :options="regionOptions" placeholder="所属地区"
+                            class="custom-cascader" clearable /> -->
                     </el-form-item>
                     <el-form-item label="">
-                        <el-input :prefix-icon="Search" v-model="queryParams.entityCode" placeholder="搜索主体代码/身份证"
+                        <el-input :prefix-icon="Search" v-model="queryParams.socialCreditCode" placeholder="搜索主体代码/身份证"
                             class="custom-input w220" />
                     </el-form-item>
                     <div class="query-btns">
@@ -54,21 +54,39 @@
 
             <!-- 数据表格 -->
             <div class="table-wrapper">
-                <el-table :data="tableList" border="false">
+                <el-table :data="tableList" border="false" v-loading="loading">
                     <el-table-column label="序号" type="index" width="60" align="center" />
-                    <el-table-column prop="entityCode" width="170" align="center">
+                    <el-table-column width="170" align="center">
                         <template #header>
                             <div>主体代码</div>
                             <div style="font-size: 12px; color: #999; font-weight: normal;">（企业信用代码/身份证）</div>
                         </template>
+                        <template #default="scope">
+                            {{ scope.row.socialCreditCode || scope.row.idCard || '--' }}
+                        </template>
                     </el-table-column>
-                    <el-table-column label="主体名称" prop="entityName" width="120" show-overflow-tooltip />
-                    <el-table-column label="备案类型" prop="filingType" width="100" align="center" />
-                    <el-table-column label="主体类型" prop="entityType" width="100" align="center" />
-                    <el-table-column label="主营产品" prop="mainProduct" width="100" align="center" />
-                    <el-table-column label="所属地区" prop="region" width="140" align="center" show-overflow-tooltip />
-                    <el-table-column label="创建时间" prop="createTime" width="110" align="center" />
-                    <el-table-column label="创建机构" prop="createOrg" min-width="140" show-overflow-tooltip />
+                    <el-table-column label="主体名称" prop="name" width="180" show-overflow-tooltip />
+                    <el-table-column label="备案类型" prop="type" width="100" align="center">
+                        <template #default="scope">
+                            <el-tag :type="scope.row.type === 2 ? 'warning' : 'info'">{{ scope.row.type === 2 ? '个人备案' : '企业备案' }}</el-tag>
+                        </template>
+                    </el-table-column>
+                    <el-table-column label="主体类别" prop="category" width="100" align="center">
+                        <template #default="scope">
+                            <!-- 根据字典转换，这里做个兜底展示 -->
+                            <el-tag v-if="scope.row.category">{{ scope.row.category }}</el-tag>
+                            <span v-else>--</span>
+                        </template>
+                    </el-table-column>
+                    <el-table-column label="主营产品" prop="mainProducts" width="120" align="center" show-overflow-tooltip />
+                    <el-table-column label="联系人" prop="contactName" width="100" align="center" />
+                    <el-table-column label="电话" prop="contactPhone" width="120" align="center" />
+                    <el-table-column label="所属地区" align="center" width="160" show-overflow-tooltip>
+                        <template #default="scope">
+                            {{ scope.row.provinceCode ? `${scope.row.provinceCode}${scope.row.cityCode}${scope.row.districtCode}` : '--' }}
+                        </template>
+                    </el-table-column>
+                    <el-table-column label="创建时间" prop="createTime" width="160" align="center" />
                     <el-table-column label="操作" width="160" align="center" fixed="right">
                         <template #default="scope">
                             <div class="table-operate-action-btns">
@@ -83,134 +101,75 @@
 
             <!-- 分页区域 -->
             <div class="pagination-wrapper">
-                <el-pagination v-model:current-page="pageParams.pageNum" v-model:page-size="pageParams.pageSize"
-                    :total="total" background layout="prev, pager, next" class="custom-pagination" />
+                <el-pagination v-model:current-page="pageParams.pageNo" v-model:page-size="pageParams.pageSize"
+                    :total="total" background layout="total, prev, pager, next, sizes" class="custom-pagination" 
+                    @size-change="getList" @current-change="getList" />
             </div>
         </div>
     </div>
 </template>
 
 <script setup>
-import { reactive, ref } from 'vue';
+import { reactive, ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { Search } from '@element-plus/icons-vue';
 import { useFormLayout } from '@/hooks/web/useFormLayout';
+import * as SubjectApi from '@/api/agri/subject/index';
+import { useMessage } from '@/hooks/web/useMessage';
+import { ElMessageBox } from 'element-plus';
 
 const { queryFormClass } = useFormLayout();
 
 const router = useRouter();
+const message = useMessage();
+const loading = ref(false);
 
 const queryParams = reactive({
-    entityName: '',
-    filingType: '',
-    region: [],
-    entityCode: ''
+    name: '',
+    type: undefined,
+    socialCreditCode: ''
 });
 
 const pageParams = reactive({
-    pageNum: 1,
+    pageNo: 1,
     pageSize: 10
 });
 
-const total = ref(28);
+const total = ref(0);
 
-// 地区级联选项
-const regionOptions = [
-    {
-        value: 'beijing',
-        label: '北京市',
-        children: [
-            { value: 'chaoyang', label: '朝阳区' },
-            { value: 'haidian', label: '海淀区' },
-            { value: 'dongcheng', label: '东城区' },
-            { value: 'xicheng', label: '西城区' }
-        ]
-    },
-    {
-        value: 'tianjin',
-        label: '天津市',
-        children: [
-            { value: 'nankai', label: '南开区' },
-            { value: 'hexi', label: '河西区' }
-        ]
+const tableList = ref([]);
+
+const getList = async () => {
+    loading.value = true;
+    try {
+        const data = await SubjectApi.getSubjectPage({
+            ...queryParams,
+            pageNo: pageParams.pageNo,
+            pageSize: pageParams.pageSize
+        });
+        tableList.value = data.list;
+        total.value = data.total;
+    } catch (error) {
+        console.error(error);
+    } finally {
+        loading.value = false;
     }
-];
-
-const tableList = ref([
-    {
-        entityCode: '110201181878878686816',
-        entityName: '晓辉农场',
-        filingType: '企业备案',
-        entityType: '生产',
-        mainProduct: '黄瓜、西红柿',
-        region: '北京市/北京市/海淀区',
-        createTime: '20251219',
-        createOrg: '北京市农业农村局'
-    },
-    {
-        entityCode: '21030*******0925',
-        entityName: '李慧',
-        filingType: '个人备案',
-        entityType: '收购',
-        mainProduct: '西红柿',
-        region: '北京市',
-        createTime: '20251219',
-        createOrg: '北京市农业农村局'
-    },
-    {
-        entityCode: '110201181878878686816',
-        entityName: '晓辉农场',
-        filingType: '企业备案',
-        entityType: '储存',
-        mainProduct: '草莓',
-        region: '北京市',
-        createTime: '20251219',
-        createOrg: '北京市农业农村局'
-    },
-    {
-        entityCode: '',
-        entityName: '',
-        filingType: '',
-        entityType: '运输',
-        mainProduct: '',
-        region: '',
-        createTime: '',
-        createOrg: ''
-    },
-    {
-        entityCode: '',
-        entityName: '',
-        filingType: '',
-        entityType: '加工',
-        mainProduct: '',
-        region: '',
-        createTime: '',
-        createOrg: ''
-    }
-]);
-
-
+}
 
 const handleQuery = () => {
-    console.log('Query:', queryParams);
+    pageParams.pageNo = 1;
+    getList();
 };
 
 const handleReset = () => {
-    Object.keys(queryParams).forEach(key => {
-        if (Array.isArray(queryParams[key])) {
-            queryParams[key] = [];
-        } else {
-            queryParams[key] = '';
-        }
-    });
-};
-
-const handleFilingLog = () => {
-    console.log('Filing Log');
+    queryParams.name = '';
+    queryParams.type = undefined;
+    queryParams.socialCreditCode = '';
+    handleQuery();
 };
 
 const handleExport = () => {
-    console.log('Export');
+    message.warning('导出功能待开发');
 };
 
 const handleBatchFiling = () => {
@@ -222,18 +181,33 @@ const handleSingleFiling = () => {
 };
 
 const handleEdit = (row) => {
-    console.log('Edit:', row);
-    router.push('/filing/subjectCreate');
+    router.push('/filing/subjectCreate?id=' + row.id);
 };
 
-const handleDelete = (row) => {
-    console.log('Delete:', row);
+const handleDelete = async (row) => {
+    try {
+        await ElMessageBox.confirm('是否确认删除主体名称为"' + row.name + '"的数据项?', '警告', {
+            confirmButtonText: '确定',
+            cancelButtonText: '取消',
+            type: 'warning'
+        });
+        await SubjectApi.deleteSubject(row.id);
+        message.success('删除成功');
+        getList();
+    } catch (error) {
+        if (error !== 'cancel') {
+            console.error(error);
+        }
+    }
 };
 
 const handleView = (row) => {
-    console.log('View:', row);
-    router.push('/filing/subjectDetail');
+    router.push('/filing/subjectDetail?id=' + row.id);
 };
+
+onMounted(() => {
+    getList();
+});
 </script>
 
 <style lang="scss" scoped>

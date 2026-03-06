@@ -165,7 +165,8 @@ const getList = async () => {
             pageNo: pageParams.pageNum,
             pageSize: pageParams.pageSize,
             certificateCode: queryParams.certNo || undefined,
-            productName: queryParams.productName || undefined
+            productName: queryParams.productName || undefined,
+            status: 1 // 默认查询有效
         };
         const data = await CertificateApi.getCertificatePage(params);
         const list = data.list || [];
@@ -173,9 +174,16 @@ const getList = async () => {
             ...item,
             certNo: item.certificateCode,
             productName: item.productName,
-            issueDate: item.issueDate
+            // 模拟字段或从 item 中提取
+            issueType: item.certificateType === 1 ? '生产者' : '收购者',
+            productCategory: '蔬菜', // 示例字段
+            origin: item.origin || '山东省胶州市',
+            entity: item.entityName || '某某生产经营主体',
+            issueDate: item.issueDate || item.createTime || '-'
         }));
         total.value = data.total || 0;
+    } catch (error) {
+        console.error(error);
     } finally {
         loading.value = false;
     }
@@ -233,11 +241,57 @@ const handleDelete = async (row: any) => {
     }
 };
 
-const handleCurrentChange = () => {
+const handleCurrentChange = (val: number) => {
+    pageParams.pageNum = val;
     getList();
 };
 </script>
 
 <style lang="scss" scoped>
 /* 页面特有样式（公共样式已在 App.vue 全局引入） */
+.type-tag {
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    
+    &.producer {
+        background: rgba(0, 179, 237, 0.1);
+        color: #00B3ED;
+        border: 1px solid rgba(0, 179, 237, 0.2);
+    }
+    
+    &.buyer {
+        background: rgba(255, 153, 0, 0.1);
+        color: #FF9900;
+        border: 1px solid rgba(255, 153, 0, 0.2);
+    }
+}
+
+.table-operate-action-btns {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    
+    span {
+        cursor: pointer;
+        font-size: 14px;
+        transition: all 0.2s;
+        
+        &:hover {
+            opacity: 0.8;
+        }
+    }
+    
+    .table-edit-operate {
+        color: #00B3ED;
+    }
+    
+    .table-view-operate {
+        color: #67c23a;
+    }
+    
+    .table-delete-operate {
+        color: #f56c6c;
+    }
+}
 </style>

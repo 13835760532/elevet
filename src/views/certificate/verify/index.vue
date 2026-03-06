@@ -69,6 +69,19 @@
                 </div>
             </div>
 
+            <!-- 页签切换 -->
+            <div class="record-tabs">
+                <div class="tab-item" :class="{ active: activeTab === 'all' }" @click="handleTabChange('all')">
+                    全部记录
+                </div>
+                <div class="tab-item" :class="{ active: activeTab === 'deposit' }" @click="handleTabChange('deposit')">
+                    合格证存证
+                </div>
+                <div class="tab-item" :class="{ active: activeTab === 'verify' }" @click="handleTabChange('verify')">
+                    合格证查验
+                </div>
+            </div>
+
             <!-- 数据表格 -->
             <div class="table-wrapper">
                 <el-table :data="tableData" v-loading="loading">
@@ -154,6 +167,9 @@ const pageNum = ref(1);
 const pageSize = ref(10);
 const total = ref(0);
 
+// 页签状态
+const activeTab = ref('all');
+
 // 表格数据
 const tableData = ref([]);
 const loading = ref(false);
@@ -165,7 +181,9 @@ const loadData = async () => {
             pageNo: pageNum.value,
             pageSize: pageSize.value,
             certificateCode: queryParams.certNo || undefined,
-            productName: queryParams.productName || undefined
+            productName: queryParams.productName || undefined,
+            // 预留类型过滤参数
+            type: activeTab.value !== 'all' ? activeTab.value : undefined
         };
         const data = await CertificateApi.getCertificatePage(params);
         const list = data.list || [];
@@ -173,9 +191,9 @@ const loadData = async () => {
             ...item,
             certNo: item.certificateCode,
             productName: item.productName,
-            // 本平台数据
+            // 根据返回数据判断来源，默认本平台
             source: '本平台',
-            type: '仅查验',
+            type: activeTab.value === 'deposit' ? '存证记录' : '仅查验',
             verifyTime: item.issueDate
         }));
         total.value = data.total || 0;
@@ -187,6 +205,13 @@ const loadData = async () => {
 onMounted(() => {
     loadData();
 });
+
+// 页签切换处理
+const handleTabChange = (tab: string) => {
+    activeTab.value = tab;
+    pageNum.value = 1;
+    loadData();
+};
 
 const handleSearch = () => {
     pageNum.value = 1;
@@ -263,9 +288,52 @@ const handleCurrentChange = (val) => {
 .action-left {
     .section-indicator {
         width: 4px;
-        height: 18px;
+        height: 22px;
         background: #00B3ED;
         border-radius: 2px;
+    }
+}
+
+.record-tabs {
+    display: flex;
+    margin: 0px 0 20px 0;
+    
+    .tab-item {
+        width: 140px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        color: #333;
+        background: #FFFFFF;
+        border: 1px solid #00B3ED;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        user-select: none;
+        
+        &:first-child {
+            border-radius: 4px 0 0 4px;
+        }
+        
+        &:last-child {
+            border-radius: 0 4px 4px 0;
+        }
+        
+        & + .tab-item {
+            border-left: none;
+        }
+        
+        &:hover {
+            background: rgba(0, 179, 237, 0.05);
+        }
+        
+        &.active {
+            background: #00B3ED;
+            color: #FFFFFF;
+            font-weight: 500;
+            box-shadow: 0 4px 12px rgba(45, 92, 246, 0.2);
+        }
     }
 }
 </style>

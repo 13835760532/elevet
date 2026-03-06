@@ -34,6 +34,7 @@
                     <p class="page-subtitle">本机构管辖地区合格证开具、查验、存证情况统计</p>
                 </div>
 
+
                 <!-- 统计卡片区 -->
                 <div class="query-card stats-section">
                     <div class="card-header">
@@ -61,6 +62,16 @@
                     <div class="card-header">
                      
                         <h2 class="card-title">辖区合格证查询</h2>
+                    </div>
+
+                    <!-- 交互页签 -->
+                    <div class="record-tabs">
+                        <div class="tab-item" :class="{ active: activeTab === 'produce' }" @click="handleTabChange('produce')">
+                            合格证开具（生产者）
+                        </div>
+                        <div class="tab-item" :class="{ active: activeTab === 'verify' }" @click="handleTabChange('verify')">
+                            合格证查验存证（收购者与消费者）
+                        </div>
                     </div>
                     <div class="query-form-wrapper">
                         <el-form :model="queryParams" class="custom-query-form" label-position="left">
@@ -112,7 +123,7 @@
                             <h3 class="table-section-title">辖区合格证列表</h3>
                         </div>
                         <div class="action-right">
-                            <el-button class="add-btn">导出</el-button>
+                            <el-button >导出</el-button>
                         </div>
                     </div>
 
@@ -274,6 +285,9 @@ const pageNum = ref(1);
 const pageSize = ref(10);
 const total = ref(0);
 
+// 页签状态
+const activeTab = ref('produce');
+
 // 表格数据
 const tableData = ref([]);
 const loading = ref(false);
@@ -285,7 +299,9 @@ const loadData = async () => {
             pageNo: pageNum.value,
             pageSize: pageSize.value,
             certificateCode: queryParams.certNo || undefined,
-            productName: queryParams.productName || undefined
+            productName: queryParams.productName || undefined,
+            // 预留页签过滤逻辑
+            checkType: activeTab.value === 'produce' ? 1 : 2
         };
         const data = await CertificateApi.getCertificatePage(params);
         const list = data.list || [];
@@ -304,6 +320,13 @@ const loadData = async () => {
 onMounted(() => {
     loadData();
 });
+
+// 页签切换处理
+const handleTabChange = (tab: string) => {
+    activeTab.value = tab;
+    pageNum.value = 1;
+    loadData();
+};
 
 const handleSearch = () => {
     pageNum.value = 1;
@@ -482,7 +505,7 @@ const handleCurrentChange = (val) => {
 .action-left {
     .section-indicator {
         width: 4px;
-        height: 18px;
+        height: 22px;
         background: #00B3ED;
         border-radius: 2px;
     }
@@ -500,5 +523,49 @@ const handleCurrentChange = (val) => {
     font-size: 11px;
     color: #999;
     font-weight: normal;
+}
+
+.record-tabs {
+    display: flex;
+    margin: 0px 0 16px 0;
+    width: 500px;
+    
+    .tab-item {
+        flex: 1;
+        height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        color: #333;
+        background: #FFFFFF;
+        border: 1px solid #00B3ED;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        user-select: none;
+        
+        &:first-child {
+            border-radius: 4px 0 0 4px;
+        }
+        
+        &:last-child {
+            border-radius: 0 4px 4px 0;
+        }
+        
+        & + .tab-item {
+            border-left: none;
+        }
+        
+        &:hover {
+            background: rgba(0, 179, 237, 0.05);
+        }
+        
+        &.active {
+            background: #00B3ED;
+            color: #FFFFFF;
+            font-weight: 500;
+            box-shadow: 0 4px 12px rgba(0, 179, 237, 0.2);
+        }
+    }
 }
 </style>

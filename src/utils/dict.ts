@@ -253,5 +253,6 @@ export enum DICT_TYPE {
   IOT_MODBUS_FRAME_FORMAT = 'iot_modbus_frame_format', // IoT Modbus 帧格式
 
   // ========== AGRI - 农业模块 ==========
-  AGRI_PLAN_TYPE = 'agri_plan_type' // 检测方案类型
+  AGRI_PLAN_TYPE = 'agri_plan_type', // 检测方案类型
+  AGRI_CERTIFICATE_TYPE = 'agri_certificate_type' // 合格证出证类型
 }

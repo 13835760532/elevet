@@ -13,10 +13,10 @@
 
             <el-form ref="formRef" :model="formData" :rules="formRules" label-width="120px" class="product-form">
                 <!-- 备案类型 -->
-                <el-form-item label="备案类型" prop="recordType" required>
-                    <el-select v-model="formData.recordType" placeholder="企业档案/个人档案" class="full-width">
-                        <el-option label="企业档案" value="enterprise" />
-                        <el-option label="个人档案" value="personal" />
+                <el-form-item label="备案类型" prop="type" required>
+                    <el-select v-model="formData.type" placeholder="企业档案/个人档案" class="full-width">
+                        <el-option label="企业档案" :value="1" />
+                        <el-option label="个人档案" :value="2" />
                     </el-select>
                 </el-form-item>
 
@@ -26,10 +26,10 @@
                 </el-form-item>
 
                 <!-- 主体类型 -->
-                <el-form-item label="主体类型" prop="type" required>
-                    <el-select v-model="formData.type" placeholder="请选择主体类型，如：生产" class="full-width">
-                        <el-option label="生产" value="production" />
-                        <el-option label="流通" value="circulation" />
+                <el-form-item label="主体类型" prop="category" required>
+                    <el-select v-model="formData.category" placeholder="请选择主体类型，如：生产" class="full-width">
+                        <el-option label="生产" value="生产" />
+                        <el-option label="流通" value="流通" />
                     </el-select>
                 </el-form-item>
 
@@ -39,8 +39,8 @@
                 </el-form-item>
 
                 <!-- 所属地区 -->
-                <el-form-item label="所属地区" prop="region" required>
-                    <el-input v-model="formData.region" placeholder="北京市-北京市-朝阳区（下拉选择转输入）" />
+                <el-form-item label="所属地区" prop="provinceCode" required>
+                    <el-input v-model="formData.provinceCode" placeholder="北京市-北京市-朝阳区（下拉选择转输入）" />
                 </el-form-item>
 
                 <!-- 详细地址 -->
@@ -49,80 +49,52 @@
                 </el-form-item>
 
                 <!-- 联系人 -->
-                <el-form-item label="联系人" prop="contact" required>
-                    <el-input v-model="formData.contact" placeholder="秦艳萍" />
+                <el-form-item label="联系人" prop="contactName" required>
+                    <el-input v-model="formData.contactName" placeholder="秦艳萍" />
                 </el-form-item>
 
                 <!-- 联系电话 -->
-                <el-form-item label="联系电话" prop="phone" required>
-                    <el-input v-model="formData.phone" placeholder="65776500" />
+                <el-form-item label="联系电话" prop="contactPhone" required>
+                    <el-input v-model="formData.contactPhone" placeholder="65776500" />
                 </el-form-item>
 
                 <!-- 生产规模 -->
-                <el-form-item label="生产规模" prop="scale" required>
+                <el-form-item label="生产规模" prop="productionScale" required>
                     <div class="scale-row">
-                        <el-input v-model="formData.scale" placeholder="10" />
-                        <el-select v-model="formData.scaleUnit" placeholder="亩" style="width: 100px">
-                            <el-option label="亩" value="mu" />
-                            <el-option label="公顷" value="hectare" />
+                        <el-input v-model="formData.productionScale" placeholder="10" />
+                        <el-select v-model="formData.productionScaleUnit" placeholder="亩" style="width: 100px">
+                            <el-option label="亩" value="亩" />
+                            <el-option label="公顷" value="公顷" />
                         </el-select>
                     </div>
                 </el-form-item>
 
                 <!-- 营业执照 -->
-                <el-form-item label="营业执照" prop="license">
-                    <div class="upload-container">
-                        <div class="preview-box" v-if="formData.license">
-                            <img :src="formData.license" class="preview-img" />
-                        </div>
-                        <div class="preview-box placeholder" v-else>
-                            <el-icon>
-                                <Picture />
-                            </el-icon>
-                        </div>
-                        <el-upload class="upload-demo" action="#" :auto-upload="false" :show-file-list="false">
-                            <el-button type="primary" link>上传</el-button>
-                        </el-upload>
-                    </div>
+                <el-form-item label="营业执照" prop="businessLicenseUrl">
+                    <UploadImg v-model="formData.businessLicenseUrl" :limit="1" />
                 </el-form-item>
 
                 <!-- 信用代码 -->
-                <el-form-item label="信用代码" prop="creditCode">
-                    <div class="text-value">1102011818788786816</div>
+                <el-form-item label="信用代码" prop="socialCreditCode">
+                   <el-input v-model="formData.socialCreditCode" placeholder="输入信用代码" />
                 </el-form-item>
 
-                <!-- 身份证 -->
-                <el-form-item label="身份证" prop="idCard">
-                    <div class="upload-container">
-                        <div class="id-card-boxes">
-                            <div class="preview-box placeholder"><el-icon>
-                                    <UploadFilled />
-                                </el-icon></div>
-                            <div class="preview-box placeholder"><el-icon>
-                                    <UploadFilled />
-                                </el-icon></div>
-                        </div>
-                        <el-upload class="upload-demo" action="#" :auto-upload="false" :show-file-list="false">
-                            <el-button type="primary" link>上传正反面</el-button>
-                        </el-upload>
+                <!-- 身份证正反面 -->
+                <el-form-item label="身份证" prop="idCardFrontUrl">
+                    <div style="display: flex; gap: 20px;">
+                        <UploadImg v-model="formData.idCardFrontUrl" :limit="1" />
+                        <UploadImg v-model="formData.idCardBackUrl" :limit="1" />
                     </div>
                 </el-form-item>
 
                 <!-- 企业资质 -->
-                <el-form-item label="企业资质" prop="qualifications">
-                    <div class="upload-container">
-                        <div class="preview-box placeholder"><el-icon>
-                                <Picture />
-                            </el-icon></div>
-                        <el-upload class="upload-demo" action="#" :auto-upload="false" :show-file-list="false">
-                            <el-button type="primary" link>上传</el-button>
-                        </el-upload>
-                    </div>
+                <el-form-item label="企业资质" prop="qualificationUrls">
+                    <UploadImgs v-model="formData.qualificationUrls" :limit="5" />
                 </el-form-item>
 
                 <!-- 企业介绍 -->
-                <el-form-item label="企业介绍" prop="intro">
-                    <el-input v-model="formData.intro" type="textarea" :rows="4" placeholder="请输入企业介绍..." />
+                <el-form-item label="企业介绍" prop="introduction">
+                    <el-input v-model="formData.introduction" type="textarea" :rows="4" placeholder="请输入企业介绍..." />
                 </el-form-item>
 
                 <!-- 底部按钮 -->
@@ -137,48 +109,105 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, reactive, onMounted } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import { Picture, UploadFilled } from '@element-plus/icons-vue';
 import PageHeader from '@/components/PageHeader/index.vue';
+import { UploadImg, UploadImgs } from '@/components/UploadFile';
+import * as SubjectApi from '@/api/agri/subject/index';
+import { useMessage } from '@/hooks/web/useMessage';
 
 const router = useRouter();
+const route = useRoute();
+const message = useMessage();
 const formRef = ref(null);
 
+const id = route.query.id;
+
 const formData = reactive({
-    recordType: 'enterprise',
+    type: 1,
     name: '',
-    type: 'production',
+    category: '生产',
     mainProducts: '',
-    region: '',
+    provinceCode: '',
     address: '',
-    contact: '',
-    phone: '',
-    scale: '10',
-    scaleUnit: 'mu',
-    license: '',
-    creditCode: '1102011818788786816',
-    idCard: [],
-    qualifications: [],
-    intro: ''
+    contactName: '',
+    contactPhone: '',
+    productionScale: '',
+    productionScaleUnit: '亩',
+    businessLicenseUrl: '',
+    socialCreditCode: '',
+    idCardFrontUrl: '',
+    idCardBackUrl: '',
+    qualificationUrls: '',
+    introduction: ''
 });
 
 const formRules = {
-    recordType: [{ required: true, message: '请选择备案类型', trigger: 'change' }],
+    type: [{ required: true, message: '请选择备案类型', trigger: 'change' }],
     name: [{ required: true, message: '请输入主体名称', trigger: 'blur' }],
-    type: [{ required: true, message: '请选择主体类型', trigger: 'change' }],
+    category: [{ required: true, message: '请选择主体类别', trigger: 'change' }],
     mainProducts: [{ required: true, message: '请输入主营产品', trigger: 'blur' }],
-    region: [{ required: true, message: '请选择所属地区', trigger: 'change' }],
+    provinceCode: [{ required: true, message: '请选择所属地区', trigger: 'change' }],
     address: [{ required: true, message: '请输入详细地址', trigger: 'blur' }],
-    contact: [{ required: true, message: '请输入联系人', trigger: 'blur' }],
-    phone: [{ required: true, message: '请输入联系电话', trigger: 'blur' }],
-    scale: [{ required: true, message: '请输入生产规模', trigger: 'blur' }]
+    contactName: [{ required: true, message: '请输入联系人', trigger: 'blur' }],
+    contactPhone: [{ required: true, message: '请输入联系电话', trigger: 'blur' }],
+    productionScale: [{ required: true, message: '请输入生产规模', trigger: 'blur' }]
 };
 
-const handleSubmit = () => {
-    formRef.value.validate((valid) => {
+const loadDetail = async () => {
+    if (!id) return;
+    try {
+        const data = await SubjectApi.getSubject(id);
+        if (data.qualificationUrls && typeof data.qualificationUrls === 'string') {
+            data.qualificationUrls = data.qualificationUrls.split(',').filter(item => item !== '');
+        }
+        Object.assign(formData, data);
+    } catch (error) {
+        console.error('加载主体详情失败', error);
+    }
+};
+
+onMounted(() => {
+    loadDetail();
+});
+
+const handleSubmit = async () => {
+    if (!formRef.value) return;
+    await formRef.value.validate(async (valid) => {
         if (valid) {
-            console.log('Submit Success:', formData);
+            try {
+                const submitData = { ...formData };
+                if (Array.isArray(submitData.qualificationUrls)) {
+                    submitData.qualificationUrls = submitData.qualificationUrls.join(',');
+                }
+
+                let result;
+                if (id) {
+                    await SubjectApi.updateSubject({ ...submitData, id });
+                    message.success('更新成功');
+                } else {
+                    result = await SubjectApi.createSubject(submitData);
+                    message.success('创建成功');
+                }
+                
+                const redirect = route.query.redirect;
+                if (redirect) {
+                    // 如果存在跳转回流地址，则回跳，并尝试带上新创建的主体 ID
+                    router.push({
+                        path: redirect,
+                        query: { 
+                            ...route.query,
+                            newSubjectId: result || id,
+                            redirect: undefined // 清除 redirect 标记
+                         }
+                    });
+                } else {
+                    router.back();
+                }
+            } catch (error) {
+                console.error(error);
+            }
         }
     });
 };

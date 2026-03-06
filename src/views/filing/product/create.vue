@@ -20,64 +20,36 @@
                 </el-form-item>
 
                 <!-- 产品类别 -->
-                <el-form-item label="产品类别" prop="productCategory">
-                    <el-select v-model="formData.productCategory" placeholder="请选择产品类别" class="full-width">
-                        <el-option label="蔬菜" value="vegetable" />
-                        <el-option label="水果" value="fruit" />
-                        <el-option label="肉类" value="meat" />
-                        <el-option label="水产品" value="aquatic" />
+                <el-form-item label="产品类别" prop="category">
+                    <el-select v-model="formData.category" placeholder="请选择产品类别" class="full-width">
+                        <el-option label="蔬菜" value="蔬菜" />
+                        <el-option label="水果" value="水果" />
+                        <el-option label="肉类" value="肉类" />
+                        <el-option label="水产品" value="水产品" />
                     </el-select>
                 </el-form-item>
 
                 <!-- 产品产地 -->
-                <el-form-item label="产品产地" prop="origin">
-                    <el-input v-model="formData.origin" placeholder="请填写详细产地（省/市/县/镇）" />
+                <el-form-item label="产品产地" prop="productionArea">
+                    <el-input v-model="formData.productionArea" placeholder="请填写详细产地（省/市/县/镇）" />
                 </el-form-item>
 
-                <!-- 批次规模 -->
-                <el-form-item label="批次规模" prop="batchSize">
+                <!-- 产品规格 -->
+                <el-form-item label="产品规格" prop="productSpec">
                     <div class="compound-input">
-                        <el-input v-model="formData.batchSize" placeholder="数量" style="flex: 1;" />
-                        <el-select class="prefix-select" v-model="formData.batchUnit" placeholder="单位" style="width: 100px;">
+                        <el-input v-model="formData.productSpec" placeholder="数量" style="flex: 1;" />
+                        <el-select class="prefix-select" v-model="formData.productUnit" placeholder="单位" style="width: 100px;">
                             <el-option label="kg" value="kg" />
-                            <el-option label="吨" value="ton" />
-                            <el-option label="箱" value="box" />
-                            <el-option label="亩" value="mu" />
+                            <el-option label="吨" value="吨" />
+                            <el-option label="箱" value="箱" />
+                            <el-option label="亩" value="亩" />
                         </el-select>
                     </div>
                 </el-form-item>
 
-                <!-- 建档日期 -->
-                <el-form-item label="建档日期" prop="archiveDate">
-                    <el-date-picker v-model="formData.archiveDate" type="date" placeholder="选择建档日期"
-                        class="full-width" />
-                </el-form-item>
-
                 <!-- 产品宣传照片 -->
-                <el-form-item label="产品宣传照片" class="upload-item">
-                    <div class="upload-container">
-                        <el-upload 
-                            class="photo-uploader" 
-                            action="#" 
-                            :auto-upload="false" 
-                            :show-file-list="false"
-                        >
-                            <div class="upload-slot">
-                                <el-icon class="upload-icon"><Plus /></el-icon>
-                                <span class="upload-text">选取图片</span>
-                            </div>
-                        </el-upload>
-                        <div class="preview-area">
-                            <div class="preview-box empty">
-                                <el-icon><Picture /></el-icon>
-                                <span class="hint">暂无图片</span>
-                            </div>
-                        </div>
-                        <div class="upload-info">
-                            <p class="main-tip">建议尺寸 800x800 px</p>
-                            <p class="sub-tip">支持 JPG/PNG 格式，大小不超过 5MB</p>
-                        </div>
-                    </div>
+                <el-form-item label="产品宣传照片" prop="productImageUrl" class="upload-item">
+                    <UploadImg v-model="formData.productImageUrl" :limit="1" />
                 </el-form-item>
 
                 <!-- 分割线 -->
@@ -91,14 +63,14 @@
                 <el-form-item label="生产经营主体" prop="subjectId">
                     <div class="subject-selector-wrapper">
                         <el-select v-model="formData.subjectId" filterable remote
-                            placeholder="搜索企业名称或信用代码查询主体" class="subject-select">
+                            placeholder="搜索企业名称或信用代码查询主体" class="subject-select"
+                            :remote-method="searchSubject" @change="handleSubjectChange">
                             <template #prefix>
                                 <el-icon><Search /></el-icon>
                             </template>
-                            <el-option label="北京物美商业集团股份有限公司" value="1" />
-                            <el-option label="小辉农场" value="2" />
+                            <el-option v-for="item in subjectOptions" :key="item.id" :label="item.name" :value="item.id" />
                         </el-select>
-                        <el-button type="primary" class="btn-new-subject">
+                        <el-button type="primary" class="btn-new-subject" @click="router.push('/filing/subjectCreate')">
                             <el-icon class="mr4"><Plus /></el-icon>新增主体
                         </el-button>
                     </div>
@@ -106,7 +78,7 @@
 
                 <!-- 主体卡片详情 -->
                 <transition name="el-fade-in">
-                    <div class="subject-card" v-if="formData.subjectId">
+                    <div class="subject-card" v-if="currentSubject">
                         <div class="card-title">
                             <el-icon><OfficeBuilding /></el-icon>
                             主体详细信息
@@ -114,38 +86,31 @@
                         <div class="info-grid">
                             <div class="info-item">
                                 <span class="label">主体名称</span>
-                                <span class="value semibold">北京物美商业集团股份有限公司</span>
+                                <span class="value semibold">{{ currentSubject.name || '--' }}</span>
                             </div>
                             <div class="info-item">
                                 <span class="label">信用代码</span>
-                                <span class="value">91110108700234256X</span>
+                                <span class="value">{{ currentSubject.socialCreditCode || currentSubject.idCard || '--' }}</span>
                             </div>
                             <div class="info-item">
                                 <span class="label">主体类型</span>
-                                <span class="value"><el-tag size="small" effect="plain">流通环节</el-tag></span>
+                                <span class="value"><el-tag size="small" effect="plain" v-if="currentSubject.category">{{ currentSubject.category }}</el-tag><span v-else>--</span></span>
                             </div>
                             <div class="info-item">
                                 <span class="label">备案等级</span>
-                                <span class="value">企业档案</span>
+                                <span class="value">{{ currentSubject.type === 2 ? '个人档案' : '企业档案' }}</span>
                             </div>
                             <div class="info-item">
                                 <span class="label">联系人</span>
-                                <span class="value">秦艳萍</span>
+                                <span class="value">{{ currentSubject.contactName || '--' }}</span>
                             </div>
                             <div class="info-item">
                                 <span class="label">联系电话</span>
-                                <span class="value">18513172770</span>
+                                <span class="value">{{ currentSubject.contactPhone || '--' }}</span>
                             </div>
                             <div class="info-item span-2">
-                                <span class="label">所属地区</span>
-                                <span class="value">北京市 朝阳区 建国路29号建外SOHO</span>
-                            </div>
-                            <div class="info-item">
-                                <span class="label">详细证件</span>
-                                <div class="link-group">
-                                    <span class="active-link">营业执照 <el-icon><View /></el-icon></span>
-                                    <span class="active-link">身份证 <el-icon><View /></el-icon></span>
-                                </div>
+                                <span class="label">所属地区及详细地址</span>
+                                <span class="value">{{ currentSubject.provinceCode ? `${currentSubject.provinceCode}${currentSubject.cityCode || ''}${currentSubject.districtCode || ''}` : '' }} {{ currentSubject.address || '--' }}</span>
                             </div>
                         </div>
                     </div>
@@ -163,35 +128,100 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, reactive, onMounted } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import { Plus, Picture, Search, OfficeBuilding, View, Download } from '@element-plus/icons-vue';
 import PageHeader from '@/components/PageHeader/index.vue';
+import { UploadImg } from '@/components/UploadFile';
+import * as ProductApi from '@/api/agri/product/index';
+import * as SubjectApi from '@/api/agri/subject/index';
+import { useMessage } from '@/hooks/web/useMessage';
 
 const router = useRouter();
+const route = useRoute();
+const message = useMessage();
 const formRef = ref(null);
 
+const id = route.query.id;
+
 const formData = reactive({
+    productCode: '',
     productName: '',
-    productCategory: 'vegetable',
-    origin: '',
-    batchSize: '',
-    batchUnit: 'kg',
-    archiveDate: '2025-12-19',
-    subjectId: '1',
-    photos: []
+    category: '蔬菜',
+    productionArea: '',
+    productSpec: '',
+    productUnit: 'kg',
+    productImageUrl: '',
+    subjectId: undefined
 });
 
 const formRules = {
     productName: [{ required: true, message: '请输入产品名称', trigger: 'blur' }],
-    productCategory: [{ required: true, message: '请选择产品类别', trigger: 'change' }],
+    category: [{ required: true, message: '请选择产品类别', trigger: 'change' }],
     subjectId: [{ required: true, message: '请选择所属主体', trigger: 'change' }]
 };
 
-const handleSave = () => {
-    formRef.value.validate((valid) => {
+const subjectOptions = ref([]);
+const currentSubject = ref(null);
+
+const searchSubject = async (query) => {
+    if (query !== '') {
+        try {
+            const data = await SubjectApi.getSubjectPage({ name: query, pageNo: 1, pageSize: 50 });
+            subjectOptions.value = data.list;
+        } catch (error) {
+            console.error('搜索主体失败', error);
+        }
+    } else {
+        subjectOptions.value = [];
+    }
+};
+
+const handleSubjectChange = async (val) => {
+    currentSubject.value = subjectOptions.value.find(item => item.id === val) || null;
+};
+
+const loadDetail = async () => {
+    if (!id) return;
+    try {
+        const data = await ProductApi.getProduct(id);
+        Object.assign(formData, data);
+        if (data.subjectId) {
+            const subjectData = await SubjectApi.getSubject(data.subjectId);
+            currentSubject.value = subjectData;
+            subjectOptions.value = [subjectData];
+        }
+    } catch (error) {
+        console.error('加载详情失败', error);
+    }
+};
+
+onMounted(() => {
+    loadDetail();
+});
+
+const handleSave = async () => {
+    if (!formRef.value) return;
+    await formRef.value.validate(async (valid) => {
         if (valid) {
-            console.log('Saving product archive:', formData);
+            try {
+                // 如果没有填写 productCode，根据业务要求可能需要前端生成一条随机的，或者后端生成。通常后端生成较为规范，但这里我们先给个占位或者让用户填：
+                const submitData = { ...formData };
+                if (!submitData.productCode) {
+                    submitData.productCode = 'PROD' + new Date().getTime();
+                }
+
+                if (id) {
+                    await ProductApi.updateProduct({ ...submitData, id });
+                    message.success('更新成功');
+                } else {
+                    await ProductApi.createProduct(submitData);
+                    message.success('创建成功');
+                }
+                router.back();
+            } catch (error) {
+                console.error(error);
+            }
         }
     });
 };
@@ -317,92 +347,7 @@ $border-color: #E2E8F0;
     }
 }
 
-/* 照片上传优化 */
-.upload-container {
-    width: 520px;
-    display: flex;
-    align-items: flex-start;
-    gap: 20px;
-    background: $bg-light;
-    padding: 24px;
-    border-radius: 4px;
-    border: 1px solid $border-color;
-}
 
-.photo-uploader {
-    :deep(.el-upload) {
-        .upload-slot {
-            width: 100px;
-            height: 100px;
-            border: 2px dashed #CBD5E1;
-            border-radius: 12px;
-            background: #fff;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s;
-            cursor: pointer;
-
-            &:hover {
-                border-color: $theme-color;
-                background: rgba($theme-color, 0.02);
-                .upload-icon { color: $theme-color; }
-            }
-
-            .upload-icon {
-                font-size: 24px;
-                color: #94A3B8;
-                margin-bottom: 4px;
-            }
-
-            .upload-text {
-                font-size: 12px;
-                color: #64748B;
-            }
-        }
-    }
-}
-
-.preview-area {
-    .preview-box {
-        width: 100px;
-        height: 100px;
-        border-radius: 12px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        border: 1px solid #E2E8F0;
-        
-        &.empty {
-            background: #F1F5F9;
-            color: #94A3B8;
-            .el-icon { font-size: 32px; margin-bottom: 4px; }
-            .hint { font-size: 12px; }
-        }
-    }
-}
-
-.upload-info {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    height: 100px;
-
-    .main-tip {
-        font-size: 14px;
-        font-weight: 600;
-        color: #334155;
-        margin-bottom: 6px;
-    }
-
-    .sub-tip {
-        font-size: 12px;
-        color: #94A3B8;
-    }
-}
 
 .form-divider {
     height: 1px;
