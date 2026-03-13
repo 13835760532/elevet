@@ -45,7 +45,7 @@
 
       <!-- 备案按钮区域 -->
       <div class="action-section">
-        <el-button type="primary" class="beian-submit-btn" @click="handleBeian">
+        <el-button v-hasPermi="['agri:subject:create']" type="primary" class="beian-submit-btn" @click="handleBeian">
           立即账号备案
         </el-button>
       </div>

@@ -16,10 +16,10 @@
             <div class="query-form-wrapper">
                 <el-form :inline="true" :model="queryParams" class="custom-query-form custom-query-form-row" label-position="left">
                     <el-form-item label="">
-                        <el-input :prefix-icon="Search" v-model="queryParams.productName" placeholder="搜索产品名称" class="custom-input w220" />
+                        <el-input :prefix-icon="Search" clearable v-model="queryParams.productName" placeholder="搜索产品名称" class="custom-input w220" />
                     </el-form-item>
                     <el-form-item label="">
-                        <el-input :prefix-icon="Search" v-model="queryParams.productCode" placeholder="搜索产品编号" class="custom-input w220" />
+                        <el-input :prefix-icon="Search" clearable v-model="queryParams.productCode" placeholder="搜索产品编号" class="custom-input w220" />
                     </el-form-item>
                     <el-form-item label="">
                         <el-input v-model="queryParams.productionArea" placeholder="产地查询" class="custom-input w220" />
@@ -38,7 +38,7 @@
                     <el-button type="primary" @click="handleSingleFiling" class="primary-btn">单条建档</el-button>
                 </div>
                 <div class="action-right">
-                    <el-button @click="handleExport">导出</el-button>
+                    <el-button @click="handleExport" :loading="exportLoading">导出</el-button>
                 </div>
             </div>
 
@@ -90,12 +90,14 @@ import { useFormLayout } from '@/hooks/web/useFormLayout';
 import * as ProductApi from '@/api/agri/product/index';
 import { useMessage } from '@/hooks/web/useMessage';
 import { ElMessageBox } from 'element-plus';
+import download from '@/utils/download';
 
 const { queryFormClass } = useFormLayout();
 
 const router = useRouter();
 const message = useMessage();
 const loading = ref(false);
+const exportLoading = ref(false);
 
 const queryParams = reactive({
     productName: '',
@@ -141,8 +143,21 @@ const handleReset = () => {
     handleQuery();
 };
 
-const handleExport = () => {
-    message.warning('导出功能待开发');
+const handleExport = async () => {
+    try {
+        await message.exportConfirm();
+        exportLoading.value = true;
+        const res = await ProductApi.exportProduct({
+            ...queryParams,
+            pageNo: pageParams.pageNo,
+            pageSize: pageParams.pageSize || 100
+        });
+        download.excel(res, '产品档案导出.xls');
+    } catch (error) {
+        console.error('导出失败', error);
+    } finally {
+        exportLoading.value = false;
+    }
 };
 
 const handleBatchFiling = () => {

@@ -58,3 +58,19 @@ export const deleteSubjectList = (ids: number[]) => {
 export const exportSubject = (params: any) => {
   return request.download({ url: '/agri/subject/export-excel', params })
 }
+
+// 获得导入主体档案模板
+export const getImportTemplate = () => {
+  return request.download({ url: '/agri/subject/get-import-template' })
+}
+
+// 导入主体档案
+export const importSubject = (data: { file: File; updateSupport: boolean }) => {
+  return request.post({
+    url: '/agri/subject/import',
+    data,
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  })
+}

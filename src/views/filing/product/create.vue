@@ -142,8 +142,6 @@ const route = useRoute();
 const message = useMessage();
 const formRef = ref(null);
 
-const id = route.query.id;
-
 const formData = reactive({
     productCode: '',
     productName: '',
@@ -181,22 +179,53 @@ const handleSubjectChange = async (val) => {
     currentSubject.value = subjectOptions.value.find(item => item.id === val) || null;
 };
 
+const loadingDetail = ref(false);
+
 const loadDetail = async () => {
-    if (!id) return;
+    const detailId = route.query.id;
+    if (!detailId) {
+        Object.assign(formData, {
+            productCode: '',
+            productName: '',
+            category: '蔬菜',
+            productionArea: '',
+            productSpec: '',
+            productUnit: 'kg',
+            productImageUrl: '',
+            subjectId: undefined
+        });
+        currentSubject.value = null;
+        return;
+    };
+    
+    if (loadingDetail.value) return;
+    loadingDetail.value = true;
+    
     try {
-        const data = await ProductApi.getProduct(id);
+        const data = await ProductApi.getProduct(detailId);
         Object.assign(formData, data);
         if (data.subjectId) {
-            const subjectData = await SubjectApi.getSubject(data.subjectId);
+            // 先尝试从现有选项中找，找不到再请求接口
+            let subjectData = subjectOptions.value.find(item => item.id === data.subjectId);
+            if (!subjectData) {
+                subjectData = await SubjectApi.getSubject(data.subjectId);
+                subjectOptions.value = [subjectData];
+            }
             currentSubject.value = subjectData;
-            subjectOptions.value = [subjectData];
         }
     } catch (error) {
         console.error('加载详情失败', error);
+    } finally {
+        loadingDetail.value = false;
     }
 };
 
 onMounted(() => {
+    loadDetail();
+});
+
+import { watch } from 'vue';
+watch(() => route.query.id, () => {
     loadDetail();
 });
 
@@ -462,7 +491,7 @@ $border-color: #E2E8F0;
     border: none;
 
     &:hover {
-        background: #1e52e0;
+        opacity: 0.8;
     }
 }
 
