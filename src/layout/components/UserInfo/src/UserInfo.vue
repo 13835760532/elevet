@@ -49,6 +49,9 @@ const loginOut = async () => {
 const toProfile = async () => {
   push('/user/profile')
 }
+const toResetPassword = () => {
+  push('/reset-password')
+}
 const toDocument = () => {
   window.open('https://doc.iocoder.cn/')
 }
@@ -67,6 +70,10 @@ const toDocument = () => {
         <ElDropdownItem>
           <Icon icon="ep:tools" />
           <div @click="toProfile">{{ t('common.profile') }}</div>
+        </ElDropdownItem>
+        <ElDropdownItem>
+          <Icon icon="ep:lock" />
+          <div @click="toResetPassword">修改密码</div>
         </ElDropdownItem>
         <ElDropdownItem>
           <Icon icon="ep:menu" />

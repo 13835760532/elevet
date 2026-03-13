@@ -20,6 +20,19 @@
 
             <!-- Form Area -->
             <el-form ref="resetRef" :model="resetForm" :rules="resetRules" class="reset-form">
+                <el-form-item v-if="!(route.query.mobile && route.query.code)" prop="mobile">
+                    <el-input v-model="resetForm.mobile" type="text" placeholder="手机号" />
+                </el-form-item>
+
+                <div v-if="!(route.query.mobile && route.query.code)" class="code-row">
+                    <el-form-item prop="code" class="code-input-item">
+                        <el-input v-model="resetForm.code" type="text" placeholder="验证码" />
+                    </el-form-item>
+                    <el-button class="send-code-btn" :disabled="countdown > 0" @click="handleSendCode">
+                        {{ countdown > 0 ? `${countdown}s后重新获取` : '发送验证码' }}
+                    </el-button>
+                </div>
+
                 <el-form-item prop="password">
                     <el-input v-model="resetForm.password" type="password" show-password
                         placeholder="请输入新密码（至少8个字符）">
@@ -51,23 +64,28 @@
     </div>
 </template>
 
-<script setup>
-import { ref, getCurrentInstance } from 'vue'
+<script setup lang="ts">
+import { ref, onMounted, getCurrentInstance } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { smsResetPassword } from '@/api/login'
+import { smsResetPassword, sendSmsCode } from '@/api/login'
+import type { ResetPasswordVO } from '@/api/login/types'
 
 const loading = ref(false)
-const { proxy } = getCurrentInstance()
+const countdown = ref(0)
+const isSmsSent = ref(false)
+const instance = getCurrentInstance()
 const router = useRouter()
 const route = useRoute()
 
 const resetForm = ref({
+    mobile: '',
+    code: '',
     password: '',
     confirmPassword: ''
 })
 
-const equalToPassword = (rule, value, callback) => {
+const equalToPassword = (_rule: any, value: any, callback: any) => {
     if (resetForm.value.password !== value) {
         callback(new Error("两次输入的密码不一致"))
     } else {
@@ -76,6 +94,8 @@ const equalToPassword = (rule, value, callback) => {
 }
 
 const resetRules = {
+    mobile: [{ required: true, trigger: "blur", message: "手机号不能为空" }],
+    code: [{ required: true, trigger: "blur", message: "验证码不能为空" }],
     password: [
         { required: true, trigger: "blur", message: "请输入新密码" },
         { min: 8, message: "密码长度至少为 8 个字符", trigger: "blur" }
@@ -86,23 +106,51 @@ const resetRules = {
     ]
 }
 
-function handleReset() {
-    proxy.$refs.resetRef.validate(valid => {
-        if (valid) {
-            const { mobile, code } = route.query
-            if (!mobile || !code) {
-                ElMessage.error('缺失手机号或验证码信息，请返回上一步')
-                return
+onMounted(() => {
+    // 从路由参数中预填手机号和验证码
+    if (route.query.mobile) {
+        resetForm.value.mobile = route.query.mobile as string
+    }
+    if (route.query.code) {
+        resetForm.value.code = route.query.code as string
+        isSmsSent.value = true // 如果 URL 带了 code，认为已发送
+    }
+})
+
+function handleSendCode() {
+    if (!resetForm.value.mobile) {
+        ElMessage.warning('请先输入手机号')
+        return
+    }
+
+    sendSmsCode({ mobile: resetForm.value.mobile, scene: 4 }).then(() => {
+        ElMessage.success('验证码已发送')
+        isSmsSent.value = true
+        countdown.value = 60
+        const timer = setInterval(() => {
+            countdown.value--
+            if (countdown.value <= 0) {
+                clearInterval(timer)
             }
+        }, 1000)
+    }).catch(() => {})
+}
+
+function handleReset() {
+    const formRef = instance?.proxy?.$refs.resetRef as any
+    formRef?.validate((valid: boolean) => {
+        if (valid) {
             loading.value = true
-            smsResetPassword({ 
-                mobile: mobile,
-                code: code,
+            const data: ResetPasswordVO = {
+                mobile: resetForm.value.mobile,
+                code: resetForm.value.code,
                 password: resetForm.value.password
-            }).then(() => {
+            }
+            
+            smsResetPassword(data).then(() => {
                 ElMessage.success('密码重置成功，请重新登录')
                 router.push('/login')
-            }).finally(() => {
+            }).catch(() => {
                 loading.value = false
             })
         }
@@ -238,6 +286,39 @@ function handleReset() {
 
         &:last-child {
             margin-bottom: 0;
+        }
+    }
+}
+
+.code-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 12px;
+
+    .code-input-item {
+        flex: 1;
+        margin-bottom: 0 !important;
+    }
+
+    .send-code-btn {
+        width: 120px;
+        height: 38px;
+        border-radius: 8px;
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        color: #666;
+        font-size: 12px;
+        background: #fff;
+        transition: all 0.3s;
+
+        &:hover:not(:disabled) {
+            color: #00B3ED;
+            border-color: #00B3ED;
+            background: #f8faff;
+        }
+
+        &:disabled {
+            background: #f5f7fa;
+            color: #999;
         }
     }
 }

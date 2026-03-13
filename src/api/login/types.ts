@@ -31,8 +31,14 @@ export type UserVO = {
 }
 
 export type RegisterVO = {
-  tenantName: string
   username: string
+  nickname: string
   password: string
   captchaVerification: string
+}
+
+export type ResetPasswordVO = {
+  mobile: string
+  code: string
+  password: string
 }

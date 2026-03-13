@@ -21,13 +21,15 @@
       <!-- Form Area -->
       <el-form ref="registerRef" :model="registerForm" :rules="registerRules" class="register-form">
         <el-form-item prop="username">
-          <el-input v-model="registerForm.username" type="text" placeholder="请输入用户名">
-          </el-input>
+          <el-input v-model="registerForm.username" type="text" placeholder="请输入用户名" />
+        </el-form-item>
+
+        <el-form-item prop="nickname">
+          <el-input v-model="registerForm.nickname" type="text" placeholder="请输入昵称" />
         </el-form-item>
         
         <el-form-item prop="password">
-          <el-input v-model="registerForm.password" type="password" show-password placeholder="请输入密码（至少8个字符）">
-          </el-input>
+          <el-input v-model="registerForm.password" type="password" show-password placeholder="请输入密码（至少8个字符）" />
         </el-form-item>
 
         <div class="password-requirements">
@@ -39,12 +41,11 @@
         </div>
 
         <el-form-item prop="confirmPassword">
-          <el-input v-model="registerForm.confirmPassword" type="password" show-password placeholder="请再次输入密码">
-          </el-input>
+          <el-input v-model="registerForm.confirmPassword" type="password" show-password placeholder="请再次输入密码" />
         </el-form-item>
 
         <el-form-item>
-          <el-button :loading="loading" type="primary" class="register-submit-btn" @click.prevent="handleRegister">
+          <el-button :loading="loading" type="primary" class="register-submit-btn" @click.prevent="handleRegisterPre">
             {{ loading ? '注册中...' : '注册' }}
           </el-button>
         </el-form-item>
@@ -54,6 +55,15 @@
       <div class="footer-links">
         <router-link to="/login" class="link">返回登录</router-link>
       </div>
+
+      <Verify
+        v-if="captchaEnabled"
+        ref="verify"
+        :captchaType="captchaType"
+        :imgSize="{ width: '400px', height: '200px' }"
+        mode="pop"
+        @success="handleRegister"
+      />
     </div>
   </div>
 </template>
@@ -65,15 +75,18 @@ import { register } from "@/api/login"
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 const loading = ref(false)
+const captchaEnabled = ref(import.meta.env.VITE_APP_CAPTCHA_ENABLE === 'true')
+const captchaType = ref('blockPuzzle')
+const verify = ref()
 const { proxy } = getCurrentInstance()
 const router = useRouter()
 
 const registerForm = ref({
-  username: '', // 这里通常需要用户名，但原型图中只显示了设置密码，假设从上一步传递或后续补完
+  username: '',
+  nickname: '',
   password: '',
   confirmPassword: '',
-  code: '', // 接口通常需要验证码
-  uuid: ''
+  captchaVerification: ''
 })
 
 const equalToPassword = (rule, value, callback) => {
@@ -87,7 +100,12 @@ const equalToPassword = (rule, value, callback) => {
 const registerRules = {
   username: [
     { required: true, trigger: "blur", message: "请输入您的用户名" },
-    { min: 4, max: 20, message: '用户账号长度必须介于 4 和 20 之间', trigger: 'blur' }
+    { min: 4, max: 30, message: '用户账号长度必须介于 4 和 30 之间', trigger: 'blur' },
+    { pattern: /^[a-zA-Z0-9]{4,30}$/, message: '用户账号只能包含字母和数字', trigger: 'blur' }
+  ],
+  nickname: [
+    { required: true, trigger: "blur", message: "请输入您的昵称" },
+    { min: 2, max: 30, message: '用户昵称长度必须介于 2 和 30 之间', trigger: 'blur' }
   ],
   password: [
     { required: true, trigger: "blur", message: "请输入您的密码" },
@@ -99,23 +117,33 @@ const registerRules = {
   ]
 }
 
-function handleRegister() {
+function handleRegisterPre() {
   proxy.$refs.registerRef.validate(valid => {
     if (valid) {
-      loading.value = true
-
-      register(registerForm.value).then(res => {
-        const username = registerForm.value.username || '用户'
-        ElMessageBox.alert("<font color='red'>恭喜你，您的账号 " + username + " 注册成功！</font>", "系统提示", {
-          dangerouslyUseHTMLString: true,
-          type: "success",
-        }).then(() => {
-          router.push("/login")
-        }).catch(() => { })
-      }).catch(() => {
-        loading.value = false
-      })
+      if (captchaEnabled.value) {
+        verify.value.show()
+      } else {
+        handleRegister({})
+      }
     }
+  })
+}
+
+function handleRegister(params) {
+  loading.value = true
+  const registerData = { ...registerForm.value }
+  registerData.captchaVerification = params.captchaVerification
+
+  register(registerData).then(res => {
+    const username = registerForm.value.username || '用户'
+    ElMessageBox.alert("<font color='red'>恭喜你，您的账号 " + username + " 注册成功！</font>", "系统提示", {
+      dangerouslyUseHTMLString: true,
+      type: "success",
+    }).then(() => {
+      router.push("/login")
+    }).catch(() => { })
+  }).catch(() => {
+    loading.value = false
   })
 }
 </script>
