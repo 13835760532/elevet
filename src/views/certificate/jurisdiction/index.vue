@@ -136,7 +136,7 @@
                             <el-table-column prop="productType" label="产品类别" width="80" align="center" />
                             <el-table-column prop="origin" label="产地" width="100" />
                             <el-table-column prop="entity" label="生产经营主体" width="140" />
-                            <el-table-column prop="issueDate" label="开具日期" width="140" align="center" />
+                            <el-table-column prop="issueDate" label="开具日期" width="160" align="center" :formatter="dateFormatter" />
                             <el-table-column prop="contact" label="联系人" width="120" align="center">
                                 <template #header>
                                     <div>联系人</div>
@@ -168,6 +168,7 @@ import { ref, reactive, onMounted } from 'vue';
 import { ElMessage } from 'element-plus';
 import { Search, Plus } from '@element-plus/icons-vue';
 import * as CertificateApi from '@/api/agri/certificate';
+import { dateFormatter } from '@/utils/formatTime';
 
 const provinceAndCityData = [
     {

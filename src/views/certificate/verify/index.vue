@@ -28,9 +28,9 @@
                     </el-form-item>
                     <el-form-item label="" prop="certType">
                         <el-select v-model="queryParams.certType" placeholder="出证类型" clearable class="custom-select">
-                            <el-option label="生产出证" value="produce" />
-                            <el-option label="收购出证" value="purchase" />
-                            <el-option label="销售出证" value="sell" />
+                            <el-option label="生产者" :value="1" />
+                            <el-option label="收购者" :value="2" />
+                            <el-option label="批发市场" :value="3" />
                         </el-select>
                     </el-form-item>
                     <el-form-item label="" prop="province">
@@ -86,20 +86,24 @@
             <div class="table-wrapper">
                 <el-table :data="tableData" v-loading="loading">
                     <el-table-column type="index" label="序号" width="60" align="center" />
-                    <el-table-column prop="certNo" label="合格证编号" min-width="140" />
-                    <el-table-column prop="source" label="合格证来源" width="100" align="center" />
-                    <el-table-column prop="productName" label="产品名称" width="100" align="center" />
-                    <el-table-column prop="productType" label="产品类别" width="100" align="center" />
-                    <el-table-column prop="origin" label="产地" width="100" align="center" />
-                    <el-table-column prop="entity" label="生产经营主体" min-width="160" />
-                    <el-table-column prop="type" label="类型" width="80" align="center">
+                    <el-table-column prop="certificateCode" label="合格证编号" min-width="160" />
+                    <el-table-column prop="certificateSource" label="合格证来源" width="120" align="center">
                         <template #default="{ row }">
-                            <el-tag :type="row.type === '仅查验' ? 'warning' : 'success'" size="small">
-                                {{ row.type }}
+                            {{ row.certificateSource === 1 ? '本平台' : '其他平台' }}
+                        </template>
+                    </el-table-column>
+                    <el-table-column prop="productName" label="产品名称" width="100" align="center" />
+                    <el-table-column prop="productCategory" label="产品类别" width="100" align="center" />
+                    <el-table-column prop="productionArea" label="产地" width="120" align="center" show-overflow-tooltip />
+                    <el-table-column prop="subjectName" label="生产经营主体" min-width="160" show-overflow-tooltip />
+                    <el-table-column prop="verificationType" label="状态" width="100" align="center">
+                        <template #default="{ row }">
+                            <el-tag :type="row.verificationType === 1 ? 'warning' : 'success'" size="small">
+                                {{ row.verificationType === 1 ? '仅查验' : '已存证' }}
                             </el-tag>
                         </template>
                     </el-table-column>
-                    <el-table-column prop="verifyTime" label="查验时间" width="150" align="center" />
+                    <el-table-column prop="verificationTime" label="查验时间" width="160" align="center" :formatter="dateFormatter" />
                     <el-table-column label="操作" width="140" align="center" fixed="right">
                         <template #default="{ row }">
                             <span class="table-edit-operate" @click="handleEdit(row)">编辑</span>
@@ -127,6 +131,7 @@ import { Search } from '@element-plus/icons-vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { useMessage } from '@/hooks/web/useMessage';
 import download from '@/utils/download';
+import { dateFormatter } from '@/utils/formatTime';
 import * as CertificateApi from '@/api/agri/certificate';
 
 const router = useRouter();
@@ -156,7 +161,7 @@ const queryParams = reactive({
     productName: '',
     entity: '',
     certType: '',
-    province: '',
+    province: [] as any,
     city: '',
     county: '',
     phone: ''
@@ -182,20 +187,14 @@ const loadData = async () => {
             pageSize: pageSize.value,
             certificateCode: queryParams.certNo || undefined,
             productName: queryParams.productName || undefined,
-            // 预留类型过滤参数
-            type: activeTab.value !== 'all' ? activeTab.value : undefined
+            subjectName: queryParams.entity || undefined,
+            certificateType: queryParams.certType || undefined,
+            contactPhone: queryParams.phone || undefined,
+            productionArea: queryParams.province ? queryParams.province.join('/') : undefined,
+            verificationType: activeTab.value === 'all' ? undefined : (activeTab.value === 'deposit' ? 2 : 1)
         };
-        const data = await CertificateApi.getCertificatePage(params);
-        const list = data.list || [];
-        tableData.value = list.map((item: any) => ({
-            ...item,
-            certNo: item.certificateCode,
-            productName: item.productName,
-            // 根据返回数据判断来源，默认本平台
-            source: '本平台',
-            type: activeTab.value === 'deposit' ? '存证记录' : '仅查验',
-            verifyTime: item.issueDate
-        }));
+        const data = await CertificateApi.getCertificateVerificationPage(params);
+        tableData.value = data.list || [];
         total.value = data.total || 0;
     } finally {
         loading.value = false;
@@ -221,7 +220,11 @@ const handleSearch = () => {
 
 const handleReset = () => {
     Object.keys(queryParams).forEach(key => {
-        queryParams[key] = '';
+        if (Array.isArray(queryParams[key])) {
+            queryParams[key] = [];
+        } else {
+            queryParams[key] = '';
+        }
     });
     handleSearch();
 };
@@ -231,9 +234,14 @@ const handleExport = async () => {
         await message.exportConfirm();
         const params: any = {
             certificateCode: queryParams.certNo || undefined,
-            productName: queryParams.productName || undefined
+            productName: queryParams.productName || undefined,
+            subjectName: queryParams.entity || undefined,
+            certificateType: queryParams.certType || undefined,
+            contactPhone: queryParams.phone || undefined,
+            productionArea: queryParams.province ? queryParams.province.join('/') : undefined,
+            verificationType: activeTab.value === 'all' ? undefined : (activeTab.value === 'deposit' ? 2 : 1)
         };
-        const data = await CertificateApi.exportCertificate(params);
+        const data = await CertificateApi.exportCertificateVerification(params);
         download.excel(data, '合格证查验记录.xls');
     } catch {
     }
@@ -249,27 +257,31 @@ const handleVerify = () => {
     router.push('/certificate/verify/detail');
 };
 
-const handleEdit = (row) => {
-    ElMessage.info(`编辑: ${row.certNo}`);
+const handleEdit = (row: any) => {
+    ElMessage.info(`编辑: ${row.certificateCode}`);
 };
 
-const handleView = (row) => {
-    // 根据来源跳转到不同页面
-    if (row.source === '本平台') {
-        router.push('/certificate/verify/detail');
-    } else {
-        router.push('/certificate/verify/other');
-    }
+const handleView = (row: any) => {
+    // 根据来源跳转到不同页面，并携带详情 ID
+    const path = row.certificateSource === 1 ? '/certificate/verify/detail' : '/certificate/verify/other';
+    router.push({ path, query: { id: row.id } });
 };
 
-const handleDelete = (row: any) => {
-    ElMessageBox.confirm(`确定要删除合格证编号为 "${row.certNo}" 的查验记录吗？`, '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-    }).then(() => {
+const handleDelete = async (row: any) => {
+    try {
+        await ElMessageBox.confirm(`确定要删除合格证编号为 "${row.certificateCode}" 的查验记录吗？`, '提示', {
+            confirmButtonText: '确定',
+            cancelButtonText: '取消',
+            type: 'warning'
+        });
+        await CertificateApi.deleteCertificateVerification(row.id);
         ElMessage.success('删除成功');
-    }).catch(() => { });
+        loadData();
+    } catch (error) {
+        if (error !== 'cancel') {
+            console.error(error);
+        }
+    }
 };
 
 const handleSizeChange = (val) => {

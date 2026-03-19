@@ -77,7 +77,7 @@
                             </div>
                             <div class="info-row">
                                 <span class="label">开具时间</span>
-                                <span class="value">{{ certInfo.issueTime }}</span>
+                                <span class="value">{{ formatDate(certInfo.issueTime) }}</span>
                             </div>
                         </div>
                     </div>
@@ -173,7 +173,7 @@
                             </div>
                             <div class="preview-row">
                                 <span class="label required">*开具日期</span>
-                                <span class="value">{{ otherCertInfo.issueTime }}</span>
+                                <span class="value">{{ formatDate(otherCertInfo.issueTime) }}</span>
                             </div>
                         </div>
                     </div>
@@ -229,6 +229,7 @@ import { ref, reactive, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
 import { Picture } from '@element-plus/icons-vue';
+import { formatDate } from '@/utils/formatTime';
 
 const router = useRouter();
 

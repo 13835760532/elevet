@@ -1,5 +1,5 @@
 <template>
-    <div class="page-container yy-detail-container">
+    <div class="page-container yy-detail-container" v-loading="loading">
         <PageHeader title="主体建档" desc="查看产品主体的详细档案信息。" />
 
         <div class="page-scrollable">
@@ -16,55 +16,55 @@
                 <!-- 备案类型 -->
                 <div class="detail-row">
                     <div class="label">*备案类型：</div>
-                    <div class="value">企业档案/个人档案</div>
+                    <div class="value">{{ subjectInfo.type ? getFilingTypeLabel(subjectInfo.type) : '--' }}</div>
                 </div>
 
                 <!-- 主体名称 -->
                 <div class="detail-row">
                     <div class="label">*主体名称：</div>
-                    <div class="value">北京本来生活科技有限公司</div>
+                    <div class="value">{{ subjectInfo.name || '--' }}</div>
                 </div>
 
                 <!-- 主体类型 -->
                 <div class="detail-row">
                     <div class="label">*主体类型：</div>
-                    <div class="value">流通</div>
+                    <div class="value">{{ subjectInfo.category ? getCategoryLabel(subjectInfo.category) : '--' }}</div>
                 </div>
 
                 <!-- 主营产品 -->
                 <div class="detail-row">
                     <div class="label">*主营产品：</div>
-                    <div class="value">黄瓜、西红柿、茄子、丝瓜</div>
+                    <div class="value">{{ subjectInfo.mainProducts || '--' }}</div>
                 </div>
 
                 <!-- 所属地区 -->
                 <div class="detail-row">
                     <div class="label">*所属地区：</div>
-                    <div class="value">北京市-北京市-朝阳区</div>
+                    <div class="value">{{ [subjectInfo.provinceCode, subjectInfo.cityCode, subjectInfo.districtCode].filter(Boolean).join('') || '--' }}</div>
                 </div>
 
                 <!-- 详细地址 -->
                 <div class="detail-row">
                     <div class="label">*详细地址：</div>
-                    <div class="value">建国路29号建外soho</div>
+                    <div class="value">{{ subjectInfo.address || '--' }}</div>
                 </div>
 
                 <!-- 联系人 -->
                 <div class="detail-row">
                     <div class="label">*联系人：</div>
-                    <div class="value">秦艳萍</div>
+                    <div class="value">{{ subjectInfo.contactName || '--' }}</div>
                 </div>
 
                 <!-- 联系电话 -->
                 <div class="detail-row">
                     <div class="label">*联系电话：</div>
-                    <div class="value">18513172770</div>
+                    <div class="value">{{ subjectInfo.contactPhone || '--' }}</div>
                 </div>
 
                 <!-- 生产规模 -->
                 <div class="detail-row">
                     <div class="label">*生产规模：</div>
-                    <div class="value">10 亩</div>
+                    <div class="value">{{ subjectInfo.productionScale ? (subjectInfo.productionScale + ' ' + (subjectInfo.productionScaleUnit || '')) : '--' }}</div>
                 </div>
 
                 <!-- 营业执照 -->
@@ -72,14 +72,14 @@
                     <div class="label">*营业执照：</div>
                     <div class="value">
                         <div class="img-preview-group">
-                            <div class="preview-box">
-                                <el-icon v-if="!mockData.license">
+                             <div class="preview-box">
+                                <el-icon v-if="!subjectInfo.businessLicenseUrl">
                                     <Picture />
                                 </el-icon>
-                                <img v-else src="https://img.alicdn.com/tfs/TB1_u_7D7D1gK0jSZFsXXb3vVXa-520-280.jpg"
-                                    class="preview-img" />
+                                <template v-else>
+                                    <el-image :src="subjectInfo.businessLicenseUrl" :preview-src-list="[subjectInfo.businessLicenseUrl]" class="preview-img" fit="cover" :preview-teleported="true" />
+                                </template>
                             </div>
-                            <el-button type="primary" link class="action-link">上传</el-button>
                         </div>
                     </div>
                 </div>
@@ -87,7 +87,7 @@
                 <!-- 信用代码 -->
                 <div class="detail-row">
                     <div class="label">*信用代码：</div>
-                    <div class="value">1102011818788786816</div>
+                    <div class="value">{{ subjectInfo.socialCreditCode || subjectInfo.idCard || '--' }}</div>
                 </div>
 
                 <!-- 身份证 -->
@@ -96,14 +96,19 @@
                     <div class="value">
                         <div class="img-preview-group">
                             <div class="id-card-boxes">
-                                <div class="preview-box"><el-icon>
-                                        <Postcard />
-                                    </el-icon></div>
-                                <div class="preview-box"><el-icon>
-                                        <Postcard />
-                                    </el-icon></div>
+                                 <div class="preview-box">
+                                    <el-icon v-if="!subjectInfo.idCardFrontUrl"><Postcard /></el-icon>
+                                    <template v-else>
+                                        <el-image :src="subjectInfo.idCardFrontUrl" :preview-src-list="[subjectInfo.idCardFrontUrl, subjectInfo.idCardBackUrl].filter(Boolean)" class="preview-img" fit="cover" :preview-teleported="true" />
+                                    </template>
+                                </div>
+                                <div class="preview-box">
+                                    <el-icon v-if="!subjectInfo.idCardBackUrl"><Postcard /></el-icon>
+                                    <template v-else>
+                                        <el-image :src="subjectInfo.idCardBackUrl" :preview-src-list="[subjectInfo.idCardFrontUrl, subjectInfo.idCardBackUrl].filter(Boolean)" :initial-index="subjectInfo.idCardFrontUrl ? 1 : 0" class="preview-img" fit="cover" :preview-teleported="true" />
+                                    </template>
+                                </div>
                             </div>
-                            <el-button type="primary" link class="action-link">上传正反面</el-button>
                         </div>
                     </div>
                 </div>
@@ -113,10 +118,13 @@
                     <div class="label">企业资质：</div>
                     <div class="value">
                         <div class="img-preview-group">
-                            <div class="preview-box">
-                                <el-icon>
-                                    <Picture />
-                                </el-icon>
+                             <template v-if="subjectInfo.qualificationUrls && parseUrls(subjectInfo.qualificationUrls).length">
+                                <div class="preview-box" v-for="(url, index) in parseUrls(subjectInfo.qualificationUrls)" :key="index">
+                                     <el-image :src="url" :preview-src-list="parseUrls(subjectInfo.qualificationUrls)" :initial-index="index" class="preview-img" fit="cover" :preview-teleported="true" />
+                                </div>
+                            </template>
+                            <div class="preview-box" v-else>
+                                <el-icon><Picture /></el-icon>
                             </div>
                         </div>
                     </div>
@@ -125,7 +133,8 @@
                 <!-- 企业介绍 -->
                 <div class="detail-row no-border">
                     <div class="label">企业介绍：</div>
-                    <div class="value">产品介绍产品介绍</div>
+                    <div class="value" v-if="subjectInfo.introduction" v-html="subjectInfo.introduction"></div>
+                    <div class="value" v-else>--</div>
                 </div>
             </div>
             </div>
@@ -134,16 +143,51 @@
 </template>
 
 <script setup>
-import { reactive } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, watch } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import { Picture, Postcard } from '@element-plus/icons-vue';
 import PageHeader from '@/components/PageHeader/index.vue';
+import * as SubjectApi from '@/api/agri/subject/index';
+import { useDict } from '@/hooks/web/useDict';
 
 const router = useRouter();
+const route = useRoute();
 
-const mockData = reactive({
-    license: true
-});
+const { getLabel: getCategoryLabel } = useDict('agri_subject_category', 'str');
+const { getLabel: getFilingTypeLabel } = useDict('agri_filing_type', 'int');
+
+const subjectInfo = ref({});
+const loading = ref(false);
+
+const parseUrls = (urlsStr) => {
+    if (!urlsStr) return [];
+    try {
+        const parsed = JSON.parse(urlsStr);
+        return Array.isArray(parsed) ? parsed : [];
+    } catch {
+        return urlsStr.split(',').filter(item => !!item);
+    }
+};
+
+const loadDetail = async () => {
+    const id = route.query.id;
+    if (!id) return;
+    loading.value = true;
+    try {
+        const data = await SubjectApi.getSubject(id);
+        subjectInfo.value = data || {};
+    } catch (error) {
+        console.error('获取主体详情失败', error);
+    } finally {
+        loading.value = false;
+    }
+};
+
+watch(() => route.query.id, (newId) => {
+    if (newId) {
+        loadDetail();
+    }
+}, { immediate: true });
 
 const handleBack = () => {
     router.back();
@@ -240,23 +284,42 @@ const handleBack = () => {
 .preview-box {
     width: 80px;
     height: 50px;
-    background: #F3F4F6;
+    background: #F8FAFC;
     border-radius: 4px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 1px solid #D1D5DB;
+    border: 1px solid #E2E8F0;
     overflow: hidden;
+    position: relative;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+
+    &:hover {
+        border-color: #00B3ED;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        z-index: 10;
+
+        .preview-img {
+            transform: scale(1.2);
+        }
+
+        .el-icon {
+            color: #00B3ED;
+        }
+    }
 
     .el-icon {
         font-size: 24px;
-        color: #9CA3AF;
+        color: #94A3B8;
+        transition: color 0.3s;
     }
 
     .preview-img {
         width: 100%;
         height: 100%;
-        object-fit: cover;
+        display: block;
+        transition: transform 0.3s ease-in-out;
     }
 }
 

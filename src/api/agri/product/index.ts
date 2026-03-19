@@ -47,3 +47,19 @@ export const deleteProductList = (ids: number[]) => {
 export const exportProduct = (params: any) => {
   return request.download({ url: '/agri/product/export-excel', params })
 }
+
+// 获得导入产品档案模板
+export const getImportTemplate = () => {
+  return request.download({ url: '/agri/product/get-import-template' })
+}
+
+// 导入产品档案
+export const importProduct = (data: { file: File; updateSupport: boolean }) => {
+  return request.post({
+    url: '/agri/product/import',
+    data,
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  })
+}

@@ -19,13 +19,15 @@
                     <el-input v-model="formData.productName" placeholder="请选择或输入产品名称" />
                 </el-form-item>
 
+                <!-- 建档时间 -->
+                <el-form-item label="建档时间" prop="productTime">
+                    <el-date-picker v-model="formData.productTime" type="date" placeholder="请选择建档时间" value-format="x" class="full-width" />
+                </el-form-item>
+
                 <!-- 产品类别 -->
                 <el-form-item label="产品类别" prop="category">
                     <el-select v-model="formData.category" placeholder="请选择产品类别" class="full-width">
-                        <el-option label="蔬菜" value="蔬菜" />
-                        <el-option label="水果" value="水果" />
-                        <el-option label="肉类" value="肉类" />
-                        <el-option label="水产品" value="水产品" />
+                        <el-option v-for="dict in productCategoryOptions" :key="dict.value" :label="dict.label" :value="dict.value" />
                     </el-select>
                 </el-form-item>
 
@@ -57,7 +59,7 @@
 
                 <!-- 所属主体 -->
                 <div class="card-header mt24">
-                    <span class="header-title" style="font-size: 16px;">所属主体关联</span>
+                    <span class="header-title" style="font-size: 16px;">所属主体（生产经营企业）</span>
                 </div>
 
                 <el-form-item label="生产经营主体" prop="subjectId">
@@ -70,11 +72,14 @@
                             </template>
                             <el-option v-for="item in subjectOptions" :key="item.id" :label="item.name" :value="item.id" />
                         </el-select>
-                        <el-button type="primary" class="btn-new-subject" @click="router.push('/filing/subjectCreate')">
+                        <el-button type="primary" class="btn-new-subject" @click="showSubjectDrawer = true">
                             <el-icon class="mr4"><Plus /></el-icon>新增主体
                         </el-button>
                     </div>
                 </el-form-item>
+
+                <!-- 红色 Tips -->
+                <div class="subject-form-tips">*从主体，如果未找到，请先创建主体建档</div>
 
                 <!-- 主体卡片详情 -->
                 <transition name="el-fade-in">
@@ -94,11 +99,11 @@
                             </div>
                             <div class="info-item">
                                 <span class="label">主体类型</span>
-                                <span class="value"><el-tag size="small" effect="plain" v-if="currentSubject.category">{{ currentSubject.category }}</el-tag><span v-else>--</span></span>
+                                <span class="value"><el-tag size="small" effect="plain" v-if="currentSubject.category">{{ getCategoryLabel(currentSubject.category) }}</el-tag><span v-else>--</span></span>
                             </div>
                             <div class="info-item">
-                                <span class="label">备案等级</span>
-                                <span class="value">{{ currentSubject.type === 2 ? '个人档案' : '企业档案' }}</span>
+                                <span class="label">备案类型</span>
+                                <span class="value">{{ currentSubject.type ? getFilingTypeLabel(currentSubject.type) : '--' }}</span>
                             </div>
                             <div class="info-item">
                                 <span class="label">联系人</span>
@@ -118,17 +123,20 @@
 
                 <!-- 底部操作按钮 -->
                 <div class="form-footer">
-                    <el-button type="primary" class="btn-submit" @click="handleSave">保存建档</el-button>
+                    <el-button type="primary" :loading="submitLoading" class="btn-submit" @click="handleSave">保存建档</el-button>
                     <el-button class="btn-cancel" @click="handleCancel">取消</el-button>
                 </div>
             </el-form>
         </div>
         </div>
+
+        <!-- 主体建档侧滑 -->
+        <SubjectFormDrawer v-model="showSubjectDrawer" @success="handleSubjectCreateSuccess" />
     </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive, onMounted, watch, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { Plus, Picture, Search, OfficeBuilding, View, Download } from '@element-plus/icons-vue';
 import PageHeader from '@/components/PageHeader/index.vue';
@@ -136,20 +144,30 @@ import { UploadImg } from '@/components/UploadFile';
 import * as ProductApi from '@/api/agri/product/index';
 import * as SubjectApi from '@/api/agri/subject/index';
 import { useMessage } from '@/hooks/web/useMessage';
+import { useDict } from '@/hooks/web/useDict';
+import SubjectFormDrawer from '@/views/filing/subject/components/SubjectFormDrawer.vue';
+
+const { getLabel: getCategoryLabel } = useDict('agri_subject_category', 'str');
+const { getLabel: getFilingTypeLabel } = useDict('agri_filing_type', 'int');
+const { options: productCategoryOptions } = useDict('agri_product_category', 'str');
+
+const showSubjectDrawer = ref(false);
 
 const router = useRouter();
 const route = useRoute();
 const message = useMessage();
 const formRef = ref(null);
+const submitLoading = ref(false);
 
 const formData = reactive({
     productCode: '',
     productName: '',
-    category: '蔬菜',
+    category: undefined,
     productionArea: '',
     productSpec: '',
     productUnit: 'kg',
     productImageUrl: '',
+    productTime: undefined,
     subjectId: undefined
 });
 
@@ -179,6 +197,17 @@ const handleSubjectChange = async (val) => {
     currentSubject.value = subjectOptions.value.find(item => item.id === val) || null;
 };
 
+const handleSubjectCreateSuccess = async (newId) => {
+    try {
+        const data = await SubjectApi.getSubject(newId);
+        subjectOptions.value = [data];
+        formData.subjectId = newId;
+        currentSubject.value = data;
+    } catch (error) {
+        console.error('获取新主体失败', error);
+    }
+};
+
 const loadingDetail = ref(false);
 
 const loadDetail = async () => {
@@ -187,11 +216,12 @@ const loadDetail = async () => {
         Object.assign(formData, {
             productCode: '',
             productName: '',
-            category: '蔬菜',
+            category: undefined,
             productionArea: '',
             productSpec: '',
             productUnit: 'kg',
             productImageUrl: '',
+            productTime: undefined,
             subjectId: undefined
         });
         currentSubject.value = null;
@@ -224,7 +254,7 @@ onMounted(() => {
     loadDetail();
 });
 
-import { watch } from 'vue';
+// 代码已移至顶部
 watch(() => route.query.id, () => {
     loadDetail();
 });
@@ -233,6 +263,8 @@ const handleSave = async () => {
     if (!formRef.value) return;
     await formRef.value.validate(async (valid) => {
         if (valid) {
+            if (submitLoading.value) return;
+            submitLoading.value = true;
             try {
                 // 如果没有填写 productCode，根据业务要求可能需要前端生成一条随机的，或者后端生成。通常后端生成较为规范，但这里我们先给个占位或者让用户填：
                 const submitData = { ...formData };
@@ -240,16 +272,20 @@ const handleSave = async () => {
                     submitData.productCode = 'PROD' + new Date().getTime();
                 }
 
+                const id = route.query.id;
                 if (id) {
-                    await ProductApi.updateProduct({ ...submitData, id });
+                    await ProductApi.updateProduct({ ...submitData, id: Number(id) });
                     message.success('更新成功');
                 } else {
                     await ProductApi.createProduct(submitData);
                     message.success('创建成功');
                 }
+                sessionStorage.removeItem('PRODUCT_FORM_CACHE');
                 router.back();
             } catch (error) {
                 console.error(error);
+            } finally {
+                submitLoading.value = false;
             }
         }
     });
@@ -277,6 +313,14 @@ $border-color: #E2E8F0;
 .page-scrollable {
     flex: 1;
     overflow-y: auto;
+}
+
+.subject-form-tips {
+    color: #F87171;
+    font-size: 13px;
+    margin-left: 130px;
+    margin-top: -12px;
+    margin-bottom: 24px;
 }
 
 .mr4 { margin-right: 4px; }

@@ -57,3 +57,28 @@ export const deleteCertificateList = (ids: number[]) => {
 export const exportCertificate = (params: any) => {
   return request.download({ url: '/agri/certificate/export-excel', params })
 }
+
+// 查询查验存证列表分页
+export const getCertificateVerificationPage = (params: any) => {
+  return request.get({ url: '/agri/certificate-verification/page', params })
+}
+
+// 导出查验存证 Excel
+export const exportCertificateVerification = (params: any) => {
+  return request.download({ url: '/agri/certificate-verification/export-excel', params })
+}
+
+// 获取查验存证详情
+export const getCertificateVerificationDetail = (id: number) => {
+  return request.get({ url: '/agri/certificate-verification/detail?id=' + id })
+}
+
+// 删除合格证查验记录
+export const deleteCertificateVerification = (id: number) => {
+  return request.delete({ url: '/agri/certificate-verification/delete?id=' + id })
+}
+
+// 根据编号查询上游合格证
+export const queryUpstreamCertificate = (certificateCode: string) => {
+  return request.get({ url: '/agri/certificate/query-upstream?certificateCode=' + certificateCode })
+}

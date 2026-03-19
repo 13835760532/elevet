@@ -27,9 +27,15 @@
                     </el-form-item>
                     <el-form-item label="" prop="issueType">
                         <el-select v-model="queryParams.issueType" placeholder="出证类型" clearable class="custom-select">
-                            <el-option label="生产者" value="producer" />
-                            <el-option label="收购者" value="buyer" />
-                            <el-option label="销售者" value="seller" />
+                            <el-option label="生产者" :value="1" />
+                            <el-option label="收购者" :value="2" />
+                            <el-option label="批发市场" :value="3" />
+                        </el-select>
+                    </el-form-item>
+                    <el-form-item label="" prop="status">
+                        <el-select v-model="queryParams.status" placeholder="状态" clearable class="custom-select">
+                            <el-option label="有效" :value="1" />
+                            <el-option label="作废" :value="2" />
                         </el-select>
                     </el-form-item>
                     <el-form-item label="" prop="province">
@@ -44,8 +50,8 @@
                             <el-option label="胶州市" value="jiaozhou" />
                         </el-select> -->
                     </el-form-item>
-                    <el-form-item label="" prop="phone">
-                        <el-input :prefix-icon="Search" v-model="queryParams.phone" placeholder="搜索联系电话" clearable class="custom-input w220" />
+                    <el-form-item label="" prop="dateRange">
+                        <el-date-picker v-model="queryParams.dateRange" type="daterange" range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" value-format="YYYY-MM-DD" class="custom-datepicker" />
                     </el-form-item>
                     <div class="query-btns">
                         <el-button @click="handleReset" class="reset-btn">重置</el-button>
@@ -72,18 +78,26 @@
             <div class="table-wrapper">
                 <el-table :data="tableList" v-loading="loading">
                     <el-table-column label="序号" type="index" width="70" align="center" />
-                    <el-table-column label="合格证编号" prop="certNo" width="150" align="center" />
-                    <el-table-column label="出证类型" prop="issueType" width="100" align="center">
+                    <el-table-column label="合格证编号" prop="certificateCode" width="160" align="center" />
+                    <el-table-column label="出证类型" prop="certificateType" width="100" align="center">
                         <template #default="scope">
-                            <span class="type-tag" :class="scope.row.issueType === '生产者' ? 'producer' : 'buyer'">{{
-                                scope.row.issueType }}</span>
+                            <span class="type-tag" :class="{ 'producer': scope.row.certificateType === 1, 'buyer': scope.row.certificateType === 2, 'seller': scope.row.certificateType === 3 }">
+                                {{ scope.row.certificateType === 1 ? '生产者' : (scope.row.certificateType === 2 ? '收购者' : '批发市场') }}
+                            </span>
                         </template>
                     </el-table-column>
                     <el-table-column label="产品名称" prop="productName" width="110" align="center" />
                     <el-table-column label="产品类别" prop="productCategory" width="110" align="center" />
-                    <el-table-column label="产地" prop="origin" min-width="150" show-overflow-tooltip />
-                    <el-table-column label="生产经营主体" prop="entity" min-width="200" show-overflow-tooltip />
-                    <el-table-column label="开具日期" prop="issueDate" width="160" align="center" />
+                    <el-table-column label="产地" prop="productionArea" min-width="150" show-overflow-tooltip />
+                    <el-table-column label="生产经营主体" prop="subjectName" min-width="200" show-overflow-tooltip />
+                    <el-table-column label="状态" prop="status" width="80" align="center">
+                        <template #default="{ row }">
+                            <el-tag :type="row.status === 1 ? 'success' : 'danger'" size="small">
+                                {{ row.status === 1 ? '有效' : '作废' }}
+                            </el-tag>
+                        </template>
+                    </el-table-column>
+                    <el-table-column label="开具日期" prop="issueDate" width="160" align="center" :formatter="dateFormatter" />
                     <el-table-column label="操作" width="200" align="center" fixed="right">
                         <template #default="scope">
                             <div class="table-operate-action-btns">
@@ -112,6 +126,7 @@ import { useRouter } from 'vue-router';
 import { Edit, Search } from '@element-plus/icons-vue';
 import { useMessage } from '@/hooks/web/useMessage';
 import download from '@/utils/download';
+import { dateFormatter } from '@/utils/formatTime';
 import * as CertificateApi from '@/api/agri/certificate';
 
 const router = useRouter();
@@ -140,11 +155,13 @@ const queryParams = reactive({
     certNo: '',
     productName: '',
     entity: '',
-    issueType: '',
-    province: '',
+    issueType: undefined,
+    status: 1,
+    province: [] as any,
     city: '',
     county: '',
-    phone: ''
+    phone: '',
+    dateRange: [] as any
 });
 
 const pageParams = reactive({
@@ -166,21 +183,16 @@ const getList = async () => {
             pageSize: pageParams.pageSize,
             certificateCode: queryParams.certNo || undefined,
             productName: queryParams.productName || undefined,
-            status: 1 // 默认查询有效
+            subjectName: queryParams.entity || undefined,
+            certificateType: queryParams.issueType || undefined,
+            productionArea: queryParams.province?.length ? queryParams.province.join('/') : undefined,
+            contactPhone: queryParams.phone || undefined,
+            status: queryParams.status || undefined,
+            startDate: queryParams.dateRange?.[0] || undefined,
+            endDate: queryParams.dateRange?.[1] || undefined
         };
         const data = await CertificateApi.getCertificatePage(params);
-        const list = data.list || [];
-        tableList.value = list.map((item: any) => ({
-            ...item,
-            certNo: item.certificateCode,
-            productName: item.productName,
-            // 模拟字段或从 item 中提取
-            issueType: item.certificateType === 1 ? '生产者' : '收购者',
-            productCategory: '蔬菜', // 示例字段
-            origin: item.origin || '山东省胶州市',
-            entity: item.entityName || '某某生产经营主体',
-            issueDate: item.issueDate || item.createTime || '-'
-        }));
+        tableList.value = data.list || [];
         total.value = data.total || 0;
     } catch (error) {
         console.error(error);
@@ -199,7 +211,14 @@ const handleQuery = () => {
 };
 
 const handleReset = () => {
-    Object.keys(queryParams).forEach(key => (queryParams[key] = ''));
+    Object.keys(queryParams).forEach(key => {
+        if (Array.isArray(queryParams[key])) {
+            queryParams[key] = [];
+        } else {
+            queryParams[key] = undefined;
+        }
+    });
+    queryParams.status = 1; // 重置时恢复默认有效状态
     handleQuery();
 };
 
@@ -209,7 +228,14 @@ const handleExport = async () => {
         exportLoading.value = true;
         const params: any = {
             certificateCode: queryParams.certNo || undefined,
-            productName: queryParams.productName || undefined
+            productName: queryParams.productName || undefined,
+            subjectName: queryParams.entity || undefined,
+            certificateType: queryParams.issueType || undefined,
+            productionArea: queryParams.province?.length ? queryParams.province.join('/') : undefined,
+            contactPhone: queryParams.phone || undefined,
+            status: queryParams.status || undefined,
+            startDate: queryParams.dateRange?.[0] || undefined,
+            endDate: queryParams.dateRange?.[1] || undefined
         };
         const data = await CertificateApi.exportCertificate(params);
         download.excel(data, '合格证记录.xls');
@@ -260,10 +286,10 @@ const handleCurrentChange = (val: number) => {
         border: 1px solid rgba(0, 179, 237, 0.2);
     }
     
-    &.buyer {
-        background: rgba(255, 153, 0, 0.1);
-        color: #FF9900;
-        border: 1px solid rgba(255, 153, 0, 0.2);
+    &.seller {
+        background: rgba(103, 194, 58, 0.1);
+        color: #67c23a;
+        border: 1px solid rgba(103, 194, 58, 0.2);
     }
 }
 

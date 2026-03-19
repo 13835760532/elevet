@@ -59,7 +59,7 @@
                             </el-tag>
                         </template>
                     </el-table-column>
-                    <el-table-column label="创建时间" prop="createTime" width="160" align="center" />
+                    <el-table-column label="建档日期" prop="productTime" width="160" align="center" :formatter="dateFormatter" />
                     <el-table-column label="操作" width="160" align="center" fixed="right">
                         <template #default="scope">
                             <div class="table-operate-action-btns">
@@ -91,6 +91,7 @@ import * as ProductApi from '@/api/agri/product/index';
 import { useMessage } from '@/hooks/web/useMessage';
 import { ElMessageBox } from 'element-plus';
 import download from '@/utils/download';
+import { dateFormatter } from '@/utils/formatTime';
 
 const { queryFormClass } = useFormLayout();
 

@@ -14,9 +14,8 @@
             <el-form ref="formRef" :model="formData" :rules="formRules" label-width="120px" class="product-form">
                 <!-- 备案类型 -->
                 <el-form-item label="备案类型" prop="type" required>
-                    <el-select v-model="formData.type" placeholder="企业档案/个人档案" class="full-width">
-                        <el-option label="企业档案" :value="1" />
-                        <el-option label="个人档案" :value="2" />
+                    <el-select v-model="formData.type" placeholder="选择备案类型" class="full-width">
+                        <el-option v-for="dict in filingTypeOptions" :key="dict.value" :label="dict.label" :value="dict.value" />
                     </el-select>
                 </el-form-item>
 
@@ -27,9 +26,8 @@
 
                 <!-- 主体类型 -->
                 <el-form-item label="主体类型" prop="category" required>
-                    <el-select v-model="formData.category" placeholder="请选择主体类型，如：生产" class="full-width">
-                        <el-option label="生产" value="生产" />
-                        <el-option label="流通" value="流通" />
+                    <el-select v-model="formData.category" placeholder="请选择主体类型" class="full-width">
+                        <el-option v-for="dict in subjectCategoryOptions" :key="dict.value" :label="dict.label" :value="dict.value" />
                     </el-select>
                 </el-form-item>
 
@@ -99,7 +97,7 @@
 
                 <!-- 底部按钮 -->
                 <div class="form-footer">
-                    <el-button type="primary" class="btn-submit" @click="handleSubmit">保存建档</el-button>
+                    <el-button type="primary" :loading="loading" class="btn-submit" @click="handleSubmit">保存建档</el-button>
                     <el-button class="btn-cancel" @click="handleCancel">取消</el-button>
                 </div>
             </el-form>
@@ -117,17 +115,23 @@ import { UploadImg, UploadImgs } from '@/components/UploadFile';
 import * as SubjectApi from '@/api/agri/subject/index';
 import { useMessage } from '@/hooks/web/useMessage';
 
+import { useDict } from '@/hooks/web/useDict';
+
+const { options: filingTypeOptions } = useDict('agri_filing_type', 'int');
+const { options: subjectCategoryOptions } = useDict('agri_subject_category', 'str');
+
 const router = useRouter();
 const route = useRoute();
 const message = useMessage();
 const formRef = ref(null);
+const loading = ref(false);
 
 const id = route.query.id;
 
 const formData = reactive({
-    type: 1,
+    type: undefined,
     name: '',
-    category: '生产',
+    category: undefined,
     mainProducts: '',
     provinceCode: '',
     address: '',
@@ -176,6 +180,8 @@ const handleSubmit = async () => {
     if (!formRef.value) return;
     await formRef.value.validate(async (valid) => {
         if (valid) {
+            if (loading.value) return;
+            loading.value = true;
             try {
                 const submitData = { ...formData };
                 if (Array.isArray(submitData.qualificationUrls)) {
@@ -207,6 +213,8 @@ const handleSubmit = async () => {
                 }
             } catch (error) {
                 console.error(error);
+            } finally {
+                loading.value = false;
             }
         }
     });
@@ -369,7 +377,7 @@ const handleCancel = () => {
     font-weight: 500;
 
     &:hover {
-        background: #1e52e0;
+        opacity: 0.8;
     }
 }
 

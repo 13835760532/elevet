@@ -1,127 +1,209 @@
 <template>
-    <div class="page-container yy-detail-container">
+    <div class="page-container yy-detail-container" v-loading="loading">
         <PageHeader title="产品档案" desc="查看农产品的详细档案信息。" />
 
         <div class="page-scrollable">
+            <!-- 详情卡片容器 -->
+            <div class="content-card">
+                <div class="card-header">
+                    <span class="header-title">产品基本信息</span>
+                    <div class="dashed-line"></div>
+                </div>
 
-        <!-- 详情大卡片 -->
-        <div class="content-card">
-            <!-- 产品信息区块 -->
-            <div class="detail-section">
-                <h2 class="section-title">产品信息</h2>
-                <div class="detail-list">
+                <!-- 详情数据列表 - 产品信息 -->
+                <div class="detail-list mb-30">
+                
                     <div class="detail-row">
-                        <span class="label">*建档时间：</span>
-                        <span class="value">20261230 12:56:32</span>
+                        <div class="label">*产品编码：</div>
+                        <div class="value">{{ productInfo.productCode || '--' }}</div>
                     </div>
                     <div class="detail-row">
-                        <span class="label">*产品编码：</span>
-                        <span class="value">SC-202512-0925-XX-000001（XX为随机码）</span>
+                        <div class="label">*产品名称：</div>
+                        <div class="value">{{ productInfo.productName || '--' }}</div>
                     </div>
                     <div class="detail-row">
-                        <span class="label">*产品名称：</span>
-                        <span class="value">黄瓜</span>
+                        <div class="label">*产品类别：</div>
+                        <div class="value">{{ productInfo.category ? getProductCategoryLabel(productInfo.category) : '--' }}</div>
                     </div>
                     <div class="detail-row">
-                        <span class="label">*产品类别：</span>
-                        <span class="value">蔬菜</span>
+                        <div class="label">*产品产地：</div>
+                        <div class="value">{{ productInfo.productionArea || '--' }}</div>
                     </div>
                     <div class="detail-row">
-                        <span class="label">*产品产地：</span>
-                        <span class="value">北京-朝阳-建外soho</span>
+                        <div class="label">建档时间：</div>
+                        <div class="value">{{ productInfo.productTime ? formatDate(productInfo.productTime, 'YYYY-MM-DD HH:mm:ss') : '--' }}</div>
                     </div>
-                    <div class="detail-row image-row">
-                        <span class="label">*产品宣传照片：</span>
+                    <div class="detail-row">
+                        <div class="label">*宣传照片：</div>
                         <div class="value">
-                            <div class="preview-img-box">
-                                <img src="https://img.alicdn.com/tfs/TB1_u_7D7D1gK0jSZFsXXb3vVXa-520-280.jpg"
-                                    alt="产品图片" />
+                            <div class="preview-box" v-if="productInfo.productImageUrl">
+                                <el-image :src="productInfo.productImageUrl" :preview-src-list="[productInfo.productImageUrl]" class="preview-img" fit="cover" :preview-teleported="true" />
                             </div>
+                            <span v-else>--</span>
                         </div>
                     </div>
                     <div class="detail-row">
-                        <span class="label">*批次规模：</span>
-                        <span class="value">10亩</span>
+                        <div class="label">*批次规模：</div>
+                        <div class="value">{{ productInfo.productSpec ? productInfo.productSpec + ' ' + (productInfo.productUnit || '') : '--' }}</div>
                     </div>
                 </div>
-            </div>
 
-            <!-- 所属主体区块 -->
-            <div class="detail-section mt-40">
-                <h2 class="section-title">所属主体</h2>
+                <div class="card-header">
+                    <span class="header-title">所属主体信息</span>
+                    <div class="dashed-line"></div>
+                </div>
+
+                <!-- 详情数据列表 - 主体信息 -->
                 <div class="detail-list">
                     <div class="detail-row">
-                        <span class="label">*主体名称：</span>
-                        <span class="value">北京本来生活科技有限公司</span>
+                        <div class="label">*主体名称：</div>
+                        <div class="value">{{ subjectInfo.name || '--' }}</div>
                     </div>
                     <div class="detail-row">
-                        <span class="label">*主体类型：</span>
-                        <span class="value">流通</span>
+                        <div class="label">*主体类型：</div>
+                        <div class="value">{{ subjectInfo.category ? getCategoryLabel(subjectInfo.category) : '--' }}</div>
                     </div>
                     <div class="detail-row">
-                        <span class="label">*主营产品：</span>
-                        <span class="value">黄瓜、西红柿、茄子、丝瓜</span>
+                        <div class="label">*备案类型：</div>
+                        <div class="value">{{ subjectInfo.type ? getFilingTypeLabel(subjectInfo.type) : '--' }}</div>
                     </div>
                     <div class="detail-row">
-                        <span class="label">*所属地区：</span>
-                        <span class="value">北京市-北京市-朝阳区</span>
+                        <div class="label">*主营产品：</div>
+                        <div class="value">{{ subjectInfo.mainProducts || '--' }}</div>
                     </div>
                     <div class="detail-row">
-                        <span class="label">*详细地址：</span>
-                        <span class="value">建国路29号建外soho</span>
+                        <div class="label">*所属地区：</div>
+                        <div class="value">{{ [subjectInfo.provinceCode, subjectInfo.cityCode, subjectInfo.districtCode].filter(Boolean).join('') || '--' }}</div>
                     </div>
                     <div class="detail-row">
-                        <span class="label">*联系人：</span>
-                        <span class="value">秦艳萍</span>
+                        <div class="label">*详细地址：</div>
+                        <div class="value">{{ subjectInfo.address || '--' }}</div>
                     </div>
                     <div class="detail-row">
-                        <span class="label">*联系电话：</span>
-                        <span class="value">18513172770</span>
+                        <div class="label">*联系人：</div>
+                        <div class="value">{{ subjectInfo.contactName || '--' }}</div>
                     </div>
                     <div class="detail-row">
-                        <span class="label">*生产规模：</span>
-                        <span class="value">10 亩</span>
-                    </div>
-                    <div class="detail-row complex">
-                        <span class="label">*信用代码<br />（身份证代码）：</span>
-                        <span class="value">1102011818788786816</span>
+                        <div class="label">*联系电话：</div>
+                        <div class="value">{{ subjectInfo.contactPhone || '--' }}</div>
                     </div>
                     <div class="detail-row">
-                        <span class="label">*营业执照：</span>
-                        <span class="value active-link">预览</span>
+                        <div class="label">*生产规模：</div>
+                        <div class="value">{{ subjectInfo.productionScale ? subjectInfo.productionScale + ' ' + (subjectInfo.productionScaleUnit || '') : '--' }}</div>
                     </div>
                     <div class="detail-row">
-                        <span class="label">身份证：</span>
-                        <span class="value active-link">预览</span>
+                        <div class="label">*信用代码：</div>
+                        <div class="value">{{ subjectInfo.socialCreditCode || subjectInfo.idCard || '--' }}</div>
                     </div>
                     <div class="detail-row">
-                        <span class="label">企业资质：</span>
-                        <span class="value active-link">预览</span>
+                        <div class="label">*营业执照：</div>
+                        <div class="value">
+                            <div class="preview-box" v-if="subjectInfo.businessLicenseUrl">
+                                <el-image :src="subjectInfo.businessLicenseUrl" :preview-src-list="[subjectInfo.businessLicenseUrl]" class="preview-img" fit="cover" :preview-teleported="true" />
+                            </div>
+                            <span v-else>--</span>
+                        </div>
                     </div>
                     <div class="detail-row">
-                        <span class="label">企业介绍：</span>
-                        <span class="value active-link">预览</span>
+                        <div class="label">身份证：</div>
+                        <div class="value">
+                            <div class="img-preview-group" v-if="subjectInfo.idCardFrontUrl || subjectInfo.idCardBackUrl">
+                                <div class="preview-box" v-if="subjectInfo.idCardFrontUrl">
+                                    <el-image :src="subjectInfo.idCardFrontUrl" :preview-src-list="[subjectInfo.idCardFrontUrl, subjectInfo.idCardBackUrl].filter(Boolean)" class="preview-img" fit="cover" :preview-teleported="true" />
+                                </div>
+                                <div class="preview-box" v-if="subjectInfo.idCardBackUrl">
+                                    <el-image :src="subjectInfo.idCardBackUrl" :preview-src-list="[subjectInfo.idCardFrontUrl, subjectInfo.idCardBackUrl].filter(Boolean)" :initial-index="subjectInfo.idCardFrontUrl ? 1 : 0" class="preview-img" fit="cover" :preview-teleported="true" />
+                                </div>
+                            </div>
+                            <span v-else>--</span>
+                        </div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="label">企业资质：</div>
+                        <div class="value">
+                             <div class="img-preview-group" v-if="subjectInfo.qualificationUrls && parseUrls(subjectInfo.qualificationUrls).length">
+                                <div class="preview-box" v-for="(url, index) in parseUrls(subjectInfo.qualificationUrls)" :key="index">
+                                     <el-image :src="url" :preview-src-list="parseUrls(subjectInfo.qualificationUrls)" :initial-index="index" class="preview-img" fit="cover" :preview-teleported="true" />
+                                </div>
+                            </div>
+                            <span v-else>--</span>
+                        </div>
+                    </div>
+                    <div class="detail-row no-border">
+                        <div class="label">企业介绍：</div>
+                        <div class="value" v-if="subjectInfo.introduction" v-html="subjectInfo.introduction"></div>
+                        <div class="value" v-else>--</div>
                     </div>
                 </div>
-            </div>
             </div>
         </div>
     </div>
 </template>
 
 <script setup>
-import { useRouter } from 'vue-router';
+import { ref, watch } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
+import { Picture, Postcard } from '@element-plus/icons-vue';
 import PageHeader from '@/components/PageHeader/index.vue';
+import * as ProductApi from '@/api/agri/product/index';
+import * as SubjectApi from '@/api/agri/subject/index';
+import { formatDate } from '@/utils/formatTime';
+import { useDict } from '@/hooks/web/useDict';
+
+const { getLabel: getCategoryLabel } = useDict('agri_subject_category', 'str');
+const { getLabel: getFilingTypeLabel } = useDict('agri_filing_type', 'int');
+const { getLabel: getProductCategoryLabel } = useDict('agri_product_category', 'str');
 
 const router = useRouter();
+const route = useRoute();
 
-const handleBack = () => {
-    router.back();
+const productInfo = ref({});
+const subjectInfo = ref({});
+const loading = ref(false);
+
+const parseUrls = (urlsStr) => {
+    if (!urlsStr) return [];
+    try {
+        const parsed = JSON.parse(urlsStr);
+        return Array.isArray(parsed) ? parsed : [];
+    } catch {
+        return urlsStr.split(',').filter(item => !!item);
+    }
 };
+
+const loadDetail = async () => {
+    const id = route.query.id;
+    if (!id) return;
+    loading.value = true;
+    try {
+        const prodData = await ProductApi.getProduct(id);
+        productInfo.value = prodData || {};
+        
+        if (prodData && prodData.subjectId) {
+             const subData = await SubjectApi.getSubject(prodData.subjectId);
+             subjectInfo.value = subData || {};
+             return;
+        }
+        
+        const mySubData = await SubjectApi.getMySubject();
+        subjectInfo.value = mySubData || {};
+    } catch (error) {
+        console.error('获取归档详情失败', error);
+    } finally {
+        loading.value = false;
+    }
+};
+
+watch(() => route.query.id, (newId) => {
+    if (newId) {
+        loadDetail();
+    }
+}, { immediate: true });
 </script>
 
 <style lang="scss" scoped>
 .page-container {
+    height: 100%;
     display: flex;
     flex-direction: column;
 }
@@ -142,30 +224,56 @@ const handleBack = () => {
     box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
 }
 
-.section-title {
-    font-size: 16px;
-    font-weight: 600;
-    color: #333;
-    margin: 0 0 20px 0;
-    padding-bottom: 15px;
-    // border-bottom: 1px solid #F3F4F6;
+.card-header {
+    margin-bottom: 30px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+
+    .header-title {
+        font-size: 22px;
+        font-weight: 600;
+        color: #333;
+        display: block;
+        margin-bottom: 15px;
+    }
 }
 
+.dashed-line {
+    width: 100%;
+    height: 1px;
+    background-image: linear-gradient(to right, #ccc 50%, rgba(255, 255, 255, 0) 0%);
+    background-position: bottom;
+    background-size: 10px 1px;
+    background-repeat: repeat-x;
+}
 
+.detail-list {
+    border-radius: 4px;
+    overflow: hidden;
+
+    &.mb-30 {
+        margin-bottom: 30px;
+    }
+}
 
 .detail-row {
     display: flex;
     border-bottom: 1px solid #E5E7EB;
     min-height: 50px;
-    align-items: flex-start;
+
+    &.no-border {
+        border-bottom: none;
+    }
 
     .label {
-        width: 160px;
+        width: 140px;
         padding: 15px 20px;
         font-size: 14px;
         font-weight: 600;
         color: #333;
         text-align: right;
+        background: #F8FAFC;
     }
 
     .value {
@@ -173,40 +281,43 @@ const handleBack = () => {
         padding: 15px 20px;
         font-size: 14px;
         color: #333;
-        line-height: 1.5;
-
-        &.active-link {
-            color: #3B82F6;
-            cursor: pointer;
-            font-weight: 500;
-        }
-    }
-
-    &.image-row {
-        .value {
-            padding-top: 10px;
-            padding-bottom: 10px;
-        }
+        display: flex;
+        align-items: center;
     }
 }
 
-.preview-img-box {
+.img-preview-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.preview-box {
     width: 60px;
     height: 60px;
     border-radius: 4px;
     overflow: hidden;
-    border: 1px solid #D1D5DB;
+    border: 1px solid #E2E8F0;
+    position: relative;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    background: #F8FAFC;
 
-    img {
+    &:hover {
+        border-color: #00B3ED;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        z-index: 10;
+
+        .preview-img {
+            transform: scale(1.2);
+        }
+    }
+
+    .preview-img {
         width: 100%;
         height: 100%;
-        object-fit: cover;
+        display: block;
+        transition: transform 0.3s ease-in-out;
     }
 }
-
-.mt-40 {
-    margin-top: 40px;
-}
-
-
 </style>

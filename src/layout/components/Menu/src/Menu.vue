@@ -7,6 +7,7 @@ import { useRenderMenuItem } from './components/useRenderMenuItem'
 import { isUrl } from '@/utils/is'
 import { useDesign } from '@/hooks/web/useDesign'
 import { LayoutType } from '@/types/layout'
+import { Collapse } from '@/layout/components/Collapse'
 
 const { getPrefixCls } = useDesign()
 
@@ -112,14 +113,19 @@ export default defineComponent({
         id={prefixCls}
         class={[
           `${prefixCls} ${prefixCls}__${unref(menuMode)}`,
-          'h-[100%] overflow-hidden flex-col bg-[#fff]',
+          'h-[100%] overflow-hidden flex flex-col bg-[#fff]',
           {
             'w-[var(--left-menu-min-width)]': unref(collapse) && unref(layout) !== 'cutMenu',
             'w-[var(--left-menu-max-width)]': !unref(collapse) && unref(layout) !== 'cutMenu'
           }
         ]}
       >
-        {renderMenuWrap()}
+        <div class="flex-1 overflow-hidden">{renderMenuWrap()}</div>
+        {unref(menuMode) === 'vertical' && (
+          <div class={['p-4 flex items-center', unref(collapse) ? 'justify-center' : 'justify-start']}>
+            <Collapse />
+          </div>
+        )}
       </div>
     )
   }

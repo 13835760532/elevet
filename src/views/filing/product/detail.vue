@@ -1,5 +1,5 @@
 <template>
-    <div class="page-container">
+    <div class="page-container" v-loading="loading">
         <!-- 顶部标题区 -->
         <div class="header-section">
             <div class="title-wrapper">
@@ -16,36 +16,38 @@
                 <div class="detail-list">
                     <div class="detail-row">
                         <span class="label">*建档时间：</span>
-                        <span class="value">20261230 12:56:32</span>
+                        <span class="value">{{ productInfo.createTime ? formatDate(productInfo.createTime, 'YYYY-MM-DD HH:mm:ss') : '--' }}</span>
                     </div>
                     <div class="detail-row">
                         <span class="label">*产品编码：</span>
-                        <span class="value">SC-202512-0925-XX-000001 (XX为随机码)</span>
+                        <span class="value">{{ productInfo.productCode || '--' }}</span>
                     </div>
                     <div class="detail-row">
                         <span class="label">*产品名称：</span>
-                        <span class="value">黄瓜</span>
+                        <span class="value">{{ productInfo.productName || '--' }}</span>
                     </div>
                     <div class="detail-row">
                         <span class="label">*产品类别：</span>
-                        <span class="value">蔬菜</span>
+                        <span class="value">{{ productInfo.category || '--' }}</span>
                     </div>
                     <div class="detail-row">
                         <span class="label">*产品产地：</span>
-                        <span class="value">北京-朝阳-建外soho</span>
+                        <span class="value">{{ productInfo.productionArea || '--' }}</span>
                     </div>
                     <div class="detail-row image-row">
                         <span class="label">*产品宣传照片：</span>
                         <div class="value">
-                            <div class="preview-img-box">
-                                <img src="https://img.alicdn.com/tfs/TB1_u_7D7D1gK0jSZFsXXb3vVXa-520-280.jpg"
-                                    alt="产品图片" />
+                            <div class="preview-img-box" v-if="productInfo.productImageUrl">
+                                <el-image :src="productInfo.productImageUrl"
+                                    :preview-src-list="[productInfo.productImageUrl]"
+                                    fit="cover" />
                             </div>
+                            <span v-else>--</span>
                         </div>
                     </div>
                     <div class="detail-row">
                         <span class="label">*批次规模：</span>
-                        <span class="value">10亩</span>
+                        <span class="value">{{ productInfo.productSpec ? productInfo.productSpec + ' ' + (productInfo.productUnit || '') : '--' }}</span>
                     </div>
                 </div>
             </div>
@@ -56,55 +58,65 @@
                 <div class="detail-list">
                     <div class="detail-row">
                         <span class="label">*主体名称：</span>
-                        <span class="value">北京本来生活科技有限公司</span>
+                        <span class="value">{{ subjectInfo.name || '--' }}</span>
                     </div>
                     <div class="detail-row">
                         <span class="label">*主体类型：</span>
-                        <span class="value">流通</span>
+                        <span class="value">{{ subjectInfo.category ? getCategoryLabel(subjectInfo.category) : '--' }}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="label">*备案类型：</span>
+                        <span class="value">{{ subjectInfo.type ? getFilingTypeLabel(subjectInfo.type) : '--' }}</span>
                     </div>
                     <div class="detail-row">
                         <span class="label">*主营产品：</span>
-                        <span class="value">黄瓜、西红柿、茄子、丝瓜</span>
+                        <span class="value">{{ subjectInfo.mainProducts || '--' }}</span>
                     </div>
                     <div class="detail-row">
                         <span class="label">*所属地区：</span>
-                        <span class="value">北京市-北京市-朝阳区</span>
+                        <span class="value">{{ [subjectInfo.provinceCode, subjectInfo.cityCode, subjectInfo.districtCode].filter(Boolean).join('') || '--' }}</span>
                     </div>
                     <div class="detail-row">
                         <span class="label">*详细地址：</span>
-                        <span class="value">建国路29号建外soho</span>
+                        <span class="value">{{ subjectInfo.address || '--' }}</span>
                     </div>
                     <div class="detail-row">
                         <span class="label">*联系人：</span>
-                        <span class="value">秦艳萍</span>
+                        <span class="value">{{ subjectInfo.contactName || '--' }}</span>
                     </div>
                     <div class="detail-row">
                         <span class="label">*联系电话：</span>
-                        <span class="value">18513172770</span>
+                        <span class="value">{{ subjectInfo.contactPhone || '--' }}</span>
                     </div>
                     <div class="detail-row">
                         <span class="label">*生产规模：</span>
-                        <span class="value">10 亩</span>
+                        <span class="value">{{ subjectInfo.productionScale ? subjectInfo.productionScale + ' ' + (subjectInfo.productionScaleUnit || '') : '--' }}</span>
                     </div>
                     <div class="detail-row complex">
                         <span class="label">*信用代码<br />（身份证代码）：</span>
-                        <span class="value">1102011818788786816</span>
+                        <span class="value">{{ subjectInfo.socialCreditCode || subjectInfo.idCard || '--' }}</span>
                     </div>
                     <div class="detail-row">
                         <span class="label">*营业执照：</span>
-                        <span class="value active-link">预览</span>
+                        <span class="value active-link" v-if="subjectInfo.businessLicenseUrl" @click="handlePreview(subjectInfo.businessLicenseUrl)">预览</span>
+                        <span class="value" v-else>--</span>
                     </div>
                     <div class="detail-row">
                         <span class="label">身份证：</span>
-                        <span class="value active-link">预览</span>
+                        <span class="value active-link" v-if="subjectInfo.idCardFrontUrl || subjectInfo.idCardBackUrl" 
+                              @click="handlePreview([subjectInfo.idCardFrontUrl, subjectInfo.idCardBackUrl].filter(Boolean))">预览</span>
+                        <span class="value" v-else>--</span>
                     </div>
                     <div class="detail-row">
                         <span class="label">企业资质：</span>
-                        <span class="value active-link">预览</span>
+                        <span class="value active-link" v-if="subjectInfo.qualificationUrls && parseUrls(subjectInfo.qualificationUrls).length" 
+                              @click="handlePreview(parseUrls(subjectInfo.qualificationUrls))">预览</span>
+                        <span class="value" v-else>--</span>
                     </div>
                     <div class="detail-row no-border">
                         <span class="label">企业介绍：</span>
-                        <span class="value active-link">预览</span>
+                        <span class="value" v-if="subjectInfo.introduction" v-html="subjectInfo.introduction"></span>
+                        <span class="value" v-else>--</span>
                     </div>
                 </div>
             </div>
@@ -114,13 +126,86 @@
                 <el-button class="btn-back" @click="handleBack">返回</el-button>
             </div>
         </div>
+        
+        <!-- 图片预览组件 -->
+        <el-image-viewer 
+            v-if="imgPreviewViewerVisible" 
+            :url-list="previewUrlList" 
+            @close="imgPreviewViewerVisible = false" 
+            :teleported="true"
+        />
     </div>
 </template>
 
 <script setup>
-import { useRouter } from 'vue-router';
+import { ref, onMounted } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
+import * as ProductApi from '@/api/agri/product/index';
+import * as SubjectApi from '@/api/agri/subject/index';
+import { formatDate } from '@/utils/formatTime';
+
+import { useDict } from '@/hooks/web/useDict';
+
+const { getLabel: getCategoryLabel } = useDict('agri_subject_category', 'str');
+const { getLabel: getFilingTypeLabel } = useDict('agri_filing_type', 'int');
 
 const router = useRouter();
+const route = useRoute();
+
+const productInfo = ref({});
+const subjectInfo = ref({});
+const loading = ref(false);
+const imgPreviewViewerVisible = ref(false);
+const previewUrlList = ref([]);
+
+const parseUrls = (urlsStr) => {
+    if (!urlsStr) return [];
+    try {
+        const parsed = JSON.parse(urlsStr);
+        return Array.isArray(parsed) ? parsed : [];
+    } catch {
+        return urlsStr.split(',').filter(item => !!item);
+    }
+};
+
+const handlePreview = (urls) => {
+    if (!urls) return;
+    const urlArray = Array.isArray(urls) ? urls : [urls];
+    if (urlArray.length === 0) return;
+    
+    previewUrlList.value = urlArray;
+    imgPreviewViewerVisible.value = true;
+};
+
+const loadDetail = async () => {
+    const id = route.query.id;
+    loading.value = true;
+    try {
+        if (id) {
+            const prodData = await ProductApi.getProduct(id);
+            productInfo.value = prodData || {};
+            
+            if (prodData && prodData.subjectId) {
+                 const subData = await SubjectApi.getSubject(prodData.subjectId);
+                 subjectInfo.value = subData || {};
+                 return;
+            }
+        }
+        
+        // 如果没有产品ID，或者没有关联subjectId，则使用我的主体作为回退/展示
+        const mySubData = await SubjectApi.getMySubject();
+        subjectInfo.value = mySubData || {};
+        
+    } catch (error) {
+        console.error('获取档案详情失败', error);
+    } finally {
+        loading.value = false;
+    }
+};
+
+onMounted(() => {
+    loadDetail();
+});
 
 const handleBack = () => {
     router.back();
@@ -181,8 +266,6 @@ const handleBack = () => {
 }
 
 .detail-list {
-    // border: 1px solid #E5E7EB;
-    // border-radius: 4px;
     overflow: hidden;
 }
 
@@ -216,6 +299,10 @@ const handleBack = () => {
             color: #3B82F6;
             cursor: pointer;
             font-weight: 500;
+            
+            &:hover {
+                text-decoration: underline;
+            }
         }
     }
 
@@ -240,10 +327,13 @@ const handleBack = () => {
     overflow: hidden;
     border: 1px solid #D1D5DB;
 
-    img {
+    :deep(.el-image) {
         width: 100%;
         height: 100%;
-        object-fit: cover;
+        
+        img {
+            object-fit: cover;
+        }
     }
 }
 

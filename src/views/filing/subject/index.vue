@@ -68,13 +68,12 @@
                     <el-table-column label="主体名称" prop="name" width="180" show-overflow-tooltip />
                     <el-table-column label="备案类型" prop="type" width="100" align="center">
                         <template #default="scope">
-                            <el-tag :type="scope.row.type === 2 ? 'warning' : 'info'">{{ scope.row.type === 2 ? '个人备案' : '企业备案' }}</el-tag>
+                            <el-tag :type="scope.row.type === 2 ? 'warning' : 'info'">{{ scope.row.type ? getFilingTypeLabel(scope.row.type) : '--' }}</el-tag>
                         </template>
                     </el-table-column>
                     <el-table-column label="主体类别" prop="category" width="100" align="center">
                         <template #default="scope">
-                            <!-- 根据字典转换，这里做个兜底展示 -->
-                            <el-tag v-if="scope.row.category">{{ scope.row.category }}</el-tag>
+                            <el-tag v-if="scope.row.category" effect="light" type="primary">{{ getCategoryLabel(scope.row.category) }}</el-tag>
                             <span v-else>--</span>
                         </template>
                     </el-table-column>
@@ -86,7 +85,7 @@
                             {{ scope.row.provinceCode ? `${scope.row.provinceCode}${scope.row.cityCode}${scope.row.districtCode}` : '--' }}
                         </template>
                     </el-table-column>
-                    <el-table-column label="创建时间" prop="createTime" width="160" align="center" />
+                    <el-table-column label="创建时间" prop="createTime" width="160" align="center" :formatter="dateFormatter" />
                     <el-table-column label="操作" width="160" align="center" fixed="right">
                         <template #default="scope">
                             <div class="table-operate-action-btns">
@@ -118,6 +117,12 @@ import * as SubjectApi from '@/api/agri/subject/index';
 import { useMessage } from '@/hooks/web/useMessage';
 import { ElMessageBox } from 'element-plus';
 import download from '@/utils/download';
+import { dateFormatter } from '@/utils/formatTime';
+
+import { useDict } from '@/hooks/web/useDict';
+
+const { getLabel: getCategoryLabel } = useDict('agri_subject_category', 'str');
+const { getLabel: getFilingTypeLabel } = useDict('agri_filing_type', 'int');
 
 const { queryFormClass } = useFormLayout();
 

@@ -198,7 +198,7 @@ export function formatPast2(ms: number): string {
  * @param cellValue 字段值
  */
 export function dateFormatter(_row: any, _column: TableColumnCtx<any>, cellValue: any): string {
-  return cellValue ? formatDate(cellValue) : ''
+  return cellValue ? formatDate(cellValue, 'YYYY-MM-DD HH:mm') : ''
 }
 
 /**

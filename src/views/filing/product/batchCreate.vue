@@ -18,8 +18,15 @@
             </div>
 
             <!-- 上传区域 -->
-            <div class="upload-wrapper">
-                <el-upload class="batch-upload" drag action="#" :auto-upload="false" multiple>
+            <div class="upload-wrapper" v-loading="uploadLoading">
+                <el-upload 
+                    class="batch-upload" 
+                    drag 
+                    action="#" 
+                    :http-request="handleUpload"
+                    :show-file-list="false"
+                    accept=".xlsx, .xls"
+                >
                     <div class="upload-content">
                         <div class="upload-icon-circle">
                             <el-icon class="el-icon--upload">
@@ -35,6 +42,9 @@
                         </div>
                     </div>
                 </el-upload>
+                <div class="upload-options">
+                    <el-checkbox v-model="updateSupport">是否支持更新（如果产品名称已存在，则更新其信息）</el-checkbox>
+                </div>
             </div>
 
             <!-- 预览表格 -->
@@ -75,6 +85,13 @@
 import { ref } from 'vue';
 import { UploadFilled, Download } from '@element-plus/icons-vue';
 import PageHeader from '@/components/PageHeader/index.vue';
+import * as ProductApi from '@/api/agri/product/index';
+import download from '@/utils/download';
+import { useMessage } from '@/hooks/web/useMessage';
+
+const message = useMessage();
+const uploadLoading = ref(false);
+const updateSupport = ref(false);
 
 const exampleData = ref([
     {
@@ -113,8 +130,44 @@ const exampleData = ref([
     }
 ]);
 
-const handleDownloadTemplate = () => {
-    console.log('触发模版下载...');
+const handleDownloadTemplate = async () => {
+    try {
+        const res = await ProductApi.getImportTemplate();
+        download.excel(res, '产品档案导入模板.xls');
+    } catch (error) {
+        console.error('下载模版失败', error);
+    }
+};
+
+const handleUpload = async (options) => {
+    const { file } = options;
+    uploadLoading.value = true;
+    try {
+        const res = await ProductApi.importProduct({ 
+            file, 
+            updateSupport: updateSupport.value 
+        });
+        
+        const { createNames, updateNames, failureNames } = res;
+        const failureCount = Object.keys(failureNames).length;
+        
+        let msg = `导入成功！新增 ${createNames.length} 条，更新 ${updateNames.length} 条。`;
+        if (failureCount > 0) {
+            msg += ` 失败 ${failureCount} 条。`;
+            let failureMsg = '失败原因：';
+            for (const name in failureNames) {
+                failureMsg += `\n${name}: ${failureNames[name]}`;
+            }
+            message.alert(msg + '\n' + failureMsg);
+        } else {
+            message.success(msg);
+        }
+        
+    } catch (error) {
+        console.error('上传失败', error);
+    } finally {
+        uploadLoading.value = false;
+    }
 };
 </script>
 
@@ -191,6 +244,16 @@ $bg-light: #F8FAFC;
 }
 
 /* 上传区域 */
+.upload-wrapper {
+    margin-bottom: 24px;
+}
+
+.upload-options {
+    margin-top: 16px;
+    display: flex;
+    justify-content: center;
+}
+
 .upload-wrapper {
     margin-bottom: 48px;
 
