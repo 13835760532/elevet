@@ -123,7 +123,7 @@ function handleSendCode() {
         return
     }
 
-    sendSmsCode({ mobile: resetForm.value.mobile, scene: 4 }).then(() => {
+    sendSmsCode({ mobile: resetForm.value.mobile, scene: 23 }).then(() => {
         ElMessage.success('验证码已发送')
         isSmsSent.value = true
         countdown.value = 60

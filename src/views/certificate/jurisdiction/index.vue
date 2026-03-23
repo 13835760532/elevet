@@ -44,15 +44,11 @@
                     <div class="stats-cards">
                         <div class="stat-card">
                             <div class="stat-label">辖区合格证开具量</div>
-                            <div class="stat-value">29299292</div>
+                            <div class="stat-value">{{ statsData.certificateIssueCount }}</div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-label">辖区合格证存证量</div>
-                            <div class="stat-value">29299292</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-label">辖区合格证查验次数</div>
-                            <div class="stat-value">29299292</div>
+                            <div class="stat-label">辖区合格证收证量</div>
+                            <div class="stat-value">{{ statsData.archivedCount }}</div>
                         </div>
                     </div>
                 </div>
@@ -74,45 +70,51 @@
                         </div>
                     </div>
                     <div class="query-form-wrapper">
-                        <el-form :model="queryParams" class="custom-query-form" label-position="left">
-                            <div class="query-row" style="margin-bottom: 0;">
-                                <el-form-item label="" prop="certNo">
-                                    <el-input :prefix-icon="Search" v-model="queryParams.certNo" placeholder="搜索合格证编号" clearable
-                                        class="custom-input w220" />
-                                </el-form-item>
-                                <el-form-item label="" prop="productName">
-                                    <el-input :prefix-icon="Search" v-model="queryParams.productName" placeholder="搜索产品名称" clearable
-                                        class="custom-input w220" />
-                                </el-form-item>
-                                <el-form-item label="" prop="entity">
-                                    <el-input :prefix-icon="Search" v-model="queryParams.entity" placeholder="搜索生产经营企业/个人" clearable
-                                        class="custom-input w220" />
-                                </el-form-item>
-                                <el-form-item label="" prop="contact">
-                                    <el-input :prefix-icon="Search" v-model="queryParams.contact" placeholder="搜索联系人" clearable
-                                        class="custom-input w220" />
-                                </el-form-item>
-                            </div>
-                            <div class="query-row" style="width: 100%;display: flex; align-items: center; justify-content: space-between;">
-                                <el-form-item label="" prop="dateRange">
+                        <el-form :model="queryParams" class="custom-query-form custom-query-form-row" label-position="left">
+                            <!-- 统计周期行 -->
+                            <div class="query-row" style="margin-bottom: 16px;">
+                                <el-form-item label="统计周期" prop="dateRange">
                                     <el-date-picker v-model="queryParams.dateRange" type="daterange" range-separator="至"
                                         start-placeholder="开始日期" end-placeholder="结束日期" value-format="YYYY-MM-DD"
-                                        class="date-picker custom-input" />
+                                        class="date-picker custom-input" :prefix-icon="Search" style="width: 240px !important;" />
                                 </el-form-item>
-                                <el-form-item label="" prop="certType">
-                                    <el-select v-model="queryParams.certType" placeholder="出证类型" clearable
-                                        class="custom-select">
-                                        <el-option label="生产者出证" value="produce" />
-                                        <el-option label="分销商出证" value="sell" />
-                                        <el-option label="批发市场" value="wholesale" />
+                            </div>
+                            <!-- 过滤条件行 -->
+                            <div class="query-row main-filters">
+                                <el-form-item label="合格证编号" prop="certificateCode">
+                                    <el-input v-model="queryParams.certificateCode" placeholder="请输入" clearable
+                                        class="custom-input w140" />
+                                </el-form-item>
+                                <el-form-item label="产品名称" prop="productName">
+                                    <el-input v-model="queryParams.productName" placeholder="请输入" clearable
+                                        class="custom-input w140" />
+                                </el-form-item>
+                                <el-form-item label="生产经营企业/个人" prop="subjectName">
+                                    <el-input v-model="queryParams.subjectName" placeholder="请输入" clearable
+                                        class="custom-input w140" />
+                                </el-form-item>
+                                <el-form-item label="出证类型" prop="certificateType">
+                                    <el-select v-model="queryParams.certificateType" placeholder="请选择" clearable
+                                        class="custom-select w100">
+                                        <el-option label="生产者" :value="1" />
+                                        <el-option label="收购者" :value="2" />
+                                        <el-option label="批发市场" :value="3" />
                                     </el-select>
                                 </el-form-item>
-                                <el-form-item label="" prop="province">
-                                    <el-cascader placeholder="产品产地" v-model="queryParams.province" :options="provinceAndCityData" :props="{label: 'name', value: 'code'}" clearable class="custom-select" />
+                                <el-form-item label="产品产地" prop="productionArea">
+                                    <div class="area-selectors">
+                                        <AreaCascader v-model="areaIds" @select="handleAreaSelect" placeholder="请选择产地" style="width: 260px;" />
+                                    </div>
                                 </el-form-item>
-                                <div class="query-btns flex-1" style="margin-bottom: 8px">
-                                    <el-button @click="handleReset" class="reset-btn">重置</el-button>
+                                <el-form-item label="联系人" prop="contactPhone">
+                                    <el-input v-model="queryParams.contactPhone" placeholder="请输入" clearable
+                                        class="custom-input w140" />
+                                </el-form-item>
+
+                                <div class="query-btns">
                                     <el-button type="primary" @click="handleSearch" class="search-btn">查询</el-button>
+                                    <el-button @click="handleReset" class="reset-btn">重置</el-button>
+                        
                                 </div>
                             </div>
                         </el-form>
@@ -123,36 +125,73 @@
                             <h3 class="table-section-title">辖区合格证列表</h3>
                         </div>
                         <div class="action-right">
-                            <el-button >导出</el-button>
+                            <el-button class="export-btn">导出</el-button>
                         </div>
                     </div>
 
                     <div class="table-wrapper">
                         <el-table :data="tableData" v-loading="loading">
                             <el-table-column type="index" label="序号" width="60" align="center" />
-                            <el-table-column prop="certNo" label="合格证编号" width="150" />
-                            <el-table-column prop="certType" label="出证类型" width="100" align="center" />
-                            <el-table-column prop="productName" label="产品名称" width="80" align="center" />
-                            <el-table-column prop="productType" label="产品类别" width="80" align="center" />
-                            <el-table-column prop="origin" label="产地" width="100" />
-                            <el-table-column prop="entity" label="生产经营主体" width="140" />
-                            <el-table-column prop="issueDate" label="开具日期" width="160" align="center" :formatter="dateFormatter" />
-                            <el-table-column prop="contact" label="联系人" width="120" align="center">
+                            <el-table-column prop="certificateCode" label="合格证编号" width="150" />
+                            <el-table-column prop="certificateType" label="出证类型" width="100" align="center">
+                                <template #default="scope">
+                                    <el-tag v-if="scope.row.certificateType === 1">生产者</el-tag>
+                                    <el-tag v-else-if="scope.row.certificateType === 2" type="success">收购者</el-tag>
+                                    <el-tag v-else-if="scope.row.certificateType === 3" type="warning">批发市场</el-tag>
+                                    <span v-else>--</span>
+                                </template>
+                            </el-table-column>
+                            <el-table-column prop="productName" label="产品名称" width="100" align="center" />
+                            <el-table-column prop="productCategory" label="产品类别" width="100" align="center" />
+                            <el-table-column prop="productionArea" label="产地" width="150" show-overflow-tooltip />
+                            <el-table-column prop="subjectName" label="生产经营主体" min-width="160" show-overflow-tooltip />
+                            <el-table-column v-if="activeTab === 'produce'" prop="issueDate" label="开具日期" width="160" align="center" :formatter="dateFormatter" />
+                            
+                            <!-- 查验列表特有列 -->
+                            <template v-if="activeTab === 'verify'">
+                                <el-table-column prop="certificateSource" label="来源" width="100" align="center">
+                                    <template #default="scope">
+                                        <el-tag :type="scope.row.certificateSource === 1 ? 'primary' : 'info'" effect="plain">
+                                            {{ scope.row.certificateSource === 1 ? '本平台' : '其他平台' }}
+                                        </el-tag>
+                                    </template>
+                                </el-table-column>
+                                <el-table-column prop="verificationType" label="查验状态" width="100" align="center">
+                                    <template #default="scope">
+                                        <el-tag :type="scope.row.verificationType === 2 ? 'success' : 'warning'">
+                                            {{ scope.row.verificationType === 2 ? '已存证' : '仅查验' }}
+                                        </el-tag>
+                                    </template>
+                                </el-table-column>
+                                <el-table-column prop="verificationTime" label="查验时间" width="160" align="center" :formatter="dateFormatter" />
+                            </template>
+
+                            <el-table-column prop="contactName" label="联系人" width="100" align="center">
                                 <template #header>
                                     <div>联系人</div>
                                     <div class="sub-header">(生产经营企业/个人)</div>
                                 </template>
                             </el-table-column>
-                            <el-table-column prop="phone" label="联系电话" width="120" align="center">
+                            <el-table-column prop="contactPhone" label="联系电话" width="120" align="center">
                                 <template #header>
                                     <div>联系电话</div>
                                     <div class="sub-header">(生产经营企业/个人)</div>
+                                </template>
+                            </el-table-column>
+                            <el-table-column label="操作" width="180" fixed="right" align="center">
+                                <template #default="scope">
+                                    <div class="table-ops">
+                                        <el-button v-if="activeTab === 'produce'" link type="primary" @click="handleEdit(scope.row)">编辑</el-button>
+                                        <el-button link type="primary" @click="handleDetail(scope.row)">详情</el-button>
+                                        <el-button link type="danger" @click="handleDelete(scope.row)">删除</el-button>
+                                    </div>
                                 </template>
                             </el-table-column>
                         </el-table>
                     </div>
 
                     <div class="pagination-wrapper">
+                        <div class="total-text">共 {{ total }} 条记录</div>
                         <el-pagination v-model:current-page="pageNum" v-model:page-size="pageSize" :total="total"
                             background layout="prev, pager, next" class="custom-pagination"
                             @current-change="handleCurrentChange" />
@@ -165,29 +204,12 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue';
-import { ElMessage } from 'element-plus';
+import { ElMessage, ElMessageBox } from 'element-plus';
 import { Search, Plus } from '@element-plus/icons-vue';
 import * as CertificateApi from '@/api/agri/certificate';
+import * as CertificateVerificationApi from '@/api/agri/certificateVerification';
 import { dateFormatter } from '@/utils/formatTime';
-
-const provinceAndCityData = [
-    {
-        "name": "山东省",
-        "code": "370000",
-        "children": [
-            {
-                "name": "青岛市",
-                "code": "370200",
-                "children": [
-                    {
-                        "name": "胶州市",
-                        "code": "370281"
-                    }
-                ]
-            }
-        ]
-    }
-]
+import AreaCascader from '@/components/AreaCascader/index.vue';
 
 // 搜索区域
 const searchRegion = ref('');
@@ -271,15 +293,27 @@ const treeProps = {
 // 查询参数
 const queryParams = reactive({
     dateRange: [],
-    certNo: '',
+    certificateCode: '',
     productName: '',
-    entity: '',
-    certType: '',
+    subjectName: '',
+    certificateType: undefined,
+    productionArea: '',
     province: '',
     city: '',
     county: '',
-    contact: ''
+    certificateSource: undefined,
+    verificationType: undefined,
+    contactPhone: ''
 });
+
+const areaIds = ref([]);
+const handleAreaSelect = (area: any) => {
+    queryParams.province = area.province;
+    queryParams.city = area.city;
+    queryParams.county = area.district;
+    // 同时更新拼写的完整产地字符串，如果有需要的话
+    queryParams.productionArea = [area.province, area.city, area.district].filter(Boolean).join('');
+};
 
 // 分页参数
 const pageNum = ref(1);
@@ -293,32 +327,63 @@ const activeTab = ref('produce');
 const tableData = ref([]);
 const loading = ref(false);
 
+const statsData = reactive({
+    certificateIssueCount: 0,
+    verificationOnlyCount: 0,
+    archivedCount: 0
+});
+
+const loadStats = async (deptId?: number) => {
+    try {
+        const res = await CertificateVerificationApi.getStatistics(deptId);
+        if (res) {
+            statsData.certificateIssueCount = res.certificateIssueCount || 0;
+            statsData.verificationOnlyCount = res.verificationOnlyCount || 0;
+            statsData.archivedCount = res.archivedCount || 0;
+        }
+    } catch (e) {
+        console.error('加载统计数据失败', e);
+    }
+};
+
 const loadData = async () => {
     loading.value = true;
     try {
         const params: any = {
             pageNo: pageNum.value,
             pageSize: pageSize.value,
-            certificateCode: queryParams.certNo || undefined,
+            certificateCode: queryParams.certificateCode || undefined,
             productName: queryParams.productName || undefined,
-            // 预留页签过滤逻辑
-            checkType: activeTab.value === 'produce' ? 1 : 2
+            subjectName: queryParams.subjectName || undefined,
+            certificateType: queryParams.certificateType || undefined,
+            productionArea: queryParams.productionArea || undefined,
+            contactPhone: queryParams.contactPhone || undefined,
         };
-        const data = await CertificateApi.getCertificatePage(params);
-        const list = data.list || [];
-        tableData.value = list.map((item: any) => ({
-            ...item,
-            certNo: item.certificateCode,
-            productName: item.productName,
-            issueDate: item.issueDate
-        }));
-        total.value = data.total || 0;
+        
+        // 合格证来源和查验状态只在查验页签有效
+        if (activeTab.value === 'verify') {
+          params.certificateSource = queryParams.certificateSource || undefined;
+          params.verificationType = queryParams.verificationType || undefined;
+        }
+
+        let res;
+        if (activeTab.value === 'produce') {
+          // 合格证开具
+          res = await CertificateApi.getCertificatePage(params);
+        } else {
+          // 合格证查验存证
+          res = await CertificateApi.getCertificateVerificationPage(params);
+        }
+        
+        tableData.value = res.list || [];
+        total.value = res.total || 0;
     } finally {
         loading.value = false;
     }
 };
 
 onMounted(() => {
+    loadStats();
     loadData();
 });
 
@@ -336,22 +401,69 @@ const handleSearch = () => {
 };
 
 const handleReset = () => {
-    Object.keys(queryParams).forEach(key => {
-        if (Array.isArray(queryParams[key])) {
-            queryParams[key] = [];
-        } else {
-            queryParams[key] = '';
-        }
-    });
+    queryParams.dateRange = [];
+    queryParams.certificateCode = '';
+    queryParams.productName = '';
+    queryParams.subjectName = '';
+    queryParams.certificateType = undefined;
+    queryParams.province = '';
+    queryParams.city = '';
+    queryParams.county = '';
+    queryParams.productionArea = '';
+    areaIds.value = [];
+    queryParams.certificateSource = undefined;
+    queryParams.verificationType = undefined;
+    queryParams.contactPhone = '';
+    handleSearch();
 };
 
 const handleNodeClick = (data) => {
-    ElMessage.info(`选择区域: ${data.label}`);
+    ElMessage.info(`切换区域: ${data.label}`);
+    loadStats(data.id);
+    // 列表页暂不确定是否支持 deptId 过滤，先重置页码并重新加载
+    pageNum.value = 1;
+    loadData();
 };
 
 const handleCurrentChange = (val) => {
     pageNum.value = val;
     loadData();
+};
+
+const handleEdit = (row: any) => {
+    ElMessage.info(`编辑: ${row.certificateCode}`);
+};
+
+const handleDetail = (row: any) => {
+    ElMessage.info(`查看详情: ${row.certificateCode}`);
+};
+
+const handleDelete = async (row: any) => {
+    try {
+        await ElMessageBox.confirm(
+            `确定要删除合格证编号为 ${row.certificateCode} 的记录吗？`,
+            '警告',
+            {
+                confirmButtonText: '确定',
+                cancelButtonText: '取消',
+                type: 'warning',
+            }
+        );
+        
+        if (activeTab.value === 'produce') {
+            await CertificateApi.deleteCertificate(row.id);
+        } else {
+            await CertificateApi.deleteCertificateVerification(row.id);
+        }
+        
+        ElMessage.success('删除成功');
+        loadData();
+    } catch (e) {
+        if (e !== 'cancel') {
+            console.error('删除失败', e);
+            ElMessage.error('删除操作失败');
+        }
+    }
 };
 </script>
 
@@ -460,14 +572,41 @@ const handleCurrentChange = (val) => {
 
     :deep(.el-form-item) {
         margin-bottom: 0;
-        margin-right: 0;
+        margin-right: 12px;
+
+        .el-form-item__label {
+            font-size: 13px;
+            color: #333;
+            font-weight: 500;
+        }
     }
 }
+
+.main-filters {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap; // 允许换行以便在小屏幕下保持两行或多行结构
+    gap: 12px 0;
+    padding-bottom: 8px;
+}
+
+.area-selectors {
+    display: flex;
+    gap: 4px;
+    .area-select {
+        width: 80px;
+    }
+}
+
+.w120 { width: 120px !important; }
+.w140 { width: 140px !important; }
+.w100 { width: 100px !important; }
 
 .query-btns {
     margin-left: auto;
     display: flex;
-    gap: 12px;
+    gap: 8px;
+    flex-shrink: 0;
 }
 
 /* 统计卡片 */
@@ -499,7 +638,7 @@ const handleCurrentChange = (val) => {
 
 /* 日期选择器宽度 */
 .date-picker {
-    width: 280px;
+    width: 240px !important;
 }
 
 /* 操作行内标题 */
@@ -524,6 +663,31 @@ const handleCurrentChange = (val) => {
     font-size: 11px;
     color: #999;
     font-weight: normal;
+    line-height: 1.2;
+}
+
+.table-ops {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+
+    .el-button--link {
+        padding: 0;
+        font-size: 13px;
+    }
+}
+
+.pagination-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 20px;
+
+    .total-text {
+        font-size: 13px;
+        color: #666;
+    }
 }
 
 .record-tabs {

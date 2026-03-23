@@ -84,7 +84,7 @@ function handleSendCode() {
         return
     }
 
-    sendSmsCode({ mobile: forgotForm.value.phonenumber, scene: 4 }).then(() => {
+    sendSmsCode({ mobile: forgotForm.value.phonenumber, scene: 23 }).then(() => {
         ElMessage.success('验证码已发送')
         isSmsSent.value = true
         countdown.value = 60

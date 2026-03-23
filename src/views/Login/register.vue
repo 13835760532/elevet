@@ -12,43 +12,65 @@
         </div>
       </div>
 
-      <!-- Form Title -->
-      <div class="form-title-section">
-        <h2 class="form-title">免费注册</h2>
-        <p class="form-desc">请输入您的账号信息进行注册</p>
-      </div>
-
       <!-- Form Area -->
       <el-form ref="registerRef" :model="registerForm" :rules="registerRules" class="register-form">
-        <el-form-item prop="username">
-          <el-input v-model="registerForm.username" type="text" placeholder="请输入用户名" />
-        </el-form-item>
+        <!-- 第一步：基础信息与验证 -->
+        <div v-if="currentStep === 1">
+          <el-form-item prop="username">
+            <el-input v-model="registerForm.username" type="text" placeholder="请输入用户名" />
+          </el-form-item>
 
-        <el-form-item prop="nickname">
-          <el-input v-model="registerForm.nickname" type="text" placeholder="请输入昵称" />
-        </el-form-item>
-        
-        <el-form-item prop="password">
-          <el-input v-model="registerForm.password" type="password" show-password placeholder="请输入密码（至少8个字符）" />
-        </el-form-item>
+          <el-form-item prop="nickname">
+            <el-input v-model="registerForm.nickname" type="text" placeholder="请输入昵称" />
+          </el-form-item>
+          
+          <el-form-item prop="mobile">
+            <el-input v-model="registerForm.mobile" type="text" placeholder="请输入手机号" />
+          </el-form-item>
 
-        <div class="password-requirements">
-          <p class="req-title">密码要求：</p>
-          <ul class="req-list">
-            <li>• 至少 8 个字符</li>
-            <li>• 建议包含大小写字母、数字和特殊符号</li>
-          </ul>
+          <div class="code-row">
+            <el-form-item prop="code" class="code-input-item">
+              <el-input v-model="registerForm.code" type="text" placeholder="请输入验证码" maxlength="6" />
+            </el-form-item>
+            <el-button class="send-code-btn" :disabled="countdown > 0" @click="handleSendCode">
+              {{ countdown > 0 ? `${countdown}s后重新获取` : '发送验证码' }}
+            </el-button>
+          </div>
+
+          <el-form-item>
+            <el-button type="primary" class="register-submit-btn" @click.prevent="handleNextStep">
+              下一步
+            </el-button>
+          </el-form-item>
         </div>
 
-        <el-form-item prop="confirmPassword">
-          <el-input v-model="registerForm.confirmPassword" type="password" show-password placeholder="请再次输入密码" />
-        </el-form-item>
+        <!-- 第二步：设置密码 -->
+        <div v-if="currentStep === 2">
+          <el-form-item prop="password">
+            <el-input v-model="registerForm.password" type="password" show-password placeholder="请输入密码（至少8个字符）" />
+          </el-form-item>
 
-        <el-form-item>
-          <el-button :loading="loading" type="primary" class="register-submit-btn" @click.prevent="handleRegisterPre">
-            {{ loading ? '注册中...' : '注册' }}
-          </el-button>
-        </el-form-item>
+          <div class="password-requirements">
+            <p class="req-title">密码要求：</p>
+            <ul class="req-list">
+              <li>• 至少 8 个字符</li>
+              <li>• 建议包含大小写字母、数字和特殊符号</li>
+            </ul>
+          </div>
+
+          <el-form-item prop="confirmPassword">
+            <el-input v-model="registerForm.confirmPassword" type="password" show-password placeholder="请再次输入密码" />
+          </el-form-item>
+
+          <el-form-item>
+            <div class="step2-actions">
+               <el-button :loading="loading" type="primary" class="register-submit-btn" @click.prevent="handleRegisterPre">
+                  {{ loading ? '注册中...' : '确认注册' }}
+               </el-button>
+               <el-button class="back-link-btn" @click="currentStep = 1">返回修改基础信息</el-button>
+            </div>
+          </el-form-item>
+        </div>
       </el-form>
 
       <!-- Footer Links -->
@@ -69,12 +91,13 @@
 </template>
 
 <script setup>
-import { ref, getCurrentInstance } from 'vue'
 import { useRouter } from 'vue-router'
-import { register } from "@/api/login"
+import { register, sendSmsCode } from "@/api/login"
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 const loading = ref(false)
+const countdown = ref(0)
+const currentStep = ref(1)
 const captchaEnabled = ref(import.meta.env.VITE_APP_CAPTCHA_ENABLE === 'true')
 const captchaType = ref('blockPuzzle')
 const verify = ref()
@@ -84,6 +107,8 @@ const router = useRouter()
 const registerForm = ref({
   username: '',
   nickname: '',
+  mobile: '',
+  code: '',
   password: '',
   confirmPassword: '',
   captchaVerification: ''
@@ -107,6 +132,14 @@ const registerRules = {
     { required: true, trigger: "blur", message: "请输入您的昵称" },
     { min: 2, max: 30, message: '用户昵称长度必须介于 2 和 30 之间', trigger: 'blur' }
   ],
+  mobile: [
+    { required: true, trigger: "blur", message: "请输入您的手机号" },
+    { pattern: /^1[3-9]\d{9}$/, message: "请输入正确的手机号格式", trigger: "blur" }
+  ],
+  code: [
+    { required: true, trigger: "blur", message: "请输入验证码" },
+    { len: 6, message: "验证码长度应为 6 位", trigger: "blur" }
+  ],
   password: [
     { required: true, trigger: "blur", message: "请输入您的密码" },
     { min: 8, message: "密码长度至少为 8 个字符", trigger: "blur" }
@@ -115,6 +148,44 @@ const registerRules = {
     { required: true, trigger: "blur", message: "请再次输入您的密码" },
     { validator: equalToPassword, trigger: "blur" }
   ]
+}
+
+const handleSendCode = () => {
+  if (!registerForm.value.mobile) {
+    ElMessage.warning('请先输入手机号')
+    return
+  }
+  if (!/^1[3-9]\d{9}$/.test(registerForm.value.mobile)) {
+    ElMessage.warning('请输入正确的手机号格式')
+    return
+  }
+
+  sendSmsCode({ mobile: registerForm.value.mobile, scene: 22 }).then(() => {
+    ElMessage.success('验证码已发送')
+    countdown.value = 60
+    const timer = setInterval(() => {
+      countdown.value--
+      if (countdown.value <= 0) {
+        clearInterval(timer)
+      }
+    }, 1000)
+  }).catch(() => {})
+}
+
+const handleNextStep = async () => {
+    if (!proxy.$refs.registerRef) return;
+    
+    // 仅校验第一步的关键字段
+    const fields = ['username', 'nickname', 'mobile', 'code']
+    try {
+        const valid = await proxy.$refs.registerRef.validateField(fields)
+        if (valid) {
+            currentStep.value = 2
+        }
+    } catch (error) {
+        // 校验失败，Element Plus 会自动显示红色报错文字，此处不需要额外处理
+        console.warn('Step 1 validation failed', error)
+    }
 }
 
 function handleRegisterPre() {
@@ -289,6 +360,39 @@ function handleRegister(params) {
   }
 }
 
+.code-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+
+  .code-input-item {
+    flex: 1;
+    margin-bottom: 0 !important;
+  }
+
+  .send-code-btn {
+    width: 120px;
+    height: 38px;
+    border-radius: 8px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    color: #666;
+    font-size: 12px;
+    background: #fff;
+    transition: all 0.3s;
+
+    &:hover:not(:disabled) {
+      color: #00B3ED;
+      border-color: #00B3ED;
+      background: #f8faff;
+    }
+
+    &:disabled {
+      background: #f5f7fa;
+      color: #999;
+    }
+  }
+}
+
 .password-requirements {
   margin: 20px 0 15px 0;
   width: 100%;
@@ -321,8 +425,33 @@ function handleRegister(params) {
   font-size: 14px;
   border: none;
   transition: all 0.3s;
-  margin-top: 30px;
+  height: 44px;
+  border-radius: 8px;
+  color: #fff;
+  margin-top: 20px;
+}
 
+.step2-actions {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  .back-link-btn {
+      border: none;
+      background: none;
+      color: #999;
+      font-size: 12px;
+      padding: 0;
+      height: auto;
+      text-decoration: underline;
+      cursor: pointer;
+      margin-top: 5px;
+
+      &:hover {
+          color: #00B3ED;
+      }
+  }
 }
 
 .footer-links {

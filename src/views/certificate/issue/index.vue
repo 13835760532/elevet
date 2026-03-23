@@ -39,7 +39,8 @@
                         </el-select>
                     </el-form-item>
                     <el-form-item label="" prop="province">
-                        <el-cascader placeholder="产品产地" v-model="queryParams.province" :options="provinceAndCityData" :props="{label: 'name', value: 'code'}" clearable class="custom-select" />
+                        <AreaCascader v-model="areaIds" @select="handleAreaSelect" placeholder="请选择产地" style="width: 260px;" />
+                        <!-- <el-cascader placeholder="产品产地" v-model="queryParams.province" :options="provinceAndCityData" :props="{label: 'name', value: 'code'}" clearable class="custom-select" /> -->
                         <!-- <el-select v-show="false" v-model="queryParams.province" placeholder="省" clearable class="custom-select">
                             <el-option label="山东省" value="shandong" />
                         </el-select>
@@ -51,7 +52,7 @@
                         </el-select> -->
                     </el-form-item>
                     <el-form-item label="" prop="dateRange">
-                        <el-date-picker v-model="queryParams.dateRange" type="daterange" range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" value-format="YYYY-MM-DD" class="custom-datepicker" />
+                        <el-date-picker style="width: 240px !important;" v-model="queryParams.dateRange" type="daterange" range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" value-format="YYYY-MM-DD" class="custom-datepicker" />
                     </el-form-item>
                     <div class="query-btns">
                         <el-button @click="handleReset" class="reset-btn">重置</el-button>
@@ -132,35 +133,18 @@ import * as CertificateApi from '@/api/agri/certificate';
 const router = useRouter();
 const message = useMessage();
 
-const provinceAndCityData = [
-    {
-        "name": "山东省",
-        "code": "370000",
-        "children": [
-            {
-                "name": "青岛市",
-                "code": "370200",
-                "children": [
-                    {
-                        "name": "胶州市",
-                        "code": "370281"
-                    }
-                ]
-            }
-        ]
-    }
-]
-
+const areaIds = ref<string[]>([]);
 const queryParams = reactive({
     certNo: '',
     productName: '',
     entity: '',
     issueType: undefined,
     status: 1,
-    province: [] as any,
+    province: '',
     city: '',
     county: '',
     phone: '',
+    productionArea: '',
     dateRange: [] as any
 });
 
@@ -185,7 +169,7 @@ const getList = async () => {
             productName: queryParams.productName || undefined,
             subjectName: queryParams.entity || undefined,
             certificateType: queryParams.issueType || undefined,
-            productionArea: queryParams.province?.length ? queryParams.province.join('/') : undefined,
+            productionArea: queryParams.productionArea || undefined,
             contactPhone: queryParams.phone || undefined,
             status: queryParams.status || undefined,
             startDate: queryParams.dateRange?.[0] || undefined,
@@ -199,6 +183,13 @@ const getList = async () => {
     } finally {
         loading.value = false;
     }
+};
+const handleAreaSelect = (area: any) => {
+    queryParams.province = area.province;
+    queryParams.city = area.city;
+    queryParams.county = area.district;
+    // 同时更新拼写的完整产地字符串，如果有需要的话
+    queryParams.productionArea = [area.province, area.city, area.district].filter(Boolean).join('');
 };
 
 onMounted(() => {
@@ -231,7 +222,7 @@ const handleExport = async () => {
             productName: queryParams.productName || undefined,
             subjectName: queryParams.entity || undefined,
             certificateType: queryParams.issueType || undefined,
-            productionArea: queryParams.province?.length ? queryParams.province.join('/') : undefined,
+            productionArea: queryParams.productionArea || undefined,
             contactPhone: queryParams.phone || undefined,
             status: queryParams.status || undefined,
             startDate: queryParams.dateRange?.[0] || undefined,
@@ -275,6 +266,9 @@ const handleCurrentChange = (val: number) => {
 
 <style lang="scss" scoped>
 /* 页面特有样式（公共样式已在 App.vue 全局引入） */
+.custom-datepicker {
+    width: 260px !important;
+}
 .type-tag {
     padding: 2px 8px;
     border-radius: 4px;

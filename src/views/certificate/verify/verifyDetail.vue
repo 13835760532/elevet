@@ -16,40 +16,40 @@
 
 
             <!-- 主内容区 -->
-            <div class="main-content" v-if="searchForm.certNo && searchForm.source === 'platform'">
+            <div class="main-content" v-if="certData && searchForm.source === 'platform'">
                 <!-- 左侧：合格证详情 -->
                 <div class="cert-detail-card">
                     <!-- 合格证头部 -->
                     <div class="cert-header">
-                        <span class="cert-no">合格证编号-HGZ91919991111</span>
+                        <span class="cert-no">合格证编号-{{ certData.certificateCode }}</span>
                     </div>
 
                     <!-- 合格证标题 -->
                     <div class="cert-title-section">
                         <h2 class="cert-title">承诺达标合格证</h2>
-                        <h3 class="cert-subtitle">我承诺生产销售的食用农产品</h3>
-                        <p class="cert-desc">
-                            未使用禁用农药、兽药及其他化合物；使用的常规农药、兽药残留不超标。
-                        </p>
+                        <h3 class="cert-subtitle">{{ certData.commitmentContent }}</h3>
                     </div>
-
-                    <!-- 承诺依据 -->
-                    <div class="cert-promise">
-                        <div class="promise-title">承诺依据：</div>
-                        <el-checkbox v-model="promises.quality" disabled>质量安全控制符合要求</el-checkbox>
-                        <el-checkbox v-model="promises.selfTest" disabled>自行检测合格</el-checkbox>
-                        <el-checkbox v-model="promises.thirdTest" disabled>委托检测合格</el-checkbox>
-                    </div>
-
-                    <!-- 二维码占位 -->
-                    <div class="qr-code">
-                        <div class="qr-placeholder">
-                            <el-icon :size="40" color="#ccc">
-                                <Picture />
-                            </el-icon>
-                            <span class="qr-tip">二维码</span>
+                    <div class="cert-promise-qr">
+                        <!-- 承诺依据 -->
+                        <div class="cert-promise">
+                            <div class="promise-title">承诺依据：</div>
+                            <el-checkbox :model-value="certData.commitmentBasis?.includes('1')" disabled>质量安全控制符合要求</el-checkbox>
+                            <el-checkbox :model-value="certData.commitmentBasis?.includes('2')" disabled>自行检测合格</el-checkbox>
+                            <el-checkbox :model-value="certData.commitmentBasis?.includes('3')" disabled>委托检测合格</el-checkbox>
+                        </div>
+    
+                        <!-- 二维码占位 -->
+                        <div class="qr-code">
+                            <Qrcode v-if="certData?.qrCode" :text="certData.qrCode" :width="80" />
+                            <div v-else class="qr-placeholder">
+                                <el-icon :size="40" color="#ccc">
+                                    <Picture />
+                                </el-icon>
+                                <span class="qr-tip">二维码</span>
+                            </div>
                         </div>
                     </div>
+
 
                     <!-- 基本信息 -->
                     <div class="basic-info">
@@ -77,7 +77,7 @@
                             </div>
                             <div class="info-row">
                                 <span class="label">开具时间</span>
-                                <span class="value">{{ formatDate(certInfo.issueTime) }}</span>
+                                <span class="value">{{ certInfo.issueTime }}</span>
                             </div>
                         </div>
                     </div>
@@ -88,31 +88,62 @@
                     <!-- 产品图片 -->
                     <div class="product-images">
                         <h4 class="section-label">产品图片</h4>
-                        <div class="image-placeholder">
-                            <el-icon size="40" color="#ccc">
-                                <Picture />
-                            </el-icon>
+                        <div class="image-box">
+                             <el-image v-if="certData.productImageUrl" :src="certData.productImageUrl" fit="cover" class="preview-img" />
+                             <div v-else class="image-placeholder">
+                                <el-icon size="40" color="#ccc"><Picture /></el-icon>
+                            </div>
                         </div>
                     </div>
 
                     <!-- 产品检测报告 -->
                     <div class="detection-report">
                         <h4 class="section-label">产品检测报告</h4>
-                        <div class="image-placeholder">
-                            <el-icon size="40" color="#ccc">
-                                <Picture />
-                            </el-icon>
+                        <div class="image-box">
+                            <el-image v-if="certData.thirdPartyReportUrl" :src="certData.thirdPartyReportUrl" fit="cover" class="preview-img" />
+                            <div v-else class="image-placeholder">
+                                <el-icon size="40" color="#ccc"><Picture /></el-icon>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 右侧：开具/查验辅助信息 -->
+                <div class="issue-info-card">
+                    <div class="issue-badge">验</div>
+                    <div class="issue-content">
+                        <h4 class="issue-title">官方权威查验</h4>
+                        <div class="issue-desc">
+                            <p>本合格证由：</p>
+                            <p style="color: #333; font-weight: 600; margin: 4px 0 12px 0;">{{ certInfo.entity }}</p>
+                            <p>于 {{ certInfo.issueTime }} 官方开具</p>
+                            <p style="margin-top: 12px; color: #52C41A; display: flex; align-items: center; gap: 4px;">
+                                <el-icon><CircleCheckFilled /></el-icon>
+                                票据真实有效
+                            </p>
                         </div>
                     </div>
                 </div>
             </div>
 
+            <div v-else-if="!certData && !loading && searchForm.source === 'platform' && hasSearched" class="empty-placeholder">
+                <el-empty description="未找到匹配的合格证记录" />
+            </div>
+            
+            <div v-else-if="searchForm.source === 'platform' && !hasSearched" class="empty-placeholder">
+                 <div class="guide-content" style="text-align: center; padding: 100px 0;">
+                    <el-icon :size="60" color="#E5E7EB"><Search /></el-icon>
+                    <p style="color: #999; margin-top: 16px;">输入合格证编号并点击查询以显示详情</p>
+                 </div>
+            </div>
+
             <!-- 底部按钮 -->
-            <div class="page-footer">
-                <el-button class="btn-verify-only" @click="handleVerifyOnly">仅查验</el-button>
-                <el-button type="primary" class="btn-verify-save" @click="handleVerifyAndSave">查验并存证</el-button>
+            <div class="page-footer" v-if="certData && searchForm.source === 'platform'">
+                <!-- <el-button class="btn-verify-only" @click="handleVerifyOnly">仅查验</el-button> -->
+                <el-button type="primary" class="btn-verify-save" @click="handleVerifyAndSave">存证</el-button>
             </div>
         </div>
+
 
         <!-- 其他来源弹窗 -->
         <el-dialog v-model="otherSourceDialogVisible" title="" width="900px" :close-on-click-modal="false"
@@ -228,16 +259,26 @@
 import { ref, reactive, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
-import { Picture } from '@element-plus/icons-vue';
+import { Picture, CircleCheckFilled, Search } from '@element-plus/icons-vue';
+import { Qrcode } from '@/components/Qrcode';
 import { formatDate } from '@/utils/formatTime';
+import { verifyLocal } from '@/api/agri/certificateVerification';
+import { traceCertificate } from '@/api/agri/certificate';
 
 const router = useRouter();
+
+// 状态控制
+const loading = ref(false);
+const hasSearched = ref(false);
 
 // 搜索表单
 const searchForm = reactive({
     source: 'platform',
     certNo: ''
 });
+
+// 查验回显数据 (原始合格证信息)
+const certData = ref(null);
 
 // 其他来源弹窗
 const otherSourceDialogVisible = ref(false);
@@ -257,7 +298,7 @@ const otherCertInfo = reactive({
 // 监听来源变化，选择其他来源时弹出弹窗
 watch(() => searchForm.source, (newVal) => {
     if (newVal === 'other') {
-         otherSourceDialogVisible.value = true;
+         router.push('/certificate/verify/other');
     }
 });
 
@@ -285,30 +326,77 @@ const promises = reactive({
     thirdTest: false
 });
 
-// 合格证信息
+// 合格证信息展示映射
 const certInfo = reactive({
-    productName: '白菜',
-    quantity: '100kg',
-    origin: '山东省胶州市',
-    entity: '胶州市XXX农业合作社',
-    phone: '138****8888',
-    issueTime: '2025-12-12 16:00'
+    productName: '--',
+    quantity: '--',
+    origin: '--',
+    entity: '--',
+    phone: '--',
+    issueTime: '--'
 });
 
-const handleSearch = () => {
+const handleSearch = async () => {
     if (!searchForm.certNo) {
         ElMessage.warning('请输入合格证编号');
         return;
     }
-    ElMessage.success('查询成功');
+    
+    loading.value = true;
+    hasSearched.value = true;
+    try {
+        const res = await traceCertificate(searchForm.certNo);
+        
+        if (res && res.certificate) {
+            certData.value = res.certificate;
+            
+            // 补充上游合格证和检测报告等数据
+            if (res.upstreamCertificate) {
+                certData.value.originalCertificate = res.upstreamCertificate;
+            }
+            if (res.detectionReport) {
+                certData.value.thirdPartyReportUrl = res.detectionReport.thirdPartyReportUrl || certData.value.thirdPartyReportUrl;
+            }
+
+            const cert = res.certificate;
+            // 映射展示数据
+            certInfo.productName = cert.productName || '--';
+            certInfo.quantity = `${cert.quantity || '--'}${cert.unit || ''}`;
+            certInfo.origin = cert.productionArea || '--';
+            certInfo.entity = cert.subjectName || '--';
+            certInfo.phone = cert.contactPhone || '--';
+            certInfo.issueTime = cert.issueDate ? formatDate(cert.issueDate) : '--';
+            
+            ElMessage.success('查询成功');
+        } else {
+             certData.value = null;
+             ElMessage.error('未找到对应合格证记录');
+        }
+    } catch (e) {
+        console.error('查询溯源失败', e);
+        certData.value = null;
+    } finally {
+        loading.value = false;
+    }
 };
 
 const handleVerifyOnly = () => {
     ElMessage.info('仅查验操作');
 };
 
-const handleVerifyAndSave = () => {
-    ElMessage.success('查验并存证成功');
+const handleVerifyAndSave = async () => {
+    if (!searchForm.certNo) return;
+    
+    try {
+         await verifyLocal({
+            certificateCode: searchForm.certNo,
+            verificationType: 2 // 已存证
+        });
+        ElMessage.success('存证成功');
+        router.push('/certificate/verify'); // 返回列表或指定页面
+    } catch (e) {
+        console.error('存证失败', e);
+    }
 };
 </script>
 
@@ -474,10 +562,14 @@ const handleVerifyAndSave = () => {
     }
 }
 
+.cert-promise-qr{
+    position: relative;
+}
+
 /* 二维码 */
 .qr-code {
     position: absolute;
-    top: 100px;
+    bottom: 20px;
     right: 24px;
     width: 80px;
     height: 80px;

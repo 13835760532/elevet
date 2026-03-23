@@ -3,6 +3,7 @@ import { ref, reactive, watch } from 'vue';
 import { useMessage } from '@/hooks/web/useMessage';
 import { useDict } from '@/hooks/web/useDict';
 import { UploadImg, UploadImgs } from '@/components/UploadFile';
+import AreaCascader from '@/components/AreaCascader/index.vue';
 import * as SubjectApi from '@/api/agri/subject/index';
 
 const props = defineProps({
@@ -21,6 +22,7 @@ const emit = defineEmits(['update:modelValue', 'success']);
 const message = useMessage();
 const formRef = ref(null);
 const loading = ref(false);
+const areaPath = ref([]);
 
 const { options: filingTypeOptions } = useDict('agri_filing_type', 'int');
 const { options: subjectCategoryOptions } = useDict('agri_subject_category', 'str');
@@ -31,6 +33,8 @@ const formData = reactive({
     category: undefined,
     mainProducts: '',
     provinceCode: '',
+    cityCode: '',
+    districtCode: '',
     address: '',
     contactName: '',
     contactPhone: '',
@@ -75,6 +79,7 @@ const resetForm = () => {
         qualificationUrls: '',
         introduction: ''
     });
+    areaPath.value = [];
     if (formRef.value) formRef.value.resetFields();
 };
 
@@ -147,7 +152,6 @@ const handleSubmit = async () => {
     size="600px"
     destroy-on-close
     append-to-body
-    :z-index="4000"
   >
     <div class="drawer-content" v-loading="loading">
       <el-form 
@@ -180,7 +184,15 @@ const handleSubmit = async () => {
 
         <div class="form-row">
             <el-form-item label="所属地区" prop="provinceCode" required style="flex: 1;">
-                <el-input v-model="formData.provinceCode" placeholder="所属地区" />
+                <AreaCascader 
+                    v-model="areaPath" 
+                    placeholder="请选择所属地区" 
+                    @select="(val) => {
+                        formData.provinceCode = val.province;
+                        formData.cityCode = val.city;
+                        formData.districtCode = val.district;
+                    }"
+                />
             </el-form-item>
             <el-form-item label="生产规模" prop="productionScale" required style="flex: 1;">
                 <div class="scale-row">
@@ -241,7 +253,8 @@ const handleSubmit = async () => {
 
 <style lang="scss" scoped>
 .drawer-content {
-  padding: 0 20px 20px;
+  padding: 0  20px;
+  margin-top: -20px;
 }
 
 .subject-drawer-form {

@@ -390,7 +390,7 @@
 
                     <div class="page-footer">
                         <el-button class="back-btn" @click="goToStep(1)">上一步</el-button>
-                        <el-button type="primary" :loading="submitLoading" class="submit-btn" @click="handleGenerate">生成合格证</el-button>
+                        <el-button type="primary" :loading="submitLoading" class="submit-btn" @click="handleGenerate">开具合格证</el-button>
                     </div>
                 </el-form>
             </div>

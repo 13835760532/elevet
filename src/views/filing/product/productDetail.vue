@@ -31,15 +31,21 @@
                     </div>
                     <div class="detail-row">
                         <div class="label">建档时间：</div>
-                        <div class="value">{{ productInfo.productTime ? formatDate(productInfo.productTime, 'YYYY-MM-DD HH:mm:ss') : '--' }}</div>
+                        <div class="value">{{ productInfo.archiveDate ? formatDate(productInfo.archiveDate, 'YYYY-MM-DD HH:mm:ss') : '--' }}</div>
                     </div>
                     <div class="detail-row">
                         <div class="label">*宣传照片：</div>
                         <div class="value">
-                            <div class="preview-box" v-if="productInfo.productImageUrl">
-                                <el-image :src="productInfo.productImageUrl" :preview-src-list="[productInfo.productImageUrl]" class="preview-img" fit="cover" :preview-teleported="true" />
+                            <div class="img-preview-group">
+                                <div class="preview-box">
+                                    <el-icon v-if="!productInfo.productImageUrl">
+                                        <Picture />
+                                    </el-icon>
+                                    <template v-else>
+                                        <el-image :src="productInfo.productImageUrl" :preview-src-list="[productInfo.productImageUrl]" class="preview-img" fit="cover" :preview-teleported="true" />
+                                    </template>
+                                </div>
                             </div>
-                            <span v-else>--</span>
                         </div>
                     </div>
                     <div class="detail-row">
@@ -98,35 +104,52 @@
                     <div class="detail-row">
                         <div class="label">*营业执照：</div>
                         <div class="value">
-                            <div class="preview-box" v-if="subjectInfo.businessLicenseUrl">
-                                <el-image :src="subjectInfo.businessLicenseUrl" :preview-src-list="[subjectInfo.businessLicenseUrl]" class="preview-img" fit="cover" :preview-teleported="true" />
+                            <div class="img-preview-group">
+                                <div class="preview-box">
+                                    <el-icon v-if="!subjectInfo.businessLicenseUrl">
+                                        <Picture />
+                                    </el-icon>
+                                    <template v-else>
+                                        <el-image :src="subjectInfo.businessLicenseUrl" :preview-src-list="[subjectInfo.businessLicenseUrl]" class="preview-img" fit="cover" :preview-teleported="true" />
+                                    </template>
+                                </div>
                             </div>
-                            <span v-else>--</span>
                         </div>
                     </div>
                     <div class="detail-row">
                         <div class="label">身份证：</div>
                         <div class="value">
-                            <div class="img-preview-group" v-if="subjectInfo.idCardFrontUrl || subjectInfo.idCardBackUrl">
-                                <div class="preview-box" v-if="subjectInfo.idCardFrontUrl">
-                                    <el-image :src="subjectInfo.idCardFrontUrl" :preview-src-list="[subjectInfo.idCardFrontUrl, subjectInfo.idCardBackUrl].filter(Boolean)" class="preview-img" fit="cover" :preview-teleported="true" />
-                                </div>
-                                <div class="preview-box" v-if="subjectInfo.idCardBackUrl">
-                                    <el-image :src="subjectInfo.idCardBackUrl" :preview-src-list="[subjectInfo.idCardFrontUrl, subjectInfo.idCardBackUrl].filter(Boolean)" :initial-index="subjectInfo.idCardFrontUrl ? 1 : 0" class="preview-img" fit="cover" :preview-teleported="true" />
+                            <div class="img-preview-group">
+                                <div class="id-card-boxes">
+                                    <div class="preview-box">
+                                        <el-icon v-if="!subjectInfo.idCardFrontUrl"><Postcard /></el-icon>
+                                        <template v-else>
+                                            <el-image :src="subjectInfo.idCardFrontUrl" :preview-src-list="[subjectInfo.idCardFrontUrl, subjectInfo.idCardBackUrl].filter(Boolean)" class="preview-img" fit="cover" :preview-teleported="true" />
+                                        </template>
+                                    </div>
+                                    <div class="preview-box">
+                                        <el-icon v-if="!subjectInfo.idCardBackUrl"><Postcard /></el-icon>
+                                        <template v-else>
+                                            <el-image :src="subjectInfo.idCardBackUrl" :preview-src-list="[subjectInfo.idCardFrontUrl, subjectInfo.idCardBackUrl].filter(Boolean)" :initial-index="subjectInfo.idCardFrontUrl ? 1 : 0" class="preview-img" fit="cover" :preview-teleported="true" />
+                                        </template>
+                                    </div>
                                 </div>
                             </div>
-                            <span v-else>--</span>
                         </div>
                     </div>
                     <div class="detail-row">
                         <div class="label">企业资质：</div>
                         <div class="value">
-                             <div class="img-preview-group" v-if="subjectInfo.qualificationUrls && parseUrls(subjectInfo.qualificationUrls).length">
-                                <div class="preview-box" v-for="(url, index) in parseUrls(subjectInfo.qualificationUrls)" :key="index">
-                                     <el-image :src="url" :preview-src-list="parseUrls(subjectInfo.qualificationUrls)" :initial-index="index" class="preview-img" fit="cover" :preview-teleported="true" />
+                             <div class="img-preview-group">
+                                <template v-if="subjectInfo.qualificationUrls && parseUrls(subjectInfo.qualificationUrls).length">
+                                    <div class="preview-box" v-for="(url, index) in parseUrls(subjectInfo.qualificationUrls)" :key="index">
+                                         <el-image :src="url" :preview-src-list="parseUrls(subjectInfo.qualificationUrls)" :initial-index="index" class="preview-img" fit="cover" :preview-teleported="true" />
+                                    </div>
+                                </template>
+                                <div class="preview-box" v-else>
+                                    <el-icon><Picture /></el-icon>
                                 </div>
                             </div>
-                            <span v-else>--</span>
                         </div>
                     </div>
                     <div class="detail-row no-border">
@@ -203,7 +226,6 @@ watch(() => route.query.id, (newId) => {
 
 <style lang="scss" scoped>
 .page-container {
-    height: 100%;
     display: flex;
     flex-direction: column;
 }
@@ -249,6 +271,7 @@ watch(() => route.query.id, (newId) => {
 }
 
 .detail-list {
+    /* 对应原型图中的蓝色边框效果 */
     border-radius: 4px;
     overflow: hidden;
 
@@ -273,7 +296,7 @@ watch(() => route.query.id, (newId) => {
         font-weight: 600;
         color: #333;
         text-align: right;
-        background: #F8FAFC;
+        // background: rgba(243, 244, 246, 0.5); /* 模拟左侧背景，如果原型图有的话 */
     }
 
     .value {
@@ -289,19 +312,22 @@ watch(() => route.query.id, (newId) => {
 .img-preview-group {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 20px;
 }
 
 .preview-box {
-    width: 60px;
-    height: 60px;
+    width: 80px;
+    height: 50px;
+    background: #F8FAFC;
     border-radius: 4px;
-    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     border: 1px solid #E2E8F0;
+    overflow: hidden;
     position: relative;
     cursor: pointer;
     transition: all 0.2s ease-in-out;
-    background: #F8FAFC;
 
     &:hover {
         border-color: #00B3ED;
@@ -311,6 +337,16 @@ watch(() => route.query.id, (newId) => {
         .preview-img {
             transform: scale(1.2);
         }
+
+        .el-icon {
+            color: #00B3ED;
+        }
+    }
+
+    .el-icon {
+        font-size: 24px;
+        color: #94A3B8;
+        transition: color 0.3s;
     }
 
     .preview-img {
@@ -320,4 +356,15 @@ watch(() => route.query.id, (newId) => {
         transition: transform 0.3s ease-in-out;
     }
 }
+
+.id-card-boxes {
+    display: flex;
+    gap: 10px;
+}
+
+.action-link {
+    font-weight: 500;
+    font-size: 14px;
+}
+
 </style>

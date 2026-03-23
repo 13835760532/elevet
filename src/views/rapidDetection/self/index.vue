@@ -15,37 +15,34 @@
             <div class="query-form-wrapper">
                 <el-form :inline="true" :model="queryParams" class="custom-query-form custom-query-form-row" label-position="left">
                     <el-form-item label="">
-                        <el-input :prefix-icon="Search" v-model="queryParams.sampleName" placeholder="搜索样品编号或样品名称"
-                            class="custom-input w220" />
+                        <el-input v-model="queryParams.sampleCode" placeholder="请输入编号查询"
+                            class="custom-input w160" />
                     </el-form-item>
                     <el-form-item label="">
-                        <el-select v-model="queryParams.unit" placeholder="承担单位" class="custom-select">
+                        <el-input v-model="queryParams.productName" placeholder="请输入样品名称"
+                            class="custom-input w160" />
+                    </el-form-item>
+                    <el-form-item label="">
+                        <el-select v-model="queryParams.category" placeholder="产品分类" class="custom-select w140" clearable>
                             <el-option label="全部" value="" />
-                            <el-option label="检测机构A" value="1" />
-                            <el-option label="检测机构B" value="2" />
+                            <el-option v-for="dict in productCategoryOptions" :key="dict.value + ''" :label="dict.label" :value="dict.value" />
                         </el-select>
                     </el-form-item>
                     <el-form-item label="">
-                        <el-select v-model="queryParams.category" placeholder="产品分类" class="custom-select">
+                        <AreaCascader v-model="areaIds" @select="handleAreaSelect" placeholder="抽检地区" style="width: 240px;" />
+                    </el-form-item>
+                    <el-form-item label="">
+                        <el-select v-model="queryParams.isRetest" placeholder="是否复检" class="custom-select w140">
                             <el-option label="全部" value="" />
-                            <el-option label="蔬菜" value="vegetable" />
-                            <el-option label="水果" value="fruit" />
-                            <el-option label="水产品" value="seafood" />
+                            <el-option label="是" :value="true" />
+                            <el-option label="否" :value="false" />
                         </el-select>
                     </el-form-item>
                     <el-form-item label="">
-                        <el-select v-model="queryParams.testOrg" placeholder="抽检机构" class="custom-select">
+                        <el-select v-model="queryParams.status" placeholder="检测状态" class="custom-select w140">
                             <el-option label="全部" value="" />
-                            <el-option label="机构一" value="1" />
-                            <el-option label="机构二" value="2" />
-                        </el-select>
-                    </el-form-item>
-                    <el-form-item label="">
-                        <el-select v-model="queryParams.status" placeholder="检测状态" class="custom-select">
-                            <el-option label="全部" value="" />
-                            <el-option label="未检测" value="0" />
-                            <el-option label="已检测" value="1" />
-                            <el-option label="失败" value="2" />
+                            <el-option label="合格" value="1" />
+                            <el-option label="不合格" value="0" />
                         </el-select>
                     </el-form-item>
 
@@ -59,7 +56,7 @@
             <!-- 操作按钮行 -->
             <div class="table-actions">
                 <div class="action-left">
-                    <el-button type="primary" @click="handleBatchImport" class="primary-btn">检测批量导入</el-button>
+                    <!-- <el-button type="primary" @click="handleBatchImport" class="primary-btn">检测批量导入</el-button> -->
                     <el-button type="primary" @click="handleSingleInput" class="primary-btn">检测单条录入</el-button>
                 </div>
                 <div class="action-right">
@@ -67,46 +64,58 @@
                     <el-button @click="handleSetRule">设置数据上报规则</el-button>
                 </div>
             </div>
-            <p class="import-tip">*支持第三方检测结果批量导入</p>
+            <p class="import-tip"></p>
             <!-- 数据表格区域 -->
             <div class="content-card">
-    
                 <!-- 数据表格 -->
-                <div class="table-wrapper">
-                    <el-table :data="tableList" border="false">
+                <div class="table-wrapper" v-loading="loading" ref="tableWrapperRef">
+                    <el-table :data="tableList" :height="tableHeight" :border="false">
                         <el-table-column label="序号" type="index" width="60" align="center" />
-                        <el-table-column label="样品编号" prop="sampleNo" width="130" align="center" />
-                        <el-table-column label="样品名称" prop="sampleName" width="80" align="center" />
-                        <el-table-column label="样品来源" prop="source" width="100" align="center" />
-                        <el-table-column label="产品分类" prop="category" width="80" align="center" />
-                        <el-table-column label="产地" prop="origin" width="80" align="center" />
-                        <el-table-column label="被检主体名称" prop="subjectName" min-width="110" show-overflow-tooltip />
-                        <el-table-column label="抽检地区" prop="region" width="100" align="center" />
-                        <el-table-column label="检测机构" prop="testOrg" min-width="130" show-overflow-tooltip />
-                        <el-table-column label="检测时间" prop="testTime" width="100" align="center" />
-                        <el-table-column label="检测项目" prop="testItem" min-width="100" show-overflow-tooltip />
-                        <el-table-column label="检测结果" prop="testResult" width="100" align="center" show-overflow-tooltip />
-                        <el-table-column label="是否公开" prop="isPublic" width="80" align="center" />
-                        <el-table-column label="检测状态" prop="testStatus" width="80" align="center">
+                        <el-table-column label="样品编号" prop="sampleCode" width="130" align="center" />
+                        <el-table-column label="样品名称" prop="productName" width="80" align="center" />
+                        <el-table-column label="样品来源" prop="samplingLocation" width="100" align="center" />
+                        <el-table-column label="产品分类" prop="productCategory" width="80" align="center">
                             <template #default="scope">
-                                <span :class="['status-tag', statusMap[scope.row.testStatus]?.class]">
-                                    {{ statusMap[scope.row.testStatus]?.text }}
+                                {{ getCategoryLabel(scope.row.productCategory) }}
+                            </template>
+                        </el-table-column>
+                        <el-table-column label="检地区" prop="detectionArea" width="100" align="center" />
+                        <el-table-column label="检测项目" prop="aiRecognitionResult" min-width="120" align="center" show-overflow-tooltip>
+                            <template #default="scope">
+                                {{ getDetectionItems(scope.row.aiRecognitionResult) }}
+                            </template>
+                        </el-table-column>
+                        <el-table-column label="是否复检" prop="isRetest" width="90" align="center">
+                            <template #default="scope">
+                                <el-tag :type="scope.row.isRetest ? 'warning' : 'info'">
+                                    {{ scope.row.isRetest ? '是' : '否' }}
+                                </el-tag>
+                            </template>
+                        </el-table-column>
+                        <el-table-column label="被检主体名称" prop="subjectName" min-width="110" show-overflow-tooltip />
+                        <el-table-column label="检测机构" prop="detector" min-width="130" show-overflow-tooltip />
+                        <el-table-column label="检测时间" prop="detectionDate" width="100" align="center">
+                            <template #default="scope">
+                                {{ scope.row.detectionDate ? formatDate(scope.row.detectionDate) : '-' }}
+                            </template>
+                        </el-table-column>
+                        <el-table-column label="检测状态" prop="overallResult" width="90" align="center">
+                            <template #default="scope">
+                                <span :class="scope.row.overallResult === 1 ? 'text-green-500' : 'text-red-500'">
+                                    {{ scope.row.overallResult === 1 ? '合格' : '不合格' }}
                                 </span>
+                            </template>
+                        </el-table-column>
+                        <el-table-column label="是否公开" prop="publicFlag" width="80" align="center">
+                            <template #default="scope">
+                                <span>{{ scope.row.publicFlag ? '是' : '否' }}</span>
                             </template>
                         </el-table-column>
                         <el-table-column label="操作" width="120" align="center" fixed="right">
                             <template #default="scope">
                                 <div class="table-operate-action-btns">
-                                    <template v-if="scope.row.testStatus === 0">
-                                        <span class="table-edit-operate" @click="handleTest(scope.row)">去检测</span>
-                                        <span class="table-delete-operate" @click="handleDelete(scope.row)">删除</span>
-                                    </template>
-                                    <template v-else-if="scope.row.testStatus === 1">
-                                        <span class="table-view-operate" @click="handleView(scope.row)">查看详情</span>
-                                    </template>
-                                    <template v-else>
-                                        <span class="table-edit-operate" @click="handleRetest(scope.row)">重新检测</span>
-                                    </template>
+                                    <span class="table-view-operate" @click="handleView(scope.row)">查看详情</span>
+                                    <span class="table-delete-operate" @click="handleDelete(scope.row)">删除</span>
                                 </div>
                             </template>
                         </el-table-column>
@@ -115,19 +124,29 @@
     
                 <!-- 分页区域 -->
                 <div class="pagination-wrapper">
-                    <el-pagination v-model:current-page="pageParams.pageNum" v-model:page-size="pageParams.pageSize"
-                        :total="total" background layout="prev, pager, next" class="custom-pagination" />
+                    <el-pagination 
+                        v-model:current-page="pageParams.pageNo" 
+                        v-model:page-size="pageParams.pageSize"
+                        :total="total" 
+                        background 
+                        layout="total, sizes, prev, pager, next, jumper" 
+                        @size-change="getList"
+                        @current-change="getList"
+                        class="custom-pagination" />
                 </div>
             </div>
         </div>
 
 
         <!-- 设置数据上报规则弹窗 -->
-        <el-dialog v-model="ruleDialogVisible" width="500px" :show-close="true" class="rule-dialog">
+        <el-dialog v-model="ruleDialogVisible" width="540px" :show-close="true" class="rule-dialog" align-center>
             <template #header>
                 <div class="dialog-header">
-                    <h3 class="dialog-title">自主检测数据上报规则</h3>
-                    <p class="dialog-desc">自主检测默认是不公开，设定开关与时间进行公开</p>
+                    <div class="title-with-accent">
+                        <span class="accent-bar"></span>
+                        <h3 class="dialog-title">自主检测数据上报规则</h3>
+                    </div>
+                    <p class="dialog-desc">设定自主检测结果的公开范围与生效时间段</p>
                 </div>
             </template>
 
@@ -143,8 +162,8 @@
                 <div class="form-item" v-if="ruleForm.isPublic">
                     <label class="form-label">公开时间</label>
                     <el-date-picker v-model="ruleForm.dateRange" type="daterange" range-separator="至"
-                        start-placeholder="开始日期" end-placeholder="结束日期" value-format="YYYY-MM-DD" style="width: 260px;"
-                        class=" date-range-picker" />
+                        start-placeholder="开始日期" end-placeholder="结束日期" value-format="YYYY-MM-DD"
+                        class="date-range-picker" />
                 </div>
             </div>
 
@@ -158,107 +177,111 @@
     </div>
 </template>
 
-<script setup>
-import { reactive, ref } from 'vue';
+<script setup lang="ts">
+import { reactive, ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { Search } from '@element-plus/icons-vue';
+import { useDict } from '@/hooks/web/useDict';
 
+const productCategoryDict = useDict('agri_product_category', 'str');
+const productCategoryOptions = productCategoryDict.options;
+const getCategoryLabel = (val: string) => productCategoryDict.getLabel(val);
+import * as DetectionRecordApi from '@/api/agri/detectionRecord';
+import { useMessage } from '@/hooks/web/useMessage';
+import { useTableHeight } from '@/hooks/web/useTableHeight';
+import download from '@/utils/download';
+import { formatDate } from '@/utils/formatTime';
+import AreaCascader from '@/components/AreaCascader/index.vue';
+
+const message = useMessage();
 const router = useRouter();
-const activeTab = ref('self');
+const tableWrapperRef = ref(null);
+const { tableHeight } = useTableHeight(tableWrapperRef, 86); // 增加偏置以适配内凹布局卡片
+const loading = ref(false);
 
 const queryParams = reactive({
-    sampleName: '',
-    unit: '',
+    sampleCode: '',
+    productName: '',
     category: '',
-    testOrg: '',
+    area: '',
+    isRetest: '',
     status: ''
 });
 
+const areaIds = ref([]);
+const handleAreaSelect = (area: any) => {
+    // 抽检地区通常拼接到最后一个级别，或者全量拼接
+    queryParams.area = [area.province, area.city, area.district].filter(Boolean).join('');
+};
+
 const pageParams = reactive({
-    pageNum: 1,
+    pageNo: 1,
     pageSize: 10
 });
 
-const total = ref(28);
+const total = ref(0);
+const tableList = ref([]);
 
-const statusMap = {
-    0: { text: '未检测', class: 'status-pending' },
-    1: { text: '已检测', class: 'status-done' },
-    2: { text: '失败', class: 'status-failed' }
-};
-
-const tableList = ref([
-    {
-        sampleNo: 'RW2024213213_1',
-        sampleName: '红豆',
-        source: '田间/市场/其他',
-        category: '蔬菜',
-        origin: '山东济南',
-        subjectName: '北京章三商户',
-        region: '北京市-大兴区',
-        testOrg: '盒马鲜生',
-        testTime: '-',
-        testItem: '对硫磷、甲拌磷...',
-        testResult: '-',
-        isPublic: '公开',
-        testStatus: 0
-    },
-    {
-        sampleNo: 'RW2024213213_1',
-        sampleName: '草莓',
-        source: '田间/市场/其他',
-        category: '水果',
-        origin: '山东济南',
-        subjectName: '北京章三商户',
-        region: '北京市-大兴区',
-        testOrg: '北京市平谷区农业综合检验检测中心',
-        testTime: '2023-09-09',
-        testItem: '对硫磷、甲拌磷...',
-        testResult: '阴性',
-        isPublic: '不公开',
-        testStatus: 1
-    },
-    {
-        sampleNo: 'RW2024213213_1',
-        sampleName: '桂鱼',
-        source: '田间/市场/其他',
-        category: '水产品',
-        origin: '辽宁大连',
-        subjectName: '北京章三商户',
-        region: '北京市-大兴区',
-        testOrg: '北京果村蔬菜专业合作社',
-        testTime: '2023-09-09',
-        testItem: '对硫磷、甲拌磷...',
-        testResult: '结果异常（二维码模糊）',
-        isPublic: '公开',
-        testStatus: 2
-    }
-]);
-
-
-
-const handleTabChange = (tab) => {
-    activeTab.value = tab;
-    if (tab === 'task') {
-        router.push('/rapidDetection/task');
+const getList = async () => {
+    loading.value = true;
+    try {
+        const data = await DetectionRecordApi.getDetectionRecordPage({
+            pageNo: pageParams.pageNo,
+            pageSize: pageParams.pageSize,
+            selfDetection: 'true',
+            sampleCode: queryParams.sampleCode,
+            productCategory: queryParams.category,
+            overallResult: queryParams.status,
+            detectionArea: queryParams.area,
+            isRetest: queryParams.isRetest,
+            subjectName: queryParams.productName // 映射为名称搜索
+        });
+        tableList.value = data.list;
+        total.value = data.total;
+    } catch (error) {
+        console.error(error);
+    } finally {
+        loading.value = false;
     }
 };
+
+/** 解析检测项目 */
+const getDetectionItems = (aiRecognitionResult: string) => {
+    if (!aiRecognitionResult) return '-';
+    try {
+        const aiRes = JSON.parse(aiRecognitionResult);
+        if (aiRes.results && Array.isArray(aiRes.results)) {
+            return aiRes.results.map(item => item.codeName).join(', ');
+        }
+    } catch (e) {
+        return '-';
+    }
+    return '-';
+};
+
+
 
 const handleQuery = () => {
-    console.log('Query:', queryParams);
+    pageParams.pageNo = 1;
+    getList();
 };
 
 const handleReset = () => {
     Object.keys(queryParams).forEach(key => (queryParams[key] = ''));
+    areaIds.value = [];
+    handleQuery();
 };
 
-const handleExport = () => {
-    console.log('Export');
+const handleExport = async () => {
+    try {
+        await message.confirm('是否确认导出所有检测记录数据项?');
+        const data = await DetectionRecordApi.exportDetectionRecord(queryParams);
+        download.excel(data, '检测记录.xlsx');
+    } catch (error) {
+        console.error(error);
+    }
 };
 
-const handleExportTop = () => {
-    console.log('Export Top');
-};
+/* Removed unused handleExportTop */
 
 // 数据上报规则弹窗
 const ruleDialogVisible = ref(false);
@@ -276,35 +299,35 @@ const handleSaveRule = () => {
     ruleDialogVisible.value = false;
 };
 
-const handleBatchImport = () => {
-    console.log('Batch Import');
-    router.push('/rapidDetection/batchImportData');
-};
+/* Removed unused handleBatchImport */
 
 const handleSingleInput = () => {
     console.log('Single Input');
     router.push('/rapidDetection/create');
 };
 
-const handleTest = (row) => {
-    console.log('Test:', row);
-    router.push('/rapidDetection/create');
-};
+/* Removed unused handleTest */
 
-const handleDelete = (row) => {
-    console.log('Delete:', row);
-
+const handleDelete = async (row) => {
+    try {
+        await message.confirm('是否确认删除记录编号为"' + row.recordCode + '"的数据项?');
+        await DetectionRecordApi.deleteDetectionRecord(row.id);
+        message.success('删除成功');
+        getList();
+    } catch (error) {
+        console.error(error);
+    }
 };
 
 const handleView = (row) => {
-    console.log('View:', row);
-    router.push('/rapidDetection/taskResult');
+    router.push('/rapidDetection/taskResult?id=' + row.id);
 };
 
-const handleRetest = (row) => {
-    console.log('Retest:', row);
-    router.push('/rapidDetection/create');
-};
+/* Removed unused handleRetest */
+
+onMounted(() => {
+    getList();
+});
 </script>
 
 <style lang="scss" scoped>
@@ -331,54 +354,67 @@ const handleRetest = (row) => {
 }
 
 /* 数据上报规则弹窗 */
-.rule-dialog {
-    :deep(.el-dialog) {
-        border-radius: 16px;
-        overflow: hidden;
+/* 数据上报规则弹窗 */
+:deep(.rule-dialog) {
+    border-radius: 12px;
+    overflow: hidden;
+    padding: 0 !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+
+    .el-dialog__header {
+        padding: 0 !important;
+        margin-right: 0;
+        border-bottom: 1px solid #F1F5F9;
+        background: #fff;
     }
 
-    :deep(.el-dialog__header) {
-        padding: 16px 24px 0;
-        border-bottom: none;
+    .el-dialog__body {
+        padding: 14px;
     }
 
-    :deep(.el-dialog__body) {
-        padding: 0 24px;
+    .el-dialog__footer {
+        padding: 14px;
+        border-top: 1px solid #F1F5F9;
     }
 
-    :deep(.el-dialog__footer) {
-        padding: 16px;
-        border-top: none;
+    .el-dialog__headerbtn {
+        top: 6px;
+        right: 6px;
+        font-size: 20px;
+        &:hover .el-dialog__close {
+            color: #00B3ED;
+        }
     }
-
-    :deep(.el-dialog__headerbtn) {
-        top: 20px;
-        right: 20px;
-        font-size: 18px;
-    }
-}
 
 .dialog-header {
-    .dialog-title {
-        font-size: 20px;
-        font-weight: 600;
-        color: #1a1a1a;
-        margin: 0 0 8px 0;
+    padding: 14px 10px;
+    .title-with-accent {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        .dialog-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1E293B;
+            margin: 0;
+            letter-spacing: -0.01em;
+        }
     }
 
     .dialog-desc {
-        font-size: 14px;
-        color: #999;
+        font-size: 12px;
+        color: #64748B;
         margin: 0;
+        padding-left: 16px;
     }
 }
 
 .rule-form {
-    padding: 32px 0 24px;
+    padding: 14px;
+    margin-top: -4px;
 
     .form-item {
-        margin-bottom: 28px;
-
+        margin-bottom: 14px;
         &:last-child {
             margin-bottom: 0;
         }
@@ -386,15 +422,14 @@ const handleRetest = (row) => {
 
     .form-label {
         display: block;
-        font-size: 16px;
-        font-weight: 600;
+        font-size: 14px;
         color: #1a1a1a;
-        margin-bottom: 16px;
+        margin-bottom: 4px;
     }
 
     :deep(.el-radio-group) {
         display: flex;
-        gap: 48px;
+        gap: 32px;
     }
 
     :deep(.el-radio) {
@@ -418,44 +453,69 @@ const handleRetest = (row) => {
     }
 
     .date-range-picker {
-        width: 300px;
-        height: 44px;
+        width: 360px !important;
+        height: 40px !important;
+        border-radius: 4px;
+        overflow: hidden;
+        transition: all 0.2s;
 
-        :deep(.el-input__wrapper) {
-            border-radius: 8px;
-            box-shadow: 0 0 0 1px #E5E7EB inset;
+        &.el-date-editor--daterange {
+            width: 360px !important;
         }
 
-        :deep(.el-range-separator) {
-            color: #999;
+        .el-range-input {
+            background: transparent;
+            font-size: 14px;
+            color: #333;
+
+            &::placeholder {
+                color: #999;
+            }
+        }
+
+        .el-range-separator {
+            color: #64748B;
+            padding: 0 8px;
+            font-size: 13px;
+        }
+
+        .el-range__icon {
+            color: #00B3ED;
+            font-size: 16px;
         }
     }
+}
 }
 
 .dialog-footer {
     display: flex;
     justify-content: flex-end;
-    gap: 20px;
+    gap: 10px;
 
     .cancel-btn {
-        min-width: 100px;
-        height: 44px;
+        min-width: 90px;
+        height: 38px;
         border-radius: 8px;
-        font-size: 15px;
+        font-size: 14px;
         border-color: #d9d9d9;
         color: #666;
 
         &:hover {
-            border-color: #b3b3b3;
-            color: #333;
+            opacity: 0.8;
         }
     }
 
     .confirm-btn {
-        min-width: 100px;
-        height: 44px;
+        min-width: 90px;
+        height: 38px;
         border-radius: 8px;
-        font-size: 15px;
+        font-size: 14px;
+        &:hover {
+            opacity: 0.8;
+        }
     }
+}
+.w140{
+    width: 140px!important;
 }
 </style>

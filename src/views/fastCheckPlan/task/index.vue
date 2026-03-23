@@ -1,9 +1,8 @@
 <template>
-    <div class="table-container">
+    <div class="table-container" v-loading="loading">
         <!-- 检测任务指南 -->
         <div class="guide-card">
             <div class="card-header">
-             
                 <h2 class="card-title">检测任务指南</h2>
             </div>
             <!-- 第一行: 方案创建 -> 任务拆分 -> 任务下达 -->
@@ -29,28 +28,28 @@
         <!-- 快检任务查询 -->
         <div class="query-card">
             <div class="card-header">
-             
                 <h2 class="card-title">快检任务查询</h2>
             </div>
             <div class="query-form-wrapper">
                 <el-form :inline="true" :model="queryParams" class="custom-query-form custom-query-form-row" label-position="left">
                     <el-form-item label="">
-                        <el-input :prefix-icon="Search" v-model="queryParams.scheme" placeholder="搜索所属方案名称或编号" class="custom-input w220" />
+                        <el-input :prefix-icon="Search" v-model="queryParams.taskName" placeholder="搜索任务名称或编号" class="custom-input w220" clearable @keyup.enter="handleQuery" />
                     </el-form-item>
                     <el-form-item label="">
-                        <el-input :prefix-icon="Search" v-model="queryParams.taskName" placeholder="搜索任务名称或编号" class="custom-input w220" />
-                    </el-form-item>
-                    <el-form-item label="">
-                        <el-select v-model="queryParams.status" placeholder="全部状态" class="custom-select">
-                            <el-option label="全部" value="" />
-                            <el-option label="待接收" value="0" />
-                            <el-option label="已接收" value="1" />
-                            <el-option label="待接收" value="2" />
+                        <el-select v-model="queryParams.status" placeholder="任务状态" class="custom-select" clearable style="width: 140px">
+                            <el-option v-for="dict in getIntDictOptions(DICT_TYPE.AGRI_DETECTION_TASK_STATUS)" :key="dict.value" :label="dict.label" :value="dict.value" />
                         </el-select>
                     </el-form-item>
                     <el-form-item label="">
-                        <el-date-picker v-model="queryParams.time" type="daterange" range-separator="至"
-                            start-placeholder="执行开始时间" end-placeholder="执行结束时间" />
+                        <el-date-picker 
+                            v-model="queryDateRange" 
+                            type="daterange" 
+                            range-separator="至"
+                            start-placeholder="开始日期" 
+                            end-placeholder="结束日期" 
+                            value-format="YYYY-MM-DD"
+                            @change="handleDateChange"
+                        />
                     </el-form-item>
                     <div class="query-btns">
                         <el-button @click="handleReset" class="reset-btn">重置</el-button>
@@ -64,43 +63,53 @@
                 <div class="actions-left">
                 </div>
                 <div class="actions-right">
-                    <el-button  @click="handleExport" class="export-btn">导出</el-button>
+                    <el-button @click="handleExport" class="export-btn" :loading="exportLoading">导出</el-button>
                 </div>
             </div>
 
             <!-- 数据表格 -->
             <div class="table-wrapper">
-                <el-table :data="tableList" border="false">
+                <el-table :data="tableList" border="false" v-loading="loading">
                     <el-table-column label="序号" type="index" width="60" align="center" />
-                    <el-table-column label="任务编号" prop="taskNo" width="120" align="center" />
+                    <el-table-column label="任务编码" prop="taskCode" width="160" align="center" />
                     <el-table-column label="任务名称" prop="taskName" min-width="180" show-overflow-tooltip />
-                    <el-table-column label="所属方案名称" prop="schemeName" min-width="200" show-overflow-tooltip />
-                    <el-table-column label="方案主管单位" prop="dept" min-width="180" show-overflow-tooltip />
-                    <el-table-column label="检测区域范围" prop="region" width="120" align="center" />
-                    <el-table-column label="检测品种" prop="category" min-width="120" show-overflow-tooltip />
-                    <el-table-column label="检测项目" prop="items" width="100" align="center" />
-                    <el-table-column label="任务检测数量" prop="taskCount" width="110" align="center" />
-                    <el-table-column label="执行时间" prop="executeTime" width="180" align="center" />
-                    <el-table-column label="任务完成率" width="160" align="center">
+                    <el-table-column label="检测地区" prop="detectionArea" width="120" align="center" />
+                    <el-table-column label="检测品种" prop="detectionVarieties" min-width="120" show-overflow-tooltip />
+                    <el-table-column label="检测进度" width="180" align="center">
                         <template #default="scope">
-                            <span>{{ scope.row.rate }} ({{ scope.row.finished }}/{{ scope.row.total }})</span>
+                            <div class="progress-box">
+                                <el-progress 
+                                    :percentage="scope.row.sampleCompletionRate || 0" 
+                                    :stroke-width="8" 
+                                    color="#00B3ED"
+                                    :show-text="false"
+                                />
+                                <span class="progress-text">{{ scope.row.sampleCompletedCount }}/{{ scope.row.sampleCount }}</span>
+                            </div>
+                        </template>
+                    </el-table-column>
+                    <el-table-column label="时间范围" width="200" align="center">
+                        <template #default="scope">
+                            {{ scope.row.startDate }} ~ {{ scope.row.endDate }}
+                        </template>
+                    </el-table-column>
+                    <el-table-column label="最后催办" prop="lastUrgeTime" width="160" align="center">
+                        <template #default="scope">
+                            <span>{{ scope.row.lastUrgeTime ? formatDate(scope.row.lastUrgeTime) : '--' }}</span>
+                            <el-tag v-if="scope.row.urgeCount" size="small" type="danger" style="margin-left: 4px">{{ scope.row.urgeCount }}</el-tag>
                         </template>
                     </el-table-column>
                     <el-table-column label="任务状态" prop="status" width="100" align="center">
                         <template #default="scope">
-                            <span :class="['status-tag', statusMap[scope.row.status]?.class]">
-                                {{ statusMap[scope.row.status]?.text }}
-                            </span>
+                            <dict-tag :type="DICT_TYPE.AGRI_DETECTION_TASK_STATUS" :value="scope.row.status" />
                         </template>
                     </el-table-column>
-                    <el-table-column label="操作" width="140" align="center" fixed="right">
+                    <el-table-column label="操作" width="180" align="center" fixed="right">
                         <template #default="scope">
                             <div class="table-operate-action-btns">
-                                <span class="table-edit-operate" @click="handleReceive(scope.row)"
-                                    v-if="scope.row.status === 0">接收</span>
-                                <span class="table-edit-operate" @click="handleTransfer(scope.row)"
-                                    v-if="scope.row.status === 1">转派</span>
-                                <span class="table-view-operate" @click="handleView(scope.row)">查看</span>
+                                <el-button link type="primary" @click="handleReceive(scope.row)" v-if="scope.row.status === 1">接收任务</el-button>
+                                <el-button link type="primary" @click="handleUrge(scope.row)" v-if="scope.row.status === 2">项目催办</el-button>
+                                <el-button link type="primary" @click="handleView(scope.row)">查看详情</el-button>
                             </div>
                         </template>
                     </el-table-column>
@@ -109,18 +118,33 @@
 
             <!-- 分页区域 -->
             <div class="pagination-wrapper">
-                <el-pagination v-model:current-page="pageParams.pageNum" v-model:page-size="pageParams.pageSize"
-                    :total="total" background layout="prev, pager, next" class="custom-pagination" />
+                <el-pagination 
+                    v-model:current-page="queryParams.pageNo" 
+                    v-model:page-size="queryParams.pageSize"
+                    :total="total" 
+                    background 
+                    layout="total, sizes, prev, pager, next, jumper" 
+                    class="custom-pagination"
+                    @size-change="handleSizeChange"
+                    @current-change="handleCurrentChange"
+                />
             </div>
         </div>
     </div>
 </template>
 
 <script setup>
-import { reactive, ref } from 'vue';
+import { reactive, ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { ArrowRight, Search } from '@element-plus/icons-vue';
-import { ElMessage } from 'element-plus'
+import { Search } from '@element-plus/icons-vue';
+import { ElMessage, ElMessageBox } from 'element-plus';
+import * as DetectionTaskApi from '@/api/agri/detectionTask/index';
+import { formatDate } from '@/utils/formatTime';
+import { DICT_TYPE, getIntDictOptions } from '@/utils/dict';
+
+defineOptions({
+    name: 'DetectionTaskIndex'
+});
 
 const router = useRouter();
 
@@ -134,132 +158,124 @@ const stepsRow1 = [
     { id: '06', title: '检测结果查看', description: '任务内检测结果查看' },
     { id: '07', title: '任务进度监控', description: '任务执行进度跟踪统计' }
 ];
+
+const loading = ref(false);
+const exportLoading = ref(false);
+const total = ref(0);
+const tableList = ref([]);
+const queryDateRange = ref([]);
+
 const queryParams = reactive({
-    scheme: '',
-    taskName: '',
-    status: '',
-    time: [],
-    startDate: '',
-    endDate: ''
+    pageNo: 1,
+    pageSize: 10,
+    taskName: undefined,
+    status: undefined,
+    startDate: undefined,
+    endDate: undefined
 });
 
-const pageParams = reactive({
-    pageNum: 1,
-    pageSize: 5
-});
-
-const total = ref(28);
-
-const statusMap = {
-    0: { text: '待接收', class: 'status-pending' },
-    1: { text: '已接收', class: 'status-received' },
-    2: { text: '待接收', class: 'status-pending' }
+/**
+ * 获取列表数据
+ */
+const getList = async () => {
+    loading.value = true;
+    try {
+        const data = await DetectionTaskApi.getDetectionTaskPage(queryParams);
+        tableList.value = data.list;
+        total.value = data.total;
+    } catch (error) {
+        console.error('获取列表失败', error);
+    } finally {
+        loading.value = false;
+    }
 };
 
-const tableList = ref([
-    {
-        taskNo: 'RW20251101',
-        taskName: '2026年北京市快速检测任务',
-        schemeName: '2026年1月北京市、天津市蔬菜快速检测工作方案',
-        dept: '农业农村部农产品质量安全监管司',
-        region: '北京市、天津市',
-        category: '黄瓜、西红柿、韭菜、芹菜、茄子',
-        items: 600,
-        taskCount: 600,
-        executeTime: '2025-10-1至2025-12-28',
-        rate: '100%',
-        finished: 610,
-        total: 600,
-        status: 0
-    },
-    {
-        taskNo: 'RW20251101',
-        taskName: '2025年天津快速检测任务',
-        schemeName: '2026年1月北京市、天津市蔬菜快速检测工作方案',
-        dept: '农业农村部农产品质量安全监管司',
-        region: '北京市、天津市',
-        category: '水果',
-        items: 2,
-        taskCount: 900,
-        executeTime: '2025-10-1',
-        rate: '0%',
-        finished: 0,
-        total: 900,
-        status: 1
-    },
-    {
-        taskNo: 'RW20251101',
-        taskName: '2025年丹东快速检测任务',
-        schemeName: '2026年1月辽宁蔬菜快速检测工作方案',
-        dept: '辽宁省农业农村厅',
-        region: '辽宁省丹东市',
-        category: '水果',
-        items: 3,
-        taskCount: 850,
-        executeTime: '2025-10-1',
-        rate: '0%',
-        finished: 0,
-        total: 850,
-        status: 0
-    },
-    {
-        taskNo: 'RW20251101',
-        taskName: '2025年沈阳快速检测任务',
-        schemeName: '2026年1月辽宁蔬菜快速检测工作方案',
-        dept: '辽宁省农业农村厅',
-        region: '辽宁省沈阳市',
-        category: '水果',
-        items: 2,
-        taskCount: 950,
-        executeTime: '2025-10-1',
-        rate: '0%',
-        finished: 0,
-        total: 950,
-        status: 0
-    },
-    {
-        taskNo: 'RW20251101',
-        taskName: '2025年大连快速检测任务',
-        schemeName: '2026年1月辽宁蔬菜快速检测工作方案',
-        dept: '辽宁省农业农村厅',
-        region: '辽宁省大连市',
-        category: '畜禽',
-        items: 1,
-        taskCount: 1000,
-        executeTime: '2025-10-1',
-        rate: '0%',
-        finished: 0,
-        total: 1000,
-        status: 1
-    }
-]);
-
-
-
 const handleQuery = () => {
-    console.log('Query:', queryParams);
+    queryParams.pageNo = 1;
+    getList();
 };
 
 const handleReset = () => {
-    Object.keys(queryParams).forEach(key => (queryParams[key] = ''));
+    queryParams.pageNo = 1;
+    queryParams.taskName = undefined;
+    queryParams.status = undefined;
+    queryParams.startDate = undefined;
+    queryParams.endDate = undefined;
+    queryDateRange.value = [];
+    getList();
 };
 
-const handleExport = () => {
-    console.log('Export');
+const handleDateChange = (val) => {
+    if (val) {
+        queryParams.startDate = val[0];
+        queryParams.endDate = val[1];
+    } else {
+        queryParams.startDate = undefined;
+        queryParams.endDate = undefined;
+    }
 };
 
-const handleReceive = (row) => {
-    ElMessage({ message: '接收成功', type: 'success' })
+const handleExport = async () => {
+    try {
+        await ElMessageBox.confirm('是否确认导出所有检测任务数据项?', '提示', {
+            confirmButtonText: '确定',
+            cancelButtonText: '取消',
+            type: 'warning'
+        });
+        exportLoading.value = true;
+        await DetectionTaskApi.exportDetectionTask(queryParams);
+    } catch (error) {
+        console.error('导出失败', error);
+    } finally {
+        exportLoading.value = false;
+    }
 };
 
-const handleTransfer = (row) => {
-    router.push('/fastCheckPlan/taskAllocate');
+const handleReceive = async (row) => {
+    try {
+        await ElMessageBox.confirm(`是否确认接收任务：${row.taskName}?`, '提示', {
+            confirmButtonText: '接收',
+            cancelButtonText: '取消',
+            type: 'info'
+        });
+        await DetectionTaskApi.acceptDetectionTask(row.id);
+        ElMessage.success('接收成功');
+        getList();
+    } catch (error) {
+        // 取消
+    }
+};
+
+const handleUrge = async (row) => {
+    try {
+        await DetectionTaskApi.urgeDetectionTask(row.id);
+        ElMessage.success('已催办');
+        getList();
+    } catch (error) {
+        console.error('催办失败', error);
+    }
 };
 
 const handleView = (row) => {
-    console.log('View:', row);
-    router.push('/fastCheckPlan/taskAllocate');
+    router.push({
+        path: '/fastCheckPlan/taskAllocate',
+        query: { id: row.id }
+    });
 };
+
+const handleSizeChange = (val) => {
+    queryParams.pageSize = val;
+    handleQuery();
+};
+
+const handleCurrentChange = (val) => {
+    queryParams.pageNo = val;
+    getList();
+};
+
+onMounted(() => {
+    getList();
+});
 </script>
 
 <style lang="scss" scoped>
@@ -280,7 +296,7 @@ const handleView = (row) => {
     padding: 16px;
 }
 
-/* 指南步骤样式 - 忠实还原设计图 */
+/* 指南步骤样式 */
 .guide-steps {
     display: flex;
     align-items: flex-start;
@@ -372,7 +388,7 @@ const handleView = (row) => {
         align-items: center;
         justify-content: center;
         padding: 0 4px;
-        margin-top: 12px; // 对齐圆圈中心
+        margin-top: 12px; 
         align-self: flex-start;
 
         .arrow-svg {
@@ -383,75 +399,51 @@ const handleView = (row) => {
     }
 }
 
+:deep(.el-table) {
+    --el-table-header-bg-color: #F8FAFC;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+/* 进度条盒子 */
+.progress-box {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    
+    .el-progress {
+        width: 100%;
+    }
+    
+    .progress-text {
+        font-size: 12px;
+        color: #64748B;
+    }
+}
+
 :deep(.el-input__wrapper),
 :deep(.el-select__wrapper) {
     background: #FFFFFF;
     border: 1px solid #D1D5DB;
     border-radius: 6px;
     box-shadow: none !important;
-    padding: 0 12px;
 
-    &:hover {
-        border-color: #00B3ED;
-    }
-
-    &.is-focus {
-        border-color: #00B3ED;
-    }
+    &:hover { border-color: #00B3ED; }
+    &.is-focus { border-color: #00B3ED; }
 }
 
-/* 表格定制 */
-.table-wrapper {
-    margin-bottom: 24px;
-}
-
-
-
-/* 状态标签 */
-.status-tag {
-    padding: 4px 12px;
-    border-radius: 4px;
-    font-size: 12px;
-    font-weight: 500;
-
-    &.status-pending {
-        background-color: #E6F7FF;
-        color: #00B3ED;
-    }
-
-    &.status-received {
-        background-color: #F6FFED;
-        color: #52C41A;
-    }
-}
-
+/* 操作按钮 */
 .table-operate-action-btns {
     display: flex;
     justify-content: center;
-    gap: 8px;
-
-    .el-button--link {
-        font-weight: 500;
-        color: #00B3ED;
-    }
+    gap: 12px;
 }
 
-/* 分页适配 */
 .pagination-wrapper {
     display: flex;
     justify-content: flex-end;
-    align-items: center;
-    padding: 10px 0;
-}
-
-/* 响应式 */
-@media (max-width: 1400px) {
-    .guide-steps {
-        flex-wrap: wrap;
-
-        .step-arrow {
-            display: none;
-        }
-    }
+    padding: 20px 0;
 }
 </style>

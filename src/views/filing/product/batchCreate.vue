@@ -1,10 +1,8 @@
 <template>
-    <div class="page-container yy-detail-container">
+    <div class="page-container">
         <!-- 顶部标题区 -->
         <PageHeader title="产品档案" desc="支持批量上传多个受检背景信息进行建档。" />
 
-        <div class="page-scrollable">
-        <!-- 内容卡片 -->
         <div class="content-card">
             <div class="card-action-bar">
                 <div class="action-left">
@@ -12,7 +10,7 @@
                     <span class="action-title">批量上传产品档案</span>
                 </div>
                 <el-button class="btn-download" @click="handleDownloadTemplate" plain>
-                    <el-icon class="mr4"><Download /></el-icon>
+                    <el-icon class="mr2"><Download /></el-icon>
                     下载导入模版
                 </el-button>
             </div>
@@ -57,7 +55,7 @@
                 </div>
 
                 <div class="table-container">
-                    <el-table :data="exampleData" border class="preview-table" header-row-class-name="table-header">
+                    <el-table ref="tableRef" :data="exampleData" border class="preview-table" header-row-class-name="table-header">
                         <el-table-column prop="index" label="序号" width="60" fixed="left" align="center" />
                         <el-table-column prop="productName" label="产品名称" width="120" />
                         <el-table-column prop="category" label="产品类别" width="100" align="center" />
@@ -76,7 +74,6 @@
                     </el-table>
                 </div>
             </div>
-        </div>
         </div>
     </div>
 </template>
@@ -178,19 +175,12 @@ $text-light: #64748B;
 $bg-light: #F8FAFC;
 
 .page-container {
-    height: 100%;
+    height: 100% !important;
     display: flex;
     flex-direction: column;
     padding: 0;
+    overflow: hidden !important;
 }
-
-.page-scrollable {
-    flex: 1;
-    overflow-y: auto;
-}
-
-.mr4 { margin-right: 4px; }
-
 
 /* 内容卡片 */
 .content-card {
@@ -198,7 +188,13 @@ $bg-light: #F8FAFC;
     border-radius: 12px;
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
     padding: var(--page-container-padding);
-    margin-bottom: 24px;
+    margin-bottom: 0;
+    flex: 1;
+    overflow-y: auto; /* 在此区域滚动 */
+    min-height: 0;
+    &::-webkit-scrollbar {
+        width: 0px;
+    }
 }
 
 .card-action-bar {
@@ -324,6 +320,7 @@ $bg-light: #F8FAFC;
 /* 预览表格区域 */
 .preview-section {
     margin-top: 40px;
+    min-height: 0;
 }
 
 .preview-header {
@@ -331,6 +328,7 @@ $bg-light: #F8FAFC;
     display: flex;
     align-items: center;
     gap: 16px;
+    flex-shrink: 0;
 
     .header-flex {
         display: flex;
@@ -349,6 +347,10 @@ $bg-light: #F8FAFC;
         font-weight: 700;
         color: $text-dark;
     }
+}
+
+.table-container {
+    min-height: 0;
 }
 
 .preview-table {

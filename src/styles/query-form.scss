@@ -112,6 +112,10 @@ $input-default-width: 150px;
     height: 40px !important;
     line-height: normal; /* 确保内部居中对齐 */
 }
+
+.el-date-editor{
+    width: 160px !important;
+}
 /* ========== 查询表单主体样式 ========== */
 .custom-query-form {
     display: flex;

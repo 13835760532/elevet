@@ -1,12 +1,6 @@
 <template>
     <div class="verify-page-wrapper">
-        <div class="page-header-minimal">
-            <PageBack />
-            <div class="header-main-info">
-                <h1 class="main-title">外部合格证查验进场</h1>
-                <p class="sub-title">录入其他平台或纸质合格证信息，建立数字化溯源链条</p>
-            </div>
-        </div>
+        <pageHeader title="外部合格证查验进场" desc="录入其他平台或纸质合格证信息，建立数字化溯源链条" />
 
         <div class="main-container">
             <div class="glass-form-card">
@@ -43,22 +37,11 @@
                     </div>
 
                     <div class="upload-integrated-area mt-20">
-                        <el-upload
-                            drag
-                            action="#"
-                            class="clean-uploader"
-                            :auto-upload="false"
-                        >
-                            <div class="uploader-content">
-                                <div class="icon-circle">
-                                    <el-icon><Upload /></el-icon>
-                                </div>
-                                <div class="text-content">
-                                    <strong>点击或拖拽原合格证图片至此</strong>
-                                    <p>支持多图上传，系统将自动关联存证</p>
-                                </div>
-                            </div>
-                        </el-upload>
+                         <UploadImg v-model="formData.certificateImageUrl" :limit="1" height="180px" />
+                         <div class="upload-tip-text mt-10">
+                             <strong>上传原合格证拍照件</strong>
+                             <p>清晰的票面内容有助于后续查验追溯</p>
+                         </div>
                     </div>
                 </div>
 
@@ -74,39 +57,54 @@
                     <el-form :model="formData" label-position="top" class="standard-grid-form">
                         <el-row :gutter="24">
                             <el-col :span="12">
-                                <el-form-item label="农产品名称">
+                                <el-form-item label="农产品名称" required>
                                     <el-input v-model="formData.productName" placeholder="录入产品完整名称" />
                                 </el-form-item>
                             </el-col>
                             <el-col :span="12">
                                 <el-form-item label="所属类别">
-                                    <el-select v-model="formData.category" placeholder="选择分类" class="w-full">
-                                        <el-option label="蔬菜类" value="1" />
-                                        <el-option label="水果类" value="2" />
-                                        <el-option label="畜牧水产" value="3" />
+                                    <el-select v-model="formData.productCategory" placeholder="选择分类" class="w-full">
+                                        <el-option v-for="dict in productCategoryOptions" :key="dict.value" :label="dict.label" :value="dict.value" />
                                     </el-select>
                                 </el-form-item>
                             </el-col>
                         </el-row>
 
-                        <el-form-item label="产地详情">
-                            <el-input v-model="formData.origin" placeholder="生产基地或具体产地地址" />
-                        </el-form-item>
+                        <el-row :gutter="24">
+                            <el-col :span="12">
+                                <el-form-item label="外部合格证编号">
+                                    <el-input v-model="formData.certificateCode" placeholder="外部平台证号或纸质编号" />
+                                </el-form-item>
+                            </el-col>
+                            <el-col :span="12">
+                                <el-form-item label="产地详情">
+                                    <el-input v-model="formData.productionArea" placeholder="生产基地或具体产地地址" />
+                                </el-form-item>
+                            </el-col>
+                        </el-row>
 
                         <el-row :gutter="24">
                             <el-col :span="24">
-                                <el-form-item label="承诺主体（供应商/生产者）">
+                                <el-form-item label="承诺主体（供应商/生产者）" required>
                                     <div class="entity-search-box">
                                         <el-select
-                                            v-model="formData.entity"
+                                            v-model="formData.subjectId"
                                             placeholder="输入名称搜索主体..."
                                             filterable
+                                            remote
+                                            :remote-method="remoteSearchSubject"
+                                            :loading="subjectLoading"
                                             class="w-full"
+                                            @change="handleSubjectSelect"
                                         >
-                                            <el-option label="北京朝阳蔬菜基地" value="1" />
-                                            <el-option label="山东寿光联合农业" value="2" />
+                                            <el-option 
+                                                v-for="item in subjectOptions" 
+                                                :key="item.id" 
+                                                :label="item.name" 
+                                                :value="item.id" 
+                                            />
                                         </el-select>
-                                        <el-button type="primary" link class="add-entity-btn">
+                                        <el-button type="primary" link class="add-entity-btn" @click="ElMessage.info('新增主体功能开发中')">
                                             <el-icon><Plus /></el-icon> 新增主体
                                         </el-button>
                                     </div>
@@ -117,20 +115,22 @@
                         <el-row :gutter="24">
                             <el-col :span="8">
                                 <el-form-item label="数量/规模">
-                                    <el-input v-model="formData.batchSize" placeholder="0.00" />
+                                    <el-input-number v-model="formData.quantity" :precision="2" :step="0.1" :min="0" class="w-full" placeholder="0.00" />
                                 </el-form-item>
                             </el-col>
                             <el-col :span="6">
                                 <el-form-item label="单位">
                                     <el-select v-model="formData.unit">
-                                        <el-option label="千克" value="kg" />
-                                        <el-option label="吨" value="t" />
+                                        <el-option label="kg" value="kg" />
+                                        <el-option label="吨" value="ton" />
+                                        <el-option label="个" value="pcs" />
+                                        <el-option label="箱" value="box" />
                                     </el-select>
                                 </el-form-item>
                             </el-col>
                             <el-col :span="10">
                                 <el-form-item label="原合格证开具日期">
-                                    <el-date-picker v-model="formData.createDate" type="date" class="w-full" />
+                                    <el-date-picker v-model="formData.issueDate" type="date" value-format="YYYY-MM-DD" class="w-full" />
                                 </el-form-item>
                             </el-col>
                         </el-row>
@@ -151,36 +151,89 @@
 </template>
 
 <script setup>
-import { reactive } from 'vue';
+import { reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { 
-    Link, Camera, Upload, Plus, ArrowRight
+    Link, Camera, Upload, Plus, ArrowRight, Search
 } from '@element-plus/icons-vue';
 import { ElMessage } from 'element-plus';
 import PageBack from '@/components/PageBack/index.vue';
+import { UploadImg } from '@/components/UploadFile';
+import { useDict } from '@/hooks/web/useDict';
+import * as SubjectApi from '@/api/agri/subject/index';
+import { verifyExternal } from '@/api/agri/certificateVerification/index';
 
 const router = useRouter();
 
+const { options: productCategoryOptions } = useDict('agri_product_category', 'str');
+
 const formData = reactive({
     source: 'other',
+    certificateImageUrl: '',
+    certificateCode: '',
     productName: '',
-    category: '',
-    origin: '',
-    batchSize: '',
+    productCategory: '',
+    productionArea: '',
+    quantity: undefined,
     unit: 'kg',
-    createDate: new Date(),
-    entity: ''
+    issueDate: new Date().toISOString().split('T')[0],
+    subjectId: undefined,
+    subjectName: ''
 });
+
+// 主体搜索相关
+const subjectLoading = ref(false);
+const subjectOptions = ref([]);
+
+const remoteSearchSubject = async (query) => {
+    if (query) {
+        subjectLoading.value = true;
+        try {
+            const res = await SubjectApi.getSubjectPage({ name: query, pageSize: 20 });
+            subjectOptions.value = res.list;
+        } finally {
+            subjectLoading.value = false;
+        }
+    }
+};
+
+const handleSubjectSelect = (val) => {
+    const item = subjectOptions.value.find(s => s.id === val);
+    if (item) {
+        formData.subjectName = item.name;
+        // 如果主体有地址信息，可以尝试回显产地
+        if (item.provinceCode) {
+             formData.productionArea = `${item.provinceCode}-${item.cityCode || ''}-${item.districtCode || ''}`;
+        }
+    }
+};
 
 const handleCancel = () => router.push('/certificate/verify');
 
-const handleSubmit = () => {
-    if (!formData.productName) {
-        ElMessage.warning('请输入必要的产品名称信息');
+const handleSubmit = async () => {
+    if (!formData.certificateImageUrl) {
+        ElMessage.warning('请先上传合格证凭证图片');
         return;
     }
-    ElMessage.success('外部合格证已成功入库备案');
-    router.push('/certificate/verify');
+    if (!formData.productName) {
+        ElMessage.warning('请输入产品名称');
+        return;
+    }
+    if (!formData.subjectName) {
+        ElMessage.warning('请输入或搜索生产经营主体');
+        return;
+    }
+
+    try {
+        await verifyExternal({
+            ...formData,
+            verificationType: 2 // 已存证
+        });
+        ElMessage.success('外部合格证已成功入库备案');
+        router.push('/certificate/verify');
+    } catch (e) {
+        console.error('存证失败', e);
+    }
 };
 </script>
 
@@ -220,7 +273,7 @@ $text-light: #64748B;
 
 .main-container {
     max-width: 860px;
-    margin: 0 auto;
+    margin: 14px auto;
 }
 
 /* Glass Form Card */

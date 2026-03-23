@@ -20,8 +20,8 @@
                 </el-form-item>
 
                 <!-- 建档时间 -->
-                <el-form-item label="建档时间" prop="productTime">
-                    <el-date-picker v-model="formData.productTime" type="date" placeholder="请选择建档时间" value-format="x" class="full-width" />
+                <el-form-item label="建档时间" prop="archiveDate">
+                    <el-date-picker v-model="formData.archiveDate" type="date" placeholder="请选择建档时间" value-format="YYYY-MM-DD" class="full-width" />
                 </el-form-item>
 
                 <!-- 产品类别 -->
@@ -33,7 +33,16 @@
 
                 <!-- 产品产地 -->
                 <el-form-item label="产品产地" prop="productionArea">
-                    <el-input v-model="formData.productionArea" placeholder="请填写详细产地（省/市/县/镇）" />
+                    <AreaCascader 
+                        v-model="areaPath" 
+                        placeholder="请选择产品产地" 
+                        @select="(val) => {
+                            formData.provinceCode = val.province;
+                            formData.cityCode = val.city;
+                            formData.districtCode = val.district;
+                            formData.productionArea = `${val.province}${val.city}${val.district}`;
+                        }"
+                    />
                 </el-form-item>
 
                 <!-- 产品规格 -->
@@ -141,6 +150,7 @@ import { useRouter, useRoute } from 'vue-router';
 import { Plus, Picture, Search, OfficeBuilding, View, Download } from '@element-plus/icons-vue';
 import PageHeader from '@/components/PageHeader/index.vue';
 import { UploadImg } from '@/components/UploadFile';
+import AreaCascader from '@/components/AreaCascader/index.vue';
 import * as ProductApi from '@/api/agri/product/index';
 import * as SubjectApi from '@/api/agri/subject/index';
 import { useMessage } from '@/hooks/web/useMessage';
@@ -158,16 +168,20 @@ const route = useRoute();
 const message = useMessage();
 const formRef = ref(null);
 const submitLoading = ref(false);
+const areaPath = ref([]);
 
 const formData = reactive({
     productCode: '',
     productName: '',
     category: undefined,
     productionArea: '',
+    provinceCode: '',
+    cityCode: '',
+    districtCode: '',
     productSpec: '',
     productUnit: 'kg',
     productImageUrl: '',
-    productTime: undefined,
+    archiveDate: undefined,
     subjectId: undefined
 });
 
@@ -218,10 +232,13 @@ const loadDetail = async () => {
             productName: '',
             category: undefined,
             productionArea: '',
+            provinceCode: '',
+            cityCode: '',
+            districtCode: '',
             productSpec: '',
             productUnit: 'kg',
             productImageUrl: '',
-            productTime: undefined,
+            archiveDate: undefined,
             subjectId: undefined
         });
         currentSubject.value = null;
@@ -234,6 +251,16 @@ const loadDetail = async () => {
     try {
         const data = await ProductApi.getProduct(detailId);
         Object.assign(formData, data);
+        
+        // 产品产地回显优化：
+        if (data.provinceCode || data.cityCode || data.districtCode) {
+            // 优先使用代码路径
+            areaPath.value = [data.provinceCode, data.cityCode, data.districtCode].filter(Boolean);
+        } else if (data.productionArea) {
+            // 兼容模式：如果没有代码，则直接传入地区名称字符串（AreaCascader 会处理解析）
+            areaPath.value = data.productionArea;
+        }
+
         if (data.subjectId) {
             // 先尝试从现有选项中找，找不到再请求接口
             let subjectData = subjectOptions.value.find(item => item.id === data.subjectId);

@@ -82,3 +82,8 @@ export const deleteCertificateVerification = (id: number) => {
 export const queryUpstreamCertificate = (certificateCode: string) => {
   return request.get({ url: '/agri/certificate/query-upstream?certificateCode=' + certificateCode })
 }
+
+// 合格证溯源 - 根据合格证编号查询合格证、检测报告及上游合格证
+export const traceCertificate = (certificateCode: string) => {
+  return request.get({ url: '/agri/certificate/trace?certificateCode=' + certificateCode })
+}

@@ -38,7 +38,16 @@
 
                 <!-- 所属地区 -->
                 <el-form-item label="所属地区" prop="provinceCode" required>
-                    <el-input v-model="formData.provinceCode" placeholder="北京市-北京市-朝阳区（下拉选择转输入）" />
+                    <AreaCascader 
+                        style="width: 500px;" 
+                        v-model="areaPath" 
+                        placeholder="请选择所属地区" 
+                        @select="(val) => {
+                            formData.provinceCode = val.province;
+                            formData.cityCode = val.city;
+                            formData.districtCode = val.district;
+                        }"
+                    />
                 </el-form-item>
 
                 <!-- 详细地址 -->
@@ -112,6 +121,7 @@ import { useRouter, useRoute } from 'vue-router';
 import { Picture, UploadFilled } from '@element-plus/icons-vue';
 import PageHeader from '@/components/PageHeader/index.vue';
 import { UploadImg, UploadImgs } from '@/components/UploadFile';
+import AreaCascader from '@/components/AreaCascader/index.vue';
 import * as SubjectApi from '@/api/agri/subject/index';
 import { useMessage } from '@/hooks/web/useMessage';
 
@@ -125,6 +135,7 @@ const route = useRoute();
 const message = useMessage();
 const formRef = ref(null);
 const loading = ref(false);
+const areaPath = ref([]);
 
 const id = route.query.id;
 
@@ -134,6 +145,8 @@ const formData = reactive({
     category: undefined,
     mainProducts: '',
     provinceCode: '',
+    cityCode: '',
+    districtCode: '',
     address: '',
     contactName: '',
     contactPhone: '',

@@ -254,5 +254,7 @@ export enum DICT_TYPE {
 
   // ========== AGRI - 农业模块 ==========
   AGRI_PLAN_TYPE = 'agri_plan_type', // 检测方案类型
-  AGRI_CERTIFICATE_TYPE = 'agri_certificate_type' // 合格证出证类型
+  AGRI_CERTIFICATE_TYPE = 'agri_certificate_type', // 合格证出证类型
+  AGRI_DETECTION_TASK_STATUS = 'agri_detection_task_status', // 检测任务状态
+  AGRI_SAMPLE_STATUS = 'agri_sample_status' // 检测样品状态
 }

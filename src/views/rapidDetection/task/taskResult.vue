@@ -1,6 +1,8 @@
 <template>
     <div class="table-container">
-        <PageHeader title="检测详情" desc="对检测结果进行拍照上传判读后的结果" />
+        <div class="header-fixed-container">
+            <PageHeader title="检测详情" desc="对检测结果进行拍照上传判读后的结果" />
+        </div>
         
         <!-- 卡片内容区域 -->
         <div class="content-card">
@@ -17,10 +19,10 @@
                     <span class="label">样品编号</span>
                     <span class="value">{{ sampleInfo.sampleNo }}</span>
                 </div>
-                <div class="info-row">
+                <!-- <div class="info-row">
                     <span class="label">样品来源</span>
                     <span class="value">{{ sampleInfo.source }}</span>
-                </div>
+                </div> -->
                 <div class="info-row">
                     <span class="label">样品名称</span>
                     <span class="value">{{ sampleInfo.sampleName }}</span>
@@ -33,18 +35,18 @@
                     <span class="label">数量（重量）</span>
                     <span class="value">{{ sampleInfo.quantity }}</span>
                 </div>
-                <div class="info-row">
+                <!-- <div class="info-row">
                     <span class="label">抽检区域</span>
                     <span class="value">{{ sampleInfo.checkArea }}</span>
-                </div>
+                </div> -->
                 <div class="info-row">
                     <span class="label">生产经营主体</span>
                     <span class="value">{{ sampleInfo.producer }}</span>
                 </div>
-                <div class="info-row">
+                <!-- <div class="info-row">
                     <span class="label">抽检区域</span>
                     <span class="value">{{ sampleInfo.region }}</span>
-                </div>
+                </div> -->
                 <div class="info-row">
                     <span class="label">检测机构</span>
                     <span class="value">{{ sampleInfo.testOrg }}</span>
@@ -52,10 +54,10 @@
                 <div class="info-row">
                     <span class="label">检测人员</span>
                     <span class="value">{{ sampleInfo.tester }}</span>
-                </div>
+                </div>  
                 <div class="info-row">
                     <span class="label">检测日期</span>
-                    <span class="value">{{ sampleInfo.testDate }}</span>
+                    <span class="value">{{ formatDate(sampleInfo.detectionDate, 'YYYY-MM-DD HH:mm:ss') }}</span>
                 </div>
                 <div class="info-row photo-row">
                     <span class="label">检测照片</span>
@@ -88,14 +90,18 @@
             <!-- 检测报告 -->
             <div class="section-header mt-40">
                 <h3 class="section-title">检测报告</h3>
+                <div v-if="reportData" class="report-code">报告编号：{{ reportData.reportCode }}</div>
             </div>
             <div class="report-section">
                 <div class="report-preview">
-                    <el-image :src="reportImage" fit="contain" class="report-image" />
+                    <el-image :src="reportImage || sampleInfo.photo" fit="contain" class="report-image" />
                 </div>
-                <div class="report-actions">
+                <div v-if="reportData" class="report-actions">
                     <span class="link-btn" @click="handlePreviewReport">报告预览</span>
                     <span class="link-btn" @click="handleDownloadReport">报告下载</span>
+                </div>
+                <div v-else class="report-tip">
+                     <el-empty description="暂无正式报告" :image-size="60" />
                 </div>
             </div>
 
@@ -109,55 +115,107 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, computed, onMounted } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
+import { getDetectionRecord } from '@/api/agri/detectionRecord';
+import { getDetectionReportByRecordId } from '@/api/agri/detectionReport';
+import { formatDate } from '@/utils/formatTime';
 
 const router = useRouter();
+const route = useRoute();
+const loading = ref(false);
 
-const isQualified = ref(false);
+const isQualified = computed(() => recordData.value?.overallResult === 1);
 
+const recordData = ref(null);
+const reportData = ref(null);
 const sampleInfo = ref({
-    sampleNo: 'YP20251230000001',
-    source: '田间/市场/其他',
-    sampleName: '桂鱼',
-    origin: '广东省-佛山市',
-    quantity: '10亩',
-    checkArea: '北京-朝阳-高楼店',
-    producer: '佛山市山水区合祥水产有限公司',
-    region: '北京-朝阳',
-    testOrg: '北京市平谷区农业综合检验检测中心',
-    tester: '李娜',
-    testDate: '2025-12-30',
-    photo: 'https://via.placeholder.com/80x100'
+    sampleNo: '--',
+    source: '--',
+    sampleName: '--',
+    origin: '--',
+    quantity: '--', 
+    checkArea: '--',
+    producer: '--',
+    region: '--',
+    testOrg: '系统默认检测中心',
+    tester: '--',
+    testDate: '--',
+    photo: ''
 });
 
-const resultList = ref([
-    {
-        channel: '1',
-        item: '氯虫腈',
-        tcValue: '0.32',
-        concentration: '<500.00',
-        result: '阴性'
-    },
-    {
-        channel: '2',
-        item: '灭多威',
-        tcValue: '5.13',
-        concentration: '<500.00',
-        result: '阳性'
+const resultList = ref([]);
+const reportImage = ref('');
+
+/**
+ * 获取检测详情及报告
+ */
+const initData = async () => {
+    const id = route.query.id;
+    if (!id) return;
+
+    loading.value = true;
+    try {
+        const [res, reportRes] = await Promise.all([
+            getDetectionRecord(id),
+            getDetectionReportByRecordId(id).catch(() => null)
+        ]);
+        
+        recordData.value = res;
+        reportData.value = reportRes;
+        
+        // 映射样品信息
+        sampleInfo.value = {
+            sampleNo: res.sampleCode || res.recordCode || '--',
+            source: res.sourceType === 'PLAN_TASK' ? '方案任务' : (res.sourceType === 'SELF_TASK' ? '历史自主' : '自主录入'),
+            sampleName: res.productName || '--',
+            origin: res.detectionArea || '--',
+            quantity: '--', 
+            checkArea: res.detectionArea || '--',
+            producer: res.subjectName || '--',
+            region: res.detectionArea || '--',
+            testOrg: res.sourceType === 'PLAN_TASK' ? '检测服务中心' : '自主录入', 
+            tester: res.detector || '--',
+            testDate: res.detectionDate ? formatDate(res.detectionDate, 'YYYY-MM-DD') : '--',
+            photo: res.testPaperImageUrl || ''
+        };
+
+        // 解析 AI 结果 JSON
+        if (res.aiRecognitionResult) {
+            try {
+                const aiRes = JSON.parse(res.aiRecognitionResult);
+                if (aiRes.results && Array.isArray(aiRes.results)) {
+                    resultList.value = aiRes.results.map(item => ({
+                        channel: item.cardChannel || '--',
+                        item: item.codeName || '--',
+                        tcValue: item.result || '--',
+                        concentration: item.concentration || '--',
+                        result: item.status || '--'
+                    }));
+                }
+            } catch (e) {
+                console.error('解析AI结果失败', e);
+            }
+        }
+        
+        reportImage.value = res.testPaperImageUrl;
+    } catch (e) {
+        console.error('获取详情失败', e);
+    } finally {
+        loading.value = false;
     }
-]);
+};
 
-const reportImage = ref('https://via.placeholder.com/200x280');
-
-
+onMounted(() => {
+    initData();
+});
 
 const handleBack = () => {
     router.back();
 };
 
 const handleContinueTest = () => {
-    console.log('Continue Test');
+    router.push('/rapidDetection/create');
 };
 
 const handlePreviewReport = () => {
@@ -170,7 +228,17 @@ const handleDownloadReport = () => {
 </script>
 
 <style lang="scss" scoped>
-/* 容器样式继承自全局 .table-container */
+.table-container {
+    height: calc(100vh - 86px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    gap: 20px;
+}
+
+.header-fixed-container {
+    flex-shrink: 0;
+}
 
 /* 内容卡片 */
 .content-card {
@@ -178,6 +246,8 @@ const handleDownloadReport = () => {
     border-radius: 10px;
     padding: 24px;
     flex: 1;
+    overflow-y: auto;
+    min-height: 0;
 }
 
 .section-header {
@@ -185,6 +255,7 @@ const handleDownloadReport = () => {
     align-items: center;
     justify-content: space-between;
     margin-bottom: 24px;
+    position: relative;
 
     &.mt-40 {
         margin-top: 40px;
@@ -227,6 +298,9 @@ const handleDownloadReport = () => {
     transform: rotate(-20deg);
     opacity: 0.8;
     user-select: none;
+    position: absolute;
+    top: 0px;
+    right: 20px;
 
     &.stamp-fail {
         border-color: #F5222D;
@@ -338,6 +412,15 @@ const handleDownloadReport = () => {
             text-decoration: underline;
         }
     }
+}
+
+.report-code {
+    font-size: 14px;
+    color: #999;
+}
+
+.report-tip {
+    width: 100%;
 }
 
 /* 底部按钮 */
