@@ -1,470 +1,428 @@
 <template>
-    <div class="verify-page-wrapper">
-        <pageHeader title="外部合格证查验进场" desc="录入其他平台或纸质合格证信息，建立数字化溯源链条" />
+    <div class="verify-detail-page">
+        <!-- 1. 统一查验头部 -->
+        <pageHeader title="合格证收证"  desc="上传合格证照片进行收证"/>
 
-        <div class="main-container">
-            <div class="glass-form-card">
-                <!-- 第一部分：来源识别 -->
-                <div class="form-group-section">
-                    <div class="section-indicator">
-                        <span class="step-badge">01</span>
-                        <h3 class="group-title">识别来源与证据</h3>
-                    </div>
-                    
-                    <div class="source-selector-grid">
-                        <div 
-                            class="source-mode-item" 
-                            :class="{ active: formData.source === 'other' }"
-                            @click="formData.source = 'other'"
-                        >
-                            <el-icon class="mode-icon"><Link /></el-icon>
-                            <div class="mode-meta">
-                                <span class="m-title">其他平台电子版</span>
-                                <span class="m-desc">输入证号或上传电子档</span>
-                            </div>
-                        </div>
-                        <div 
-                            class="source-mode-item" 
-                            :class="{ active: formData.source === 'paper' }"
-                            @click="formData.source = 'paper'"
-                        >
-                            <el-icon class="mode-icon"><Camera /></el-icon>
-                            <div class="mode-meta">
-                                <span class="m-title">纸质凭证拍照</span>
-                                <span class="m-desc">自动 OCR 识别票面内容</span>
-                            </div>
-                        </div>
-                    </div>
+        <!-- 2. 统一内容大卡片 -->
+        <div class="page-content-card">
+            <!-- Tab 切换区 (仅非编辑模式显示) -->
+            <div v-if="!isEdit" class="content-tabs-wrapper">
+                <el-tabs v-model="activeTab" class="custom-nav-tabs">
+                    <el-tab-pane label="农产品上游合格证为本平台开具" name="internal" />
+                    <el-tab-pane label="其他来源" name="external" />
+                </el-tabs>
+            </div>
 
-                    <div class="upload-integrated-area mt-20">
-                         <UploadImg v-model="formData.certificateImageUrl" :limit="1" height="180px" />
-                         <div class="upload-tip-text mt-10">
-                             <strong>上传原合格证拍照件</strong>
-                             <p>清晰的票面内容有助于后续查验追溯</p>
-                         </div>
+            <div class="main-body">
+                <!-- 3. 顶部上传区 -->
+                <div class="upload-section">
+                    <p class="upload-label">上传合格证照片</p>
+                    <div class="upload-drag-box">
+                        <el-upload
+                            class="ocr-uploader"
+                            drag
+                            action="#"
+                            :auto-upload="false"
+                            :show-file-list="false"
+                            @change="onFileChange"
+                        >
+                            <el-icon class="el-icon--upload"><FolderOpened /></el-icon>
+                            <div class="el-upload__text">
+                                点击或将图片拖拽到这里上传
+                                <p class="support-text">按住Ctrl可同时多选。支持上传rar/zip格式文件。单个文件不能超过500kb</p>
+                                <p class="support-text">严禁上传包含色情、暴力、反动等相关违法信息的文件。</p>
+                            </div>
+                        </el-upload>
+                        <el-button type="primary" class="upload-btn">上传合格证照片</el-button>
                     </div>
                 </div>
 
-                <el-divider />
+                <div class="divider-dashed"></div>
 
-                <!-- 第二部分：产品与主体 -->
-                <div class="form-group-section">
-                    <div class="section-indicator">
-                        <span class="step-badge">02</span>
-                        <h3 class="group-title">详尽存档信息</h3>
-                    </div>
+                <!-- 4. 双栏布局 (表单 + 预览) -->
+                <div class="detail-grid">
+                    <!-- 左侧表单 -->
+                    <div class="form-container">
+                        <h3 class="group-title">产品信息</h3>
+                        <el-form :model="formData" label-position="top" class="standard-form">
+                            <el-form-item label="产品名称">
+                                <el-input v-model="formData.productName" placeholder="白菜" />
+                            </el-form-item>
+                            
+                            <el-form-item label="产品产地">
+                                <el-input v-model="formData.productionArea" placeholder="山东-济南" />
+                            </el-form-item>
 
-                    <el-form :model="formData" label-position="top" class="standard-grid-form">
-                        <el-row :gutter="24">
-                            <el-col :span="12">
-                                <el-form-item label="农产品名称" required>
-                                    <el-input v-model="formData.productName" placeholder="录入产品完整名称" />
-                                </el-form-item>
-                            </el-col>
-                            <el-col :span="12">
-                                <el-form-item label="所属类别">
-                                    <el-select v-model="formData.productCategory" placeholder="选择分类" class="w-full">
-                                        <el-option v-for="dict in productCategoryOptions" :key="dict.value" :label="dict.label" :value="dict.value" />
-                                    </el-select>
-                                </el-form-item>
-                            </el-col>
-                        </el-row>
-
-                        <el-row :gutter="24">
-                            <el-col :span="12">
-                                <el-form-item label="外部合格证编号">
-                                    <el-input v-model="formData.certificateCode" placeholder="外部平台证号或纸质编号" />
-                                </el-form-item>
-                            </el-col>
-                            <el-col :span="12">
-                                <el-form-item label="产地详情">
-                                    <el-input v-model="formData.productionArea" placeholder="生产基地或具体产地地址" />
-                                </el-form-item>
-                            </el-col>
-                        </el-row>
-
-                        <el-row :gutter="24">
-                            <el-col :span="24">
-                                <el-form-item label="承诺主体（供应商/生产者）" required>
-                                    <div class="entity-search-box">
-                                        <el-select
-                                            v-model="formData.subjectId"
-                                            placeholder="输入名称搜索主体..."
-                                            filterable
-                                            remote
-                                            :remote-method="remoteSearchSubject"
-                                            :loading="subjectLoading"
-                                            class="w-full"
-                                            @change="handleSubjectSelect"
-                                        >
-                                            <el-option 
-                                                v-for="item in subjectOptions" 
-                                                :key="item.id" 
-                                                :label="item.name" 
-                                                :value="item.id" 
-                                            />
+                            <el-row :gutter="16">
+                                <el-col :span="14">
+                                    <el-form-item label="重量/数量">
+                                        <el-input v-model="formData.quantity" placeholder="10" />
+                                    </el-form-item>
+                                </el-col>
+                                <el-col :span="10">
+                                    <el-form-item label="单位">
+                                        <el-select v-model="formData.unit" placeholder="选择计量单位">
+                                            <el-option label="kg" value="kg" />
+                                            <el-option label="吨" value="ton" />
+                                            <el-option label="箱" value="box" />
                                         </el-select>
-                                        <el-button type="primary" link class="add-entity-btn" @click="ElMessage.info('新增主体功能开发中')">
-                                            <el-icon><Plus /></el-icon> 新增主体
-                                        </el-button>
+                                    </el-form-item>
+                                </el-col>
+                            </el-row>
+
+                            <el-form-item label="建档日期">
+                                <el-date-picker 
+                                    v-model="formData.issueDate" 
+                                    type="date" 
+                                    placeholder="2025-12-19" 
+                                    class="w-full"
+                                    value-format="YYYY-MM-DD"
+                                />
+                            </el-form-item>
+
+                            <el-form-item label="联系人">
+                                <el-input v-model="formData.contactName" placeholder="输入联系人" />
+                            </el-form-item>
+
+                            <el-form-item label="联系电话">
+                                <el-input v-model="formData.contactPhone" placeholder="输入联系电话" />
+                            </el-form-item>
+
+                            <el-form-item label="生产经营企业（主体名称）">
+                                <el-input v-model="formData.subjectName" placeholder="北京朝阳本来生活大悦城分店" />
+                            </el-form-item>
+                        </el-form>
+                    </div>
+
+                    <!-- 右侧预览 -->
+                    <div class="preview-container">
+                        <template v-if="activeTab === 'internal'">
+                            <div class="preview-card-wrap">
+                                <div class="preview-header">合格证预览</div>
+                                <div class="certificate-mock">
+                                    <div class="cert-code">合格证编号—{{formData.certificateCode || 'HGZ9191991111'}}</div>
+                                    <h4 class="cert-title">承诺达标合格证</h4>
+                                    <div class="cert-body">
+                                        <p class="promise">我承诺生产销售的食用农产品</p>
+                                        <p class="promise-detail">未使用禁用农兽药、兽药及其他化合物；使用的常规农药、兽药残留不超标。</p>
+                                        <div class="cert-main">
+                                            <div class="cert-left">
+                                                <p class="label-item">承诺依据：</p>
+                                                <div class="check-list">
+                                                    <el-checkbox label="质量安全控制符合要求" checked disabled />
+                                                    <el-checkbox label="自行检测合格" disabled />
+                                                    <el-checkbox label="委托检测合格" disabled />
+                                                </div>
+                                            </div>
+                                            <div class="cert-right">
+                                                <div class="qr-placeholder">
+                                                    <Icon icon="ep:grid" class="qr-icon" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="info-table">
+                                            <div class="tr"><div class="td-label">产品名称</div><div class="td-value">{{formData.productName || '--'}}</div></div>
+                                            <div class="tr"><div class="td-label">产品数量</div><div class="td-value">{{formData.quantity}}{{formData.unit}}</div></div>
+                                            <div class="tr"><div class="td-label">产品产地</div><div class="td-value">{{formData.productionArea || '--'}}</div></div>
+                                            <div class="tr"><div class="td-label">承诺主体</div><div class="td-value">{{formData.subjectName || '--'}}</div></div>
+                                            <div class="tr"><div class="td-label">联系方式</div><div class="td-value">{{formData.contactPhone || '--'}}</div></div>
+                                            <div class="tr"><div class="td-label">开具时间</div><div class="td-value">{{formData.issueDate || '--'}}</div></div>
+                                        </div>
                                     </div>
-                                </el-form-item>
-                            </el-col>
-                        </el-row>
+                                </div>
+                            </div>
+                        </template>
 
-                        <el-row :gutter="24">
-                            <el-col :span="8">
-                                <el-form-item label="数量/规模">
-                                    <el-input-number v-model="formData.quantity" :precision="2" :step="0.1" :min="0" class="w-full" placeholder="0.00" />
-                                </el-form-item>
-                            </el-col>
-                            <el-col :span="6">
-                                <el-form-item label="单位">
-                                    <el-select v-model="formData.unit">
-                                        <el-option label="kg" value="kg" />
-                                        <el-option label="吨" value="ton" />
-                                        <el-option label="个" value="pcs" />
-                                        <el-option label="箱" value="box" />
-                                    </el-select>
-                                </el-form-item>
-                            </el-col>
-                            <el-col :span="10">
-                                <el-form-item label="原合格证开具日期">
-                                    <el-date-picker v-model="formData.issueDate" type="date" value-format="YYYY-MM-DD" class="w-full" />
-                                </el-form-item>
-                            </el-col>
-                        </el-row>
-                    </el-form>
+                        <template v-else>
+                            <div class="preview-card-wrap">
+                                <div class="preview-header">上游合格证预览</div>
+                                <div class="external-preview-content">
+                                    <div class="info-list-side">
+                                        <div class="s-item"><span class="s-label">合格证编号</span><span class="s-val">{{formData.certificateCode || '--'}}</span></div>
+                                        <div class="s-item"><span class="s-label">出证类型</span><span class="s-val">--</span></div>
+                                        <div class="s-item"><span class="s-label">产品档案编号</span><span class="s-val">--</span></div>
+                                        <div class="s-item required"><span class="s-label">产品名称</span><span class="s-val">{{formData.productName}}</span></div>
+                                        <div class="s-item required"><span class="s-label">重量/数量</span><span class="s-val">{{formData.quantity}} {{formData.unit}}</span></div>
+                                        <div class="s-item required"><span class="s-label">产品产地</span><span class="s-val">{{formData.productionArea}}</span></div>
+                                        <div class="s-item required"><span class="s-label">生产经营主体</span><span class="s-val">{{formData.subjectName}}</span></div>
+                                    </div>
+                                    <div class="image-preview-side">
+                                        <el-image 
+                                            v-if="formData.certificateImageUrl" 
+                                            :src="formData.certificateImageUrl" 
+                                            fit="contain" 
+                                            class="original-img"
+                                        />
+                                        <div v-else class="img-empty">
+                                            <Icon icon="ep:picture" />
+                                            <span>原始照片预览</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
                 </div>
-
-                <!-- 操作区 -->
-                <div class="form-actions-bar">
-                    <el-button class="btn-cancel" @click="handleCancel">取消并返回</el-button>
-                    <el-button type="primary" class="btn-submit-premium" @click="handleSubmit">
-                        <span>完成查验并入库档案</span>
-                        <el-icon class="icon-right"><ArrowRight /></el-icon>
-                    </el-button>
-                </div>
+            </div>
+            <!-- 底部固定操作栏 -->
+            <div class="bottom-actions">
+                <el-button class="btn-cancel" @click="handleCancel">取消</el-button>
+                <el-button type="primary" class="btn-save" @click="handleSubmit">存证</el-button>
             </div>
         </div>
     </div>
 </template>
 
 <script setup>
-import { reactive, ref } from 'vue';
-import { useRouter } from 'vue-router';
-import { 
-    Link, Camera, Upload, Plus, ArrowRight, Search
-} from '@element-plus/icons-vue';
-import { ElMessage } from 'element-plus';
-import PageBack from '@/components/PageBack/index.vue';
-import { UploadImg } from '@/components/UploadFile';
-import { useDict } from '@/hooks/web/useDict';
-import * as SubjectApi from '@/api/agri/subject/index';
-import { verifyExternal } from '@/api/agri/certificateVerification/index';
+import { reactive, ref, onMounted } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
+import { FolderOpened } from '@element-plus/icons-vue';
+import { ElMessage, ElLoading } from 'element-plus';
+import { parseImage, createArchive, getVerification, updateCertificateVerification } from '@/api/agri/certificateVerification/index';
 
 const router = useRouter();
-
-const { options: productCategoryOptions } = useDict('agri_product_category', 'str');
+const route = useRoute();
+const activeTab = ref('internal');
+const isEdit = ref(!!route.query.id);
 
 const formData = reactive({
-    source: 'other',
+    productName: '',
+    productionArea: '',
+    quantity: '',
+    unit: 'kg',
+    issueDate: '',
+    contactName: '',
+    contactPhone: '',
+    subjectName: '',
     certificateImageUrl: '',
     certificateCode: '',
-    productName: '',
-    productCategory: '',
-    productionArea: '',
-    quantity: undefined,
-    unit: 'kg',
-    issueDate: new Date().toISOString().split('T')[0],
-    subjectId: undefined,
-    subjectName: ''
+    source: 1
 });
 
-// 主体搜索相关
-const subjectLoading = ref(false);
-const subjectOptions = ref([]);
+const onFileChange = async (uploadFile) => {
+    const loading = ElLoading.service({
+        target: '.upload-drag-box',
+        text: '正在智能识别合格证...',
+        background: 'rgba(255, 255, 255, 0.7)'
+    });
+    
+    try {
+        const sourceHint = activeTab.value === 'internal' ? 1 : 2;
+        const res = await parseImage({
+            file: uploadFile.raw,
+            sourceHint
+        });
+        
+        const data = res.data;
+        if (!data.matched) {
+            ElMessage.warning('未能识别到匹配的信息，请手动补全');
+        } else {
+            ElMessage.success('识别成功');
+        }
 
-const remoteSearchSubject = async (query) => {
-    if (query) {
-        subjectLoading.value = true;
+        formData.certificateImageUrl = data.certificateImageUrl;
+        formData.source = data.source;
+        activeTab.value = data.source === 1 ? 'internal' : 'external';
+
+        if (data.source === 1 && data.certificate) {
+            const cert = data.certificate;
+            formData.productName = cert.productName;
+            formData.productionArea = cert.productionArea;
+            formData.quantity = cert.quantity;
+            formData.unit = cert.unit || 'kg';
+            formData.issueDate = cert.issueDate;
+            formData.contactName = cert.contactName;
+            formData.contactPhone = cert.contactPhone;
+            formData.subjectName = cert.subjectName;
+            formData.certificateCode = cert.certificateCode;
+        } else if (data.source === 2 && data.ocrData) {
+            const ocr = data.ocrData;
+            formData.productName = ocr.productName || '';
+            formData.productionArea = ocr.productionArea || '';
+            formData.quantity = ocr.quantity || '';
+            formData.unit = ocr.unit || 'kg';
+            formData.issueDate = ocr.issueDate || '';
+            formData.contactName = ocr.contactName || '';
+            formData.contactPhone = ocr.contactPhone || '';
+            formData.subjectName = ocr.subjectName || '';
+            formData.certificateCode = ocr.certificateCode || '';
+        }
+
+    } catch (e) {
+        console.error('识别失败', e);
+        ElMessage.error('识别服务异常，请手动填写');
+    } finally {
+        loading.close();
+    }
+};
+
+const handleCancel = () => {
+    router.back();
+};
+
+onMounted(async () => {
+    if (isEdit.value) {
         try {
-            const res = await SubjectApi.getSubjectPage({ name: query, pageSize: 20 });
-            subjectOptions.value = res.list;
-        } finally {
-            subjectLoading.value = false;
+            const data = await getVerification(Number(route.query.id));
+            if (data) {
+                Object.assign(formData, data);
+                activeTab.value = data.source === 1 ? 'internal' : 'external';
+            }
+        } catch (e) {
+            console.error('加载详情失败', e);
         }
     }
-};
-
-const handleSubjectSelect = (val) => {
-    const item = subjectOptions.value.find(s => s.id === val);
-    if (item) {
-        formData.subjectName = item.name;
-        // 如果主体有地址信息，可以尝试回显产地
-        if (item.provinceCode) {
-             formData.productionArea = `${item.provinceCode}-${item.cityCode || ''}-${item.districtCode || ''}`;
-        }
-    }
-};
-
-const handleCancel = () => router.push('/certificate/verify');
+});
 
 const handleSubmit = async () => {
     if (!formData.certificateImageUrl) {
-        ElMessage.warning('请先上传合格证凭证图片');
+        ElMessage.warning('请先上传并识别合格证照片');
         return;
     }
-    if (!formData.productName) {
-        ElMessage.warning('请输入产品名称');
-        return;
-    }
-    if (!formData.subjectName) {
-        ElMessage.warning('请输入或搜索生产经营主体');
-        return;
+    
+    const submitData = {
+        certificateSource: formData.source, 
+        verificationType: 2, 
+        certificateImageUrl: formData.certificateImageUrl,
+        certificateCode: formData.certificateCode,
+        productName: formData.productName,
+        productionArea: formData.productionArea,
+        quantity: Number(formData.quantity) || 0,
+        unit: formData.unit,
+        issueDate: formData.issueDate,
+        subjectName: formData.subjectName,
+        contactName: formData.contactName,
+        contactPhone: formData.contactPhone,
+        certificateType: 1,
+        remark: isEdit.value ? '后台修改存证' : '后台录入存证'
+    };
+
+    if (isEdit.value) {
+        submitData.id = Number(route.query.id);
     }
 
+    const loading = ElLoading.service({ text: isEdit.value ? '正在更新记录...' : '正在提交存证记录...' });
     try {
-        await verifyExternal({
-            ...formData,
-            verificationType: 2 // 已存证
-        });
-        ElMessage.success('外部合格证已成功入库备案');
+        if (isEdit.value) {
+            await updateCertificateVerification(submitData);
+            ElMessage.success('存证记录已更新');
+        } else {
+            await createArchive(submitData);
+            ElMessage.success('存证记录已成功保存');
+        }
         router.push('/certificate/verify');
     } catch (e) {
-        console.error('存证失败', e);
+        console.error('提交失败', e);
+    } finally {
+        loading.close();
     }
 };
 </script>
 
 <style lang="scss" scoped>
-$theme-color: #00B3ED;
-$bg-faded: #F8FAFC;
-$text-dark: #1E293B;
-$text-light: #64748B;
-
-.verify-page-wrapper {
-    min-height: 100vh;
-}
-
-/* Header Minimal */
-.page-header-minimal {
+.verify-detail-page {
+    background-color: #f5f7fa;
+    height: calc(100vh - 86px);
     display: flex;
-    align-items: flex-start;
-    gap: 20px;
-    margin-bottom: 30px;
-    padding-left: 10px;
+    flex-direction: column;
 
-    .header-main-info {
-        .main-title {
-            font-size: 24px;
-            font-weight: 800;
-            color: $text-dark;
-            margin: 0 0 6px 0;
-            letter-spacing: -0.5px;
-        }
-        .sub-title {
-            font-size: 14px;
-            color: $text-light;
-            margin: 0;
-        }
-    }
-}
-
-.main-container {
-    max-width: 860px;
-    margin: 14px auto;
-}
-
-/* Glass Form Card */
-.glass-form-card {
-    background: #fff;
-    border-radius: 20px;
-    padding: 40px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
-}
-
-.form-group-section {
-    margin-bottom: 30px;
-}
-
-.section-indicator {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 24px;
-
-    .step-badge {
-        width: 32px;
-        height: 32px;
-        background: rgba($theme-color, 0.1);
-        color: $theme-color;
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 800;
-        font-size: 14px;
-    }
-
-    .group-title {
-        font-size: 18px;
-        font-weight: 700;
-        color: $text-dark;
-        margin: 0;
-    }
-}
-
-/* Source Selector */
-.source-selector-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-    margin-bottom: 24px;
-}
-
-.source-mode-item {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    padding: 20px;
-    border: 2px solid #F1F5F9;
-    border-radius: 12px;
-    cursor: pointer;
-    transition: all 0.2s;
-
-    .mode-icon {
-        font-size: 24px;
-        color: $text-light;
-        transition: color 0.2s;
-    }
-
-    .mode-meta {
-        display: flex;
-        flex-direction: column;
-        .m-title { font-weight: 700; color: $text-dark; font-size: 15px; }
-        .m-desc { font-size: 12px; color: $text-light; margin-top: 2px; }
-    }
-
-    &:hover {
-        background: #F8FAFC;
-        border-color: #E2E8F0;
-    }
-
-    &.active {
-        background: rgba($theme-color, 0.04);
-        border-color: $theme-color;
-        .mode-icon { color: $theme-color; }
-        .m-title { color: $theme-color; }
-    }
-}
-
-/* Uploader */
-.clean-uploader {
-    :deep(.el-upload-dragger) {
-        border: 2px dashed #E2E8F0;
-        background: #F8FAFC;
-        border-radius: 12px;
-        padding: 30px;
-        &:hover { border-color: $theme-color; }
-    }
-
-    .uploader-content {
-        display: flex;
-        align-items: center;
-        gap: 20px;
-        text-align: left;
-
-        .icon-circle {
-            width: 54px;
-            height: 54px;
-            background: #fff;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 22px;
-            color: $theme-color;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-        }
-
-        .text-content {
-            strong { display: block; font-size: 15px; color: $text-dark; margin-bottom: 4px; }
-            p { font-size: 13px; color: $text-light; margin: 0; }
-        }
-    }
-}
-
-/* Form Layout */
-.standard-grid-form {
-    :deep(.el-form-item__label) {
-        font-weight: 700;
-        color: #475569;
-        font-size: 13px;
-        padding-bottom: 4px;
-    }
-
-    :deep(.el-input__wrapper) {
+    .page-content-card {
+        flex: 1;
+        overflow-y: auto;
         background: #fff;
-        border-radius: 8px;
-        box-shadow: 0 0 0 1px #E2E8F0 inset;
-        height: 40px;
-        
-        &.is-focus {
-            box-shadow: 0 0 0 1px $theme-color inset !important;
+        padding: 16px;
+        margin-top: 16px;
+        border-radius: 12px;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.05);
+
+        &::-webkit-scrollbar {
+            display: none;
+            width: 0;
         }
     }
-}
 
-.entity-search-box {
-    display: flex;
-    gap: 12px;
-    align-items: center;
-}
-
-.add-entity-btn {
-    white-space: nowrap;
-    font-weight: 600;
-}
-
-/* Actions */
-.form-actions-bar {
-    margin-top: 40px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.btn-cancel {
-    border-radius: var(--el-border-radius-base);
-    color: $text-light;
-    border: 1px solid #E2E8F0;
-}
-
-.btn-submit-premium {
-    border-radius: var(--el-border-radius-base);
-    background: $theme-color;
-    border: none;
-    font-size: 15px;
-    font-weight: 700;
-    box-shadow: 0 8px 20px rgba(0, 179, 237, 0.2);
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    transition: all 0.3s;
-
-    &:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 12px 24px rgba(0, 179, 237, 0.3);
-        opacity: 0.8;
+    .content-tabs-wrapper {
+        padding: 0 16px 16px;
+        .custom-nav-tabs {
+            :deep(.el-tabs__header) { margin-bottom: 0; border-bottom: none; }
+            :deep(.el-tabs__item) {
+                font-size: 15px;
+                color: #64748b;
+                height: 50px;
+                &.is-active { font-weight: 600; color: var(--el-color-primary); }
+            }
+        }
     }
 
-    .icon-right {
-        font-size: 18px;
+    .main-body {
+        padding: 0 16px;
+    }
+
+    .upload-section {
+        .upload-label { font-size: 14px; color: #1e293b; margin-bottom: 12px; }
+        .upload-drag-box {
+            display: flex; gap: 20px; align-items: flex-end;
+            .ocr-uploader {
+                flex: 1;
+                :deep(.el-upload-dragger) { border: 1px solid #e2e8f0; background-color: #f8fafc; padding: 30px; }
+            }
+            .upload-btn { height: 40px; padding: 0 24px; }
+        }
+    }
+
+    .divider-dashed {
+        height: 1px;
+        background-image: linear-gradient(to right, #e2e8f0 40%, rgba(255, 255, 255, 0) 0%);
+        background-position: bottom; background-size: 8px 1px; background-repeat: repeat-x;
+        margin: 32px 0;
+    }
+
+    .detail-grid {
+        display: grid; grid-template-columns: 360px 1fr; gap: 60px;
+        .form-container {
+            .group-title { font-size: 16px; font-weight: 600; margin-bottom: 24px; color: #1e293b; }
+            .standard-form { :deep(.el-form-item) { margin-bottom: 20px; } }
+        }
+    }
+
+    .preview-container {
+        .preview-card-wrap {
+            border: 1px solid #f1f5f9; border-radius: 8px; overflow: hidden;
+            .preview-header { background: #f1f5f9; padding: 12px; text-align: center; font-weight: 600; }
+        }
+    }
+
+    .certificate-mock {
+        padding: 24px;
+        .cert-code { font-size: 13px; color: #64748b; margin-bottom: 16px; }
+        .cert-title { font-size: 18px; font-weight: 700; text-align: center; margin-bottom: 12px; }
+        .cert-body {
+            .promise { font-weight: 600; font-size: 15px; }
+            .cert-main { display: flex; justify-content: space-between; margin: 20px 0; }
+            .info-table { .tr { display: flex; border-bottom: 1px solid #f8fafc; .td-label { width: 90px; background: #f8fafc; padding: 10px; } .td-value { flex: 1; padding: 10px; } } }
+        }
+    }
+
+    .external-preview-content {
+        display: flex; padding: 20px; gap: 20px;
+        .info-list-side {
+            flex: 1;
+            .s-item {
+                display: flex; margin-bottom: 12px; font-size: 13px;
+                .s-label { width: 100px; color: #64748b; }
+                &.required .s-label::before { content: '*'; color: #ef4444; margin-right: 4px; }
+            }
+        }
+        .image-preview-side {
+            width: 240px; height: 320px; border: 1px dashed #e2e8f0; display: flex; align-items: center; justify-content: center;
+            .original-img { width: 100%; height: 100%; }
+            .img-empty { color: #94a3b8; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+        }
+    }
+
+    .bottom-actions {
+        margin-top: 32px; padding: 20px 0; border-top: 1px solid #f1f5f9; display: flex; justify-content: flex-end; gap: 12px;
+        .btn-save { padding: 0 40px; }
     }
 }
-
-/* Utils */
-.w-full { width: 100%; }
-.mt-20 { margin-top: 20px; }
 </style>

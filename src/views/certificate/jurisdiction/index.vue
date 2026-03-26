@@ -12,7 +12,7 @@
                     </div>
                 </div>
                 <div class="tree-wrapper">
-                    <el-tree :data="regionTree" :props="treeProps" default-expand-all highlight-current node-key="id"
+                    <el-tree :data="regionTree" :props="treeProps" highlight-current node-key="id"
                         @node-click="handleNodeClick">
                         <template #default="{ node }">
                             <span class="custom-tree-node">
@@ -28,17 +28,14 @@
                 <!-- 顶部标题区 -->
                 <div class="guide-card">
                     <div class="card-header">
-                     
                         <h2 class="card-title">辖区合格证</h2>
                     </div>
                     <p class="page-subtitle">本机构管辖地区合格证开具、查验、存证情况统计</p>
                 </div>
 
-
                 <!-- 统计卡片区 -->
                 <div class="query-card stats-section">
                     <div class="card-header">
-                     
                         <h2 class="card-title">辖区合格证概况</h2>
                     </div>
                     <div class="stats-cards">
@@ -56,7 +53,6 @@
                 <!-- 搜索查询区 -->
                 <div class="query-card">
                     <div class="card-header">
-                     
                         <h2 class="card-title">辖区合格证查询</h2>
                     </div>
 
@@ -71,7 +67,6 @@
                     </div>
                     <div class="query-form-wrapper">
                         <el-form :model="queryParams" class="custom-query-form custom-query-form-row" label-position="left">
-                            <!-- 统计周期行 -->
                             <div class="query-row" style="margin-bottom: 16px;">
                                 <el-form-item label="统计周期" prop="dateRange">
                                     <el-date-picker v-model="queryParams.dateRange" type="daterange" range-separator="至"
@@ -79,7 +74,6 @@
                                         class="date-picker custom-input" :prefix-icon="Search" style="width: 240px !important;" />
                                 </el-form-item>
                             </div>
-                            <!-- 过滤条件行 -->
                             <div class="query-row main-filters">
                                 <el-form-item label="合格证编号" prop="certificateCode">
                                     <el-input v-model="queryParams.certificateCode" placeholder="请输入" clearable
@@ -114,11 +108,11 @@
                                 <div class="query-btns">
                                     <el-button type="primary" @click="handleSearch" class="search-btn">查询</el-button>
                                     <el-button @click="handleReset" class="reset-btn">重置</el-button>
-                        
                                 </div>
                             </div>
                         </el-form>
                     </div>
+
                     <div class="table-actions">
                         <div class="action-left">
                             <div class="section-indicator"></div>
@@ -147,7 +141,6 @@
                             <el-table-column prop="subjectName" label="生产经营主体" min-width="160" show-overflow-tooltip />
                             <el-table-column v-if="activeTab === 'produce'" prop="issueDate" label="开具日期" width="160" align="center" :formatter="dateFormatter" />
                             
-                            <!-- 查验列表特有列 -->
                             <template v-if="activeTab === 'verify'">
                                 <el-table-column prop="certificateSource" label="来源" width="100" align="center">
                                     <template #default="scope">
@@ -203,91 +196,36 @@
 </template>
 
 <script setup lang="ts">
+import { useRouter } from 'vue-router';
 import { ref, reactive, onMounted } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { Search, Plus } from '@element-plus/icons-vue';
 import * as CertificateApi from '@/api/agri/certificate';
 import * as CertificateVerificationApi from '@/api/agri/certificateVerification';
+import * as AreaApi from '@/api/system/area';
 import { dateFormatter } from '@/utils/formatTime';
 import AreaCascader from '@/components/AreaCascader/index.vue';
+
+const router = useRouter();
 
 // 搜索区域
 const searchRegion = ref('');
 
-// 区域树数据 - 山西省
-const regionTree = ref([
-    {
-        id: 1,
-        label: '山西省',
-        icon: '🏛️',
-        children: [
-            {
-                id: 11,
-                label: '太原市',
-                icon: '🏙️',
-                children: [
-                    { id: 111, label: '小店区', icon: '📍' },
-                    { id: 112, label: '迎泽区', icon: '📍' },
-                    { id: 113, label: '杏花岭区', icon: '📍' },
-                    { id: 114, label: '尖草坪区', icon: '📍' }
-                ]
-            },
-            {
-                id: 12,
-                label: '大同市',
-                icon: '🏙️',
-                children: [
-                    { id: 121, label: '平城区', icon: '📍' },
-                    { id: 122, label: '云冈区', icon: '📍' },
-                    { id: 123, label: '新荣区', icon: '📍' }
-                ]
-            },
-            {
-                id: 13,
-                label: '阳泉市',
-                icon: '🏙️',
-                children: [
-                    { id: 131, label: '城区', icon: '📍' },
-                    { id: 132, label: '矿区', icon: '📍' },
-                    { id: 133, label: '郊区', icon: '📍' }
-                ]
-            },
-            {
-                id: 14,
-                label: '长治市',
-                icon: '🏙️',
-                children: [
-                    {
-                        id: 141,
-                        label: '潞州区',
-                        icon: '📍',
-                        children: [
-                            { id: 1411, label: '东街街道', icon: '🏘️' },
-                            { id: 1412, label: '西街街道', icon: '🏘️' },
-                            { id: 1413, label: '南街街道', icon: '🏘️' }
-                        ]
-                    },
-                    { id: 142, label: '上党区', icon: '📍' },
-                    { id: 143, label: '屯留区', icon: '📍' }
-                ]
-            },
-            {
-                id: 15,
-                label: '晋城市',
-                icon: '�️',
-                children: [
-                    { id: 151, label: '城区', icon: '📍' },
-                    { id: 152, label: '泽州县', icon: '📍' },
-                    { id: 153, label: '高平市', icon: '📍' }
-                ]
-            }
-        ]
-    }
-]);
+// 区域树数据
+const regionTree = ref([]);
 
 const treeProps = {
     children: 'children',
-    label: 'label'
+    label: 'name'
+};
+
+const getRegionTree = async () => {
+    try {
+        const data = await AreaApi.getAreaTree();
+        regionTree.value = data;
+    } catch (e) {
+        console.error('获取区域树失败', e);
+    }
 };
 
 // 查询参数
@@ -311,7 +249,6 @@ const handleAreaSelect = (area: any) => {
     queryParams.province = area.province;
     queryParams.city = area.city;
     queryParams.county = area.district;
-    // 同时更新拼写的完整产地字符串，如果有需要的话
     queryParams.productionArea = [area.province, area.city, area.district].filter(Boolean).join('');
 };
 
@@ -360,7 +297,6 @@ const loadData = async () => {
             contactPhone: queryParams.contactPhone || undefined,
         };
         
-        // 合格证来源和查验状态只在查验页签有效
         if (activeTab.value === 'verify') {
           params.certificateSource = queryParams.certificateSource || undefined;
           params.verificationType = queryParams.verificationType || undefined;
@@ -368,10 +304,8 @@ const loadData = async () => {
 
         let res;
         if (activeTab.value === 'produce') {
-          // 合格证开具
           res = await CertificateApi.getCertificatePage(params);
         } else {
-          // 合格证查验存证
           res = await CertificateApi.getCertificateVerificationPage(params);
         }
         
@@ -383,6 +317,7 @@ const loadData = async () => {
 };
 
 onMounted(() => {
+    getRegionTree();
     loadStats();
     loadData();
 });
@@ -418,9 +353,8 @@ const handleReset = () => {
 };
 
 const handleNodeClick = (data) => {
-    ElMessage.info(`切换区域: ${data.label}`);
+    ElMessage.info(`切换区域: ${data.name}`);
     loadStats(data.id);
-    // 列表页暂不确定是否支持 deptId 过滤，先重置页码并重新加载
     pageNum.value = 1;
     loadData();
 };
@@ -435,7 +369,16 @@ const handleEdit = (row: any) => {
 };
 
 const handleDetail = (row: any) => {
-    ElMessage.info(`查看详情: ${row.certificateCode}`);
+    if (activeTab.value === 'produce') {
+        // 开具合格证详情
+        router.push(`/certificate/issue/detail/${row.id}`);
+    } else {
+        // 收证查验详情
+        router.push({
+            path: '/certificate/verify/detail',
+            query: { id: row.id }
+        });
+    }
 };
 
 const handleDelete = async (row: any) => {
@@ -480,13 +423,13 @@ const handleDelete = async (row: any) => {
 .left-sidebar {
     width: 220px;
     flex-shrink: 0;
-    background: rgba(255, 255, 255, 0.6);
-    backdrop-filter: blur(10px);
+    background: #fff;
     border-radius: 10px;
-    padding: 16px;
+    padding: 12px;
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    height: calc(100vh - 86px);
 }
 
 .sidebar-header {
@@ -515,6 +458,10 @@ const handleDelete = async (row: any) => {
 .tree-wrapper {
     flex: 1;
     overflow-y: auto;
+    &::-webkit-scrollbar {
+        width: 1px!important;
+        display: none;
+    }
 }
 
 .custom-tree-node {
@@ -585,7 +532,7 @@ const handleDelete = async (row: any) => {
 .main-filters {
     display: flex;
     align-items: center;
-    flex-wrap: wrap; // 允许换行以便在小屏幕下保持两行或多行结构
+    flex-wrap: wrap; 
     gap: 12px 0;
     padding-bottom: 8px;
 }

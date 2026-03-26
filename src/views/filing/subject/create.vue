@@ -76,9 +76,16 @@
                     </div>
                 </el-form-item>
 
-                <!-- 营业执照 -->
                 <el-form-item label="营业执照" prop="businessLicenseUrl">
-                    <UploadImg v-model="formData.businessLicenseUrl" :limit="1" />
+                    <div class="ocr-upload-wrapper">
+                        <UploadImg 
+                            v-model="formData.businessLicenseUrl" 
+                            :limit="1" 
+                            @change="(val) => !val && (formData.socialCreditCode = '')"
+                            :http-request="(options) => handleOcrUpload(options, 1)"
+                        />
+                        <div class="ocr-tip">点击上传营业执照，系统将自动识别信用代码</div>
+                    </div>
                 </el-form-item>
 
                 <!-- 信用代码 -->
@@ -86,11 +93,25 @@
                    <el-input v-model="formData.socialCreditCode" placeholder="输入信用代码" />
                 </el-form-item>
 
-                <!-- 身份证正反面 -->
                 <el-form-item label="身份证" prop="idCardFrontUrl">
                     <div style="display: flex; gap: 20px;">
-                        <UploadImg v-model="formData.idCardFrontUrl" :limit="1" />
-                        <UploadImg v-model="formData.idCardBackUrl" :limit="1" />
+                        <div class="ocr-upload-wrapper">
+                            <UploadImg 
+                                v-model="formData.idCardFrontUrl" 
+                                :limit="1" 
+                                @change="(val) => !val && (formData.idCard = '')"
+                                :http-request="(options) => handleOcrUpload(options, 2)"
+                            />
+                            <div class="ocr-tip">身份证正面</div>
+                        </div>
+                        <div class="ocr-upload-wrapper">
+                            <UploadImg 
+                                v-model="formData.idCardBackUrl" 
+                                :limit="1" 
+                                :http-request="(options) => handleOcrUpload(options, 3)"
+                            />
+                            <div class="ocr-tip">身份证反面</div>
+                        </div>
                     </div>
                 </el-form-item>
 
@@ -236,6 +257,45 @@ const handleSubmit = async () => {
 const handleCancel = () => {
     router.back();
 };
+
+/**
+ * OCR 识别上传
+ */
+const handleOcrUpload = async (options, imageType) => {
+    try {
+        const res = await SubjectApi.ocrUpload({
+            file: options.file,
+            imageType: imageType
+        });
+        
+        const data = res.data; // SubjectImageOcrRespVO
+        
+        // 更新图片预览
+        if (imageType === 1) {
+            formData.businessLicenseUrl = data.imageUrl;
+            if (data.socialCreditCode) {
+                formData.socialCreditCode = data.socialCreditCode;
+                message.success('已自动识别信用代码');
+            }
+        } else if (imageType === 2) {
+            formData.idCardFrontUrl = data.imageUrl;
+            if (data.idCard) {
+                formData.idCard = data.idCard;
+                message.success('已自动识别身份证号');
+            }
+        } else if (imageType === 3) {
+            formData.idCardBackUrl = data.imageUrl;
+            message.success('上传成功');
+        }
+        
+        return data.imageUrl;
+    } catch (error) {
+        console.error('OCR 识别失败', error);
+        message.error('证件识别失败，请检查图片是否清晰');
+        throw error;
+    }
+};
+
 </script>
 
 <style lang="scss" scoped>
@@ -403,5 +463,16 @@ const handleCancel = () => {
 }
 .upload-demo{
     margin-left: 80px;
+}
+.ocr-upload-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+
+    .ocr-tip {
+        font-size: 12px;
+        color: #999;
+    }
 }
 </style>

@@ -16,11 +16,11 @@
                 <el-form :inline="true" :model="queryParams" class="custom-query-form custom-query-form-row" label-position="left">
                     <el-form-item label="">
                         <el-input v-model="queryParams.sampleCode" placeholder="请输入编号查询"
-                            class="custom-input w160" />
+                            class="custom-input w160" clearable />
                     </el-form-item>
                     <el-form-item label="">
                         <el-input v-model="queryParams.productName" placeholder="请输入样品名称"
-                            class="custom-input w160" />
+                            class="custom-input w160" clearable />
                     </el-form-item>
                     <el-form-item label="">
                         <el-select v-model="queryParams.category" placeholder="产品分类" class="custom-select w140" clearable>
@@ -32,17 +32,18 @@
                         <AreaCascader v-model="areaIds" @select="handleAreaSelect" placeholder="抽检地区" style="width: 240px;" />
                     </el-form-item>
                     <el-form-item label="">
-                        <el-select v-model="queryParams.isRetest" placeholder="是否复检" class="custom-select w140">
+                        <el-select v-model="queryParams.isRetest" placeholder="是否复检" class="custom-select w140" clearable>
                             <el-option label="全部" value="" />
                             <el-option label="是" :value="true" />
                             <el-option label="否" :value="false" />
                         </el-select>
                     </el-form-item>
                     <el-form-item label="">
-                        <el-select v-model="queryParams.status" placeholder="检测状态" class="custom-select w140">
+                        <el-select v-model="queryParams.status" placeholder="检测状态" class="custom-select w140" clearable>
                             <el-option label="全部" value="" />
-                            <el-option label="合格" value="1" />
-                            <el-option label="不合格" value="0" />
+                            <el-option label="阴性" value="1" />
+                            <el-option label="阳性" value="0" />
+                            <el-option label="异常" value="2" />
                         </el-select>
                     </el-form-item>
 
@@ -79,7 +80,7 @@
                                 {{ getCategoryLabel(scope.row.productCategory) }}
                             </template>
                         </el-table-column>
-                        <el-table-column label="检地区" prop="detectionArea" width="100" align="center" />
+                        <el-table-column label="抽检地区" prop="detectionArea" width="100" align="center" />
                         <el-table-column label="检测项目" prop="aiRecognitionResult" min-width="120" align="center" show-overflow-tooltip>
                             <template #default="scope">
                                 {{ getDetectionItems(scope.row.aiRecognitionResult) }}
@@ -87,23 +88,34 @@
                         </el-table-column>
                         <el-table-column label="是否复检" prop="isRetest" width="90" align="center">
                             <template #default="scope">
-                                <el-tag :type="scope.row.isRetest ? 'warning' : 'info'">
-                                    {{ scope.row.isRetest ? '是' : '否' }}
+                                <el-tag :type="scope.row.recheckNo ? 'warning' : 'info'">
+                                    {{ scope.row.recheckNo ? '是' : '否' }}
                                 </el-tag>
                             </template>
                         </el-table-column>
                         <el-table-column label="被检主体名称" prop="subjectName" min-width="110" show-overflow-tooltip />
-                        <el-table-column label="检测机构" prop="detector" min-width="130" show-overflow-tooltip />
+                        <el-table-column label="检测机构" prop="detectionOrgName" min-width="130" show-overflow-tooltip >
+                            <template #default="scope">
+                                {{ scope.row.detectionOrgName ||  scope.row.subjectName ||  '-' }}
+                            </template>
+                        </el-table-column>
                         <el-table-column label="检测时间" prop="detectionDate" width="100" align="center">
                             <template #default="scope">
                                 {{ scope.row.detectionDate ? formatDate(scope.row.detectionDate) : '-' }}
                             </template>
                         </el-table-column>
-                        <el-table-column label="检测状态" prop="overallResult" width="90" align="center">
+                        <el-table-column label="检测结果" prop="overallResult" width="100" align="center">
                             <template #default="scope">
-                                <span :class="scope.row.overallResult === 1 ? 'text-green-500' : 'text-red-500'">
-                                    {{ scope.row.overallResult === 1 ? '合格' : '不合格' }}
-                                </span>
+                                <template v-if="scope.row.overallResult !== null && scope.row.overallResult !== undefined">
+                                    <el-tag 
+                                        :type="scope.row.overallResult === 0 ? 'success' : (scope.row.overallResult === 1 ? 'danger' : 'warning')"
+                                        size="small"
+                                        effect="light"
+                                    >
+                                        {{ scope.row.overallResult === 0 ? '阴性' : (scope.row.overallResult === 1 ? '阳性' : '结果异常') }}
+                                    </el-tag>
+                                </template>
+                                <span v-else>--</span>
                             </template>
                         </el-table-column>
                         <el-table-column label="是否公开" prop="publicFlag" width="80" align="center">
@@ -111,10 +123,11 @@
                                 <span>{{ scope.row.publicFlag ? '是' : '否' }}</span>
                             </template>
                         </el-table-column>
-                        <el-table-column label="操作" width="120" align="center" fixed="right">
+                        <el-table-column label="操作" width="160" align="center" fixed="right">
                             <template #default="scope">
                                 <div class="table-operate-action-btns">
                                     <span class="table-view-operate" @click="handleView(scope.row)">查看详情</span>
+                                    <span class="table-edit-operate" @click="handleRetest(scope.row)" v-if="scope.row.overallResult != null && (scope.row.status == 2 || scope.row.overallResult != 0) && scope.row.recheckNo == 0">复检</span>
                                     <span class="table-delete-operate" @click="handleDelete(scope.row)">删除</span>
                                 </div>
                             </template>
@@ -186,6 +199,7 @@ const productCategoryDict = useDict('agri_product_category', 'str');
 const productCategoryOptions = productCategoryDict.options;
 const getCategoryLabel = (val: string) => productCategoryDict.getLabel(val);
 import * as DetectionRecordApi from '@/api/agri/detectionRecord';
+import * as SelfDetectionReportRuleApi from '@/api/agri/selfDetectionReportRule';
 import { useMessage } from '@/hooks/web/useMessage';
 import { useTableHeight } from '@/hooks/web/useTableHeight';
 import download from '@/utils/download';
@@ -209,8 +223,8 @@ const queryParams = reactive({
 
 const areaIds = ref([]);
 const handleAreaSelect = (area: any) => {
-    // 抽检地区通常拼接到最后一个级别，或者全量拼接
-    queryParams.area = [area.province, area.city, area.district].filter(Boolean).join('');
+    // 抽检地区全量拼接，并使用短横线分隔
+    queryParams.area = [area.province, area.city, area.district].filter(Boolean).join('-');
 };
 
 const pageParams = reactive({
@@ -285,18 +299,59 @@ const handleExport = async () => {
 
 // 数据上报规则弹窗
 const ruleDialogVisible = ref(false);
-const ruleForm = reactive({
+const ruleForm = reactive<{
+    id: number | undefined;
+    isPublic: boolean;
+    dateRange: string[];
+}>({
+    id: undefined,
     isPublic: true,
     dateRange: []
 });
 
-const handleSetRule = () => {
-    ruleDialogVisible.value = true;
+const handleSetRule = async () => {
+    try {
+        const data = await SelfDetectionReportRuleApi.getCurrentSelfDetectionReportRule();
+        if (data) {
+            ruleForm.id = data.id;
+            ruleForm.isPublic = data.enabled;
+            if (data.startTime && data.endTime) {
+                // 确保日期字符串仅包含 YYYY-MM-DD
+                ruleForm.dateRange = [
+                    data.startTime.substring(0, 10),
+                    data.endTime.substring(0, 10)
+                ];
+            } else {
+                ruleForm.dateRange = [];
+            }
+        }
+        ruleDialogVisible.value = true;
+    } catch (error) {
+        console.error('获取上报规则失败', error);
+        message.error('获取上报规则失败');
+    }
 };
 
-const handleSaveRule = () => {
-    console.log('Save Rule:', ruleForm);
-    ruleDialogVisible.value = false;
+const handleSaveRule = async () => {
+    try {
+        const submitData = {
+            id: ruleForm.id,
+            enabled: ruleForm.isPublic,
+            startTime: ruleForm.dateRange?.[0] ? ruleForm.dateRange[0] + ' 00:00:00' : undefined,
+            endTime: ruleForm.dateRange?.[1] ? ruleForm.dateRange[1] + ' 23:59:59' : undefined
+        };
+        if (ruleForm.id) {
+            await SelfDetectionReportRuleApi.updateSelfDetectionReportRule(submitData);
+            message.success('数据上报规则修改成功');
+        } else {
+            await SelfDetectionReportRuleApi.createSelfDetectionReportRule(submitData);
+            message.success('数据上报规则设置成功');
+        }
+        ruleDialogVisible.value = false;
+        getList();
+    } catch (error) {
+        console.error('修改上报规则失败', error);
+    }
 };
 
 /* Removed unused handleBatchImport */
@@ -323,7 +378,12 @@ const handleView = (row) => {
     router.push('/rapidDetection/taskResult?id=' + row.id);
 };
 
-/* Removed unused handleRetest */
+const handleRetest = (row) => {
+    router.push({
+        path: '/rapidDetection/create',
+        query: { id: row.id, action: 'recheck' }
+    });
+};
 
 onMounted(() => {
     getList();

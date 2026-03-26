@@ -75,7 +75,7 @@
                     <el-table-column label="操作" width="160" align="center" fixed="right">
                         <template #default="scope">
                             <div class="table-operate-action-btns">
-                                <span class="table-edit-operate" @click="handleEdit(scope.row)">编辑</span>
+                                <span v-if="scope.row.certificateSource === 2" class="table-edit-operate" @click="handleEdit(scope.row)">编辑</span>
                                 <span class="table-view-operate" @click="handleView(scope.row)">详情</span>
                                 <span class="table-delete-operate" @click="handleDelete(scope.row)">删除</span>
                             </div>
@@ -206,15 +206,16 @@ const handleExport = async () => {
 };
 
 const handleVerify = () => {
-    router.push('/certificate/verify/detail');
+    router.push('/certificate/verify/other');
 };
 
 const handleEdit = (row: any) => {
-    message.info(`编辑: ${row.certificateCode}`);
+    // 编辑其他平台合格证 不现实 tab 切换
+    router.push({ path: '/certificate/verify/other', query: { id: row.id } });
 };
 
 const handleView = (row: any) => {
-    const path = row.certificateSource === 1 ? '/certificate/verify/detail' : '/certificate/verify/other';
+    const path = '/certificate/verify/detail';
     router.push({ path, query: { id: row.id } });
 };
 

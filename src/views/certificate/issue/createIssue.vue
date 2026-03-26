@@ -253,7 +253,7 @@
                             <div class="info-row"><span class="label">承诺主体</span><span class="value">{{ formData.entity
                                 || '--' }}</span>
                             </div>
-                            <div class="info-row"><span class="label">联系方式</span><span class="value">--</span></div>
+                            <div class="info-row"><span class="label">联系方式</span><span class="value">{{ formData.contactPhone || '--' }}</span></div>
                             <div class="info-row"><span class="label">开具时间</span><span class="value">{{
                                 formData.createDate || '--'
                                     }}</span></div>
@@ -558,7 +558,8 @@ const formData = reactive({
     platformRecordId: undefined,
     platformType: 'platform',
     searchKey: '',
-    qrCode: ''
+    qrCode: '',
+    contactPhone: ''
 });
 
 const submitLoading = ref(false);
@@ -720,6 +721,7 @@ const handleProductSelect = async (id) => {
             formData.registeredCity = subject.cityCode || '青岛市';
             // 更新主体下拉列表选项，确保 select 显示
             entityOptions.value = [subject];
+            formData.contactPhone = subject.contactPhone
         } else if (data.subjectId && data.subjectName) {
             formData.subjectId = data.subjectId;
             formData.entity = data.subjectName;

@@ -8,6 +8,7 @@ export interface DetectionRecordVO {
   detectionType: number
   detectionDate: string
   subjectName: string
+  detectionOrgName?: string
   detector: string
   detectionArea: string
   detectionLocation?: string
@@ -42,6 +43,11 @@ export const updateDetectionRecord = (data: DetectionRecordVO) => {
 // 删除检测记录
 export const deleteDetectionRecord = (id: number) => {
   return request.delete({ url: '/agri/detection-record/delete?id=' + id })
+}
+
+// 新增复检
+export const recheckDetectionRecord = (data: DetectionRecordVO) => {
+  return request.post({ url: '/agri/detection-record/recheck', data })
 }
 
 // 批量删除检测记录

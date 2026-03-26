@@ -25,8 +25,23 @@
                     <el-form-item label="">
                         <el-select v-model="queryParams.type" placeholder="备案类型" class="custom-select w130" clearable>
                             <el-option label="全部" value="" />
-                            <el-option label="企业备案" :value="1" />
-                            <el-option label="个人备案" :value="2" />
+                            <el-option 
+                                v-for="dict in filingTypeOptions" 
+                                :key="dict.value" 
+                                :label="dict.label" 
+                                :value="dict.value" 
+                            />
+                        </el-select>
+                    </el-form-item>
+                    <el-form-item label="">
+                        <el-select v-model="queryParams.category" placeholder="主体类型" class="custom-select w130" clearable>
+                            <el-option label="全部类别" value="" />
+                            <el-option 
+                                v-for="dict in categoryOptions" 
+                                :key="dict.value" 
+                                :label="dict.label" 
+                                :value="dict.value" 
+                            />
                         </el-select>
                     </el-form-item>
                     <el-form-item label="">
@@ -34,6 +49,7 @@
                             v-model="queryParams.region" 
                             placeholder="请选择所属地区"
                             class="custom-cascader w180"
+                            @select="handleAreaSelect"
                         />
                     </el-form-item>
                     <el-form-item label="">
@@ -47,10 +63,12 @@
                     <el-form-item label="">
                         <el-date-picker
                             v-model="queryParams.createTime"
-                            type="date"
-                            placeholder="创建日期"
+                            type="daterange"
+                            start-placeholder="开始日期"
+                            end-placeholder="结束日期"
                             value-format="YYYY-MM-DD"
-                            class="custom-datepicker w180"
+                            class="custom-datepicker w240"
+                            style="width: 260px !important; flex-shrink: 0;"
                         />
                     </el-form-item>
 
@@ -88,10 +106,12 @@
                     <el-table-column label="主体名称" prop="name" min-width="180" show-overflow-tooltip />
                     <el-table-column label="备案类型" prop="type" width="100" align="center">
                         <template #default="scope">
-                            <el-tag :type="scope.row.type === 2 ? 'warning' : 'info'">{{ scope.row.type ? getFilingTypeLabel(scope.row.type) : '--' }}</el-tag>
+                            <el-tag :type="scope.row.type === 2 ? 'warning' : 'info'">
+                                {{ scope.row.type !== undefined && scope.row.type !== null ? getFilingTypeLabel(scope.row.type) : '--' }}
+                            </el-tag>
                         </template>
                     </el-table-column>
-                    <el-table-column label="主体类别" prop="category" width="100" align="center">
+                    <el-table-column label="主体类型" prop="category" width="100" align="center">
                         <template #default="scope">
                             <el-tag v-if="scope.row.category" effect="light" type="primary">{{ getCategoryLabel(scope.row.category) }}</el-tag>
                             <span v-else>--</span>
@@ -105,7 +125,7 @@
                             {{ scope.row.provinceCode ? `${scope.row.provinceCode}${scope.row.cityCode}${scope.row.districtCode}` : '--' }}
                         </template>
                     </el-table-column>
-                    <el-table-column label="创建时间" prop="createTime" width="160" align="center" :formatter="dateFormatter" />
+                    <el-table-column label="创建时间" prop="createTime" width="160" align="center" :formatter="dateFormatter2" />
                     <el-table-column label="操作" width="160" align="center" fixed="right">
                         <template #default="scope">
                             <div class="table-operate-action-btns">
@@ -135,7 +155,7 @@ import * as SubjectApi from '@/api/agri/subject/index';
 import { useMessage } from '@/hooks/web/useMessage';
 import { ElMessageBox } from 'element-plus';
 import download from '@/utils/download';
-import { dateFormatter } from '@/utils/formatTime';
+import { dateFormatter, dateFormatter2 } from '@/utils/formatTime';
 import { useDict } from '@/hooks/web/useDict';
 import AreaCascader from '@/components/AreaCascader/index.vue';
 import { useTableHeight } from '@/hooks/web/useTableHeight';
@@ -144,8 +164,8 @@ defineOptions({
     name: 'SubjectArchiveIndex'
 });
 
-const { getLabel: getCategoryLabel } = useDict('agri_subject_category', 'str');
-const { getLabel: getFilingTypeLabel } = useDict('agri_filing_type', 'int');
+const { getLabel: getCategoryLabel, options: categoryOptions } = useDict('agri_subject_category', 'str');
+const { getLabel: getFilingTypeLabel, options: filingTypeOptions } = useDict('agri_filing_type', 'int');
 
 const router = useRouter();
 const message = useMessage();
@@ -153,8 +173,9 @@ const loading = ref(false);
 const exportLoading = ref(false);
 
 const queryParams = reactive({
-    name: '',
+    socialCreditCodeOrIdCard: '',
     type: undefined,
+    category: undefined,
     socialCreditCode: '',
     region: [],
     createTime: []
@@ -168,6 +189,11 @@ const pageParams = reactive({
 const total = ref(0);
 const tableList = ref([]);
 
+const selectedAreaNames = ref([]);
+const handleAreaSelect = (area) => {
+    selectedAreaNames.value = [area.province, area.city, area.district].filter(Boolean);
+};
+
 /**
  * 获取列表数据
  */
@@ -177,18 +203,22 @@ const getList = async () => {
         const params = {
             ...queryParams,
             pageNo: pageParams.pageNo,
-            pageSize: pageParams.pageSize
+            pageSize: pageParams.pageSize,
+            createTime: undefined // 移除原始字段，避免类型冲突
         };
-        // 处理地区
-        if (queryParams.region && queryParams.region.length > 0) {
-            params.provinceCode = queryParams.region[0];
-            params.cityCode = queryParams.region[1];
-            params.districtCode = queryParams.region[2];
+        // 处理地区：同样全量转为中文
+        if (selectedAreaNames.value.length > 0 && queryParams.region && queryParams.region.length > 0) {
+            params.region = selectedAreaNames.value;
+            params.provinceCode = selectedAreaNames.value[0];
+            params.cityCode = selectedAreaNames.value[1];
+            params.districtCode = selectedAreaNames.value[2];
         }
+  
         // 处理时间范围
         if (queryParams.createTime && queryParams.createTime.length === 2) {
             params.beginCreateTime = queryParams.createTime[0] + ' 00:00:00';
             params.endCreateTime = queryParams.createTime[1] + ' 23:59:59';
+            params.createTime = [queryParams.createTime[0] + ' 00:00:00', queryParams.createTime[1] + ' 23:59:59']
         }
 
         const data = await SubjectApi.getSubjectPage(params);
@@ -207,10 +237,11 @@ const handleQuery = () => {
 };
 
 const handleReset = () => {
-    queryParams.name = '';
+    queryParams.socialCreditCodeOrIdCard = '';
     queryParams.type = undefined;
     queryParams.socialCreditCode = '';
     queryParams.region = [];
+    selectedAreaNames.value = [];
     queryParams.createTime = [];
     handleQuery();
 };
@@ -223,16 +254,19 @@ const handleExport = async () => {
         const params = {
             ...queryParams,
             pageNo: pageParams.pageNo,
-            pageSize: 1000 // 导出较多数据
+            pageSize: 1000, // 导出较多数据
+            createTime: undefined
         };
-        if (queryParams.region && queryParams.region.length > 0) {
-            params.provinceCode = queryParams.region[0];
-            params.cityCode = queryParams.region[1];
-            params.districtCode = queryParams.region[2];
+        if (selectedAreaNames.value.length > 0 && queryParams.region && queryParams.region.length > 0) {
+            params.region = selectedAreaNames.value;
+            params.provinceCode = selectedAreaNames.value[0];
+            params.cityCode = selectedAreaNames.value[1];
+            params.districtCode = selectedAreaNames.value[2];
         }
         if (queryParams.createTime && queryParams.createTime.length === 2) {
             params.beginCreateTime = queryParams.createTime[0] + ' 00:00:00';
             params.endCreateTime = queryParams.createTime[1] + ' 23:59:59';
+            params.createTime = [queryParams.createTime[0] + ' 00:00:00', queryParams.createTime[1] + ' 23:59:59']
         }
 
         const res = await SubjectApi.exportSubject(params);
@@ -305,7 +339,11 @@ onMounted(() => {
 .w80 { width: 80px !important; }
 .w130 { width: 130px !important; }
 .w200 { width: 200px !important; }
-.w240 { width: 240px !important; }
+.w240 { 
+    width: 380px !important; 
+    min-width: 380px !important;
+    flex-shrink: 0;
+}
 
 @media (max-width: 1500px) {
     .custom-query-form-row {

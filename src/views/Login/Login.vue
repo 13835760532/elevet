@@ -51,7 +51,7 @@
 
       <!-- Footer Links -->
       <div class="footer-links">
-        <router-link to="/register" class="link">注册</router-link>
+        <span class="link" @click="handleRegister">注册</span>
         <router-link to="/forgotPassword" class="link">忘记密码</router-link>
       </div>
 
@@ -70,7 +70,7 @@
 <script setup>
 import { ref, onMounted, getCurrentInstance } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { ElMessage, ElLoading } from 'element-plus'
+import { ElMessage, ElLoading, ElMessageBox } from 'element-plus'
 import * as authUtil from '@/utils/auth'
 import { usePermissionStore } from '@/store/modules/permission'
 import * as LoginApi from '@/api/login'
@@ -134,6 +134,18 @@ const getTenantByWebsite = async () => {
       loginForm.value.tenantName = res.name
       authUtil.setTenantId(res.id)
     }
+  }
+}
+
+const handleRegister = () => {
+  if (loginType.value === 'checking') {
+    ElMessageBox.alert('请联系壹拾智检机构客服服务010-62133855', '注册提示', {
+      confirmButtonText: '确定',
+      type: 'info',
+      center: true
+    })
+  } else {
+    router.push('/register')
   }
 }
 
@@ -436,6 +448,7 @@ onMounted(() => {
     color: #666;
     text-decoration: none;
     transition: color 0.3s;
+    cursor: pointer;
 
     &:hover {
       color: #3AB2F1;

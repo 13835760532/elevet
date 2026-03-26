@@ -155,6 +155,7 @@ import * as ProductApi from '@/api/agri/product/index';
 import * as SubjectApi from '@/api/agri/subject/index';
 import { useMessage } from '@/hooks/web/useMessage';
 import { useDict } from '@/hooks/web/useDict';
+import { formatDate } from '@/utils/formatTime';
 import SubjectFormDrawer from '@/views/filing/subject/components/SubjectFormDrawer.vue';
 
 const { getLabel: getCategoryLabel } = useDict('agri_subject_category', 'str');
@@ -181,7 +182,7 @@ const formData = reactive({
     productSpec: '',
     productUnit: 'kg',
     productImageUrl: '',
-    archiveDate: undefined,
+    archiveDate: formatDate(new Date(), 'YYYY-MM-DD'),
     subjectId: undefined
 });
 
@@ -238,7 +239,7 @@ const loadDetail = async () => {
             productSpec: '',
             productUnit: 'kg',
             productImageUrl: '',
-            archiveDate: undefined,
+            archiveDate: formatDate(new Date(), 'YYYY-MM-DD'),
             subjectId: undefined
         });
         currentSubject.value = null;

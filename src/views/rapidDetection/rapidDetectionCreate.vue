@@ -103,7 +103,7 @@
                         </div>
                     </el-form-item>
 
-                    <el-form-item label="样品来源" prop="sample.sampleSource">
+                    <el-form-item label="样品来源环节" prop="sample.sampleSource">
                         <el-select v-model="formData.sample.sampleSource" placeholder="选择采样来源" class="full-width" multiple collapse-tags>
                             <el-option label="田间" value="田间" />
                             <el-option label="市场" value="市场" />
@@ -142,7 +142,8 @@
                                     <el-icon><Plus /></el-icon> 新增主体
                                 </el-button>
                             </div>
-                            <p v-if="!formData.subjectName" class="subject-tip">*从主体，如果未找到，请先创建主体建档</p>
+                            <p v-if="!formData.subjectName" class="subject-tip">*如果未找到，请先创建主体建档</p>
+
                             <!-- 主体详细信息回显 -->
                             <div v-if="formState.selectedSubject" class="subject-detail-card">
                                 <div class="card-title">
@@ -161,12 +162,12 @@
                                     <div class="grid-item">
                                         <div class="field-label">主体类型</div>
                                         <div class="field-value">
-                                            <span class="category-tag">{{ subjectCategoryDict.getLabel(formState.selectedSubject.category) }}</span>
+                                            <span class="category-tag">{{ getSubjectCategoryLabel(formState.selectedSubject.category) }}</span>
                                         </div>
                                     </div>
                                     <div class="grid-item">
                                         <div class="field-label">备案类型</div>
-                                        <div class="field-value">{{ filingTypeDict.getLabel(formState.selectedSubject.type) }}</div>
+                                        <div class="field-value">{{ getFilingTypeLabel(formState.selectedSubject.type) }}</div>
                                     </div>
                                     <div class="grid-item">
                                         <div class="field-label">联系人</div>
@@ -210,9 +211,7 @@
                 <el-form :model="formData" label-width="120px" class="ai-info-form">
                     <el-form-item label="检测单位">
                         <div class="with-desc">
-                            <el-select v-model="formData.subjectName" filterable allow-create default-first-option style="width: 100%">
-                                <el-option :label="userStore.user.deptName" :value="userStore.user.deptName" />
-                            </el-select>
+                           <el-input v-model="formData.detectionOrgName" placeholder="获取用户机构名称" />
                             <span class="field-desc-red">获取当前用户机构名称，支持手动更改名称。</span>
                         </div>
                     </el-form-item>
@@ -224,12 +223,12 @@
                         </div>
                     </el-form-item>
 
-                    <!-- <el-form-item label="检测区划">
+                    <el-form-item label="检测区划">
                         <div class="with-desc">
                             <el-input v-model="formData.detectionArea" placeholder="读取所属区划" />
                             <span class="field-desc-red">读取当前用户所属区划，支持用户修改。</span>
                         </div>
-                    </el-form-item> -->
+                    </el-form-item>
 
                     <el-form-item label="检测地点">
                         <div class="with-desc">
@@ -242,19 +241,30 @@
                         <div class="with-desc">
                             <el-date-picker 
                                 v-model="formData.detectionDate" 
-                                type="date" 
+                                type="datetime" 
                                 placeholder="选择日期时间" 
-                                format="YYYY-MM-DD"
-                                value-format="YYYY-MM-DD"
-                                style="width: 100%"
+                                format="YYYY-MM-DD HH:mm:ss"
+                                value-format="YYYY-MM-DD HH:mm:ss"
+                                readonly
+                                style="width: 260px!important"
                             />
                             <span class="field-desc-red">读取系统时间</span>
                         </div>
                     </el-form-item>
 
-                    <!-- <el-form-item label="检测标准">
-                        <el-input v-model="formData.detectStandard" placeholder="读取产品标准" />
-                    </el-form-item> -->
+                    <el-form-item label="检测标准">
+                        <el-select 
+                            v-model="formData.detectStandard" 
+                            placeholder="请选择或输入检测标准" 
+                            filterable 
+                            allow-create 
+                            default-first-option
+                            style="width: 100%"
+                        >
+                            <el-option label="GB2763-2021" value="GB2763-2021" />
+                            <el-option label="GB21650-2019" value="GB21650-2019" />
+                        </el-select>
+                    </el-form-item>
 
                     <el-form-item label="检测照片上传">
                         <div class="upload-container">
@@ -316,22 +326,22 @@
                             <span class="label">样品编号：</span>
                             <span class="value">{{ formData.sample.sampleCode }}</span>
                         </div>
-                        <!-- <div class="info-item">
+                        <div class="info-item">
                             <span class="label">样品来源：</span>
                             <span class="value">{{ Array.isArray(formData.sample.sampleSource) ? formData.sample.sampleSource.join(', ') : (formData.sample.sampleSource || '--') }}</span>
-                        </div> -->
+                        </div>
                         <div class="info-item">
                             <span class="label">样品名称：</span>
                             <span class="value">{{ formData.sample.sampleName }}</span>
                         </div>
-                        <!-- <div class="info-item">
+                        <div class="info-item">
                             <span class="label">样品产地：</span>
                             <span class="value">{{ formData.sample.productionArea }}</span>
-                        </div> -->
-                        <!-- <div class="info-item">
+                        </div>
+                        <div class="info-item">
                             <span class="label">抽检区域：</span>
                             <span class="value">{{ formData.detectionArea }}</span>
-                        </div> -->
+                        </div>
                         <div class="info-item">
                             <span class="label">生产主体：</span>
                             <span class="value">{{ formState.selectedSubject?.name || '--' }}</span>
@@ -344,7 +354,7 @@
                         </div>
                         <div class="info-item">
                             <span class="label">检测机构：</span>
-                            <span class="value">{{ formData.subjectName }}</span>
+                            <span class="value">{{ formData.detectionOrgName }}</span>
                         </div>
                         <div class="info-item">
                             <span class="label">检测人员：</span>
@@ -382,7 +392,7 @@
                     </div>
 
                     <!-- 备注 -->
-                    <!-- <div class="remarks-section">
+                    <div class="remarks-section">
                         <div class="section-label">备 注：</div>
                         <el-input
                             v-model="formData.remarks"
@@ -393,122 +403,28 @@
                             placeholder="请输入备注（最多50个字符）"
                         />
                         <p class="remarks-tip">备注仅对当前结果生效，最多50个字符</p>
-                    </div> -->
+                    </div>
 
-                    <!-- <div class="save-action">
+                    <div class="save-action">
                         <el-button type="primary" size="large" @click="handleSave" :loading="submitting">保存</el-button>
-                    </div> -->
+                    </div>
                 </div>
             </div>
 
             <!-- 步骤4: 检测报告 -->
             <div v-show="currentStep === 4" class="step-content">
-                <div class="report-paper">
-                    <!-- 报告页眉标题 -->
-                    <div class="report-header">
-                        <h1>检测报告</h1>
-                        <h2 class="sub-title">Test Report</h2>
-                    </div>
-
-                    <!-- 报告简要封面信息 -->
-                    <div class="cover-info">
-                        <div class="top-fields">
-                            <p><strong>报告编号：</strong> {{ formData.recordCode || 'QYMA04GC0E5202602250001X' }}</p>
-                            <p><strong>样品名称：</strong> {{ formData.sample.sampleName }}</p>
-                            <p><strong>报告日期：</strong> {{ formatDate(formData.detectionDate, 'YYYY-MM-DD HH:mm:ss') || '--' }}</p>
-                        </div>
-                        <div class="org-line">
-                             {{ formData.subjectName }}检测
-                        </div>
-                    </div>
-
-                    <!-- 详细报表区块 -->
-                    <div class="report-main-table">
-                        <div v-if="overallStatusLabel" class="result-stamp" :class="overallStatusLabel">
-                            {{ overallStatusLabel }}
-                        </div>
-
-                        <div class="field-list-grid">
-                            <div class="f-row">
-                                <span class="f-label">样品编号：</span>
-                                <span class="f-value">{{ formData.sample.sampleCode }}</span>
-                            </div>
-                            <div class="f-row">
-                                <span class="f-label">样品来源：</span>
-                                <span class="f-value">{{ Array.isArray(formData.sample.sampleSource) ? formData.sample.sampleSource.join(', ') : formData.sample.sampleSource }}</span>
-                            </div>
-                            <div class="f-row">
-                                <span class="f-label">样品名称：</span>
-                                <span class="f-value">{{ formData.sample.sampleName }}</span>
-                            </div>
-                            <div class="f-row">
-                                <span class="f-label">样品产地：</span>
-                                <span class="f-value">{{ formData.sample.productionArea }}</span>
-                            </div>
-                            <div class="f-row">
-                                <span class="f-label">抽检区域：</span>
-                                <span class="f-value">{{ formData.detectionArea }}</span>
-                            </div>
-                            <div class="f-row">
-                                <span class="f-label">生产主体：</span>
-                                <span class="f-value">{{ formState.selectedSubject?.name || '--' }}</span>
-                            </div>
-                            <div class="f-row">
-                                <span class="f-label">样品状态：</span>
-                                <span class="f-value" :class="overallStatusValue === '阳性' ? 'text-red' : 'text-green'">{{ overallStatusValue }}</span>
-                            </div>
-                            <div class="f-row">
-                                <span class="f-label">检测机构：</span>
-                                <span class="f-value">{{ formData.subjectName }}</span>
-                            </div>
-                            <div class="f-row">
-                                <span class="f-label">检测人员：</span>
-                                <span class="f-value">{{ formData.detector }}</span>
-                            </div>
-                            <div class="f-row">
-                                <span class="f-label">检测日期：</span>
-                                <span class="f-value">{{ formatDate(formData.detectionDate, 'YYYY-MM-DD HH:mm:ss') }}</span>
-                            </div>
-                            <div class="f-row">
-                                <span class="f-label">检测方法：</span>
-                                <span class="f-value">{{ formData.detectionMethod }}</span>
-                            </div>
-                            <div class="f-row">
-                                <span class="f-label">检测依据：</span>
-                                <span class="f-value">{{ formData.detectStandard }}</span>
-                            </div>
-                        </div>
-
-                        <h4 class="table-caption">检测结果：</h4>
-                        <table class="native-report-table">
-                            <thead>
-                                <tr>
-                                    <th>通道</th>
-                                    <th>检测项目</th>
-                                    <th>检测值 (T/C值)</th>
-                                    <th>浓度值(单位ppb)</th>
-                                    <th>检测结果</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr v-for="(item, index) in formState.aiDetailResults" :key="index">
-                                    <td>{{ item.cardChannel || (index + 1) }}</td>
-                                    <td>{{ item.codeName }}</td>
-                                    <td>{{ item.result }}</td>
-                                    <td>{{ item.concentration || '<500.00' }}</td>
-                                    <td :class="item.status.includes('阳') ? 'text-red' : 'text-green'">{{ item.status }}</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+                <RapidDetectionReport 
+                    ref="reportRef" 
+                    :data="formData" 
+                    :results="formState.aiDetailResults" 
+                />
             </div>
 
             <!-- 底部按钮 -->
             <div class="footer-actions">
                 <template v-if="currentStep < 4">
                     <el-button @click="handleCancel" class="btn-cancel">取消</el-button>
-                    <el-button v-if="currentStep > 1" @click="handlePrev">上一步</el-button>
+                    <el-button v-if="currentStep > 1 && !(isRecheck && currentStep === 2)" @click="handlePrev">上一步</el-button>
                     <el-button type="primary" @click="handleNext" class="btn-next">下一步</el-button>
                 </template>
                 <template v-else>
@@ -524,10 +440,10 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, watch } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, reactive, onMounted, watch, computed } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import { Search, Goods, Plus, OfficeBuilding, UploadFilled } from '@element-plus/icons-vue';
-import { ElMessage } from 'element-plus';
+import { ElMessage, ElLoading } from 'element-plus';
 import { useDict } from '@/hooks/web/useDict';
 import * as DetectionRecordApi from '@/api/agri/detectionRecord';
 import * as SubjectApi from '@/api/agri/subject/index';
@@ -540,16 +456,20 @@ import { formatDate } from '@/utils/formatTime';
 import AreaCascader from '@/components/AreaCascader/index.vue';
 import ImageUpload from '@/components/ImageUpload/index.vue';
 import SubjectFormDrawer from '@/views/filing/subject/components/SubjectFormDrawer.vue';
+import RapidDetectionReport from './components/RapidDetectionReport.vue';
 
 const router = useRouter();
+const route = useRoute();
 const userStore = useUserStore();
 const formRef = ref(null);
 const currentStep = ref(1);
 const submitting = ref(false);
 const subjectDrawerVisible = ref(false);
+const isRecheck = ref(false);
+const reportRef = ref(null);
 
-const filingTypeDict = useDict('agri_filing_type', 'int');
-const subjectCategoryDict = useDict('agri_subject_category', 'str');
+const { getLabel: getFilingTypeLabel } = useDict('agri_filing_type', 'int');
+const { getLabel: getSubjectCategoryLabel } = useDict('agri_subject_category', 'str');
 const { options: productCategoryOptions } = useDict('agri_product_category', 'str');
 
 const productLoading = ref(false);
@@ -564,11 +484,11 @@ const formState = reactive({
     linkProduct: false,
     selectedProduct: null,
     selectedSubject: null,
-    productCategory: undefined, // 手动录入时的分类
+    productCategory: undefined, 
     quantityUnit: 'kg',
-    origin: [], // 产地区域级联数据
-    tempFileUrl: '', // 用于本地预览
-    rawFile: null, // 存储原始文件对象用于上传
+    origin: [], 
+    tempFileUrl: '', 
+    rawFile: null, 
     aiDetailResults: []
 });
 
@@ -576,17 +496,22 @@ const aiLoading = ref(false);
 
 const overallStatusValue = computed(() => {
     if (!formState.aiDetailResults || formState.aiDetailResults.length === 0) return '待检测';
-    const isPositive = formState.aiDetailResults.some(item => item.status.includes('阳') || item.status.includes('不合格'));
-    return isPositive ? '阳性' : '阴性';
+    // 检查是否有异常
+    const hasAbnormal = formState.aiDetailResults.some(item => item.status && item.status.includes('异常'));
+    if (hasAbnormal) return '异常';
+    
+    const isUnqualified = formState.aiDetailResults.some(item => 
+        item.status && (item.status.includes('阳') || item.status.includes('不合格'))
+    );
+    return isUnqualified ? '阳性' : '阴性';
 });
 
 const overallStatusLabel = computed(() => {
-    if (!formState.aiDetailResults || formState.aiDetailResults.length === 0) return '';
-    const isUnqualified = overallStatusValue.value === '阳性';
-    return isUnqualified ? '不合格' : '合格';
+    if (overallStatusValue.value === '异常' || overallStatusValue.value === '待检测') return '';
+    return overallStatusValue.value === '阳性' ? '不合格' : '合格';
 });
 
-const reportInfo = ref(null); // 检测报告信息
+const reportInfo = ref(null); 
 
 // 监听关联开关，选择“否”时清空关联数据
 watch(() => formState.linkProduct, (newVal) => {
@@ -602,7 +527,7 @@ watch(() => formState.linkProduct, (newVal) => {
         formState.selectedProduct = null;
     }
 });
-const inspectionRecordId = ref(undefined); // 检测记录id
+const inspectionRecordId = ref(undefined);
 const formData = reactive({
     id: undefined,
     inspectionRecordId: undefined,
@@ -624,16 +549,17 @@ const formData = reactive({
     },
     taskId: undefined,
     detectionType: 1,
-    detectionDate: new Date().toISOString(),
+    detectionDate: formatDate(new Date(), 'YYYY-MM-DD HH:mm:ss'),
     subjectName: '',
+    detectionOrgName: userStore.user.deptName || '',
     detector: userStore.user.nickname || '管理员',
     detectionArea: '',
     detectionLocation: '现场抽检',
     detectionMethod: '酶抑制法',
     detectStandard: 'GB/T 5009.199-2003',
     testPaperImageUrl: '',
-    aiRecognitionResult: '', // 存储原始 JSON 字符串
-    aiRecognitionResultText: '', // 存储回显展示文字
+    aiRecognitionResult: '', 
+    aiRecognitionResultText: '', 
     remarks: '',
     status: 1,
     publicFlag: true
@@ -746,6 +672,19 @@ const handleAreaSelect = (area) => {
     formData.detectionArea = formData.sample.productionArea;
 };
 
+/**
+ * 获取提交给接口的数据（处理多选的样品来源为字符串）
+ */
+const getSubmitData = () => {
+    const submitData = JSON.parse(JSON.stringify(formData));
+    if (Array.isArray(submitData.sample.sampleSource)) {
+        submitData.sample.sampleSource = submitData.sample.sampleSource.join(',');
+    }
+    // 写入整体判定结论 (0-阴性/合格, 1-阳性/不合格, 2-结果异常)
+    submitData.overallResult = overallStatusValue.value === '异常' ? 2 : (overallStatusValue.value === '阳性' ? 1 : 0);
+    return submitData;
+};
+
 const goToStep = (step) => {
     if (step < currentStep.value) currentStep.value = step;
 };
@@ -754,7 +693,11 @@ const handleCancel = () => { router.back(); };
 
 const handlePrev = () => { if (currentStep.value > 1) currentStep.value--; };
 
-const handlePrint = () => { window.print(); };
+const handlePrint = () => { 
+    if (reportRef.value) {
+        reportRef.value.handleDownload();
+    }
+};
 
 const handleResetForm = () => { window.location.reload(); };
 
@@ -768,7 +711,32 @@ const handleNext = async () => {
                      ElMessage.warning('请选择关联的产品档案');
                      return;
                  }
-                 currentStep.value++;
+                 submitting.value = true;
+                 try {
+                     const submitData = getSubmitData();
+                     if (formData.id) {
+                         await DetectionRecordApi.updateDetectionRecord(submitData);
+                         ElMessage.success('数据已成功保存');
+                     } else {
+                         const res = await DetectionRecordApi.createDetectionRecord(submitData);
+                         formData.id = res; 
+                         inspectionRecordId.value = res;
+                         formData.inspectionRecordId = res;
+                     }
+                     
+                     // 自动初始化 Step 2 的环境信息
+                     if (!formData.detectionOrgName) formData.detectionOrgName = userStore.user.deptName;
+                     if (!formData.detector) formData.detector = userStore.user.nickname;
+                     if (!formData.detectionArea) formData.detectionArea = '北京市/北京市/海淀区'; 
+                     if (!formData.detectionDate) formData.detectionDate = new Date().toISOString();
+                     
+                     currentStep.value++;
+                 } catch (e) {
+                     console.error('预存失败', e);
+                     ElMessage.error('样本信息预存失败，请检查网络');
+                 } finally {
+                     submitting.value = false;
+                 }
             } else {
                 ElMessage.warning('请填写必填项');
             }
@@ -779,8 +747,8 @@ const handleNext = async () => {
             ElMessage.warning('请先上传试纸照片并完成 AI 识别');
             return;
         }
-        // 没有产品关联，实现产品静默创建
-        if(!formState.linkProduct && !formData.sample.productId){
+        // 没有产品关联，实现产品静默创建 (复检不需要创建产品)
+        if(!formState.linkProduct && !formData.sample.productId && !isRecheck.value){
            try {
                const productData = {
                    productName: formData.sample.sampleName,
@@ -803,32 +771,18 @@ const handleNext = async () => {
         }
         submitting.value = true;
         try {
-            // 处理多选的样品来源，转换为逗号分隔字符串提交
-            const submitData = JSON.parse(JSON.stringify(formData));
-            if (Array.isArray(submitData.sample.sampleSource)) {
-                submitData.sample.sampleSource = submitData.sample.sampleSource.join(',');
-            }
-
-            if (formData.id) {
-                await DetectionRecordApi.updateDetectionRecord(submitData);
-                ElMessage.success('数据已成功保存');
+            if (isRecheck.value) {
+                // 如果是复检，调用 /recheck 接口
+                const submitData = getSubmitData();
+                await DetectionRecordApi.recheckDetectionRecord(submitData);
             } else {
-                const res = await DetectionRecordApi.createDetectionRecord(submitData);
-                formData.id = res; 
-                inspectionRecordId.value = res;
-                formData.inspectionRecordId = res;
+                await DetectionRecordApi.updateDetectionRecord(getSubmitData());
             }
-            
-            // 自动初始化 Step 2 的环境信息
-            if (!formData.subjectName) formData.subjectName = userStore.user.deptName;
-            if (!formData.detector) formData.detector = userStore.user.nickname;
-            if (!formData.detectionArea) formData.detectionArea = '北京市/北京市/海淀区'; 
-            if (!formData.detectionDate) formData.detectionDate = new Date().toISOString();
-            
+            ElMessage.success('数据已成功保存');
             currentStep.value++;
         } catch (e) {
-            console.error('预存失败', e);
-            ElMessage.error('样本信息预存失败，请检查网络');
+            console.error('更新失败', e);
+            ElMessage.error('更新失败，请稍后重试');
         } finally {
             submitting.value = false;
         }
@@ -836,8 +790,14 @@ const handleNext = async () => {
         // 第三步：先保存备注信息，再生成并预览报告
         submitting.value = true;
         try {
+            // 如果是复检，调用 /recheck 接口
+            const submitData = getSubmitData();
             // 提交最新的数据（含备注、AI 判定等）
-            await DetectionRecordApi.updateDetectionRecord(formData);
+            if(route.query.action == 'recheck'){
+                await DetectionRecordApi.recheckDetectionRecord(submitData);
+            } else {
+                await DetectionRecordApi.updateDetectionRecord(submitData);
+            }
             
             // 一键生成检测报告
             const reportId = await DetectionReportApi.generateReport(formData.id);
@@ -904,8 +864,14 @@ const handleSave = async () => {
     submitting.value = true;
     try {
         if (formData.id) {
-            await DetectionRecordApi.updateDetectionRecord(formData);
-            ElMessage.success('数据已成功保存');
+            // 如果是复检，调用 /recheck 接口
+            const submitData = getSubmitData();
+            // 提交最新的数据（含备注、AI 判定等）
+            if(route.query.action == 'recheck'){
+                await DetectionRecordApi.recheckDetectionRecord(submitData);
+            } else {
+                await DetectionRecordApi.updateDetectionRecord(submitData);
+            }
         } else {
             ElMessage.error('记录尚未生成主键，请先进行 AI 识别');
         }
@@ -920,15 +886,17 @@ const handleSave = async () => {
 const handleSubmit = async () => {
     submitting.value = true;
     try {
-        // 处理多选的样品来源，转换为逗号分隔字符串提交
-        const submitData = JSON.parse(JSON.stringify(formData));
-        if (Array.isArray(submitData.sample.sampleSource)) {
-            submitData.sample.sampleSource = submitData.sample.sampleSource.join(',');
-        }
+        const submitData = getSubmitData();
 
         // 由于第一步已经走了一次 create，后续流程均应走 update
         if (formData.id) {
-            await DetectionRecordApi.updateDetectionRecord(submitData);
+            if(route.query.action == 'recheck'){
+                // 如果是复检，调用 /recheck 接口
+                const submitData = getSubmitData();
+                await DetectionRecordApi.recheckDetectionRecord(submitData);
+            } else {
+                await DetectionRecordApi.updateDetectionRecord(submitData);
+            }
         } else {
             await DetectionRecordApi.createDetectionRecord(submitData);
         }
@@ -960,6 +928,39 @@ onMounted(async () => {
     ]);
     productOptions.value = pData.list;
     subjectOptions.value = sData.list;
+
+    const action = route.query.action;
+    const id = route.query.id;
+    if (action === 'recheck' && id) {
+        isRecheck.value = true;
+        currentStep.value = 2; // 跳过样本信息填写
+        try {
+            const record = await DetectionRecordApi.getDetectionRecord(Number(id));
+            if (record) {
+                formData.id = record.id;
+                formData.recordCode = record.recordCode;
+                // 检测单位、检测人、时间初始化
+                formData.detectionOrgName = userStore.user.deptName || record.detectionOrgName || record.subjectName;
+                formData.detector = userStore.user.nickname;
+                formData.detectionDate = formatDate(new Date(), 'YYYY-MM-DD HH:mm:ss');
+                
+                // 继承原记录的地点等
+                if (record.detectionArea) formData.detectionArea = record.detectionArea;
+                if (record.detectionLocation) formData.detectionLocation = record.detectionLocation;
+                if (record.detectStandard) formData.detectStandard = record.detectStandard;
+                
+                // 为了让结果页(Step 3/4)展示正常，回填基本样本信息
+                if (record.sampleName) formData.sample.sampleName = record.sampleName;
+                if (record.subjectName) {
+                    formData.subjectName = record.subjectName;
+                    formState.selectedSubject = { name: record.subjectName };
+                }
+            }
+        } catch (e) {
+            console.error('获取原检测数据失败', e);
+            ElMessage.error('无法读取原检测记录，请返回重试');
+        }
+    }
 });
 </script>
 
@@ -1541,96 +1542,116 @@ onMounted(async () => {
     width: 210mm;
     min-height: 297mm;
     margin: 0 auto;
-    padding: 30mm 20mm;
+    padding: 20mm 15mm;
     box-shadow: 0 0 20px rgba(0,0,0,0.05);
     position: relative;
-    color: #000;
-    font-family: serif;
+    color: #333;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    border-radius: 4px;
 
     .report-header {
         text-align: center;
-        margin-bottom: 50px;
+        margin-bottom: 60px;
         h1 {
-            font-size: 32px;
-            letter-spacing: 4px;
+            font-size: 28px;
+            font-weight: 700;
+            color: #000;
             margin: 0;
+            letter-spacing: 2px;
         }
         .sub-title {
-            font-size: 20px;
-            font-weight: normal;
-            margin-top: 10px;
+            font-size: 32px;
+            font-weight: 700;
+            color: #000;
+            margin-top: 5px;
+            font-family: "Arial", sans-serif;
         }
     }
 
     .cover-info {
-        margin-bottom: 60px;
-        position: relative;
-        padding-left: 20px;
+        margin-bottom: 40px;
+        padding-left: 60px;
         
         .top-fields {
-            margin-bottom: 40px;
+            margin-bottom: 30px;
             p {
-                margin: 8px 0;
+                margin: 10px 0;
                 font-size: 16px;
+                color: #333;
             }
         }
 
-        .org-line {
+        .org-container {
             text-align: center;
-            font-size: 18px;
-            margin-top: 20px;
-            border-bottom: 1px solid #000;
-            display: inline-block;
-            padding-bottom: 5px;
-            min-width: 400px;
+            .org-line {
+                font-size: 18px;
+                font-weight: 500;
+                padding: 0 10px 8px;
+                border-bottom: 1.5px solid #333;
+                display: inline-flex;
+                align-items: center;
+                gap: 10px;
+                min-width: 320px;
+                justify-content: center;
+                
+                .edit-icon {
+                    font-size: 18px;
+                    color: #666;
+                }
+            }
         }
     }
 
     .report-main-table {
         position: relative;
-        border-top: 2px solid #000;
-        padding-top: 30px;
+        padding-top: 20px;
 
         .result-stamp {
-            width: 80px;
-            height: 80px;
+            width: 100px;
+            height: 100px;
             border: 3px double #f56c6c;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 16px;
-            font-weight: 900;
+            font-size: 20px;
+            font-weight: 800;
             color: #f56c6c;
             transform: rotate(-20deg);
             position: absolute;
             right: 40px;
-            top: 40px;
-            background: rgba(245, 108, 108, 0.05);
+            top: -10px;
+            background: rgba(255, 255, 255, 0.9);
             z-index: 10;
+            letter-spacing: 2px;
+            
+            &.合格 {
+                border-color: #67c23a;
+                color: #67c23a;
+            }
         }
 
         .field-list-grid {
-            border-left: 1px solid #eee;
-            border-top: 1px solid #eee;
+            border-top: 1.5px solid #eee;
             
             .f-row {
                 display: flex;
-                border-right: 1px solid #eee;
-                border-bottom: 1px solid #eee;
+                border-bottom: 1.5px solid #eee;
                 font-size: 15px;
+                min-height: 44px;
+                align-items: center;
 
                 .f-label {
                     width: 140px;
                     padding: 10px 15px;
-                    background: #fcfcfc;
-                    border-right: 1px solid #eee;
-                    font-weight: 600;
+                    color: #333;
+                    font-weight: 500;
                 }
 
                 .f-value {
                     flex: 1;
                     padding: 10px 15px;
+                    color: #333;
                 }
                 
                 .text-red { color: #f56c6c; font-weight: bold; }
@@ -1639,22 +1660,33 @@ onMounted(async () => {
         }
 
         .table-caption {
-            margin: 40px 0 15px 0;
+            display: flex;
+            width: 120px;
+            margin: 30px 0 15px 0;
             font-size: 18px;
+            font-weight: 700;
+            color: #000;
         }
 
         .native-report-table {
             width: 100%;
             border-collapse: collapse;
+            border: 1.5px solid #eee;
+            
             th, td {
-                border: 1px solid #ddd;
-                padding: 12px;
+                border: 1.5px solid #eee;
+                padding: 12px 8px;
                 text-align: center;
-                font-size: 15px;
+                font-size: 14px;
+                color: #333;
             }
+            
             th {
-                background: #f9f9f9;
+                background: #fff;
+                font-weight: 700;
+                color: #000;
             }
+            
             .text-red { color: #f56c6c; font-weight: bold; }
             .text-green { color: #67c23a; font-weight: bold; }
         }

@@ -35,22 +35,29 @@
                             v-model="queryParams.region" 
                             placeholder="请选择产地"
                             class="custom-cascader w180"
+                            @select="handleAreaSelect"
                         />
                     </el-form-item>
                     <el-form-item label="">
                         <el-select v-model="queryParams.subjectType" placeholder="主体类型" class="custom-select w130" clearable>
                             <el-option label="全部" value="" />
-                            <el-option label="企业备案" :value="1" />
-                            <el-option label="个人备案" :value="2" />
+                            <el-option 
+                                v-for="dict in filingTypeOptions" 
+                                :key="dict.value" 
+                                :label="dict.label" 
+                                :value="dict.value" 
+                            />
                         </el-select>
                     </el-form-item>
                     <el-form-item label="">
                         <el-date-picker
                             v-model="queryParams.archiveTime"
-                            type="date"
-                            placeholder="建档日期"
+                            type="daterange"
+                            start-placeholder="开始日期"
+                            end-placeholder="结束日期"
                             value-format="YYYY-MM-DD"
-                            class="custom-datepicker w160"
+                            class="custom-datepicker w240"
+                            style="width: 260px !important; flex-shrink: 0;"
                         />
                     </el-form-item>
 
@@ -79,10 +86,17 @@
                     <el-table-column label="产品编号" prop="productCode" min-width="160" show-overflow-tooltip />
                     <el-table-column label="产品名称" prop="productName" min-width="120" show-overflow-tooltip />
                     <el-table-column label="所属主体" prop="subjectInfo.name" min-width="150" show-overflow-tooltip />
-                    <el-table-column label="产品类别" prop="category" min-width="100" align="center" />
+                    <el-table-column label="产品类别" prop="category" min-width="100" align="center">
+                        <template #default="scope">
+                            <el-tag v-if="scope.row.category" effect="light" type="primary">
+                                {{ getProductCategoryLabel(scope.row.category) }}
+                            </el-tag>
+                            <span v-else>--</span>
+                        </template>
+                    </el-table-column>
                     <el-table-column label="规格" prop="productSpec" min-width="100" align="center" />
                     <el-table-column label="产地" prop="productionArea" min-width="120" show-overflow-tooltip />
-                    <el-table-column label="建档日期" prop="archiveDate" width="160" align="center" :formatter="dateFormatter" />
+                    <el-table-column label="建档日期" prop="archiveDate" width="160" align="center" :formatter="dateFormatter2" />
                     <el-table-column label="操作" width="160" align="center" fixed="right">
                         <template #default="scope">
                             <div class="table-operate-action-btns">
@@ -112,13 +126,17 @@ import * as ProductApi from '@/api/agri/product/index';
 import { useMessage } from '@/hooks/web/useMessage';
 import { ElMessageBox } from 'element-plus';
 import download from '@/utils/download';
-import { dateFormatter } from '@/utils/formatTime';
+import { dateFormatter, dateFormatter2 } from '@/utils/formatTime';
 import AreaCascader from '@/components/AreaCascader/index.vue';
 import { useTableHeight } from '@/hooks/web/useTableHeight';
+import { useDict } from '@/hooks/web/useDict';
 
 defineOptions({
     name: 'ProductArchiveIndex'
 });
+
+const { options: filingTypeOptions } = useDict('agri_filing_type', 'int');
+const { getLabel: getProductCategoryLabel } = useDict('agri_product_category', 'str');
 
 const router = useRouter();
 const message = useMessage();
@@ -141,22 +159,35 @@ const pageParams = reactive({
 const total = ref(0);
 const tableList = ref([]);
 
+const selectedAreaNames = ref([]);
+const handleAreaSelect = (area) => {
+    selectedAreaNames.value = [area.province, area.city, area.district].filter(Boolean);
+};
+
 const getList = async () => {
     loading.value = true;
     try {
         const params = {
             ...queryParams,
             pageNo: pageParams.pageNo,
-            pageSize: pageParams.pageSize
+            pageSize: pageParams.pageSize,
+            archiveTime: undefined
         };
-        // 处理产地
-        if (queryParams.region && queryParams.region.length > 0) {
-            params.productionArea = queryParams.region.join('-');
+        // 处理产地：核心逻辑——将 region 也转为中文并拼接 productionArea
+        if (selectedAreaNames.value.length > 0 && queryParams.region && queryParams.region.length > 0) {
+            params.region = selectedAreaNames.value; // region 数组转为中文
+            // params.productionArea = selectedAreaNames.value.join('-');
+
+            params.provinceCode = selectedAreaNames.value[0];
+            params.cityCode = selectedAreaNames.value[1];
+            params.districtCode = selectedAreaNames.value[2]; 
         }
+        params.createTime = []
         // 处理归档时间
         if (queryParams.archiveTime && queryParams.archiveTime.length === 2) {
             params.beginArchiveDate = queryParams.archiveTime[0] + ' 00:00:00';
             params.endArchiveDate = queryParams.archiveTime[1] + ' 23:59:59';
+            params.createTime = [queryParams.archiveTime[0] + ' 00:00:00', queryParams.archiveTime[1] + ' 23:59:59']
         }
 
         const data = await ProductApi.getProductPage(params);
@@ -178,8 +209,10 @@ const handleReset = () => {
     queryParams.productCode = '';
     queryParams.subjectName = '';
     queryParams.region = [];
+    selectedAreaNames.value = [];
     queryParams.subjectType = undefined;
     queryParams.archiveTime = [];
+    queryParams.createTime = []
     handleQuery();
 };
 
@@ -190,8 +223,22 @@ const handleExport = async () => {
         const params = {
             ...queryParams,
             pageNo: pageParams.pageNo,
-            pageSize: 1000
+            pageSize: 1000,
+            archiveTime: undefined
         };
+        if (selectedAreaNames.value.length > 0 && queryParams.region && queryParams.region.length > 0) {
+            params.region = selectedAreaNames.value;
+            // params.productionArea = selectedAreaNames.value.join('-');
+            params.provinceCode = selectedAreaNames.value[0];
+            params.cityCode = selectedAreaNames.value[1];
+            params.districtCode = selectedAreaNames.value[2];   
+        }
+        params.createTime = []
+        if (queryParams.archiveTime && queryParams.archiveTime.length === 2) {
+            params.beginArchiveDate = queryParams.archiveTime[0] + ' 00:00:00';
+            params.endArchiveDate = queryParams.archiveTime[1] + ' 23:59:59';
+            params.createTime = [queryParams.archiveTime[0] + ' 00:00:00', queryParams.archiveTime[1] + ' 23:59:59']
+        }
         const res = await ProductApi.exportProduct(params);
         download.excel(res, '产品档案导出.xls');
     } catch (error) {
@@ -254,6 +301,7 @@ onMounted(() => {
 .w130 { width: 130px !important; }
 .w180 { width: 180px !important; }
 .w220 { width: 220px !important; }
+.w240 { width: 240px !important; }
 
 @media (max-width: 1500px) {
     .custom-query-form-row {
