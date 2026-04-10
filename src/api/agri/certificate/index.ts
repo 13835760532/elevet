@@ -7,7 +7,7 @@ export interface CertificateVO {
   subjectId: number
   productId?: number
   productName: string
-  detectionRecordId?: number
+  detectionRecordId?: number[]
   productionDate?: string
   batchNo?: string
   quantity?: number
@@ -28,9 +28,9 @@ export const getCertificate = (id: number) => {
   return request.get({ url: '/agri/certificate/get?id=' + id })
 }
 
-// 根据编号查询合格证详情
+// 根据编号查询合格证详情（上游关联专用）
 export const getCertificateByCode = (certificateCode: string) => {
-  return request.get({ url: '/agri/certificate/get-by-code?certificateCode=' + certificateCode })
+  return request.get({ url: '/agri/certificate/query-upstream?certificateCode=' + certificateCode })
 }
 
 // 新增合格证记录
@@ -41,6 +41,16 @@ export const createCertificate = (data: CertificateVO) => {
 // 修改合格证记录
 export const updateCertificate = (data: CertificateVO) => {
   return request.put({ url: '/agri/certificate/update', data })
+}
+
+// 作废合格证
+export const voidCertificate = (data: { id: number; voidReason: string }) => {
+  return request.put({ url: '/agri/certificate/void', data })
+}
+
+// 保存合格证草稿
+export const saveDraft = (data: any) => {
+  return request.post({ url: '/agri/certificate/save-draft', data })
 }
 
 // 删除合格证记录

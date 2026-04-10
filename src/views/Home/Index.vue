@@ -45,24 +45,91 @@
 
       <!-- 备案按钮区域 -->
       <div class="action-section">
-        <el-button v-hasPermi="['agri:subject:create']" type="primary" class="beian-submit-btn" @click="handleBeian">
+        <el-button type="primary" :disabled="hasFiling" class="beian-submit-btn" @click="handleBeian">
           立即账号备案
         </el-button>
       </div>
+
+      <!-- 便携式打印机区域 -->
+      <!-- <div class="printer-section">
+        <div class="printer-header">
+          <h3 class="printer-title">便携式打印机</h3>
+          <p class="printer-subtitle">蓝牙连接后，一键打印测试小票</p>
+        </div>
+        <div class="printer-status">
+          <el-tag :type="isPrinterReady ? 'success' : 'info'">
+            {{ isPrinterReady ? `已连接：${printerName}` : '未连接设备' }}
+          </el-tag>
+          <el-tag v-if="!isBluetoothSupported" type="warning">
+            当前浏览器不支持 Web Bluetooth
+          </el-tag>
+        </div>
+        <div class="printer-actions">
+          <el-button type="primary" plain :disabled="!isBluetoothSupported || connecting" @click="handleConnectPrinter">
+            {{ connecting ? '连接中...' : '连接蓝牙打印机' }}
+          </el-button>
+          <el-button type="success" :disabled="!isPrinterReady || printing" @click="handleOneClickPrint">
+            {{ printing ? '打印中...' : '蓝牙一键打印' }}
+          </el-button>
+        </div>
+      </div> -->
     </div>
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
+import { ElMessage } from 'element-plus';
 import { useUserStore } from '@/store/modules/user';
+import { BluetoothPrinter, buildEscPosTestTicket } from '@/utils';
+import * as SubjectApi from '@/api/agri/subject/index';
 
 const userStore = useUserStore();
 const router = useRouter();
 
 // 获取用户昵称（根据 RuoYi-Vue3 默认逻辑从 userStore 获取）
 const userNickname = computed(() => userStore.getUser.nickname);
+const printerName = ref('未知设备');
+const isPrinterReady = ref(false);
+const connecting = ref(false);
+const printing = ref(false);
+const printer = new BluetoothPrinter({
+  namePrefix: 'YSH',
+  serviceUUIDs: [
+    '000018f0-0000-1000-8000-00805f9b34fb',
+    '0000ffe0-0000-1000-8000-00805f9b34fb',
+    '49535343-fe7d-4ae5-8fa9-9fafd205e455'
+  ],
+  characteristicUUIDs: [
+    '00002af1-0000-1000-8000-00805f9b34fb',
+    '0000ffe1-0000-1000-8000-00805f9b34fb',
+    '49535343-8841-43f4-a8d4-ecbe34729bb3'
+  ],
+  onStatusChange: (ready, name) => {
+    isPrinterReady.value = ready;
+    printerName.value = name;
+  }
+});
+const isBluetoothSupported = computed(() => printer.isSupported());
+
+const hasFiling = ref(false);
+
+/**
+ * 检查备案状态
+ */
+const checkSubjectStatus = async () => {
+  try {
+    const data = await SubjectApi.hasDeptSubject();
+    hasFiling.value = !!data;
+  } catch (error) {
+    console.error('获取备案状态失败', error);
+  }
+};
+
+onMounted(() => {
+  checkSubjectStatus();
+});
 
 /**
  * 处理备案点击事件
@@ -70,6 +137,43 @@ const userNickname = computed(() => userStore.getUser.nickname);
 const handleBeian = () => {
   // 根据新配置路由跳转至备案表单
   router.push('/filing/subjectCreate');
+};
+
+/**
+ * 连接蓝牙打印机
+ */
+const handleConnectPrinter = async () => {
+  connecting.value = true;
+  try {
+    const name = await printer.connect();
+    ElMessage.success(`已连接打印机：${name}`);
+  } catch (error) {
+    if (error?.name !== 'NotFoundError') {
+      ElMessage.error(`连接失败：${error?.message || '请重试'}`);
+    }
+  } finally {
+    connecting.value = false;
+  }
+};
+
+/**
+ * 一键打印测试小票
+ */
+const handleOneClickPrint = async () => {
+  if (!isPrinterReady.value) {
+    ElMessage.warning('请先连接蓝牙打印机');
+    return;
+  }
+  printing.value = true;
+  try {
+    const ticket = buildEscPosTestTicket(userNickname.value || 'admin');
+    await printer.print(ticket);
+    ElMessage.success('打印指令已发送，请检查打印机输出');
+  } catch (error) {
+    ElMessage.error(`打印失败：${error?.message || '请检查设备连接'}`);
+  } finally {
+    printing.value = false;
+  }
 };
 </script>
 
@@ -198,6 +302,7 @@ const handleBeian = () => {
   width: 100%;
   display: flex;
   justify-content: center;
+  margin-bottom: 30px;
 
   .beian-submit-btn {
     width: 420px;
@@ -219,6 +324,45 @@ const handleBeian = () => {
     &:active {
       transform: translateY(0);
     }
+  }
+}
+
+.printer-section {
+  width: 100%;
+  max-width: 880px;
+  padding: 20px;
+  border: 1px solid #e6f4fb;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #f7fcff 0%, #ffffff 100%);
+
+  .printer-header {
+    margin-bottom: 12px;
+  }
+
+  .printer-title {
+    margin: 0;
+    color: #00B3ED;
+    font-size: 18px;
+    font-weight: 600;
+  }
+
+  .printer-subtitle {
+    margin: 8px 0 0;
+    color: #666;
+    font-size: 14px;
+  }
+
+  .printer-status {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+  }
+
+  .printer-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
   }
 }
 
@@ -245,6 +389,11 @@ const handleBeian = () => {
 
   .beian-submit-btn {
     width: 100% !important;
+  }
+
+  .printer-section .printer-actions {
+    display: grid;
+    grid-template-columns: 1fr;
   }
 }
 </style>

@@ -70,7 +70,7 @@
 
                     <!-- 样品编号 -->
                     <el-form-item label="记录编码" prop="recordCode">
-                        <el-input v-model="formData.recordCode" placeholder="系统自动生成或自定义" :disabled="formState.linkProduct" />
+                        <el-input v-model="formData.recordCode" :disabled="true" placeholder="系统自动生成或自定义" />
                     </el-form-item>
 
                     <!-- 样品名称 -->
@@ -371,10 +371,14 @@
                     <el-table :data="formState.aiDetailResults" border class="result-table">
                         <el-table-column property="cardChannel" label="通道" width="100" />
                         <el-table-column property="codeName" label="检测项目" />
-                        <el-table-column property="result" label="检测值（T/C值）" />
+                        <el-table-column property="result" label="检测值（T/C值）" >
+                             <template #default="scope">
+                                {{ Number(scope.row.result).toFixed(3) || 0 }}
+                            </template>
+                        </el-table-column>
                         <el-table-column property="concentration" label="浓度值（单位 ppb）">
                             <template #default="scope">
-                                {{ scope.row.concentration || '<500.00' }}
+                                {{ scope.row.concentration || '--' }}
                             </template>
                         </el-table-column>
                         <el-table-column property="status" label="检测结果">
@@ -467,6 +471,7 @@ const submitting = ref(false);
 const subjectDrawerVisible = ref(false);
 const isRecheck = ref(false);
 const reportRef = ref(null);
+const lastSavedRemarks = ref(null);
 
 const { getLabel: getFilingTypeLabel } = useDict('agri_filing_type', 'int');
 const { getLabel: getSubjectCategoryLabel } = useDict('agri_subject_category', 'str');
@@ -531,7 +536,7 @@ const inspectionRecordId = ref(undefined);
 const formData = reactive({
     id: undefined,
     inspectionRecordId: undefined,
-    recordCode: 'JL' + new Date().getTime(),
+    recordCode: 'YP' + new Date().getTime(),
     sample: {
         id: undefined,
         sampleCode: 'YP' + new Date().getTime(),
@@ -607,10 +612,14 @@ const handleSubjectSelect = (item) => {
     formData.subjectName = item.name;
     // 回显产地/地区信息
     if (item.provinceCode) {
-        formData.detectionArea = `${item.provinceCode}-${item.cityCode || ''}-${item.districtCode || ''}`;
-        formData.sample.productionArea = formData.detectionArea;
-        // 更新级联组件的状态（如果支持直接赋值名称）
-        // formState.origin = [item.provinceCode, item.cityCode, item.districtCode].filter(Boolean);
+        formData.detectionArea = `${item.provinceCode}${item.cityCode ? '-' + item.cityCode : ''}${item.districtCode ? '-' + item.districtCode : ''}`;
+        
+        // 核心修复：仅当用户尚未手动选择产地时，才自动同步主体的地址作为产地
+        if (!formData.sample.productionArea || formData.sample.productionArea === '--') {
+            formData.sample.productionArea = formData.detectionArea;
+            // 更新级联组件的状态，实现 UI 同步
+            formState.origin = [item.provinceCode, item.cityCode, item.districtCode].filter(Boolean);
+        }
     }
 };
 
@@ -670,6 +679,7 @@ const handleProductChange = async (val) => {
 const handleAreaSelect = (area) => {
     formData.sample.productionArea = `${area.province}-${area.city}-${area.district}`;
     formData.detectionArea = formData.sample.productionArea;
+    console.log(formData.sample.productionArea)
 };
 
 /**
@@ -711,6 +721,29 @@ const handleNext = async () => {
                      ElMessage.warning('请选择关联的产品档案');
                      return;
                  }
+                   // 没有产品关联，实现产品静默创建 (复检不需要创建产品)
+                if(!formState.linkProduct && !formData.sample.productId && !isRecheck.value && !formData.id){
+                    try {
+                        
+                        const productData = {
+                            productName: formData.sample.sampleName,
+                            productCode: 'PRD' + new Date().getTime(),
+                            subjectId: formState.selectedSubject?.id,
+                            category: formState.productCategory || '其他',
+                            productionArea: formData.sample.productionArea,
+                            productSpec: String(formData.sample.sampleQuantity || ''),
+                            productUnit: formState.quantityUnit,
+                            status: 1
+                        };
+                        const newProductId = await ProductApi.createProduct(productData);
+                        formData.sample.productId = newProductId;
+                        // ElMessage.success('产品档案已自动同步创建');
+                    } catch (e) {
+                        console.error('产品创建失败', e);
+                        ElMessage.warning('产品档案同步失败，将继续检测任务');
+                        return false;
+                    }
+                }
                  submitting.value = true;
                  try {
                      const submitData = getSubmitData();
@@ -727,7 +760,7 @@ const handleNext = async () => {
                      // 自动初始化 Step 2 的环境信息
                      if (!formData.detectionOrgName) formData.detectionOrgName = userStore.user.deptName;
                      if (!formData.detector) formData.detector = userStore.user.nickname;
-                     if (!formData.detectionArea) formData.detectionArea = '北京市/北京市/海淀区'; 
+                     if (!formData.detectionArea) formData.detectionArea = formData.sample.productionArea; 
                      if (!formData.detectionDate) formData.detectionDate = new Date().toISOString();
                      
                      currentStep.value++;
@@ -747,28 +780,7 @@ const handleNext = async () => {
             ElMessage.warning('请先上传试纸照片并完成 AI 识别');
             return;
         }
-        // 没有产品关联，实现产品静默创建 (复检不需要创建产品)
-        if(!formState.linkProduct && !formData.sample.productId && !isRecheck.value){
-           try {
-               const productData = {
-                   productName: formData.sample.sampleName,
-                   productCode: 'PRD' + new Date().getTime(),
-                   subjectId: formState.selectedSubject?.id,
-                   category: formState.productCategory || '其他',
-                   productionArea: formData.sample.productionArea,
-                   productSpec: String(formData.sample.sampleQuantity || ''),
-                   productUnit: formState.quantityUnit,
-                   status: 1
-               };
-               const newProductId = await ProductApi.createProduct(productData);
-               formData.sample.productId = newProductId;
-               // ElMessage.success('产品档案已自动同步创建');
-           } catch (e) {
-               console.error('产品创建失败', e);
-               ElMessage.warning('产品档案同步失败，将继续检测任务');
-               return false;
-           }
-        }
+      
         submitting.value = true;
         try {
             if (isRecheck.value) {
@@ -790,17 +802,17 @@ const handleNext = async () => {
         // 第三步：先保存备注信息，再生成并预览报告
         submitting.value = true;
         try {
-            // 如果是复检，调用 /recheck 接口
-            const submitData = getSubmitData();
-            // 提交最新的数据（含备注、AI 判定等）
-            if(route.query.action == 'recheck'){
-                await DetectionRecordApi.recheckDetectionRecord(submitData);
-            } else {
-                await DetectionRecordApi.updateDetectionRecord(submitData);
+            // 提交最新的备注数据 (仅当内容发生变化时)
+            if (formData.id && formData.remarks !== lastSavedRemarks.value) {
+                await DetectionRecordApi.updateDetectionRecordRemarks({ 
+                    id: formData.id, 
+                    remarks: formData.remarks 
+                });
+                lastSavedRemarks.value = formData.remarks;
             }
             
             // 一键生成检测报告
-            const reportId = await DetectionReportApi.generateReport(formData.id);
+            const reportId = await DetectionReportApi.generateReport({ recordId: formData.id });
             if (reportId) {
                 // 回显生成的报告内容
                 const reportDetail = await DetectionReportApi.getDetectionReport(reportId);
@@ -864,14 +876,12 @@ const handleSave = async () => {
     submitting.value = true;
     try {
         if (formData.id) {
-            // 如果是复检，调用 /recheck 接口
-            const submitData = getSubmitData();
-            // 提交最新的数据（含备注、AI 判定等）
-            if(route.query.action == 'recheck'){
-                await DetectionRecordApi.recheckDetectionRecord(submitData);
-            } else {
-                await DetectionRecordApi.updateDetectionRecord(submitData);
-            }
+            await DetectionRecordApi.updateDetectionRecordRemarks({ 
+                id: formData.id, 
+                remarks: formData.remarks 
+            });
+            lastSavedRemarks.value = formData.remarks;
+            ElMessage.success('备注已成功更新');
         } else {
             ElMessage.error('记录尚未生成主键，请先进行 AI 识别');
         }
@@ -931,30 +941,54 @@ onMounted(async () => {
 
     const action = route.query.action;
     const id = route.query.id;
-    if (action === 'recheck' && id) {
-        isRecheck.value = true;
-        currentStep.value = 2; // 跳过样本信息填写
+    if ((action === 'recheck' || action === 'detect') && id) {
+        if (action === 'recheck') isRecheck.value = true;
+        currentStep.value = 2; // 继续检测或复检直接进入第二步
         try {
             const record = await DetectionRecordApi.getDetectionRecord(Number(id));
             if (record) {
+                // 基础骨架回填
                 formData.id = record.id;
                 formData.recordCode = record.recordCode;
-                // 检测单位、检测人、时间初始化
-                formData.detectionOrgName = userStore.user.deptName || record.detectionOrgName || record.subjectName;
-                formData.detector = userStore.user.nickname;
-                formData.detectionDate = formatDate(new Date(), 'YYYY-MM-DD HH:mm:ss');
+                formData.inspectionRecordId = record.inspectionRecordId;
                 
-                // 继承原记录的地点等
+                // 样品信息回填 (Step 1的内容)
+                formData.sample = {
+                    ...formData.sample,
+                    id: record.sampleId,
+                    sampleCode: record.sampleCode || record.recordCode || formData.sample.sampleCode,
+                    sampleName: record.sampleName || record.productName || '',
+                    sampleSource: (record.sampleSource || record.samplingLocation) ? (record.sampleSource || record.samplingLocation).split(',') : [],
+                    productionArea: record.productionArea || record.detectionArea || '',
+                    sampleQuantity: record.sampleQuantity,
+                    productId: record.productId
+                };
+                
+                // 主体信息回填
+                formData.subjectName = record.subjectName;
+                formState.selectedSubject = { name: record.subjectName };
+                // 尝试补全详细的主体信息
+                if (record.subjectId || record.subjectName) {
+                    try {
+                        const sList = await SubjectApi.getSubjectPage({ name: record.subjectName, pageSize: 1 });
+                        if (sList.list && sList.list.length > 0) {
+                            formState.selectedSubject = sList.list[0];
+                        }
+                    } catch (e) {
+                         console.warn('获取主体详情失败，仅使用基本名称', e);
+                    }
+                }
+
+                // 环境检测信息初始化 (Step 2)
+                formData.detectionOrgName = userStore.user.deptName || record.detectionOrgName;
+                formData.detector = userStore.user.nickname || record.detector;
+                formData.detectionDate = action === 'recheck' ? formatDate(new Date(), 'YYYY-MM-DD HH:mm:ss') : (record.detectionDate || formatDate(new Date(), 'YYYY-MM-DD HH:mm:ss'));
+                
                 if (record.detectionArea) formData.detectionArea = record.detectionArea;
                 if (record.detectionLocation) formData.detectionLocation = record.detectionLocation;
                 if (record.detectStandard) formData.detectStandard = record.detectStandard;
-                
-                // 为了让结果页(Step 3/4)展示正常，回填基本样本信息
-                if (record.sampleName) formData.sample.sampleName = record.sampleName;
-                if (record.subjectName) {
-                    formData.subjectName = record.subjectName;
-                    formState.selectedSubject = { name: record.subjectName };
-                }
+                formData.remarks = record.remarks || '';
+                lastSavedRemarks.value = formData.remarks;
             }
         } catch (e) {
             console.error('获取原检测数据失败', e);

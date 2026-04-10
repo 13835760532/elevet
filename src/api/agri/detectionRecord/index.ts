@@ -59,3 +59,8 @@ export const deleteDetectionRecordList = (ids: number[]) => {
 export const exportDetectionRecord = (params: any) => {
   return request.download({ url: '/agri/detection-record/export-excel', params })
 }
+
+// 更新检测记录备注
+export const updateDetectionRecordRemarks = (data: { id: number; remarks: string }) => {
+  return request.put({ url: '/agri/detection-record/updateRemarks', data })
+}

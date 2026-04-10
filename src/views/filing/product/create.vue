@@ -7,7 +7,11 @@
         <!-- 内容卡片 -->
         <div class="content-card">
             <div class="card-header">
-                <span class="header-title">产品基本信息</span>
+                <div class="header-main">
+                    <span class="header-title">产品基本信息</span>
+                    <el-button type="primary" plain class="btn-copy-prev" :loading="copyLoading"
+                        @click="handleCopyPrevious">复制上一条</el-button>
+                </div>
                 <div class="dashed-line"></div>
             </div>
 
@@ -16,7 +20,7 @@
                 
                 <!-- 产品名称 -->
                 <el-form-item label="产品名称" prop="productName">
-                    <el-input v-model="formData.productName" placeholder="请选择或输入产品名称" />
+                    <el-input v-model="formData.productName" placeholder="请填写或选择产品名称" />
                 </el-form-item>
 
                 <!-- 建档时间 -->
@@ -35,7 +39,7 @@
                 <el-form-item label="产品产地" prop="productionArea">
                     <AreaCascader 
                         v-model="areaPath" 
-                        placeholder="请选择产品产地" 
+                        placeholder="请选择所属地区" 
                         @select="(val) => {
                             formData.provinceCode = val.province;
                             formData.cityCode = val.city;
@@ -48,8 +52,8 @@
                 <!-- 产品规格 -->
                 <el-form-item label="产品规格" prop="productSpec">
                     <div class="compound-input">
-                        <el-input v-model="formData.productSpec" placeholder="数量" style="flex: 1;" />
-                        <el-select class="prefix-select" v-model="formData.productUnit" placeholder="单位" style="width: 100px;">
+                        <el-input v-model="formData.productSpec" placeholder="请填写数量" style="flex: 1;" />
+                        <el-select class="prefix-select" v-model="formData.productUnit" placeholder="请选择单位" style="width: 100px;">
                             <el-option label="kg" value="kg" />
                             <el-option label="吨" value="吨" />
                             <el-option label="箱" value="箱" />
@@ -74,7 +78,7 @@
                 <el-form-item label="生产经营主体" prop="subjectId">
                     <div class="subject-selector-wrapper">
                         <el-select v-model="formData.subjectId" filterable remote
-                            placeholder="搜索企业名称或信用代码查询主体" class="subject-select"
+                            placeholder="请搜索或选择所属主体" class="subject-select"
                             :remote-method="searchSubject" @change="handleSubjectChange">
                             <template #prefix>
                                 <el-icon><Search /></el-icon>
@@ -157,6 +161,7 @@ import { useMessage } from '@/hooks/web/useMessage';
 import { useDict } from '@/hooks/web/useDict';
 import { formatDate } from '@/utils/formatTime';
 import SubjectFormDrawer from '@/views/filing/subject/components/SubjectFormDrawer.vue';
+import { buildProductCreatePayload, getLastSubmittedProduct, saveLastSubmittedProduct } from './lastSubmitCache';
 
 const { getLabel: getCategoryLabel } = useDict('agri_subject_category', 'str');
 const { getLabel: getFilingTypeLabel } = useDict('agri_filing_type', 'int');
@@ -169,6 +174,7 @@ const route = useRoute();
 const message = useMessage();
 const formRef = ref(null);
 const submitLoading = ref(false);
+const copyLoading = ref(false);
 const areaPath = ref([]);
 
 const formData = reactive({
@@ -294,11 +300,7 @@ const handleSave = async () => {
             if (submitLoading.value) return;
             submitLoading.value = true;
             try {
-                // 如果没有填写 productCode，根据业务要求可能需要前端生成一条随机的，或者后端生成。通常后端生成较为规范，但这里我们先给个占位或者让用户填：
-                const submitData = { ...formData };
-                if (!submitData.productCode) {
-                    submitData.productCode = 'PROD' + new Date().getTime();
-                }
+                const submitData = buildProductCreatePayload(formData);
 
                 const id = route.query.id;
                 if (id) {
@@ -308,7 +310,7 @@ const handleSave = async () => {
                     await ProductApi.createProduct(submitData);
                     message.success('创建成功');
                 }
-                sessionStorage.removeItem('PRODUCT_FORM_CACHE');
+                saveLastSubmittedProduct(submitData);
                 router.back();
             } catch (error) {
                 console.error(error);
@@ -317,6 +319,59 @@ const handleSave = async () => {
             }
         }
     });
+};
+
+const handleCopyPrevious = async () => {
+    const cachedPayload = getLastSubmittedProduct();
+    if (!cachedPayload) {
+        message.warning('暂无可复制的上一条产品建档信息');
+        return;
+    }
+    if (!cachedPayload.productName || !cachedPayload.category || !cachedPayload.subjectId) {
+        message.warning('上一条产品建档信息不完整，无法复制');
+        return;
+    }
+    if (copyLoading.value) return;
+    copyLoading.value = true;
+    try {
+        Object.assign(formData, {
+            productName: cachedPayload.productName || '',
+            category: cachedPayload.category || undefined,
+            productionArea: cachedPayload.productionArea || '',
+            provinceCode: cachedPayload.provinceCode || '',
+            cityCode: cachedPayload.cityCode || '',
+            districtCode: cachedPayload.districtCode || '',
+            productSpec: cachedPayload.productSpec || '',
+            productUnit: cachedPayload.productUnit || 'kg',
+            productImageUrl: cachedPayload.productImageUrl || '',
+            archiveDate: cachedPayload.archiveDate || formatDate(new Date(), 'YYYY-MM-DD'),
+            subjectId: cachedPayload.subjectId || undefined
+        });
+
+        if (cachedPayload.provinceCode || cachedPayload.cityCode || cachedPayload.districtCode) {
+            areaPath.value = [cachedPayload.provinceCode, cachedPayload.cityCode, cachedPayload.districtCode].filter(Boolean);
+        } else {
+            areaPath.value = cachedPayload.productionArea || '';
+        }
+
+        if (cachedPayload.subjectId) {
+            let subjectData = subjectOptions.value.find(item => item.id === cachedPayload.subjectId);
+            if (!subjectData) {
+                subjectData = await SubjectApi.getSubject(cachedPayload.subjectId);
+                subjectOptions.value = subjectData ? [subjectData] : [];
+            }
+            currentSubject.value = subjectData || null;
+        } else {
+            currentSubject.value = null;
+        }
+
+        message.success('已回显上一条建档信息');
+    } catch (error) {
+        console.error('回显上一条建档信息失败', error);
+        message.error('回显上一条失败，请稍后重试');
+    } finally {
+        copyLoading.value = false;
+    }
 };
 
 const handleCancel = () => {
@@ -362,12 +417,23 @@ $border-color: #E2E8F0;
     margin-bottom: 12px;
 }
 
+.btn-copy-prev {
+    min-width: 100px;
+    height: 32px;
+}
+
 .card-header {
-    margin-bottom: 32px;
+    margin-bottom: 24px;
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
+    gap: 8px;
+
+    .header-main {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+    }
 
     .header-title {
         font-size: 20px;

@@ -84,3 +84,17 @@ export const ocrUpload = (params: { file: File; imageType: number }) => {
     }
   })
 }
+
+// 查询当前用户部门下是否已创建主体
+export const hasDeptSubject = () => {
+  return request.get({ url: '/agri/subject/has-dept-subject' })
+}
+
+// 核验后查看主体敏感信息
+export const getSubjectSensitiveInfo = (data: {
+  subjectId: number
+  username: string
+  password: string
+}) => {
+  return request.post({ url: '/agri/subject/sensitive-info', data })
+}

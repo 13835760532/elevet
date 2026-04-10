@@ -170,15 +170,24 @@ const uploadError = () => {
       width: v-bind(width);
       height: v-bind(height);
       overflow: hidden;
-      border: 1px dashed var(--el-border-color-darker);
+      border: 1px dashed #E2E8F0;
+      background-color: #F8FAFC;
       border-radius: v-bind(borderradius);
-      transition: var(--el-transition-duration-fast);
+      transition: all 0.3s ease;
 
       &:hover {
-        border-color: var(--el-color-primary);
+        border-color: #00B3ED;
+        background-color: #f0f9ff;
 
         .upload-handle {
           opacity: 1;
+        }
+
+        .upload-empty {
+          .el-icon {
+            color: #00B3ED;
+            opacity: 1;
+          }
         }
       }
 
@@ -191,23 +200,24 @@ const uploadError = () => {
         padding: 0;
         overflow: hidden;
         background-color: transparent;
-        border: 1px dashed var(--el-border-color-darker);
+        border: 1px dashed #E2E8F0;
         border-radius: v-bind(borderradius);
+        transition: all 0.3s ease;
 
         &:hover {
-          border: 1px dashed var(--el-color-primary);
+          border: 1px dashed #00B3ED;
         }
       }
 
       .el-upload-dragger.is-dragover {
-        background-color: var(--el-color-primary-light-9);
-        border: 2px dashed var(--el-color-primary) !important;
+        background-color: #f0f9ff;
+        border: 2px dashed #00B3ED !important;
       }
 
       .upload-image {
         width: 100%;
         height: 100%;
-        object-fit: contain;
+        object-fit: cover;
       }
 
       .upload-empty {
@@ -218,11 +228,13 @@ const uploadError = () => {
         justify-content: center;
         font-size: 12px;
         line-height: 30px;
-        color: var(--el-color-info);
+        color: #94a3b8;
 
         .el-icon {
-          font-size: 28px;
-          color: var(--el-text-color-secondary);
+          font-size: 32px;
+          color: #94a3b8;
+          opacity: 0.6;
+          transition: all 0.3s ease;
         }
       }
 

@@ -124,7 +124,7 @@
                     </div>
 
                     <div class="table-wrapper">
-                        <el-table :data="tableData" v-loading="loading">
+                        <el-table ref="tableRef" :data="tableData" v-loading="loading" :height="tableHeight">
                             <el-table-column type="index" label="序号" width="60" align="center" />
                             <el-table-column prop="certificateCode" label="合格证编号" width="150" />
                             <el-table-column prop="certificateType" label="出证类型" width="100" align="center">
@@ -205,8 +205,11 @@ import * as CertificateVerificationApi from '@/api/agri/certificateVerification'
 import * as AreaApi from '@/api/system/area';
 import { dateFormatter } from '@/utils/formatTime';
 import AreaCascader from '@/components/AreaCascader/index.vue';
+import { useTableHeight } from '@/hooks/web/useTableHeight';
 
 const router = useRouter();
+const tableRef = ref(null);
+const { tableHeight } = useTableHeight(tableRef, 70);
 
 // 搜索区域
 const searchRegion = ref('');

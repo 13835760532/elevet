@@ -55,7 +55,7 @@
                     <el-form-item label="">
                         <el-input 
                             clearable 
-                            v-model="queryParams.socialCreditCode" 
+                            v-model="queryParams.socialCreditCodeOrIdCard" 
                             placeholder="请输入企业代码或身份证"
                             class="custom-input w180" 
                         />
@@ -104,27 +104,29 @@
                         </template>
                     </el-table-column>
                     <el-table-column label="主体名称" prop="name" min-width="180" show-overflow-tooltip />
-                    <el-table-column label="备案类型" prop="type" width="100" align="center">
-                        <template #default="scope">
-                            <el-tag :type="scope.row.type === 2 ? 'warning' : 'info'">
-                                {{ scope.row.type !== undefined && scope.row.type !== null ? getFilingTypeLabel(scope.row.type) : '--' }}
-                            </el-tag>
-                        </template>
-                    </el-table-column>
-                    <el-table-column label="主体类型" prop="category" width="100" align="center">
-                        <template #default="scope">
-                            <el-tag v-if="scope.row.category" effect="light" type="primary">{{ getCategoryLabel(scope.row.category) }}</el-tag>
-                            <span v-else>--</span>
-                        </template>
-                    </el-table-column>
-                    <el-table-column label="主营产品" prop="mainProducts" width="120" align="center" show-overflow-tooltip />
-                    <el-table-column label="联系人" prop="contactName" width="100" align="center" />
-                    <el-table-column label="电话" prop="contactPhone" width="120" align="center" />
                     <el-table-column label="所属地区" align="center" width="160" show-overflow-tooltip>
                         <template #default="scope">
                             {{ scope.row.provinceCode ? `${scope.row.provinceCode}${scope.row.cityCode}${scope.row.districtCode}` : '--' }}
                         </template>
                     </el-table-column>
+                    <el-table-column label="备案类型" prop="type" width="100" align="center">
+                        <template #default="scope">
+                            {{ scope.row.type !== undefined && scope.row.type !== null ? getFilingTypeLabel(scope.row.type) : '--' }}
+                        </template>
+                    </el-table-column>
+                    <el-table-column label="主体类型" prop="category" width="100" align="center">
+                        <template #default="scope">
+                            {{ scope.row.category ? getCategoryLabel(scope.row.category) : '--' }}
+                        </template>
+                    </el-table-column>
+                    <el-table-column label="主营产品" prop="mainProducts" width="120" align="center" show-overflow-tooltip />
+                    <el-table-column label="联系人" prop="contactName" width="100" align="center" />
+                    <el-table-column label="电话" prop="contactPhone" width="130" align="center">
+                        <template #default="scope">
+                            {{ maskPhone(scope.row.contactPhone) }}
+                        </template>
+                    </el-table-column>
+                 
                     <el-table-column label="创建时间" prop="createTime" width="160" align="center" :formatter="dateFormatter2" />
                     <el-table-column label="操作" width="160" align="center" fixed="right">
                         <template #default="scope">
@@ -173,10 +175,9 @@ const loading = ref(false);
 const exportLoading = ref(false);
 
 const queryParams = reactive({
-    socialCreditCodeOrIdCard: '',
     type: undefined,
     category: undefined,
-    socialCreditCode: '',
+    socialCreditCodeOrIdCard: '',
     region: [],
     createTime: []
 });
@@ -237,9 +238,8 @@ const handleQuery = () => {
 };
 
 const handleReset = () => {
-    queryParams.socialCreditCodeOrIdCard = '';
     queryParams.type = undefined;
-    queryParams.socialCreditCode = '';
+    queryParams.socialCreditCodeOrIdCard = '';
     queryParams.region = [];
     selectedAreaNames.value = [];
     queryParams.createTime = [];
@@ -297,6 +297,16 @@ const handleDelete = async (row) => {
 };
 
 const handleView = (row) => { router.push('/filing/subjectDetail?id=' + row.id); };
+
+/**
+ * 手机号脱敏：显示前3位和后2位，中间打码
+ */
+const maskPhone = (phone) => {
+    if (!phone) return '--';
+    // 允许非标准长度，但至少保留前3后2
+    if (phone.length <= 5) return phone;
+    return phone.substring(0, 3) + '*'.repeat(phone.length - 5) + phone.substring(phone.length - 2);
+};
 
 // 表格高度动态计算
 const tableRef = ref(null);

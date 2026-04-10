@@ -237,17 +237,28 @@ const handleExceed = () => {
       height: 100%;
       padding: 0;
       overflow: hidden;
-      border: 1px dashed var(--el-border-color-darker);
+      border: 1px dashed #E2E8F0;
+      background-color: #F8FAFC;
       border-radius: v-bind(borderradius);
+      transition: all 0.3s ease;
 
       &:hover {
-        border: 1px dashed var(--el-color-primary);
+        border-color: #00B3ED;
+        background-color: #f0f9ff;
+        
+        .upload-empty {
+          color: #00B3ED;
+          .el-icon {
+            color: #00B3ED;
+            opacity: 1;
+          }
+        }
       }
     }
 
     .el-upload-dragger.is-dragover {
-      background-color: var(--el-color-primary-light-9);
-      border: 2px dashed var(--el-color-primary) !important;
+      background-color: #f0f9ff;
+      border: 2px dashed #00B3ED !important;
     }
 
     .el-upload-list__item,
@@ -261,7 +272,7 @@ const handleExceed = () => {
     .upload-image {
       width: 100%;
       height: 100%;
-      object-fit: contain;
+      object-fit: cover;
     }
 
     .upload-handle {
@@ -272,7 +283,7 @@ const handleExceed = () => {
       width: 100%;
       height: 100%;
       cursor: pointer;
-      background: rgb(0 0 0 / 60%);
+      background: rgba(0, 0, 0, 0.6);
       opacity: 0;
       box-sizing: border-box;
       transition: var(--el-transition-duration-fast);
@@ -312,11 +323,14 @@ const handleExceed = () => {
       align-items: center;
       font-size: 12px;
       line-height: 30px;
-      color: var(--el-color-info);
+      color: #94a3b8;
+      transition: all 0.3s ease;
 
       .el-icon {
-        font-size: 28px;
-        color: var(--el-text-color-secondary);
+        font-size: 32px;
+        color: #94a3b8;
+        opacity: 0.6;
+        transition: all 0.3s ease;
       }
     }
   }

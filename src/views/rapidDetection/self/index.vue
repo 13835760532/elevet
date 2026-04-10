@@ -83,7 +83,7 @@
                         <el-table-column label="抽检地区" prop="detectionArea" width="100" align="center" />
                         <el-table-column label="检测项目" prop="aiRecognitionResult" min-width="120" align="center" show-overflow-tooltip>
                             <template #default="scope">
-                                {{ getDetectionItems(scope.row.aiRecognitionResult) }}
+                                {{ scope.row.aiRecognitionResult}}
                             </template>
                         </el-table-column>
                         <el-table-column label="是否复检" prop="isRetest" width="90" align="center">
@@ -101,7 +101,7 @@
                         </el-table-column>
                         <el-table-column label="检测时间" prop="detectionDate" width="100" align="center">
                             <template #default="scope">
-                                {{ scope.row.detectionDate ? formatDate(scope.row.detectionDate) : '-' }}
+                                {{ scope.row.testTime || '-' }}
                             </template>
                         </el-table-column>
                         <el-table-column label="检测结果" prop="overallResult" width="100" align="center">
@@ -123,11 +123,12 @@
                                 <span>{{ scope.row.publicFlag ? '是' : '否' }}</span>
                             </template>
                         </el-table-column>
-                        <el-table-column label="操作" width="160" align="center" fixed="right">
+                        <el-table-column label="操作" width="200" align="center" fixed="right">
                             <template #default="scope">
                                 <div class="table-operate-action-btns">
+                                    <span class="table-view-operate" v-if="scope.row.status == 0 &&  !scope.row.reportGenerated" @click="handleDetect(scope.row)">去检测</span>
                                     <span class="table-view-operate" @click="handleView(scope.row)">查看详情</span>
-                                    <span class="table-edit-operate" @click="handleRetest(scope.row)" v-if="scope.row.overallResult != null && (scope.row.status == 2 || scope.row.overallResult != 0) && scope.row.recheckNo == 0">复检</span>
+                                    <span class="table-edit-operate" @click="handleRetest(scope.row)" v-if="scope.row.status && scope.row.recheckNo == 0">复检</span>
                                     <span class="table-delete-operate" @click="handleDelete(scope.row)">删除</span>
                                 </div>
                             </template>
@@ -246,8 +247,19 @@ const getList = async () => {
             productCategory: queryParams.category,
             overallResult: queryParams.status,
             detectionArea: queryParams.area,
-            isRetest: queryParams.isRetest,
-            subjectName: queryParams.productName // 映射为名称搜索
+            rechecked: queryParams.isRetest,
+            sampleName: queryParams.productName // 映射为名称搜索
+        });
+        data.list.forEach(item => {
+            if(item.aiRecognitionResult) {
+                let data = JSON.parse(item.aiRecognitionResult)
+                item.aiRecognitionResult = data.results.map(item => item.codeName).join(', ');
+                item.testTime = data.timestamp || '-';
+            } else {
+                item.testTime = '-';
+                item.aiRecognitionResult = '-';
+            }
+            return item
         });
         tableList.value = data.list;
         total.value = data.total;
@@ -264,7 +276,7 @@ const getDetectionItems = (aiRecognitionResult: string) => {
     try {
         const aiRes = JSON.parse(aiRecognitionResult);
         if (aiRes.results && Array.isArray(aiRes.results)) {
-            return aiRes.results.map(item => item.codeName).join(', ');
+            return aiRes.results.map(item => item.timestamp).join(', ');
         }
     } catch (e) {
         return '-';
@@ -372,6 +384,13 @@ const handleDelete = async (row) => {
     } catch (error) {
         console.error(error);
     }
+};
+
+const handleDetect = (row) => {
+    router.push({
+        path: '/rapidDetection/create',
+        query: { id: row.id, action: 'detect' }
+    });
 };
 
 const handleView = (row) => {
@@ -577,5 +596,23 @@ onMounted(() => {
 }
 .w140{
     width: 140px!important;
+}
+
+/* 核心优化：确保操作按钮区域横向排布不折行 */
+.table-operate-action-btns {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    gap: 12px !important;
+    justify-content: center;
+    align-items: center;
+
+    span {
+        white-space: nowrap;
+        font-size: 13px;
+        &:hover {
+            opacity: 0.8;
+            text-decoration: underline;
+        }
+    }
 }
 </style>

@@ -30,9 +30,7 @@
                                 <div class="qty-unit-group">
                                     <el-input v-model="formData.quantity" disabled />
                                     <el-select v-model="formData.unit" disabled style="width: 100px;">
-                                        <el-option label="kg" value="kg" />
-                                        <el-option label="吨" value="t" />
-                                        <el-option label="个" value="count" />
+                                        <el-option v-for="unit in AGRI_UNITS" :key="unit.value" :label="unit.label" :value="unit.value" />
                                     </el-select>
                                 </div>
                             </el-form-item>
@@ -91,7 +89,7 @@
                                         </div>
                                         <div class="tr">
                                             <div class="td-label">重量/数量</div>
-                                            <div class="td-value">{{ formData.quantity }}{{ formData.unit }}</div>
+                                            <div class="td-value">{{ formData.quantity }}{{ getAgriUnitLabel(formData.unit) }}</div>
                                         </div>
                                         <div class="tr">
                                             <div class="td-label">产地</div>
@@ -146,6 +144,8 @@ import { ElLoading } from 'element-plus';
 import { Qrcode } from '@/components/Qrcode';
 import { getVerification } from '@/api/agri/certificateVerification/index';
 import { dateFormatter } from '@/utils/formatTime';
+import { AGRI_UNITS } from '@/utils/constants';
+import { getAgriUnitLabel } from '@/utils';
 
 const router = useRouter();
 const route = useRoute();
@@ -322,11 +322,11 @@ export default {
 
     /* 三方预览样式 */
     .external-preview-content {
-        height: 550px;
+        min-height: 550px;
         .image-preview-side {
-            height: 100%; display: flex; align-items: center; justify-content: center; padding: 20px;
-            .original-img { max-height: 100%; border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-            .img-empty { display: flex; flex-direction: column; align-items: center; color: #cbd5e1; gap: 12px; }
+            display: flex; flex-direction: column; align-items: center; padding: 20px;
+            .original-img { max-width: 400px; border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+            .img-empty { display: flex; flex-direction: column; align-items: center; color: #cbd5e1; gap: 12px; padding: 100px 0; }
         }
     }
 

@@ -158,6 +158,7 @@
                         <div class="value" v-else>--</div>
                     </div>
                 </div>
+
             </div>
         </div>
     </div>
@@ -165,7 +166,7 @@
 
 <script setup>
 import { ref, watch } from 'vue';
-import { useRouter, useRoute } from 'vue-router';
+import { useRoute } from 'vue-router';
 import { Picture, Postcard } from '@element-plus/icons-vue';
 import PageHeader from '@/components/PageHeader/index.vue';
 import * as ProductApi from '@/api/agri/product/index';
@@ -177,7 +178,6 @@ const { getLabel: getCategoryLabel } = useDict('agri_subject_category', 'str');
 const { getLabel: getFilingTypeLabel } = useDict('agri_filing_type', 'int');
 const { getLabel: getProductCategoryLabel } = useDict('agri_product_category', 'str');
 
-const router = useRouter();
 const route = useRoute();
 
 const productInfo = ref({});

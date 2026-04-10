@@ -57,7 +57,7 @@
 
             <!-- 数据表格 -->
             <div class="table-wrapper">
-                <el-table :data="tableData" v-loading="loading">
+                <el-table ref="tableRef" :data="tableData" v-loading="loading" :height="tableHeight">
                     <el-table-column label="序号" type="index" width="70" align="center" />
                     <el-table-column label="合格证编号" prop="certificateCode" width="160" align="center" />
                     <el-table-column label="来源" prop="certificateSource" width="100" align="center">
@@ -109,6 +109,7 @@ import { useMessage } from '@/hooks/web/useMessage';
 import download from '@/utils/download';
 import { dateFormatter } from '@/utils/formatTime';
 import * as CertificateApi from '@/api/agri/certificate';
+import { useTableHeight } from '@/hooks/web/useTableHeight';
 
 defineOptions({
     name: 'CertificateVerify'
@@ -116,6 +117,8 @@ defineOptions({
 
 const router = useRouter();
 const message = useMessage();
+const tableRef = ref(null);
+const { tableHeight } = useTableHeight(tableRef, 70);
 
 const areaIds = ref<string[]>([]);
 const queryParams = reactive({

@@ -7,21 +7,24 @@
         <!-- 内容卡片 -->
         <div class="content-card">
             <div class="card-header">
-                <span class="header-title">主体基本信息</span>
+                <div class="header-main">
+                    <span class="header-title">主体基本信息</span>
+                    <el-button type="primary" plain class="btn-copy-prev" :loading="copyLoading" @click="handleCopyPrevious">复制上一条</el-button>
+                </div>
                 <div class="dashed-line"></div>
             </div>
 
             <el-form ref="formRef" :model="formData" :rules="formRules" label-width="120px" class="product-form">
                 <!-- 备案类型 -->
                 <el-form-item label="备案类型" prop="type" required>
-                    <el-select v-model="formData.type" placeholder="选择备案类型" class="full-width">
+                    <el-select v-model="formData.type" placeholder="请选择备案类型" class="full-width" @change="handleTypeChange">
                         <el-option v-for="dict in filingTypeOptions" :key="dict.value" :label="dict.label" :value="dict.value" />
                     </el-select>
                 </el-form-item>
 
                 <!-- 主体名称 -->
                 <el-form-item label="主体名称" prop="name" required>
-                    <el-input v-model="formData.name" placeholder="请输入主体名称，如：北京本来生活科技有限公司" />
+                    <el-input v-model="formData.name" placeholder="请填写主体名称" />
                 </el-form-item>
 
                 <!-- 主体类型 -->
@@ -33,7 +36,7 @@
 
                 <!-- 主营产品 -->
                 <el-form-item label="主营产品" prop="mainProducts" required>
-                    <el-input v-model="formData.mainProducts" placeholder="黄瓜、西红柿、茄子、丝瓜（手工输入）" />
+                    <el-input v-model="formData.mainProducts" placeholder="请填写主营产品" />
                 </el-form-item>
 
                 <!-- 所属地区 -->
@@ -52,23 +55,23 @@
 
                 <!-- 详细地址 -->
                 <el-form-item label="详细地址" prop="address" required>
-                    <el-input v-model="formData.address" placeholder="建国路29号建外soho" />
+                    <el-input v-model="formData.address" placeholder="请填写详细地址" />
                 </el-form-item>
 
                 <!-- 联系人 -->
                 <el-form-item label="联系人" prop="contactName" required>
-                    <el-input v-model="formData.contactName" placeholder="秦艳萍" />
+                    <el-input v-model="formData.contactName" placeholder="请填写联系人" />
                 </el-form-item>
 
                 <!-- 联系电话 -->
                 <el-form-item label="联系电话" prop="contactPhone" required>
-                    <el-input v-model="formData.contactPhone" placeholder="65776500" />
+                    <el-input v-model="formData.contactPhone" placeholder="请填写联系电话" />
                 </el-form-item>
 
                 <!-- 生产规模 -->
                 <el-form-item label="生产规模" prop="productionScale" required>
                     <div class="scale-row">
-                        <el-input v-model="formData.productionScale" placeholder="10" />
+                        <el-input v-model="formData.productionScale" placeholder="请填写生产规模" />
                         <el-select v-model="formData.productionScaleUnit" placeholder="亩" style="width: 100px">
                             <el-option label="亩" value="亩" />
                             <el-option label="公顷" value="公顷" />
@@ -76,24 +79,36 @@
                     </div>
                 </el-form-item>
 
-                <el-form-item label="营业执照" prop="businessLicenseUrl">
-                    <div class="ocr-upload-wrapper">
-                        <UploadImg 
-                            v-model="formData.businessLicenseUrl" 
-                            :limit="1" 
-                            @change="(val) => !val && (formData.socialCreditCode = '')"
-                            :http-request="(options) => handleOcrUpload(options, 1)"
-                        />
-                        <div class="ocr-tip">点击上传营业执照，系统将自动识别信用代码</div>
-                    </div>
-                </el-form-item>
+                <template v-if="formData.type === 1">
+                    <el-form-item label="营业执照" prop="businessLicenseUrl">
+                        <div class="ocr-upload-wrapper">
+                            <UploadImg 
+                                v-model="formData.businessLicenseUrl" 
+                                :limit="1" 
+                                @change="(val) => !val && (formData.socialCreditCode = '')"
+                                :http-request="(options) => handleOcrUpload(options, 1)"
+                            />
+                            <div class="ocr-tip">上传营业执照，系统可自动识别营业执照编号，保障主体唯一性，支持企业宣传展示。</div>
+                        </div>
+                    </el-form-item>
 
-                <!-- 信用代码 -->
-                <el-form-item label="信用代码" prop="socialCreditCode">
-                   <el-input v-model="formData.socialCreditCode" placeholder="输入信用代码" />
-                </el-form-item>
+                    <!-- 信用代码 -->
+                    <el-form-item label="信用代码" prop="socialCreditCode">
+                        <el-input v-model="formData.socialCreditCode" placeholder="请填写信用代码" />
+                    </el-form-item>
 
-                <el-form-item label="身份证" prop="idCardFrontUrl">
+                    <!-- 企业资质 -->
+                    <el-form-item label="企业资质" prop="qualificationUrls">
+                        <UploadImgs v-model="formData.qualificationUrls" :limit="5" />
+                    </el-form-item>
+
+                    <!-- 企业介绍 -->
+                    <el-form-item label="企业介绍" prop="introduction">
+                        <el-input v-model="formData.introduction" type="textarea" :rows="4" placeholder="请填写企业介绍" />
+                    </el-form-item>
+                </template>
+
+                <el-form-item v-if="formData.type === 2" label="身份证" prop="idCardFrontUrl">
                     <div style="display: flex; gap: 20px;">
                         <div class="ocr-upload-wrapper">
                             <UploadImg 
@@ -113,16 +128,6 @@
                             <div class="ocr-tip">身份证反面</div>
                         </div>
                     </div>
-                </el-form-item>
-
-                <!-- 企业资质 -->
-                <el-form-item label="企业资质" prop="qualificationUrls">
-                    <UploadImgs v-model="formData.qualificationUrls" :limit="5" />
-                </el-form-item>
-
-                <!-- 企业介绍 -->
-                <el-form-item label="企业介绍" prop="introduction">
-                    <el-input v-model="formData.introduction" type="textarea" :rows="4" placeholder="请输入企业介绍..." />
                 </el-form-item>
 
                 <!-- 底部按钮 -->
@@ -145,6 +150,7 @@ import { UploadImg, UploadImgs } from '@/components/UploadFile';
 import AreaCascader from '@/components/AreaCascader/index.vue';
 import * as SubjectApi from '@/api/agri/subject/index';
 import { useMessage } from '@/hooks/web/useMessage';
+import { buildSubjectSubmitPayload, getLastSubmittedSubject, saveLastSubmittedSubject } from './lastSubmitCache';
 
 import { useDict } from '@/hooks/web/useDict';
 
@@ -156,6 +162,7 @@ const route = useRoute();
 const message = useMessage();
 const formRef = ref(null);
 const loading = ref(false);
+const copyLoading = ref(false);
 const areaPath = ref([]);
 
 const id = route.query.id;
@@ -175,11 +182,28 @@ const formData = reactive({
     productionScaleUnit: '亩',
     businessLicenseUrl: '',
     socialCreditCode: '',
+    idCard: '',
     idCardFrontUrl: '',
     idCardBackUrl: '',
     qualificationUrls: '',
     introduction: ''
 });
+
+/**
+ * 处理备案类型变化
+ */
+const handleTypeChange = (val) => {
+    if (val === 1) {
+        // 切换为企业，清空个人相关字段
+        formData.idCard = '';
+        formData.idCardFrontUrl = '';
+        formData.idCardBackUrl = '';
+    } else if (val === 2) {
+        // 切换为个人，清空企业相关字段
+        formData.businessLicenseUrl = '';
+        formData.socialCreditCode = '';
+    }
+};
 
 const formRules = {
     type: [{ required: true, message: '请选择备案类型', trigger: 'change' }],
@@ -201,6 +225,7 @@ const loadDetail = async () => {
             data.qualificationUrls = data.qualificationUrls.split(',').filter(item => item !== '');
         }
         Object.assign(formData, data);
+        areaPath.value = [data.provinceCode, data.cityCode, data.districtCode].filter(Boolean);
     } catch (error) {
         console.error('加载主体详情失败', error);
     }
@@ -217,10 +242,11 @@ const handleSubmit = async () => {
             if (loading.value) return;
             loading.value = true;
             try {
-                const submitData = { ...formData };
-                if (Array.isArray(submitData.qualificationUrls)) {
-                    submitData.qualificationUrls = submitData.qualificationUrls.join(',');
-                }
+                const normalizedPayload = buildSubjectSubmitPayload(formData);
+                const submitData = {
+                    ...normalizedPayload,
+                    qualificationUrls: normalizedPayload.qualificationUrls.join(',')
+                };
 
                 let result;
                 if (id) {
@@ -231,6 +257,8 @@ const handleSubmit = async () => {
                     message.success('创建成功');
                 }
                 
+                saveLastSubmittedSubject(normalizedPayload);
+
                 const redirect = route.query.redirect;
                 if (redirect) {
                     // 如果存在跳转回流地址，则回跳，并尝试带上新创建的主体 ID
@@ -256,6 +284,50 @@ const handleSubmit = async () => {
 
 const handleCancel = () => {
     router.back();
+};
+
+const handleCopyPrevious = async () => {
+    const cachedPayload = getLastSubmittedSubject();
+    if (!cachedPayload) {
+        message.warning('暂无可复制的上一条主体建档信息');
+        return;
+    }
+    if (!cachedPayload.type || !cachedPayload.name || !cachedPayload.category) {
+        message.warning('上一条主体建档信息不完整，无法复制');
+        return;
+    }
+    if (copyLoading.value) return;
+    copyLoading.value = true;
+    try {
+        Object.assign(formData, {
+            type: cachedPayload.type,
+            name: cachedPayload.name,
+            category: cachedPayload.category,
+            mainProducts: cachedPayload.mainProducts,
+            provinceCode: cachedPayload.provinceCode,
+            cityCode: cachedPayload.cityCode,
+            districtCode: cachedPayload.districtCode,
+            address: cachedPayload.address,
+            contactName: cachedPayload.contactName,
+            contactPhone: cachedPayload.contactPhone,
+            productionScale: cachedPayload.productionScale,
+            productionScaleUnit: cachedPayload.productionScaleUnit,
+            businessLicenseUrl: cachedPayload.businessLicenseUrl,
+            socialCreditCode: cachedPayload.socialCreditCode,
+            idCard: cachedPayload.idCard,
+            idCardFrontUrl: cachedPayload.idCardFrontUrl,
+            idCardBackUrl: cachedPayload.idCardBackUrl,
+            qualificationUrls: cachedPayload.qualificationUrls,
+            introduction: cachedPayload.introduction
+        });
+        areaPath.value = [cachedPayload.provinceCode, cachedPayload.cityCode, cachedPayload.districtCode].filter(Boolean);
+        message.success('已回显上一条建档信息');
+    } catch (error) {
+        console.error('回显上一条主体建档信息失败', error);
+        message.error('回显上一条失败，请稍后重试');
+    } finally {
+        copyLoading.value = false;
+    }
 };
 
 /**
@@ -323,21 +395,29 @@ const handleOcrUpload = async (options, imageType) => {
     box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
 }
 
+.btn-copy-prev {
+    min-width: 100px;
+    height: 32px;
+}
+
 .card-header {
-    margin-bottom: 30px;
+    margin-bottom: 24px;
     display: flex;
-    align-items: center;
     flex-direction: column;
-    justify-content: flex-start;
-    align-items: flex-start;
-    gap: 12px;
+    gap: 8px;
+
+    .header-main {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+    }
 
     .header-title {
         font-size: 20px;
         font-weight: 600;
         color: #333;
         display: block;
-        margin-bottom: 12px;
         text-align: left;
     }
     .dashed-line {
@@ -467,7 +547,7 @@ const handleOcrUpload = async (options, imageType) => {
 .ocr-upload-wrapper {
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: flex-start;
     gap: 8px;
 
     .ocr-tip {

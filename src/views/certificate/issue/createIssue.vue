@@ -1,8 +1,8 @@
 <template>
     <div class="page-container">
-
-        <pageHeader title="合格证开具（生产者/收购者）" desc="填写产品档案，关联上游合格证，关联检测信息开具合格证" />
-
+        <pageHeader v-if="currentStep== 2" title="合格证开具" desc="填写农产品合格证的详细信息，包括产品批次、检测结果、生产者信息等" />
+        <pageHeader v-else-if="currentStep == 3" title="合格证开具" desc="填写农产品合格证的详细信息，包括产品批次、检测结果、生产者信息等" />
+        <pageHeader v-else title="合格证开具（生产者/收购者）" desc="填写农产品档案，关联上游合格证，关联检测信息开具合格证" />
         <div class="content-card">
             <!-- 步骤导航 (参考 guide-steps) -->
             <div class="guide-steps">
@@ -101,56 +101,66 @@
 
                         <div class="divider"></div>
 
-                        <!-- 两列布局：产品编号 + 产品名称 -->
-                        <div class="form-row two-cols">
-                            <el-form-item label="*产品编号" class="form-col">
-                                <el-input v-model="formData.productNo" placeholder="DP20251238000001"
-                                    :disabled="formData.linkProfile === 'yes'" />
-                            </el-form-item>
-                            <el-form-item label="产品名称" class="form-col">
-                                <el-input v-model="formData.productName" placeholder="输入产品名称"
-                                    :disabled="formData.linkProfile === 'yes'" />
-                            </el-form-item>
-                        </div>
-
-                        <!-- 两列布局：产品类别 + 产品产地 -->
-                        <div class="form-row two-cols">
-                            <el-form-item label="产品类别" class="form-col">
-                                <el-select v-model="formData.category" placeholder="选择产品类别" class="full-width"
-                                    :disabled="formData.linkProfile === 'yes'">
-                                    <el-option label="蔬菜" value="vegetable" />
-                                    <el-option label="水果" value="fruit" />
-                                </el-select>
-                            </el-form-item>
-                            <el-form-item label="产品产地" class="form-col">
-                                <el-input v-model="formData.origin" placeholder="输入产品的生产地"
-                                    :disabled="formData.linkProfile === 'yes'" />
-                            </el-form-item>
-                        </div>
-
-                        <!-- 两列布局：批次规模 + 建档日期 -->
-                        <div class="form-row two-cols">
-                            <el-form-item label="批次规模" class="form-col">
-                                <div class="batch-input">
-                                    <el-input v-model="formData.batchSize" placeholder="输入产品数量" style="flex: 1;"
+                        <!-- 两列布局 -->
+                        <div class="product-fields-grid">
+                            <!-- 第一行：产品编号 + 产品名称 -->
+                            <div class="form-row two-cols">
+                                <el-form-item label="产品编号" required class="form-col">
+                                    <el-input v-model="formData.productNo" placeholder="DP20251238000001"
                                         :disabled="formData.linkProfile === 'yes'" />
-                                    <el-select v-model="formData.unit" placeholder="单位" style="width: 100px;"
+                                </el-form-item>
+                                <el-form-item label="产品名称" required class="form-col">
+                                    <el-input v-model="formData.productName" placeholder="输入产品名称"
+                                        :disabled="formData.linkProfile === 'yes'" />
+                                </el-form-item>
+                            </div>
+
+                            <!-- 第二行：产品类别 + 产品产地 -->
+                            <div class="form-row two-cols">
+                                <el-form-item label="产品类别" required class="form-col">
+                                    <el-select v-model="formData.category" placeholder="选择产品类别" class="full-width"
                                         :disabled="formData.linkProfile === 'yes'">
-                                        <el-option label="吨" value="t" />
-                                        <el-option label="千克" value="kg" />
+                                        <el-option v-for="dict in productCategoryOptions" :key="dict.value" :label="dict.label" :value="dict.value" />
                                     </el-select>
-                                </div>
-                            </el-form-item>
-                            <el-form-item label="建档日期" class="form-col">
-                                <el-date-picker v-model="formData.createDate" type="date" placeholder="2025-12-19"
-                                    class="full-width" :disabled="formData.linkProfile === 'yes'" />
-                            </el-form-item>
+                                </el-form-item>
+                                <el-form-item label="产品产地" required class="form-col">
+                                    <el-input v-model="formData.origin" placeholder="输入产品的生产地"
+                                        :disabled="formData.linkProfile === 'yes'" />
+                                </el-form-item>
+                            </div>
+
+                            <!-- 第三行：批次规模 + 建档日期 -->
+                            <div class="form-row two-cols">
+                                <el-form-item label="批次规模" required class="form-col">
+                                    <div class="batch-input">
+                                        <el-input v-model="formData.batchSize" placeholder="输入产品数量" style="flex: 1;"
+                                            :disabled="formData.linkProfile === 'yes'" />
+                                        <el-select v-model="formData.unit" placeholder="单位" style="width: 100px;"
+                                            :disabled="formData.linkProfile === 'yes'">
+                                            <el-option v-for="unit in AGRI_UNITS" :key="unit.value" :label="unit.label" :value="unit.value" />
+                                        </el-select>
+                                    </div>
+                                </el-form-item>
+                                <el-form-item label="建档日期" required class="form-col">
+                                    <el-date-picker v-model="formData.createDate" type="date" placeholder="选择建档日期时间"
+                                        class="full-width" :disabled="formData.linkProfile === 'yes'" value-format="YYYY-MM-DD" />
+                                </el-form-item>
+                            </div>
+
+                            <div class="form-row two-cols">
+                                <el-form-item label="产品图片" class="form-col">
+                                    <div class="image-upload-wrapper">
+                                        <UploadImg v-model="formData.productImageUrl" :limit="1" height="150px" width="150px"
+                                            :disabled="formData.linkProfile === 'yes'" />
+                                    </div>
+                                </el-form-item>
+                            </div>
                         </div>
                     </div>
 
                     <!-- 生产经营企业 -->
                     <div class="form-section">
-                        <h3 class="section-title">生产经营企业（主体名称）</h3>
+                        <h3 class="section-title"><span class="required-mark">*</span>生产经营企业（主体名称）</h3>
                         <p class="section-tip">*从生产档案中选择，或直接搜索到企业，支持多项建档</p>
 
                         <div class="entity-selector">
@@ -169,8 +179,8 @@
                                 <div class="info-line">注册城市: {{ formData.registeredCity || '-' }}</div>
                                 <div class="info-line">法人: {{ formData.legalPerson || '-' }}</div>
                                 <div class="info-actions">
-                                    <el-button class="btn-close">关闭</el-button>
-                                    <el-button type="primary" class="btn-select"
+                                    <el-button class="theme-default-btn">关闭</el-button>
+                                    <el-button type="primary" class="theme-primary-btn"
                                         @click="showSubjectDrawer = true">主体建档</el-button>
                                 </div>
                             </div>
@@ -194,14 +204,15 @@
                         <template v-if="formData.linkUpstream === 'yes'">
 
                             <el-form-item class="mt16">
-                                <el-select v-model="formData.upstreamType" placeholder="农产品上游合格证为本平台开具"
+                                <el-select v-model="formData.upstreamCertificateSource" placeholder="农产品上游合格证为本平台开具"
                                     class="full-width">
-                                    <el-option label="本平台开具" value="platform" />
+                                    <el-option label="农产品上游合格证为本平台开具" :value="1" />
+                                    <el-option label="农产品上游合格证为其他平台开具" :value="2" />
                                 </el-select>
                             </el-form-item>
 
-                            <div class="search-row">
-                                <el-input v-model="formData.upstreamCertNo" placeholder="10245567(输入上游合格证编号)"
+                            <div v-if="formData.upstreamCertificateSource === 1" class="search-row">
+                                <el-input v-model="formData.upstreamCertNo" placeholder="HGZ0000000001(输入上游合格证编号)"
                                     style="flex: 1">
                                     <template #suffix>
                                         <el-icon>
@@ -209,20 +220,57 @@
                                         </el-icon>
                                     </template>
                                 </el-input>
-                                <el-button type="primary" class="btn-cyan" :loading="upstreamLoading"
-                                    @click="handleSearchUpstream">查询</el-button>
+                                <el-button type="primary" class="theme-primary-btn mini-btn" :loading="upstreamLoading" @click="handleSearchUpstream">
+                                    查询
+                                </el-button>
+                            </div>
+
+                            <div v-else class="other-platform-area">
+                                <div class="upload-trigger-wrap">
+                                    <el-upload
+                                        class="upstream-uploader"
+                                        action="#"
+                                        :auto-upload="false"
+                                        :show-file-list="false"
+                                        @change="onUpstreamFileChange"
+                                    >
+                                        <el-button type="primary" class="upload-btn">上传合格证照片</el-button>
+                                    </el-upload>
+                                </div>
+
+                                <div class="upstream-preview-card">
+                                    <div class="preview-title">上游合格证预览</div>
+                                    <div class="preview-body">
+                                        <!-- 仅保留并放大图片展示 -->
+                                        <div class="image-box-side only-img">
+                                            <el-image 
+                                                v-if="formData.upstreamCertificateImageUrl"
+                                                :src="formData.upstreamCertificateImageUrl"
+                                                fit="contain"
+                                                class="preview-img"
+                                                :preview-src-list="[formData.upstreamCertificateImageUrl]"
+                                            />
+                                            <div v-else class="img-empty">
+                                                <el-icon :size="48"><Picture /></el-icon>
+                                                <span>未上传上游合格证照片</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </template>
                     </div>
 
                     <!-- 合格证预览区 -->
                     <div class="certificate-preview-mini"
-                        v-if="formData.linkUpstream == 'yes' && formData.upstreamType == 'platform' && formData.upstreamId">
+                        v-if="formData.linkUpstream == 'yes' && formData.upstreamCertificateSource == 1 && formData.upstreamId">
                         <div class="cert-no">上游合格证编号：{{ formData.upstreamCertNo }}</div>
                         <div class="cert-inner-card">
                             <h2 class="cert-main-title">承诺达标合格</h2>
-                            <div class="cert-sub-title">我承诺生产销售的食用农产品</div>
-                            <p class="cert-desc">未使用禁用的农药、兽药及其他化合物，使用的常规农药、兽药残留不超标。</p>
+                            <div class="cert-sub-title">承诺事项</div>
+                            <div class="cert-declaration-list mini">
+                                <p style="text-align: left;" v-for="(line, idx) in computedCommitment" :key="idx" class="declaration-line">• {{ line }}</p>
+                            </div>
                             <div class="cert-promises">
                                 <div class="cert-title">承诺依据</div>
                                 <el-checkbox v-model="formData.p1" disabled>质量安全控制符合要求</el-checkbox>
@@ -230,23 +278,27 @@
                                 <el-checkbox v-model="formData.p3" disabled>委托检测合格</el-checkbox>
                             </div>
                             <div class="qr-placeholder">
-                                <el-icon size="60">
-                                    <Picture />
-                                </el-icon>
+                                <Qrcode v-if="formData.qrCode" :text="formData.qrCode" :width="80" />
                             </div>
                         </div>
                     </div>
 
                     <!-- 基本信息预览 -->
                     <div class="basic-info-preview">
-                        <h3 class="section-title">基本信息</h3>
+                        <h3 class="preview-title">基本信息</h3>
                         <div class="info-grid">
                             <div class="info-row"><span class="label">产品名称</span><span class="value">{{
                                 formData.productName || '--'
                                     }}</span></div>
-                            <div class="info-row"><span class="label">产品数量</span><span class="value">{{
+                            <div class="info-row"><span class="label">数量/重量</span><span class="value">{{
                                 formData.batchSize || '--' }} {{
-                                        formData.unit }}</span></div>
+                                        formData.unit || '' }}</span></div>
+                            <div class="info-row">
+                                <span class="label">产品类别</span>
+                                <span class="value">
+                                    {{ getDictLabel(DICT_TYPE.AGRI_PRODUCT_CATEGORY, formData.category) || '--' }}
+                                </span>
+                            </div>
                             <div class="info-row"><span class="label">产品产地</span><span class="value">{{ formData.origin
                                 || '--' }}</span>
                             </div>
@@ -255,33 +307,26 @@
                             </div>
                             <div class="info-row"><span class="label">联系方式</span><span class="value">{{ formData.contactPhone || '--' }}</span></div>
                             <div class="info-row"><span class="label">开具时间</span><span class="value">{{
-                                formData.createDate || '--'
+                                formatDate(formData.createDate) || '--'
                                     }}</span></div>
                         </div>
                         <p class="info-tip">*电子合格证须现查询快检阅读电子智慧平台多数据</p>
                     </div>
 
-                    <!-- 产品图片 -->
-                    <div class="form-section">
-                        <h3 class="section-title">产品图片</h3>
-                        <div class="image-upload-wrapper">
-                            <UploadImg v-model="formData.productImageUrl" :limit="1" height="160px" />
-                        </div>
-                    </div>
 
                     <!-- 底部按钮 -->
                     <div class="form-footer">
-                        <el-button class="btn-cancel" @click="handleCancel">取消</el-button>
-                        <el-button type="primary" :loading="submitLoading" class="btn-submit" @click="goNextToStep2">生成合格证</el-button>
+                        <el-button class="theme-default-btn" @click="handleCancel">取消</el-button>
+                        <el-button type="primary" :loading="submitLoading" class="theme-primary-btn" @click="goNextToStep2">下一步</el-button>
                     </div>
                 </el-form>
             </div>
 
             <!-- 第二步：开具内容 -->
             <div v-if="currentStep === 2" class="step-content">
-                <el-form :model="formData" label-position="top" class="step-form">
-                    <el-form-item label="合格证出证类型" class="nowrap-item">
-                        <el-select v-model="formData.issueType" placeholder="请选择" class="custom-select-large">
+                <el-form :model="formData" :rules="rules" ref="formRef2" label-position="top" class="step-form">
+                    <el-form-item label="合格证出证类型" prop="issueType" class="nowrap-item">
+                        <el-select v-model="formData.issueType" placeholder="请选择出证类型" class="custom-select-large">
                             <el-option v-for="dict in certificateTypeOptions" :key="dict.value" :label="dict.label"
                                 :value="dict.value" />
                         </el-select>
@@ -290,23 +335,21 @@
                     <el-form-item label="数量 (重量)">
                         <div class="quantity-input">
                             <div class="stepper">
-                                <button type="button" class="step-btn" @click="handleSub">-</button>
-                                <div class="step-val">{{ formData.quantity }}</div>
+                                <button type="button" :class="['step-btn', { yellow: formData.quantity > 0 }]" @click="handleSub">-</button>
+                                <input type="number" class="step-val" v-model.number="formData.quantity" min="0" />
                                 <button type="button" class="step-btn yellow" @click="handleAdd">+</button>
                             </div>
                             <el-select v-model="formData.unit" class="unit-select">
-                                <el-option label="单位" value="unit" />
-                                <el-option label="千克" value="kg" />
-                                <el-option label="吨" value="t" />
+                                <el-option v-for="unit in AGRI_UNITS" :key="unit.value" :label="unit.label" :value="unit.value" />
                             </el-select>
                         </div>
                     </el-form-item>
 
-                    <el-form-item label="承诺依据">
+                    <el-form-item label="承诺依据" prop="basis">
                         <el-checkbox-group v-model="formData.basis">
-                            <el-checkbox label="quality">质量安全控制符合要求</el-checkbox>
-                            <el-checkbox label="self">自行检测合格</el-checkbox>
-                            <el-checkbox label="entrust">委托检测合格</el-checkbox>
+                            <el-checkbox :label="1">质量安全控制符合要求</el-checkbox>
+                            <el-checkbox :label="2">自行检测合格</el-checkbox>
+                            <el-checkbox :label="3">委托检测合格</el-checkbox>
                         </el-checkbox-group>
                     </el-form-item>
 
@@ -320,67 +363,67 @@
                                     <el-option label="本平台检测结果" value="platform" />
                                 </el-select>
                                 <template v-if="formData.thirdPartyType === 'third'">
+                                    <div class="upload-wrapper-box" @click="handleTriggerUpload">
+                                        <div class="upload-trigger-inner">
+                                            <UploadImgs 
+                                                ref="uploadImgsRef"
+                                                v-model="formData.thirdPartyReportUrls" 
+                                                :limit="3" 
+                                                draggable 
+                                                class="hidden-upload" 
+                                                width="100%" 
+                                                height="100%"
+                                            />
+                                            <div class="trigger-content" v-if="!formData.thirdPartyReportUrls || formData.thirdPartyReportUrls.length === 0">
+                                                <el-icon class="upload-big-icon"><Plus /></el-icon>
+                                                <div class="upload-tip-text">点击或拖拽上传检测报告（最多3张）</div>
+                                                <div class="upload-sub-tip">支持 JPG、PNG、PDF 格式，每张不超过 5MB</div>
+                                            </div>
+                                            <div class="trigger-content active" v-else>
+                                                <el-icon class="upload-big-icon primary"><CircleCheck /></el-icon>
+                                                <div class="upload-tip-text">继续上传或更改图片 ({{ formData.thirdPartyReportUrls.length }}/3)</div>
+                                            </div>
+                                        </div>
+                                    </div>
 
-                                    <UploadImg v-model="formData.thirdPartyReportUrl" :limit="1" height="200px" />
-                                    <div class="upload-tip">上传检测报告/检测结果</div>
+                                    <div class="results-preview-list" v-if="formData.thirdPartyReportUrls && formData.thirdPartyReportUrls.length > 0">
+                                        <h4 class="preview-title">上传结果预览：</h4>
+                                        <div class="image-preview-grid">
+                                            <div v-for="(url, idx) in formData.thirdPartyReportUrls" :key="idx" class="preview-box" :title="isPdf(url) ? '点击预览 PDF' : ''">
+                                                <div v-if="isPdf(url)" class="pdf-file-preview" @click="handlePreviewPdf(url)">
+                                                    <el-icon><Document /></el-icon>
+                                                    <span class="file-label">PDF 报告</span>
+                                                </div>
+                                                <el-image 
+                                                    v-else
+                                                    :src="url" 
+                                                    class="preview-img" 
+                                                    :preview-src-list="formData.thirdPartyReportUrls"
+                                                    :initial-index="idx"
+                                                    fit="contain"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="results-preview-list no-data" v-else>
+                                        <h4 class="preview-title">上传结果预览：</h4>
+                                        <div class="image-preview-grid">
+                                            <div v-for="n in 3" :key="n" class="preview-box empty">
+                                                <div class="preview-placeholder">
+                                                    <el-icon><Picture /></el-icon>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </template>
 
                                 <template v-else>
-                                    <div class="search-row" style="margin-top: 0;">
-                                        <el-select v-model="formData.platformRecordId" filterable remote
-                                            :remote-method="searchPlatformRecords" placeholder="查询样品检测结果完成关联"
-                                            class="flex-input" :loading="searchLoading">
-                                            <el-option v-for="item in recordOptions" :key="item.id"
-                                                :label="item.recordCode" :value="item.id">
-                                                <span>{{ item.recordCode }} ({{ item.subjectName }})</span>
-                                            </el-option>
-                                        </el-select>
-                                        <el-button type="primary" class="link-btn" @click="handleLinkRecord"
-                                            :loading="linkLoading">关联</el-button>
-                                    </div>
-
-                                    <div class="results-preview" v-if="currentRecord">
-                                        <h4 class="preview-title">检测结果预览</h4>
-
-                                        <div class="kv-grid">
-                                            <div class="kv-row"><span class="label">样品编号：</span><span class="val">{{
-                                                    currentRecord.recordCode }}</span></div>
-                                            <div class="kv-row"><span class="label">样品名称：</span><span class="val">{{
-                                                    currentRecord.subjectName }}</span></div>
-                                            <div class="kv-row"><span class="label">检测人员：</span><span class="val">{{
-                                                    currentRecord.detector }}</span></div>
-                                            <div class="kv-row"><span class="label">检测日期：</span><span class="val">{{
-                                                    currentRecord.detectionDate }}</span></div>
-                                        </div>
-
-                                        <table class="nested-table">
-                                            <thead>
-                                                <tr>
-                                                    <th>通道</th>
-                                                    <th>检测项目</th>
-                                                    <th>检测结果</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <tr v-for="(item, index) in detectionItems" :key="index">
-                                                    <td>{{ index + 1 }}</td>
-                                                    <td>{{ item.detectionItem }}</td>
-                                                    <td>
-                                                        <el-tag :type="item.result === 1 ? 'success' : 'danger'"
-                                                            size="small">
-                                                            {{ item.result === 1 ? '阴性' : '阳性' }}
-                                                        </el-tag>
-                                                    </td>
-                                                </tr>
-                                                <tr v-if="detectionItems.length === 0">
-                                                    <td colspan="3" class="text-center">无检测细项</td>
-                                                </tr>
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                    <div v-else class="preview-empty">
-                                        <el-empty description="请先搜索并选择检测记录进行关联" :image-size="80" />
-                                    </div>
+                                    <PlatformDetectionSelector
+                                        v-model="formData.platformRecordIds"
+                                        v-model:linked-records="linkedPlatformRecords"
+                                        :search-method="searchPlatformRecords"
+                                        @update:active-record="handlePlatformActiveRecordChange"
+                                    />
                                 </template>
 
 
@@ -389,8 +432,8 @@
                     </div>
 
                     <div class="page-footer">
-                        <el-button class="back-btn" @click="goToStep(1)">上一步</el-button>
-                        <el-button type="primary" :loading="submitLoading" class="submit-btn" @click="handleGenerate">开具合格证</el-button>
+                        <el-button class="theme-default-btn" @click="goToStep(1)">上一步</el-button>
+                        <el-button type="primary" :loading="submitLoading" class="theme-primary-btn" @click="handleGenerate">生成合格证</el-button>
                     </div>
                 </el-form>
             </div>
@@ -399,25 +442,31 @@
             <div v-if="currentStep === 3" class="step-content">
                 <div ref="printAreaRef" class="certificate-document">
                     <div class="cert-header">
-                        <span class="cert-no-tag">合格证编号－{{ certStore.certificate.certNo }}</span>
+                        <span class="cert-no-tag">合格证编号－{{ displayCertNo }}</span>
                     </div>
 
                     <div class="cert-body">
                         <h1 class="cert-title">承诺达标合格证</h1>
-                        <h2 class="cert-subtitle">我承诺生产销售的食用农产品</h2>
-                        <p class="cert-declaration">未使用禁用农药、兽药及其他化合物；使用的常规农药、兽药残留不超标。</p>
+                        <h2 class="cert-subtitle">承诺事项</h2>
+                        <div class="cert-declaration-list">
+                            <p v-for="(line, idx) in computedCommitment" :key="idx" class="declaration-line">• {{ line }}</p>
+                        </div>
 
                         <div class="cert-middle-section">
                             <div class="cert-basis">
-                                <h3 class="basis-title">承诺依据：</h3>
-                                <el-checkbox-group v-model="formData.basis" disabled>
-                                    <el-checkbox label="quality">质量安全控制符合要求</el-checkbox>
-                                    <el-checkbox label="self">自行检测合格</el-checkbox>
-                                    <el-checkbox label="entrust">委托检测合格</el-checkbox>
-                                </el-checkbox-group>
+                                <h3 class="basis-title" style="margin-bottom: 12px;">承诺依据：</h3>
+                                <div class="custom-basis-group">
+                                    <div class="basis-item" v-for="item in selectedBasisOptions" :key="item.value">
+                                        <span class="basis-box checked">✔</span>
+                                        <span class="basis-label">
+                                            <span class="basis-index">{{ item.indexLabel }}</span>
+                                            {{ item.label }}
+                                        </span>
+                                    </div>
+                                </div>
                             </div>
                             <div class="qr-code-wrapper">
-                                <Qrcode v-if="certStore.certificate.certNo" :text="certStore.certificate.certNo" :width="120" />
+                                <Qrcode v-if="displayCertNo" :text="`https://yishizhijian.jikeyun.net/certificate/trace?qrcode=${displayCertNo}`" :width="132" />
                             </div>
                         </div>
 
@@ -431,8 +480,8 @@
                                     <div class="value">{{ formData.productName }}</div>
                                 </div>
                                 <div class="info-row">
-                                    <div class="label">产品数量</div>
-                                    <div class="value">{{ formData.quantity }} {{ formData.unit }}</div>
+                                <div class="label">数量/重量</div>
+                                <div class="value">{{ (formData.quantity ?? formData.batchSize ?? '--') }} {{ formData.unit || '' }}</div>
                                 </div>
                                 <div class="info-row">
                                     <div class="label">产品产地</div>
@@ -443,15 +492,19 @@
                                     <div class="value">{{ formData.entity }}</div>
                                 </div>
                                 <div class="info-row">
+                                    <div class="label">联系方式</div>
+                                    <div class="value">{{ formData.contactPhone }}</div>
+                                </div>
+                                <div class="info-row">
                                     <div class="label">开具时间</div>
-                                    <div class="value">{{ certStore.certificate.issueDate }}</div>
+                                    <div class="value">{{ formatDate(certStore.certificate.issueDate) }}</div>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="divider"></div>
+                        <div class="divider no-print"></div>
 
-                        <div class="image-section">
+                        <div class="image-section no-print">
                             <h3 class="info-title">产品图片</h3>
                             <div class="image-preview-box">
                                 <img v-if="formData.productImageUrl" :src="formData.productImageUrl" class="cert-product-img" alt="产品图片" />
@@ -464,9 +517,17 @@
                 </div>
 
                 <div class="action-footer">
-                    <el-button type="primary" class="print-btn" :loading="captureLoading" @click="handlePreview()">打印合格证 / 预览</el-button>
-                    <el-button class="back-btn" @click="handleBack">返回列表</el-button>
-                    <el-button class="back-btn" @click="goToStep(2)">修改信息</el-button>
+                    <el-button class="theme-default-btn" @click="goToStep(2)">上一步</el-button>
+                    <el-button
+                        type="primary"
+                        class="theme-primary-btn"
+                        :loading="captureLoading"
+                        @click="handlePreview"
+                    >
+                        打印
+                    </el-button>
+                    <el-button type="info" class="theme-default-btn" @click="handleDownload">下载</el-button>
+                  
                 </div>
             </div>
         </div>
@@ -478,45 +539,113 @@
             append-to-body
             class="print-preview-dialog"
         >
-            <div class="preview-wrapper" v-loading="captureLoading">
-                <img v-if="previewSrc" :src="previewSrc" class="preview-img" />
-                <div v-else class="preview-placeholder">生成预览中…</div>
+            <div class="preview-section-title">热敏打印效果预览</div>
+            <div class="preview-wrapper print-effect-wrapper" v-loading="printEffectLoading">
+                <img v-if="printEffectPreviewSrc" :src="printEffectPreviewSrc" class="preview-img print-effect-img" />
+                <div v-else class="preview-placeholder">生成打印效果中…</div>
             </div>
             <template #footer>
-                <el-button @click="previewVisible = false">关闭</el-button>
-                <el-button type="primary" :disabled="!previewSrc" @click="handlePrint(previewSrc)">打印</el-button>
+                <el-button class="theme-default-btn" @click="previewVisible = false">关闭</el-button>
+                <el-button
+                    plain
+                    class="theme-default-btn bluetooth-btn"
+                    :loading="bluetoothConnecting"
+                    @click="connectBluetoothPrinter"
+                >
+                    {{ bluetoothReady ? `已连接：${printerName}` : '连接蓝牙打印机' }}
+                </el-button>
+                <el-button type="primary" class="theme-primary-btn" :loading="bluetoothPrinting" :disabled="!preparedPrintBytes || !bluetoothReady" @click="handlePrint(previewSrc)">
+                    蓝牙打印
+                </el-button>
             </template>
+        </el-dialog>
+
+        <!-- PDF 预览弹窗 -->
+        <el-dialog
+            v-model="pdfVisible"
+            title="PDF 报告预览"
+            width="80%"
+            destroy-on-close
+            class="pdf-view-dialog"
+        >
+            <iframe :src="pdfUrl" width="100%" height="700px" frameborder="0"></iframe>
         </el-dialog>
     </div>
 </template>
 
 <script setup>
-import { reactive, computed, onMounted, ref, nextTick } from 'vue';
+import { reactive, computed, onMounted, onUnmounted, ref, nextTick, watch } from 'vue';
 import { useRouter, useRoute, onBeforeRouteLeave } from 'vue-router';
-import { Search, Picture, Check, ArrowRight } from '@element-plus/icons-vue';
+import { Search, Picture, Check, ArrowRight, Plus, CircleCheck, Document } from '@element-plus/icons-vue';
 import { useCertificateStore } from '@/store/modules/certificate';
 import PageBack from '@/components/PageBack/index.vue';
 import * as CertificateApi from '@/api/agri/certificate';
 import * as ProductApi from '@/api/agri/product';
 import * as SubjectApi from '@/api/agri/subject';
+import * as DetectionReportApi from '@/api/agri/detectionReport';
+
+const isPdf = (url) => {
+    if (!url) return false;
+    return url.toLowerCase().endsWith('.pdf');
+};
+
+// PDF 预览相关
+const pdfVisible = ref(false);
+const pdfUrl = ref('');
+
+const handlePreviewPdf = (url) => {
+    if (!url) return;
+    pdfUrl.value = url;
+    pdfVisible.value = true;
+};
+
+import * as DetectionRecordApi from '@/api/agri/detectionRecord';
 import { useMessage } from '@/hooks/web/useMessage';
-import { DICT_TYPE, getIntDictOptions } from '@/utils/dict';
+import { DICT_TYPE, getIntDictOptions, getDictOptions, getDictLabel } from '@/utils/dict';
+import { formatDate } from '@/utils/formatTime';
 import html2canvas from 'html2canvas';
-import printJS from 'print-js';
 import { Qrcode } from '@/components/Qrcode';
 import SubjectFormDrawer from '@/views/filing/subject/components/SubjectFormDrawer.vue';
+import PlatformDetectionSelector from './components/PlatformDetectionSelector.vue';
+import { BluetoothPrinter } from '@/utils';
+import { parseImage } from '@/api/agri/certificateVerification/index';
+import { uploadFile } from '@/api/common/index';
+import { ElLoading } from 'element-plus';
+import { AGRI_UNITS } from '@/utils/constants';
 
 const router = useRouter();
 const route = useRoute();
 const message = useMessage();
 const certStore = useCertificateStore();
+const PRINTER_NAME_PREFIX = 'YSH';
+const PRINTER_SERVICE_UUIDS = [
+    '000018f0-0000-1000-8000-00805f9b34fb',
+    '0000ffe0-0000-1000-8000-00805f9b34fb',
+    '49535343-fe7d-4ae5-8fa9-9fafd205e455'
+];
+const PRINTER_CHARACTERISTIC_UUIDS = [
+    '00002af1-0000-1000-8000-00805f9b34fb',
+    '0000ffe1-0000-1000-8000-00805f9b34fb',
+    '49535343-8841-43f4-a8d4-ecbe34729bb3'
+];
 
 const id = route.query.id;
 const isUpdate = !!id;
 const currentStep = computed(() => certStore.currentStep);
 
+const isSubmitted = ref(false);
+
 // 点返回清空数据
-onBeforeRouteLeave((to) => {
+onBeforeRouteLeave(async (to) => {
+    // 如果在第二步切换页面且未提交成功，则自动保存草稿
+    if (currentStep.value === 2 && !isSubmitted.value) {
+        try {
+            await handleSaveDraft(true); // 静默保存
+        } catch (e) {
+            console.error('自动保存草稿失败', e);
+        }
+    }
+    
     if (to.path === '/certificate/issue') {
         certStore.resetAll();
     }
@@ -524,6 +653,14 @@ onBeforeRouteLeave((to) => {
 
 // 字典数据
 const certificateTypeOptions = getIntDictOptions(DICT_TYPE.AGRI_CERTIFICATE_TYPE);
+const productCategoryOptions = getDictOptions(DICT_TYPE.AGRI_PRODUCT_CATEGORY);
+
+const formRef2 = ref(null);
+
+const rules = {
+    issueType: [{ required: true, message: '请选择合格证出证类型', trigger: 'change' }],
+    basis: [{ type: 'array', required: true, message: '请至少选择一项承诺依据', trigger: 'change' }]
+};
 
 const formData = reactive({
     // Step 1
@@ -535,7 +672,7 @@ const formData = reactive({
     origin: '',
     batchSize: '',
     unit: 'kg',
-    createDate: '',
+    createDate: formatDate(new Date()),
     entity: '',
     registeredCity: '',
     legalPerson: '',
@@ -543,7 +680,7 @@ const formData = reactive({
     productId: undefined,
     subjectId: undefined, // 新增：保存主体ID
     linkUpstream: 'no',
-    upstreamType: 'platform',
+    upstreamCertificateSource: 1, // 1-本平台 2-其他平台
     upstreamCertNo: '',
     p1: false,
     p2: false,
@@ -552,18 +689,151 @@ const formData = reactive({
     // Step 2
     issueType: undefined,
     quantity: 0,
-    basis: ['quality'],
-    thirdPartyType: 'third',
-    thirdPartyReportUrl: '',
+    basis: [1],
+    thirdPartyType: 'platform',
+    thirdPartyReportUrls: [], // 存储多张三方报告URL
+    thirdPartyReportUrl: '', // 最终提交给后端的逗号分隔字符串
+    platformRecordIds: [],
     platformRecordId: undefined,
     platformType: 'platform',
     searchKey: '',
     qrCode: '',
-    contactPhone: ''
+    contactPhone: '',
+    commitmentContent: '', // 新增记录字段内容
+    upstreamCertificateImageUrl: '', // 上游合格证照片
 });
+
+// 监听关联档案状态，切换至“否”时清空产品信息
+watch(() => formData.linkProfile, (val) => {
+    if (val === 'no') {
+        formData.searchProfile = '';
+        formData.productNo = '';
+        formData.productName = '';
+        formData.category = '';
+        formData.origin = '';
+        formData.batchSize = '';
+        formData.productId = undefined;
+        formData.productImageUrl = '';
+    }
+});
+
+// 动态承诺依据文本标签
+const basisLabels = computed(() => {
+    const type = Number(formData.issueType);
+    if (type === 1) { // 生产者
+        return {
+            1: '未使用禁用农药兽药、停用兽药和非法添加物',
+            2: '使用常规农药兽药残留不超标',
+            3: '对承诺的真实性负责'
+        };
+    } else { // 收购者/批发市场
+        return {
+            1: '已按规定收取并保存该批次产品的承诺达标合格证或者其他质量安全合格证明；',
+            2: '未违规使用保鲜剂、防腐剂、添加剂等。',
+            3: '对承诺的真实性负责'
+        };
+    }
+});
+
+// 动态承诺内容计算属性：不再受勾选影响，直接展示对应类型下的所有 3 条承诺
+const computedCommitment = computed(() => {
+    const labels = basisLabels.value;
+    // 直接返回对象中的所有文字描述（1, 2, 3）
+    return [labels[1], labels[2], labels[3]].filter(Boolean);
+});
+const displayCertNo = computed(() => certStore.certificate.certNo || formData.productNo || '');
+
+const STEP1_FIELD_KEYS = [
+    'linkProfile',
+    'searchProfile',
+    'productNo',
+    'productName',
+    'category',
+    'origin',
+    'batchSize',
+    'unit',
+    'createDate',
+    'entity',
+    'registeredCity',
+    'legalPerson',
+    'productImageUrl',
+    'productId',
+    'subjectId',
+    'linkUpstream',
+    'upstreamCertificateSource',
+    'upstreamCertNo',
+    'p1',
+    'p2',
+    'p3',
+    'upstreamId',
+    'contactPhone',
+    'upstreamCertificateImageUrl'
+];
+
+const pickStep1Data = () => {
+    const result = {};
+    STEP1_FIELD_KEYS.forEach((key) => {
+        result[key] = formData[key];
+    });
+    return result;
+};
 
 const submitLoading = ref(false);
 const showSubjectDrawer = ref(false);
+const linkedPlatformRecords = ref([]);
+const currentPlatformRecord = ref(null);
+
+const mapReportOption = (item) => {
+    const linkId = Number(item?.recordId || item?.id || 0);
+    return {
+        ...item,
+        linkId,
+        optionLabel: `${item?.sampleCode || item?.recordCode || item?.reportCode || '-'}${item?.sampleName || item?.productName ? `（${item?.sampleName || item?.productName}）` : ''}`,
+        sampleName: item?.sampleName || item?.productName || ''
+    };
+};
+
+const unwrapApiData = (payload) => {
+    if (Array.isArray(payload)) return payload;
+    if (Array.isArray(payload?.data)) return payload.data;
+    return payload?.data || payload || null;
+};
+
+const normalizeDetectionRecordIds = (value) => {
+    if (Array.isArray(value)) {
+        return value.map((id) => Number(id)).filter((id) => Number.isFinite(id) && id > 0);
+    }
+    const singleId = Number(value);
+    return Number.isFinite(singleId) && singleId > 0 ? [singleId] : [];
+};
+
+const searchPlatformRecords = async (query) => {
+    const keyword = String(query || '').trim();
+    if (!keyword) return [];
+    try {
+        const response = await DetectionRecordApi.getDetectionRecordPage({
+            keyword: keyword,
+            // sampleCode: keyword,
+            // sampleName: keyword,
+            overallResult: 0, // 0-阴性，1-阳性，此处固定过滤掉阳性
+            pageNo: 1,
+            pageSize: 50
+        });
+        
+        const data = unwrapApiData(response);
+        // 如果返回的是分页结果对象，提取 list 数组
+        const sourceList = data?.list || (Array.isArray(data) ? data : []);
+        
+        return sourceList.map(mapReportOption).filter(item => item.linkId);
+    } catch (error) {
+        console.error('查询平台检测记录失败', error);
+        return [];
+    }
+};
+
+const handlePlatformActiveRecordChange = (record) => {
+    currentPlatformRecord.value = record || null;
+};
 
 const upstreamLoading = ref(false);
 const handleSearchUpstream = async () => {
@@ -573,34 +843,25 @@ const handleSearchUpstream = async () => {
     }
     upstreamLoading.value = true;
     try {
-        const data = await CertificateApi.queryUpstreamCertificate(formData.upstreamCertNo);
+        // 正则去除可能存在的横杠（包括全角 － 和长横杠 —）
+        const cleanedCode = String(formData.upstreamCertNo || '').replace(/[－—\-]/g, '').trim();
+        const data = await CertificateApi.queryUpstreamCertificate(cleanedCode);
         if (data) {
             message.success('查询成功');
-            // 回填信息
+            // 仅记录关联关系，不覆盖当前填写的产品档案信息
             formData.upstreamId = data.id;
-            formData.productName = data.productName || formData.productName;
-            formData.origin = data.productionArea || formData.origin;
-            formData.entity = data.subjectName || formData.entity;
-            formData.subjectId = data.subjectId || formData.subjectId;
-            formData.productId = data.productId || formData.productId;
-            formData.batchSize = data.batchNo || formData.batchSize;
-            formData.unit = data.unit || formData.unit;
+            formData.qrCode = 'https://yishizhijian.jikeyun.net/certificate/trace?qrcode=' + (data.qrCode || data.certificateCode) || formData.qrCode;
 
-            // 解析承诺依据
+            // 回填承诺依据，用于 Step 1 的上游预览展示
             if (data.commitmentBasis) {
                 try {
-                    const basis = JSON.parse(data.commitmentBasis);
-                    formData.p1 = basis.includes(1);
-                    formData.p2 = basis.includes(2);
-                    formData.p3 = basis.includes(3);
+                    const basis = typeof data.commitmentBasis === 'string' ? JSON.parse(data.commitmentBasis) : data.commitmentBasis;
+                    formData.p1 = basis.includes(1) || basis.includes("1");
+                    formData.p2 = basis.includes(2) || basis.includes("2");
+                    formData.p3 = basis.includes(3) || basis.includes("3");
                 } catch (e) {
                     console.error('解析承诺依据失败', e);
                 }
-            }
-
-            // 如果有主体信息，更新选项
-            if (data.subjectId && data.subjectName) {
-                entityOptions.value = [{ id: data.subjectId, name: data.subjectName }];
             }
         } else {
             message.warning('未找到对应的合格证信息');
@@ -611,6 +872,37 @@ const handleSearchUpstream = async () => {
         formData.upstreamId = undefined;
     } finally {
         upstreamLoading.value = false;
+    }
+};
+
+const onUpstreamFileChange = async (fileObj) => {
+    const loading = ElLoading.service({
+        target: '.other-platform-area',
+        text: '正在智能识别上游合格证...',
+        background: 'rgba(255, 255, 255, 0.7)'
+    });
+    
+    try {
+        if (formData.upstreamCertificateSource === 1) {
+            // 本平台识别（虽然本平台通常通过编号搜索，但保留该逻辑以备二维码识别）
+            const data = await parseImage({
+                file: fileObj.raw,
+                sourceHint: 1
+            });
+            formData.upstreamCertificateImageUrl = data.certificateImageUrl || '';
+            // message.success('识别成功');
+        } else {
+            // “其他平台”不做 OCR 识别，仅上传图片
+            const res = await uploadFile(fileObj.raw);
+            formData.upstreamCertificateImageUrl = unwrapApiData(res) || '';
+            formData.upstreamCertNo = ''; // 其他平台不传编号
+            message.success('图片上传成功');
+        }
+    } catch (e) {
+        console.error('上游合格证处理失败', e);
+        message.error('处理失败，请手动确认');
+    } finally {
+        loading.close();
     }
 };
 
@@ -625,38 +917,102 @@ const handleEntityChange = (val) => {
     }
 };
 
+
 const loadDetails = async () => {
     if (!id) return;
     try {
         const data = await CertificateApi.getCertificate(id);
+        const loadedDetectionRecordIds = normalizeDetectionRecordIds(data.detectionRecordId);
+        
+        // 解析承诺依据
+        let basisArr = [];
+        if (data.commitmentBasis) {
+            try {
+                basisArr = typeof data.commitmentBasis === 'string' ? JSON.parse(data.commitmentBasis) : data.commitmentBasis;
+            } catch (e) {
+                console.error('解析承诺依据失败', e);
+            }
+        }
+
         Object.assign(formData, {
-            productNo: data.certificateCode,
-            productName: data.productName,
-            category: 'vegetable', // 示例映射
-            origin: data.origin || '',
-            batchSize: data.quantity,
-            unit: data.unit || 'kg',
-            createDate: data.issueDate,
-            entity: data.entityName || '',
-            subjectId: data.subjectId, // 设置 ID
-            registeredCity: data.cityCode || '青岛市',
-            legalPerson: data.legalPerson || '',
+            productNo: data.certificateCode || data.productDraft?.productCode || data.productCode || '',
+            productName: data.productName || data.productDraft?.productName || '',
+            category: data.productCategory || data.productDraft?.category || 'vegetable',
+            origin: data.productionArea || data.productDraft?.productionArea || '',
+            batchSize: data.batchNo || data.quantity || '',
+            unit: data.unit || data.productDraft?.productUnit || 'kg',
+            createDate: data.issueDate || data.createTime || '',
+            entity: data.subjectName || '',
+            subjectId: data.subjectId,
+            registeredCity: data.productCityCode || '青岛市',
+            legalPerson: data.contactName || '', // 用联系人暂替法人回显
+            contactPhone: data.contactPhone || '',
             productImageUrl: data.productImageUrl || '',
             productId: data.productId,
             issueType: data.certificateType,
             quantity: data.quantity,
+            thirdPartyReportUrls: data.thirdPartyReportUrl ? data.thirdPartyReportUrl.split(',') : [],
             thirdPartyReportUrl: data.thirdPartyReportUrl || '',
-            platformRecordId: data.detectionRecordId,
-            thirdPartyType: data.thirdPartyReportUrl ? 'third' : (data.detectionRecordId ? 'platform' : 'third'),
-            qrCode: data.qrCode
+            platformRecordIds: loadedDetectionRecordIds,
+            platformRecordId: loadedDetectionRecordIds[0],
+            thirdPartyType: data.thirdPartyReportUrl ? 'third' : (loadedDetectionRecordIds.length ? 'platform' : 'third'),
+            qrCode: data.qrCode,
+            // 承诺依据同步
+            basis: basisArr,
+            p1: basisArr.includes(1) || basisArr.includes("1"),
+            p2: basisArr.includes(2) || basisArr.includes("2"),
+            p3: basisArr.includes(3) || basisArr.includes("3"),
+            upstreamCertificateImageUrl: data.upstreamCertificateImageUrl || ''
         });
+
+        // 如果有关联产品，则触发产品详情加载以完善产品编号等信息
+        if (data.productId) {
+            handleProductSelect(data.productId);
+        }
+
         // 为确保 select 显示名称，如果有 ID 则构造一个 option
-        if (data.subjectId && data.entityName) {
-            entityOptions.value = [{ id: data.subjectId, name: data.entityName }];
+        if (data.subjectId && data.subjectName) {
+            entityOptions.value = [{ id: data.subjectId, name: data.subjectName }];
         }
         // 更新 store 以同步其它步骤
-        certStore.updateProductInfo(formData);
+        certStore.updateProductInfo(pickStep1Data());
         certStore.updateIssueInfo(formData);
+
+        if (loadedDetectionRecordIds.length) {
+            try {
+                const detailResponses = await Promise.all(
+                    loadedDetectionRecordIds.map(async (recordId) => {
+                        // 优先检测记录详情（与 detectionRecordId 语义一致），报告接口作为兜底
+                        try {
+                            const record = await DetectionRecordApi.getDetectionRecord(Number(recordId));
+                            if (record) return record;
+                        } catch (error) {
+                            console.warn('加载检测记录详情失败，尝试检测报告详情', recordId, error);
+                        }
+                        try {
+                            const report = await DetectionReportApi.getDetectionReportByRecordId(Number(recordId));
+                            return unwrapApiData(report);
+                        } catch (error) {
+                            console.warn('加载检测报告详情失败', recordId, error);
+                            return null;
+                        }
+                    })
+                );
+                const mappedList = detailResponses
+                    .filter(Boolean)
+                    .map((detail) => mapReportOption(detail));
+
+                if (mappedList.length) {
+                    linkedPlatformRecords.value = mappedList;
+                    formData.platformRecordIds = mappedList.map((item) => item.linkId);
+                    currentPlatformRecord.value = mappedList[0];
+                } else {
+                    formData.platformRecordIds = loadedDetectionRecordIds;
+                }
+            } catch (error) {
+                console.error('加载关联检测记录失败', error);
+            }
+        }
     } catch (error) {
         console.error('加载详情失败', error);
     }
@@ -683,7 +1039,15 @@ const searchProduct = async (query) => {
     if (query !== '') {
         productLoading.value = true;
         try {
-            const data = await ProductApi.getProductPage({ productCode: query, pageNo: 1, pageSize: 50 });
+            // 判断是否全部为中文
+            const isAllChinese = /^[\u4e00-\u9fa5]+$/.test(query);
+            const params = { pageNo: 1, pageSize: 50 };
+            if (isAllChinese) {
+                params.productName = query;
+            } else {
+                params.productCode = query;
+            }
+            const data = await ProductApi.getProductPage(params);
             productOptions.value = data.list;
         } finally {
             productLoading.value = false;
@@ -705,10 +1069,9 @@ const handleProductSelect = async (id) => {
         formData.productId = data.id;
         formData.batchSize = data.productSpec || '';
         formData.unit = data.productUnit || 'kg';
-        // 转换时间戳为日期字符串
+        // 转换时间戳为完整日期时间字符串
         if (data.createTime) {
-            const date = new Date(data.createTime);
-            formData.createDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+            formData.createDate = formatDate(new Date(data.createTime));
         }
 
         // 自动带入主体信息
@@ -733,16 +1096,15 @@ const handleProductSelect = async (id) => {
 };
 
 onMounted(async () => {
+console.log(certificateTypeOptions)
     certStore.setStep(1);
     if (id) {
         loadDetails();
     } else {
-        // 如果是从主体建档回跳，尝试从 store 恢复现场
-        Object.assign(formData, certStore.productInfo);
-
-        // 处理回跳后的新主体自动选中
         const newSubjectId = route.query.newSubjectId;
+        // 仅在“主体建档回跳”场景恢复第一步数据，普通新建不回填历史残留
         if (newSubjectId) {
+            Object.assign(formData, certStore.productInfo);
             try {
                 const subject = await SubjectApi.getSubject(newSubjectId);
                 formData.subjectId = subject.id;
@@ -751,6 +1113,8 @@ onMounted(async () => {
             } catch (err) {
                 console.error('获取新主体信息失败', err);
             }
+        } else {
+            certStore.resetAll();
         }
     }
 });
@@ -775,24 +1139,141 @@ const goToStep = (step) => {
     certStore.setStep(step);
 };
 
+const isEmptyValue = (value) => {
+    if (value === null || value === undefined) return true;
+    if (Array.isArray(value)) return value.length === 0;
+    return String(value).trim() === '';
+};
+
+const validateStep1Required = () => {
+    const requiredFields = [
+        { key: 'productNo', label: '产品编号' },
+        { key: 'productName', label: '产品名称' },
+        { key: 'category', label: '产品类别' },
+        { key: 'origin', label: '产品产地' },
+        { key: 'batchSize', label: '批次规模' },
+        { key: 'createDate', label: '建档日期' },
+        { key: 'subjectId', label: '生产经营企业（主体）' }
+    ];
+
+    for (const item of requiredFields) {
+        if (isEmptyValue(formData[item.key])) {
+            message.warning(`请先填写必填项：${item.label}`);
+            return false;
+        }
+    }
+    return true;
+};
+
 const goNextToStep2 = () => {
-    certStore.updateProductInfo(formData);
+    if (!validateStep1Required()) {
+        return;
+    }
+    certStore.updateProductInfo(pickStep1Data());
     goToStep(2);
 };
 
 // 提交数据
+const uploadImgsRef = ref(null);
+const handleTriggerUpload = () => {
+    if (!uploadImgsRef.value) return;
+    // 获取根元素的 DOM，向上查找 .el-upload__input
+    const el = uploadImgsRef.value?.$el;
+    const input = el?.querySelector('.el-upload__input');
+    if (input) {
+        input.click();
+    }
+};
+
+watch(() => formData.thirdPartyType, (type) => {
+    if (type !== 'platform') {
+        formData.platformRecordId = undefined;
+        formData.platformRecordIds = [];
+        linkedPlatformRecords.value = [];
+        currentPlatformRecord.value = null;
+    }
+});
+
+
+// 统一同步承诺依据到 basis 数组（供其他逻辑使用）
+watch([() => formData.p1, () => formData.p2, () => formData.p3], () => {
+    const basis = [];
+    if (formData.p1) basis.push(1);
+    if (formData.p2) basis.push(2);
+    if (formData.p3) basis.push(3);
+    formData.basis = basis;
+}, { immediate: true });
+
+const handleSaveDraft = async (isSilent = false) => {
+    const draftData = {
+        id: id ? Number(id) : undefined,
+        productId: formData.productId,
+        subjectId: formData.subjectId,
+        autoCreateSubject: formData.linkProfile === 'no',
+        autoCreateProduct: formData.linkProfile === 'no',
+        certificateType: formData.issueType,
+        productionDate: formData.createDate,
+        batchNo: formData.batchSize, // 同 handleGenerate 逻辑，批次规模存 batchNo
+        quantity: formData.quantity,
+        unit: formData.unit,
+        commitmentContent: formData.commitmentContent,
+        commitmentBasis: JSON.stringify(formData.basis || []),
+        detectionRecordId: normalizeDetectionRecordIds(formData.platformRecordIds),
+        subjectDraft: {
+            name: formData.entity,
+            contactPhone: formData.contactPhone,
+            legalPerson: formData.legalPerson,
+            address: formData.origin 
+        },
+        productDraft: {
+            productCode: formData.productNo, // 产品编号存此处
+            productName: formData.productName,
+            category: formData.category,
+            productionArea: formData.origin,
+            productUnit: formData.unit,
+            productImageUrl: formData.productImageUrl
+        },
+        upstreamCertificateImageUrl: formData.upstreamCertificateImageUrl
+    };
+
+    try {
+        await CertificateApi.saveDraft(draftData);
+        if (!isSilent) {
+            message.success('已保存至草稿');
+        }
+        return true;
+    } catch (e) {
+        if (!isSilent) {
+            message.error('保存草稿失败');
+        }
+        throw e;
+    }
+};
+
 const handleGenerate = async () => {
     if (submitLoading.value) return;
+
+    if (formRef2.value) {
+        try {
+            await formRef2.value.validate();
+        } catch (err) {
+            message.warning('请补全必填信息');
+            return;
+        }
+    }
+
     submitLoading.value = true;
     try {
-        const basisMapping = {
-            quality: 1,
-            self: 2,
-            entrust: 3
-        };
-        const mappedBasis = formData.basis.map(key => basisMapping[key]).filter(Boolean);
+        // 确保以当前编辑区域的 basis 数组为准进行提交，并过滤掉 null 或无效值
+        const mappedBasis = formData.basis.map(v => Number(v));
+        const linkedPlatformRecordIds = normalizeDetectionRecordIds(formData.platformRecordIds);
 
-        let currentProductId = formData.productId || 15707; // 回退使用默认值
+        // if (formData.thirdPartyType === 'platform' && linkedPlatformRecordIds.length === 0) {
+        //     message.warning('请先在本平台检测结果中关联至少一个样品');
+        //     return;
+        // }
+
+        let currentProductId = formData.productId;
 
         if (formData.linkProfile === 'no') {
             const productData = {
@@ -814,32 +1295,30 @@ const handleGenerate = async () => {
         }
 
         const submitData = {
-            id: isUpdate ? id : undefined,
             certificateType: formData.issueType,
             productId: currentProductId,
             quantity: Number(formData.quantity) || 0,
             unit: formData.unit || 'kg',
-            commitmentContent: '我承诺生产销售的食用农产品未使用禁用的农药、兽药及其他化合物，使用的常规农药、兽药残留不超标。',
+            commitmentContent: Array.isArray(computedCommitment.value) ? computedCommitment.value.join('\n') : (computedCommitment.value || ''), // 提交动态生成的内容，使用换行符连接
             commitmentBasis: JSON.stringify(mappedBasis),
             productionDate: formData.createDate ? new Date(formData.createDate).toISOString().split('T')[0] : '',
             batchNo: formData.batchSize || undefined,
             productImageUrl: formData.productImageUrl || undefined,
-            upstreamCertificateId: formData.linkUpstream === 'yes' ? formData.upstreamId : undefined,
-            upstreamCertificateCode: formData.linkUpstream === 'yes' ? formData.upstreamCertNo : undefined,
-            thirdPartyReportUrl: formData.thirdPartyType === 'third' ? formData.thirdPartyReportUrl : undefined,
-            detectionRecordId: formData.thirdPartyType === 'platform' ? formData.platformRecordId : undefined
+            upstreamCertificateSource: formData.linkUpstream === 'yes' ? formData.upstreamCertificateSource : undefined,
+            upstreamCertificateId: (formData.linkUpstream === 'yes' && formData.upstreamCertificateSource === 1) ? formData.upstreamId : undefined,
+            upstreamCertificateCode: (formData.linkUpstream === 'yes' && formData.upstreamCertificateSource === 1) ? formData.upstreamCertNo : undefined,
+            upstreamCertificateImageUrl: (formData.linkUpstream === 'yes' && formData.upstreamCertificateSource === 2) ? formData.upstreamCertificateImageUrl : undefined,
+            thirdPartyReportUrl: formData.thirdPartyType === 'third' ? (Array.isArray(formData.thirdPartyReportUrls) ? formData.thirdPartyReportUrls.filter(Boolean).join(',') : formData.thirdPartyReportUrls) : undefined,
+            detectionRecordId: formData.thirdPartyType === 'platform' ? linkedPlatformRecordIds : undefined
         };
 
-        if (isUpdate) {
-            await CertificateApi.updateCertificate(submitData);
-            message.success('更新成功');
-        } else {
-            await CertificateApi.createCertificate(submitData);
-            message.success('创建成功');
-        }
+   
+        await CertificateApi.createCertificate(submitData);
+        message.success('创建成功');
 
         certStore.updateIssueInfo(formData);
         certStore.generateCertificate();
+        isSubmitted.value = true;
         goToStep(3);
     } catch (error) {
         console.error('保存失败', error);
@@ -853,6 +1332,29 @@ const handleCancel = () => {
     router.push('/certificate/issue');
 };
 
+const handleDownload = async () => {
+    const area = printAreaRef.value;
+    if (!area) {
+        message.warning('预览区域未加载');
+        return;
+    }
+    try {
+        const canvas = await html2canvas(area, {
+            useCORS: true,
+            scale: 2,
+            backgroundColor: '#ffffff'
+        });
+        const link = document.createElement('a');
+        link.download = `合格证_${displayCertNo.value || Date.now()}.png`;
+        link.href = canvas.toDataURL();
+        link.click();
+        message.success('已启动下载');
+    } catch (e) {
+        console.error('下载失败', e);
+        message.error('下载导出失败，请重试');
+    }
+};
+
 const handleBack = () => {
     certStore.resetAll();
     router.push('/certificate/issue');
@@ -861,7 +1363,127 @@ const handleBack = () => {
 const printAreaRef = ref(null);
 const previewVisible = ref(false);
 const previewSrc = ref(null);
+const printEffectPreviewSrc = ref(null);
+const preparedPrintBytes = ref(null);
 const captureLoading = ref(false);
+const printEffectLoading = ref(false);
+const bluetoothConnecting = ref(false);
+const bluetoothPrinting = ref(false);
+const bluetoothReady = ref(false);
+const printerName = ref('未连接设备');
+const autoReconnectTimer = ref(null);
+const keepAliveTimer = ref(null);
+
+const basisOptions = [
+    { indexLabel: '(1)', label: '质量安全控制符合要求', value: 1 },
+    { indexLabel: '(2)', label: '自行检测合格', value: 2 },
+    { indexLabel: '(3)', label: '委托检测合格', value: 3 }
+];
+
+const selectedBasisOptions = computed(() => {
+    const selected = new Set((formData.basis || []).map(v => Number(v)));
+    return basisOptions.filter(item => selected.has(Number(item.value)));
+});
+
+// 用“改宽度”替代 transform 缩放 0.95（544 * 0.95 ≈ 517，取 8 的倍数 520）
+const PRINT_TARGET_WIDTH = 520;
+
+const printImageOptions = {
+    rotate90: false,
+    cropWhitespace: false,
+    fitToWidth: true,
+    maxWidth: PRINT_TARGET_WIDTH,
+    threshold: 220,
+    contrast: 2.2,
+    align: 'center',
+    feedLines: 2,
+    feedDots: 30,
+    cut: false,
+    widthUnit: 'bytes',
+    command: 'gs-v-0'
+};
+
+const bluetoothPrinter = new BluetoothPrinter({
+    namePrefix: PRINTER_NAME_PREFIX,
+    serviceUUIDs: PRINTER_SERVICE_UUIDS,
+    characteristicUUIDs: PRINTER_CHARACTERISTIC_UUIDS,
+    packetSize: 180,
+    writeDelayMs: 8,
+    preferWriteWithResponse: false,
+    onStatusChange: (ready, name) => {
+        bluetoothReady.value = ready;
+        printerName.value = ready ? name : '未连接设备';
+    }
+});
+
+const connectBluetoothPrinter = async () => {
+    bluetoothConnecting.value = true;
+    try {
+        const name = await bluetoothPrinter.connect();
+        message.success(`已连接蓝牙打印机：${name}`);
+    } catch (error) {
+        if (error?.name !== 'NotFoundError') {
+            message.error(`蓝牙连接失败：${error?.message || '请重试'}`);
+        }
+    } finally {
+        bluetoothConnecting.value = false;
+    }
+};
+
+const startBluetoothKeepAlive = () => {
+    if (keepAliveTimer.value) return;
+    keepAliveTimer.value = window.setInterval(async () => {
+        if (!bluetoothReady.value) return;
+        try {
+            await bluetoothPrinter.ping();
+        } catch (error) {
+            console.warn('bluetooth keepAlive failed', error);
+        }
+    }, 12000);
+};
+
+const pauseBluetoothKeepAlive = () => {
+    if (!keepAliveTimer.value) return;
+    clearInterval(keepAliveTimer.value);
+    keepAliveTimer.value = null;
+};
+
+const startAutoReconnect = () => {
+    if (autoReconnectTimer.value) return;
+    autoReconnectTimer.value = window.setInterval(async () => {
+        if (bluetoothReady.value || bluetoothConnecting.value) return;
+        try {
+            const name = await bluetoothPrinter.reconnectLastDevice();
+            if (name) {
+                message.success(`蓝牙已自动重连：${name}`);
+            }
+        } catch (error) {
+            // 忽略失败，定时器下一轮继续重连
+        }
+    }, 6000);
+};
+
+const stopBluetoothTimers = () => {
+    pauseBluetoothKeepAlive();
+    if (autoReconnectTimer.value) {
+        clearInterval(autoReconnectTimer.value);
+        autoReconnectTimer.value = null;
+    }
+};
+
+onMounted(async () => {
+    startBluetoothKeepAlive();
+    startAutoReconnect();
+    try {
+        await bluetoothPrinter.reconnectLastDevice();
+    } catch (error) {
+        // 初次进入可能尚未授权设备，忽略
+    }
+});
+
+onUnmounted(() => {
+    stopBluetoothTimers();
+});
 
 const captureAreaToImg = async () => {
     const area = printAreaRef.value;
@@ -875,16 +1497,22 @@ const captureAreaToImg = async () => {
     });
 
     try {
+        // 关键步骤：添加特定类名以强制大字号和窄布局
+        area.classList.add('printing-active');
+        
         const canvas = await html2canvas(area, {
-            scale: 2,
+            scale: 1.5, // 回退到2，避免超大像素反而导致不兼容
             useCORS: true,
             backgroundColor: '#fff',
             scrollX: 0,
             scrollY: 0,
-            windowWidth: document.documentElement.clientWidth
+            width: PRINT_TARGET_WIDTH,
+            windowWidth: PRINT_TARGET_WIDTH
         });
         return canvas.toDataURL('image/png');
     } finally {
+        // 恢复原始外观
+        area.classList.remove('printing-active');
         hiddenNodes.forEach(({ el, display }) => {
             el.style.display = display;
         });
@@ -893,8 +1521,11 @@ const captureAreaToImg = async () => {
 
 const handlePreview = async () => {
     captureLoading.value = true;
+    printEffectLoading.value = true;
     previewVisible.value = true;
     previewSrc.value = null;
+    printEffectPreviewSrc.value = null;
+    preparedPrintBytes.value = null;
     
     // 让弹窗及 loading UI 先呈现出来再进行阻断式渲染
     await nextTick();
@@ -904,11 +1535,17 @@ const handlePreview = async () => {
     try {
         const img = await captureAreaToImg();
         previewSrc.value = img;
+        if (img) {
+            const payload = await bluetoothPrinter.buildPrintImagePayload(img, printImageOptions);
+            printEffectPreviewSrc.value = payload.previewDataUrl;
+            preparedPrintBytes.value = payload.bytes;
+        }
     } catch (e) {
         console.error('preview failed', e);
         message.error('预览生成失败');
     } finally {
         captureLoading.value = false;
+        printEffectLoading.value = false;
     }
 };
 
@@ -918,29 +1555,43 @@ const handlePrint = async (prepared) => {
         message.error('生成打印内容失败');
         return;
     }
+    if (!bluetoothReady.value) {
+        message.warning('请先连接便携式蓝牙打印机');
+        return;
+    }
+    bluetoothPrinting.value = true;
+    pauseBluetoothKeepAlive();
     try {
-        printJS({
-            printable: dataUrl,
-            type: 'image',
-            imageStyle: 'width:100%;',
-            documentTitle: certStore.certificate?.certNo || '合格证'
-        });
+        if (!preparedPrintBytes.value) {
+            const payload = await bluetoothPrinter.buildPrintImagePayload(dataUrl, printImageOptions);
+            preparedPrintBytes.value = payload.bytes;
+            if (!printEffectPreviewSrc.value) {
+                printEffectPreviewSrc.value = payload.previewDataUrl;
+            }
+        }
+        await bluetoothPrinter.print(preparedPrintBytes.value);
+        message.success('蓝牙打印指令已发送');
     } catch (e) {
         console.error('print failed', e);
-        message.error('打印失败，请稍后重试');
+        message.error(`蓝牙打印失败：${e?.message || '请稍后重试'}`);
+    } finally {
+        bluetoothPrinting.value = false;
+        if (bluetoothReady.value) {
+            startBluetoothKeepAlive();
+        }
     }
 };
 </script>
 
 <style lang="scss" scoped>
 .page-container {
-    height: 100%;
-    overflow-y: auto;
+    height: calc(100vh - 86px);
+    display: flex;
+    flex-direction: column;
 }
 
 .header-section {
     padding: 16px;
-    margin-bottom: 20px;
     background: #fff;
     backdrop-filter: blur(10px);
     border-radius: 10px;
@@ -981,6 +1632,7 @@ const handlePrint = async (prepared) => {
     border-radius: 10px;
     padding: var(--page-container-padding);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+    overflow-y: scroll;
 }
 
 /* 指南步骤样式（替换原有的 SaaS 导航） */
@@ -1119,9 +1771,9 @@ const handlePrint = async (prepared) => {
 
 /* 表单结构 */
 .form-section {
-    margin-bottom: 32px;
+    margin-bottom: 20px;
 
-    .section-title {
+    .preview-title,.section-title {
         font-size: 16px;
         font-weight: 700;
         color: #333;
@@ -1139,6 +1791,11 @@ const handlePrint = async (prepared) => {
     }
 }
 
+.required-mark {
+    color: #F56C6C;
+    margin-right: 2px;
+}
+
 .form-row {
     display: flex;
     gap: 24px;
@@ -1149,6 +1806,14 @@ const handlePrint = async (prepared) => {
         grid-template-columns: 1fr 1fr;
         gap: 24px;
     }
+}
+
+/* 产品图片上传区域微调 */
+.image-upload-wrapper {
+    background: #fdfdfd;
+    border-radius: 8px;
+    overflow: hidden;
+    display: inline-block;
 }
 
 .form-col {
@@ -1260,9 +1925,8 @@ const handlePrint = async (prepared) => {
 
     .qr-placeholder {
         position: absolute;
-        right: 20px;
-        top: 50%;
-        transform: translateY(-50%);
+        right: 30px;
+        bottom: 30px;
         width: 100px;
         height: 100px;
         background: #F3F4F6;
@@ -1276,7 +1940,13 @@ const handlePrint = async (prepared) => {
 
 /* 基本信息预览 */
 .basic-info-preview {
-    margin: 24px 0;
+    margin: 12px 0;
+    .preview-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: #333;
+        margin-bottom: 16px;
+    }
 
     .info-grid {
         display: grid;
@@ -1406,20 +2076,31 @@ const handlePrint = async (prepared) => {
 
     .step-btn.yellow {
         background: #00B3ED;
+        color: #fff;
 
         &:hover {
             background: #00B3ED;
+            color: #fff;
         }
     }
 
     .step-val {
         width: 120px;
         text-align: center;
-        line-height: 40px;
+        height: 40px;
         background: #fff;
         font-size: 18px;
-        font-weight: 600;
+        font-weight: normal;
         color: #333;
+        border: none;
+        outline: none;
+        box-sizing: border-box;
+        -moz-appearance: textfield;
+        &::-webkit-outer-spin-button,
+        &::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
     }
 }
 
@@ -1452,15 +2133,195 @@ const handlePrint = async (prepared) => {
 .results-preview {
     background: #fff;
     border: 1px solid #E5E7EB;
-    padding: 16px;
-    border-radius: 8px;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
 
     .preview-title {
-        font-size: 14px;
+        font-size: 15px;
         font-weight: 700;
-        margin-bottom: 12px;
-        border-left: 3px solid #00B3ED;
-        padding-left: 8px;
+        margin-bottom: 16px;
+        border-left: 4px solid #00B3ED;
+        padding-left: 10px;
+        color: #333;
+    }
+}
+
+.upload-wrapper-box {
+    background: #fff;
+    border: 2px dashed #E2E8F0;
+    border-radius: 12px;
+    padding: 0;
+    text-align: center;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    min-height: 180px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    &:hover {
+        border-color: #00B3ED;
+        background: #F0F9FF;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(0, 179, 237, 0.08);
+    }
+
+    .upload-trigger-inner {
+        width: 100%;
+        height: 100%;
+        padding: 40px;
+        cursor: pointer;
+        position: relative;
+    }
+
+    .hidden-upload {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        z-index: 10;
+        cursor: pointer;
+        pointer-events: auto;
+        
+        :deep(.el-upload) {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none !important;
+        }
+
+        :deep(.el-upload-dragger) {
+            width: 100% !important;
+            height: 100% !important;
+            border: none !important;
+            background: transparent !important;
+            padding: 0 !important;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        :deep(.el-upload-list) {
+            display: none !important;
+        }
+    }
+
+    .trigger-content {
+        pointer-events: none;
+        .upload-big-icon {
+            font-size: 48px;
+            color: #94A3B8;
+            margin-bottom: 12px;
+            transition: all 0.3s;
+            
+            &.primary {
+                color: #00B3ED;
+            }
+        }
+        
+        .upload-tip-text {
+            font-size: 15px;
+            font-weight: 600;
+            color: #475569;
+            margin-bottom: 6px;
+        }
+        
+        .upload-sub-tip {
+            font-size: 12px;
+            color: #94A3B8;
+        }
+    }
+
+    &:hover .upload-big-icon {
+        color: #00B3ED;
+        transform: scale(1.1);
+    }
+}
+
+.results-preview-list {
+    margin-top: 24px;
+    
+    .preview-title {
+        font-size: 15px;
+        font-weight: 700;
+        margin-bottom: 16px;
+        color: #333;
+    }
+
+    .image-preview-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, 300px);
+        gap: 20px;
+    }
+
+    .preview-box {
+        width: 300px;
+        height: 420px;
+        background: #fff;
+        border: 1px solid #E2E8F0;
+        border-radius: 8px;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        
+        &.empty {
+            background: #F8FAFC;
+            border-style: dashed;
+        }
+
+        .preview-img {
+            width: 100%;
+            height: 100%;
+            cursor: zoom-in;
+
+            :deep(img) {
+                object-fit: contain !important;
+                background: #fff;
+            }
+        }
+
+        .preview-placeholder {
+            font-size: 40px;
+            color: #CBD5E1;
+        }
+
+        .pdf-file-preview {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #F8FAFC;
+            cursor: pointer;
+            transition: all 0.3s;
+
+            .el-icon {
+                font-size: 48px;
+                color: #94A3B8;
+                margin-bottom: 8px;
+            }
+
+            .file-label {
+                font-size: 14px;
+                color: #64748B;
+                font-weight: 600;
+            }
+
+            &:hover {
+                background: #F0F9FF;
+                .el-icon { color: #00B3ED; }
+                .file-label { color: #00B3ED; }
+            }
+        }
     }
 }
 
@@ -1468,8 +2329,181 @@ const handlePrint = async (prepared) => {
 .certificate-document {
     background: #fff;
     border: 1px solid #E5E7EB;
-    padding: 40px;
+    padding: 24px; // 默认预览稍微减小一点
     border-radius: 8px;
+    width: 100%;
+    margin: 0 auto;
+
+    // 核心：截图时刻激发的类，强制窄屏大字
+    &.printing-active {
+        width: 520px !important; // 与 PRINT_TARGET_WIDTH 保持一致，避免左右偏移
+        padding: 6px 7px 20px 17px !important; // 底部增加 20px 打印留白
+        margin: 0px !important;  // 彻底无外边距
+        border: none !important;
+        box-shadow: none !important;
+        background: transparent !important; // 让外部没有背景
+        box-sizing: border-box !important;
+
+        .cert-header {
+            margin-top: 0 !important;
+            margin-bottom: 12px !important; // 编号与标题间距缩小一半
+            overflow: visible !important;
+            .cert-no-tag {
+                font-size: 31px !important; // 放大 1.3 倍
+                font-weight: 800 !important; // 加粗
+                background: none !important; // 去除背景，直接文字加粗更清晰
+                color: #000 !important;
+                padding: 0 !important;
+            }
+        }
+
+        .cert-title {
+            font-size: 47px !important; // 放大 1.3 倍
+            margin: 4px 0 !important; // 标题上下间距缩小一半
+        }
+
+        .cert-subtitle {
+            font-size: 20px !important; // 与承诺依据模板统一
+        }
+
+        .cert-declaration-list{
+            text-align: left !important;
+            margin: 8px 0 !important;
+            .declaration-line {
+                font-size: 21px !important; // 放大 1.3 倍
+                margin: 4px 0 !important;
+                line-height: 1.4 !important;
+                font-weight: 600 !important;
+                color: #000 !important;
+                text-align: left !important;
+            }
+
+            &.mini {
+                .declaration-line {
+                    font-size: 16px !important; // 放大 1.3 倍
+                    margin: 2px 0 !important;
+                    text-align: left;
+                }
+            }
+        }
+
+        .info-section {
+            margin-top: 12px !important;
+            padding-top: 8px !important;
+            border-top: 1px dashed #000 !important; // 重新加回黑色虚线分割
+            .info-title {
+                font-size: 23px !important; // 18 * 1.3
+                margin-bottom: 6px !important;
+                padding: 0 !important;
+            }
+        }
+
+        .image-section {
+            margin-top: 12px !important;
+            padding-top: 8px !important;
+            border-top: 1px dashed #000 !important; // 重新加回黑色虚线分割
+            .info-title {
+                margin-bottom: 6px !important;
+            }
+        }
+
+        .info-table {
+            border: none !important; 
+            .info-row {
+                border: none !important;
+                display: flex !important; // 使用 flex 替代 table-row 行为，彻底杜绝边框重叠
+                .label, .value {
+                    font-size: 23px !important; // 放大 1.3 倍
+                    padding: 4px 0 !important;
+                    background: none !important; 
+                    border: none !important; // 彻底移除所有边框（包括竖线）
+                    box-shadow: none !important;
+                }
+                .label {
+                    width: 130px !important;
+                }
+            }
+        }
+
+        // 隐藏模板中自带的虚线
+        .divider {
+            display: none !important;
+        }
+
+        .cert-middle-section {
+            margin: 16px 0 !important;
+            display: flex !important; // 恢复 Flex 布局，左右排列
+            justify-content: space-between !important;
+            align-items: flex-start !important; // 改为顶部对齐，方便通过 margin 细调高度
+            
+            .basis-title {
+                font-size: 20px !important; // 与副标题配套
+            }
+        }
+
+        .qr-code-wrapper {
+            margin-top: 20px !important; // 二维码往下移动 10px
+            width: 132px !important; // 二维码放大一点
+            height: 132px !important;
+        }
+        
+        .custom-basis-group {
+            .basis-item {
+                display: flex !important;
+                align-items: center !important;
+                margin-bottom: 8px !important;
+                .basis-box {
+                    width: 32px !important;
+                    height: 32px !important;
+                    border: 3px solid #333 !important;
+                    margin-right: 16px !important;
+                    font-size: 26px !important;
+                    line-height: 26px !important;
+                    text-align: center !important;
+                }
+                .basis-label {
+                    font-size: 23px !important; // 放大 1.3 倍
+                    color: #000 !important;
+                    .basis-index {
+                        display: none !important;
+                    }
+                }
+            }
+        }
+    }
+
+    .custom-basis-group {
+        .basis-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+            .basis-box {
+                width: 18px;
+                height: 18px;
+                border: 1px solid #DCDFE6;
+                margin-right: 8px;
+                display: inline-block;
+                border-radius: 2px;
+                text-align: center;
+                line-height: 16px;
+                font-size: 14px;
+                background: #F5F7FA;
+                &.checked {
+                    background: #fff;
+                    border-color: #00B3ED;
+                    color: #00B3ED;
+                }
+            }
+            .basis-label {
+                font-size: 14px;
+                color: #606266;
+                .basis-index {
+                    margin-right: 4px;
+                    color: inherit;
+                }
+            }
+        }
+    }
 
     .cert-header {
         margin-bottom: 24px;
@@ -1565,6 +2599,8 @@ const handlePrint = async (prepared) => {
 .page-footer,
 .action-footer {
     display: flex;
+    flex-wrap: wrap;
+    align-items: center;
     justify-content: center;
     gap: 16px;
     margin-top: 40px;
@@ -1572,43 +2608,68 @@ const handlePrint = async (prepared) => {
     border-top: 1px solid #E5E7EB;
 }
 
-.btn-submit,
-.submit-btn,
-.print-btn {
-    background: linear-gradient(135deg, #00B3ED 0%, #0099D6 100%);
-    border: none;
-    color: #fff;
-    min-width: 160px;
-    height: 44px;
-    font-weight: 600;
-    border-radius: var(--el-border-radius-base);
-    transition: all 0.3s;
+/* 统一主题按钮样式集 */
+.theme-primary-btn {
+    background-color: #00B3ED !important;
+    border: none !important;
+    color: #fff !important;
+    font-weight: 500 !important;
+    border-radius: 6px !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    height: 40px !important;
+    padding: 0 24px !important;
 
     &:hover {
-        background: linear-gradient(135deg, #0099D6 0%, #0085B3 100%);
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0, 179, 237, 0.3);
+        background-color: #00A3D9 !important;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 179, 237, 0.2);
+    }
+
+    &:active {
+        transform: translateY(0);
+    }
+
+    &.mini-btn {
+        padding: 0 16px !important;
+        font-size: 13px !important;
+    }
+
+    &.is-disabled {
+        background-color: #A0D9F6 !important;
+        cursor: not-allowed !important;
+        transform: none !important;
+        box-shadow: none !important;
     }
 }
 
-.btn-cancel,
-.back-btn {
-    min-width: 120px;
-    height: 44px;
-    border-radius: var(--el-border-radius-base);
-    border-color: #D1D5DB;
-    color: #666;
+.theme-default-btn {
+    background-color: #fff !important;
+    border: 1px solid #D1D5DB !important;
+    color: #4B5563 !important;
+    font-weight: 500 !important;
+    border-radius: 6px !important;
+    transition: all 0.2s !important;
+    height: 40px !important;
+    padding: 0 24px !important;
 
     &:hover {
-        background: transparent;
+        background-color: #F9FAFB !important;
+        border-color: #00B3ED !important;
+        color: #00B3ED !important;
     }
 }
 
-.btn-cyan {
-    border: none;
-    color: #fff;
-    border-radius: 6px;
-    transition: all 0.3s;
+/* 连接蓝牙专用按钮 (带状态色) */
+.bluetooth-btn {
+    border: 1px solid #00B3ED !important;
+    color: #00B3ED !important;
+    background: #F0F9FF !important;
+    border-radius: 6px !important;
+    height: 40px !important;
+    
+    &.is-plain:hover {
+        background: #E0F2FE !important;
+    }
 }
 
 /* 复选框组样式 */
@@ -1650,14 +2711,9 @@ const handlePrint = async (prepared) => {
 
 /* 上传按钮样式 */
 .upload-btn {
-    background: linear-gradient(135deg, #00B3ED 0%, #0099D6 100%);
     border: none;
     color: #fff;
     border-radius: 8px;
-
-    &:hover {
-        background: linear-gradient(135deg, #0099D6 0%, #0085B3 100%);
-    }
 }
 
 /* 图片预览占位符 */
@@ -1798,5 +2854,127 @@ const handlePrint = async (prepared) => {
 .preview-placeholder {
     color: #666;
     font-size: 14px;
+}
+
+.preview-section-title {
+    margin: 12px 0 8px;
+    font-size: 13px;
+    color: #666;
+}
+
+.print-effect-wrapper {
+    min-height: 140px;
+    margin-top: 4px;
+    background: #fff;
+    border: 1px dashed #D1D5DB;
+}
+
+.print-effect-img {
+    image-rendering: pixelated;
+}
+
+.other-platform-area {
+    margin-top: 16px;
+    
+    .upload-trigger-wrap {
+        margin-bottom: 16px;
+    }
+
+    .upstream-preview-card {
+        border: 1px solid #E2E8F0;
+        border-radius: 8px;
+        overflow: hidden;
+        background: #fff;
+
+        .preview-title {
+            background: #F8FAFC;
+            padding: 12px 16px;
+            font-weight: 600;
+            color: #334155;
+            border-bottom: 1px solid #E2E8F0;
+            font-size: 14px;
+        }
+
+        .preview-body {
+            display: flex;
+            padding: 16px;
+            gap: 20px;
+        }
+
+        .info-table-side {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            
+            .info-row {
+                display: flex;
+                border-bottom: 1px solid #F1F5F9;
+                font-size: 13px;
+                line-height: 1.5;
+                
+                &:last-child {
+                    border-bottom: none;
+                }
+
+                .info-label {
+                    width: 100px;
+                    padding: 8px 12px;
+                    background: #F8FAFC;
+                    color: #64748B;
+                    flex-shrink: 0;
+                }
+
+                .info-val {
+                    flex: 1;
+                    padding: 8px 12px;
+                    color: #1E293B;
+                    word-break: break-all;
+                }
+
+                &.required {
+                    .info-label::before {
+                        content: '*';
+                        color: #EF4444;
+                        margin-right: 4px;
+                    }
+                }
+            }
+        }
+
+        .image-box-side {
+            width: 200px;
+            height: 280px;
+            background: #F8FAFC;
+            border: 1px dashed #E2E8F0;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            overflow: hidden;
+
+            &.only-img {
+                width: 100%;
+                height: 400px;
+                border-style: solid;
+                border-color: #F1F5F9;
+            }
+
+            .preview-img {
+                width: 100%;
+                height: 100%;
+                cursor: pointer;
+            }
+
+            .img-empty {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 8px;
+                color: #94A3B8;
+                font-size: 12px;
+            }
+        }
+    }
 }
 </style>

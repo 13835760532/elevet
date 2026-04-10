@@ -32,9 +32,13 @@
                             <el-option label="批发市场" :value="3" />
                         </el-select>
                     </el-form-item>
+                     <el-form-item label="" prop="contactPhone">
+                        <el-input :prefix-icon="Search" v-model="queryParams.contactPhone" placeholder="请输入联系电话" clearable class="custom-input w220" />
+                    </el-form-item>
                     <el-form-item label="" prop="status">
-                        <el-select v-model="queryParams.status" placeholder="状态" clearable class="custom-select">
-                            <el-option label="有效" :value="1" />
+                        <el-select v-model="queryParams.status" placeholder="开具状态" clearable class="custom-select">
+                            <el-option label="未开具" :value="0" />
+                            <el-option label="已开具" :value="1" />
                             <el-option label="作废" :value="2" />
                         </el-select>
                     </el-form-item>
@@ -77,34 +81,70 @@
 
             <!-- 数据表格 -->
             <div class="table-wrapper">
-                <el-table :data="tableList" v-loading="loading">
+                <el-table ref="tableRef" :data="tableList" v-loading="loading" :height="tableHeight">
                     <el-table-column label="序号" type="index" width="70" align="center" />
                     <el-table-column label="合格证编号" prop="certificateCode" width="160" align="center" />
                     <el-table-column label="出证类型" prop="certificateType" width="100" align="center">
                         <template #default="scope">
-                            <span class="type-tag" :class="{ 'producer': scope.row.certificateType === 1, 'buyer': scope.row.certificateType === 2, 'seller': scope.row.certificateType === 3 }">
+                            <span class="type-tag" :class="scope.row.certificateType === 1 ? 'producer' : (scope.row.certificateType === 2 ? 'buyer' : 'seller')">
                                 {{ scope.row.certificateType === 1 ? '生产者' : (scope.row.certificateType === 2 ? '收购者' : '批发市场') }}
                             </span>
                         </template>
                     </el-table-column>
                     <el-table-column label="产品名称" prop="productName" width="110" align="center" />
-                    <el-table-column label="产品类别" prop="productCategory" width="110" align="center" />
+                    <el-table-column label="产品类别" prop="productCategory" width="110" align="center">
+                        <template #default="scope">
+                            <dict-tag :type="DICT_TYPE.AGRI_PRODUCT_CATEGORY" :value="scope.row.productCategory" />
+                        </template>
+                    </el-table-column>
                     <el-table-column label="产地" prop="productionArea" min-width="150" show-overflow-tooltip />
                     <el-table-column label="生产经营主体" prop="subjectName" min-width="200" show-overflow-tooltip />
-                    <el-table-column label="状态" prop="status" width="80" align="center">
+                    <el-table-column min-width="180" align="center">
+                        <template #header>
+                            <div>联系人</div>
+                            <div style="font-size: 12px; color: #999; font-weight: normal;">(生产经营企业/个人)</div>
+                        </template>
+                        <template #default="scope">
+                            {{ scope.row.contactName || '-' }}
+                        </template>
+                    </el-table-column>
+                    <el-table-column min-width="220" align="center">
+                        <template #header>
+                            <div>联系电话</div>
+                            <div style="font-size: 12px; color: #999; font-weight: normal;">(生产经营企业/个人)</div>
+                        </template>
+                        <template #default="scope">
+                            <div v-if="scope.row.contactPhone" class="phone-display">
+                                <span>{{ isPhoneVisible(scope.row.id) ? scope.row.contactPhone : hidePhone(scope.row.contactPhone) }}</span>
+                                <el-button link type="primary" @click="togglePhone(scope.row.id)" style="margin-left: 8px;">
+                                    {{ isPhoneVisible(scope.row.id) ? '隐藏' : '显示' }}
+                                </el-button>
+                            </div>
+                            <span v-else>-</span>
+                        </template>
+                    </el-table-column>
+                    <el-table-column label="开具状态" prop="status" width="100" align="center">
                         <template #default="{ row }">
-                            <el-tag :type="row.status === 1 ? 'success' : 'danger'" size="small">
-                                {{ row.status === 1 ? '有效' : '作废' }}
+                            <el-tag :type="row.status === 1 ? 'success' : (row.status === 0 ? 'warning' : 'danger')" size="small">
+                                {{ row.status === 1 ? '已开具' : (row.status === 0 ? '未开具' : '作废') }}
                             </el-tag>
                         </template>
                     </el-table-column>
-                    <el-table-column label="开具日期" prop="issueDate" width="160" align="center" :formatter="dateFormatter" />
+                    <el-table-column label="开具日期" prop="issueDate" width="160" align="center" :formatter="dateFormatter2" />
                     <el-table-column label="操作" width="200" align="center" fixed="right">
                         <template #default="scope">
                             <div class="table-operate-action-btns">
-                                <span class="table-edit-operate" @click="handleEdit(scope.row)">编辑</span>
-                                <span class="table-delete-operate" @click="handleDelete(scope.row)">删除</span>
-                                <span class="table-view-operate" @click="handleView(scope.row)">查看</span>
+                                <template v-if="scope.row.status === 0">
+                                    <span class="table-edit-operate" @click="handleEdit(scope.row)">编辑</span>
+                                    <span class="table-delete-operate" @click="handleDelete(scope.row)">删除</span>
+                                </template>
+                                <template v-else-if="scope.row.status === 1">
+                                    <span class="table-view-operate" @click="handleView(scope.row)">详情</span>
+                                    <span class="table-delete-operate" @click="handleInvalidate(scope.row)">作废</span>
+                                </template>
+                                <template v-else-if="scope.row.status === 2">
+                                    <span class="table-view-operate disabled">详情</span>
+                                </template>
                             </div>
                         </template>
                     </el-table-column>
@@ -127,11 +167,31 @@ import { useRouter } from 'vue-router';
 import { Edit, Search } from '@element-plus/icons-vue';
 import { useMessage } from '@/hooks/web/useMessage';
 import download from '@/utils/download';
-import { dateFormatter } from '@/utils/formatTime';
+import { dateFormatter2 } from '@/utils/formatTime';
 import * as CertificateApi from '@/api/agri/certificate';
+import { useTableHeight } from '@/hooks/web/useTableHeight';
+import { DICT_TYPE } from '@/utils/dict';
 
 const router = useRouter();
 const message = useMessage();
+const tableRef = ref(null);
+const { tableHeight } = useTableHeight(tableRef, 70);
+
+// 手机号显示控制
+const visiblePhoneIds = ref<number[]>([]);
+const isPhoneVisible = (id: number) => visiblePhoneIds.value.includes(id);
+const togglePhone = (id: number) => {
+    const index = visiblePhoneIds.value.indexOf(id);
+    if (index > -1) {
+        visiblePhoneIds.value.splice(index, 1);
+    } else {
+        visiblePhoneIds.value.push(id);
+    }
+};
+const hidePhone = (phone: string) => {
+    if (!phone) return '-';
+    return phone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2');
+};
 
 const areaIds = ref<string[]>([]);
 const queryParams = reactive({
@@ -139,11 +199,11 @@ const queryParams = reactive({
     productName: '',
     entity: '',
     issueType: undefined,
-    status: 1,
+    status: '',
     province: '',
     city: '',
     county: '',
-    phone: '',
+    contactPhone: '',
     productionArea: '',
     dateRange: [] as any
 });
@@ -170,10 +230,10 @@ const getList = async () => {
             subjectName: queryParams.entity || undefined,
             certificateType: queryParams.issueType || undefined,
             productionArea: queryParams.productionArea || undefined,
-            contactPhone: queryParams.phone || undefined,
-            status: queryParams.status || undefined,
-            startDate: queryParams.dateRange?.[0] || undefined,
-            endDate: queryParams.dateRange?.[1] || undefined
+            contactPhone: queryParams.contactPhone || undefined,
+            status: (queryParams.status === 0 || queryParams.status) ? queryParams.status : undefined,
+            startDate: queryParams.dateRange?.[0] ? queryParams.dateRange[0] : undefined,
+            endDate: queryParams.dateRange?.[1] ? queryParams.dateRange[1] : undefined
         };
         const data = await CertificateApi.getCertificatePage(params);
         tableList.value = data.list || [];
@@ -223,10 +283,10 @@ const handleExport = async () => {
             subjectName: queryParams.entity || undefined,
             certificateType: queryParams.issueType || undefined,
             productionArea: queryParams.productionArea || undefined,
-            contactPhone: queryParams.phone || undefined,
-            status: queryParams.status || undefined,
-            startDate: queryParams.dateRange?.[0] || undefined,
-            endDate: queryParams.dateRange?.[1] || undefined
+            contactPhone: queryParams.contactPhone || undefined,
+            status: (queryParams.status === 0 || queryParams.status) ? queryParams.status : undefined,
+            startDate: queryParams.dateRange?.[0] ? queryParams.dateRange[0] : undefined,
+            endDate: queryParams.dateRange?.[1] ? queryParams.dateRange[1] : undefined
         };
         const data = await CertificateApi.exportCertificate(params);
         download.excel(data, '合格证记录.xls');
@@ -258,6 +318,25 @@ const handleDelete = async (row: any) => {
     }
 };
 
+const handleInvalidate = async (row: any) => {
+    try {
+        const result = await message.prompt('请输入作废原因', '作废确认');
+        if (!result.value || result.value.trim() === '') {
+            message.warning('作废原因不能为空');
+            return;
+        }
+        
+        await CertificateApi.voidCertificate({
+            id: row.id,
+            voidReason: result.value
+        });
+        message.success('作废成功');
+        getList();
+    } catch (e) {
+        // 取消或请求失败处理
+    }
+};
+
 const handleCurrentChange = (val: number) => {
     pageParams.pageNum = val;
     getList();
@@ -285,6 +364,12 @@ const handleCurrentChange = (val: number) => {
         color: #67c23a;
         border: 1px solid rgba(103, 194, 58, 0.2);
     }
+
+    &.buyer {
+        background: rgba(255, 149, 0, 0.1);
+        color: #FF9500;
+        border: 1px solid rgba(255, 149, 0, 0.2);
+    }
 }
 
 .table-operate-action-btns {
@@ -308,10 +393,25 @@ const handleCurrentChange = (val: number) => {
     
     .table-view-operate {
         color: #67c23a;
+        &.disabled {
+            color: #999 !important;
+            cursor: not-allowed !important;
+            pointer-events: none;
+        }
     }
     
     .table-delete-operate {
         color: #f56c6c;
+    }
+}
+
+.phone-display {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    span {
+        font-family: monospace;
     }
 }
 </style>

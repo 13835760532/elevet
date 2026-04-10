@@ -29,7 +29,7 @@
                 </div>
                 <div class="info-row">
                     <span class="label">样品产地</span>
-                    <span class="value">{{ sampleInfo.origin }}</span>
+                    <span class="value">{{ sampleInfo.sampleArea }}</span>
                 </div>
                 <div class="info-row">
                     <span class="label">数量（重量）</span>
@@ -62,7 +62,12 @@
                 <div class="info-row photo-row">
                     <span class="label">检测照片</span>
                     <div class="photo-preview-group">
-                        <el-image :src="sampleInfo.photo" fit="cover" :preview-src-list="[sampleInfo.photo]" />
+                        <el-image 
+                            :src="sampleInfo.photo" 
+                            fit="cover" 
+                            :preview-src-list="[sampleInfo.photo]" 
+                            preview-teleported
+                        />
                         <span class="photo-tip">点击查看大图</span>
                     </div>
                 </div>
@@ -170,6 +175,7 @@ import { useRouter, useRoute } from 'vue-router';
 import { ZoomIn } from '@element-plus/icons-vue';
 import { getDetectionRecord } from '@/api/agri/detectionRecord';
 import { formatDate } from '@/utils/formatTime';
+import { getAgriUnitLabel } from '@/utils';
 import RapidDetectionReport from '../components/RapidDetectionReport.vue';
 
 const router = useRouter();
@@ -269,15 +275,16 @@ const initData = async () => {
             source: res.sourceType === 'PLAN_TASK' ? '方案任务' : (res.sourceType === 'SELF_TASK' ? '历史自主' : '自主录入'),
             sampleName: res.productName || '--',
             origin: res.detectionArea || '--',
+            sampleArea: res.sampleArea || '--',
             quantity: '--', 
             checkArea: res.detectionArea || '--',
             producer: res.subjectName || '--',
             region: res.detectionArea || '--',
             testOrg: res.sourceType === 'PLAN_TASK' ? '检测服务中心' : '自主录入', 
             tester: res.detector || '--',
-            testDate: res.detectionDate ? formatDate(res.detectionDate, 'YYYY-MM-DD') : '--',
+            testDate: res.createTime ? formatDate(res.createTime, 'YYYY-MM-DD') : '--',
             photo: res.testPaperImageUrl || '',
-            specification: res.specification + res.unit
+            specification: (res.specification || '') + getAgriUnitLabel(res.unit)
         };
 
         // 解析 AI 结果 JSON
@@ -524,9 +531,10 @@ const handleDownloadReport = () => {
         border: 2px solid #F1F5F9;
         border-radius: 6px;
         cursor: pointer;
-        transition: transform 0.2s;
+        transition: all 0.2s;
         &:hover {
-            transform: scale(1.05);
+            border-color: #00B3ED;
+            opacity: 0.9;
         }
     }
 

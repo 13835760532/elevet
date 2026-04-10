@@ -55,7 +55,7 @@
                     </div>
                 </div>
 
-                <div class="table-container">
+                <div class="table-container">					
                     <el-table ref="tableRef" :data="tableData" border class="preview-table" header-row-class-name="table-header">
                         <el-table-column prop="index" label="序号" width="60" align="center" />
                         <el-table-column prop="recordType" label="备案类型" width="100" />
@@ -67,7 +67,7 @@
                         <el-table-column prop="contact" label="联系人" width="100" align="center" />
                         <el-table-column prop="phone" label="联系电话" width="140" align="center" />
                         <el-table-column prop="creditCode" label="企业信用代码" width="180" align="center" />
-                        <el-table-column prop="hasLicense" label="营业执照" width="100" align="center">
+                        <el-table-column prop="hasLicense" label="企业营业执照" width="100" align="center">
                             <template #default="scope">
                                 <el-tag :type="scope.row.hasLicense ? 'success' : 'info'" size="small">
                                     {{ scope.row.hasLicense ? '有' : '无' }}

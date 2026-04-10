@@ -326,5 +326,49 @@ const handleBack = () => {
         border: none;
         padding: 0;
     }
+
+    /* 打印字体统一放大 1.3 倍 */
+    .cert-header .cert-no-tag {
+        font-size: 18px;
+    }
+
+    .cert-title {
+        font-size: 36px;
+    }
+
+    .cert-subtitle {
+        font-size: 20px;
+    }
+
+    .cert-declaration {
+        font-size: 18px;
+    }
+
+    .cert-basis .basis-title {
+        font-size: 20px;
+    }
+
+    .cert-basis :deep(.el-checkbox__label) {
+        font-size: 18px;
+    }
+
+    .info-section .info-title,
+    .image-section .info-title {
+        font-size: 23px;
+    }
+
+    .info-table .info-row .label,
+    .info-table .info-row .value {
+        font-size: 18px;
+    }
+
+    .footer-tip {
+        font-size: 16px;
+    }
+
+    .qr-code-wrapper {
+        width: 132px;
+        height: 132px;
+    }
 }
 </style>

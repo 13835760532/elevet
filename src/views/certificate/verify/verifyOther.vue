@@ -14,26 +14,24 @@
             </div>
 
             <div class="main-body">
-                <!-- 3. 顶部上传区 -->
                 <div class="upload-section">
-                    <p class="upload-label">上传合格证照片</p>
-                    <div class="upload-drag-box">
+                    <div class="premium-uploader-wrap">
                         <el-upload
-                            class="ocr-uploader"
+                            class="premium-uploader"
                             drag
                             action="#"
                             :auto-upload="false"
                             :show-file-list="false"
                             @change="onFileChange"
                         >
-                            <el-icon class="el-icon--upload"><FolderOpened /></el-icon>
-                            <div class="el-upload__text">
-                                点击或将图片拖拽到这里上传
-                                <p class="support-text">按住Ctrl可同时多选。支持上传rar/zip格式文件。单个文件不能超过500kb</p>
-                                <p class="support-text">严禁上传包含色情、暴力、反动等相关违法信息的文件。</p>
+                            <div class="uploader-content">
+                                <el-icon class="plus-icon"><Plus /></el-icon>
+                                <div class="upload-text">
+                                    <span class="main-title">点击或拖拽上传合格证照片（进行识别）</span>
+                                    <p class="sub-tips">支持 JPG、PNG、webp 格式，单个文件不超过 5MB</p>
+                                </div>
                             </div>
                         </el-upload>
-                        <el-button type="primary" class="upload-btn">上传合格证照片</el-button>
                     </div>
                 </div>
 
@@ -176,7 +174,7 @@
 <script setup>
 import { reactive, ref, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { FolderOpened } from '@element-plus/icons-vue';
+import { FolderOpened, Plus } from '@element-plus/icons-vue';
 import { ElMessage, ElLoading } from 'element-plus';
 import { parseImage, createArchive, getVerification, updateCertificateVerification } from '@/api/agri/certificateVerification/index';
 
@@ -196,6 +194,9 @@ const formData = reactive({
     subjectName: '',
     certificateImageUrl: '',
     certificateCode: '',
+    productCategory: '',
+    subjectId: null,
+    certificateType: null,
     source: 1
 });
 
@@ -208,16 +209,14 @@ const onFileChange = async (uploadFile) => {
     
     try {
         const sourceHint = activeTab.value === 'internal' ? 1 : 2;
-        const res = await parseImage({
+        const data = await parseImage({
             file: uploadFile.raw,
             sourceHint
         });
-        
-        const data = res.data;
-        if (!data.matched) {
-            ElMessage.warning('未能识别到匹配的信息，请手动补全');
+        if (data && !data.matched) {
+            ElMessage.warning(data.message || '未能识别到匹配的信息，请手动补全');
         } else {
-            ElMessage.success('识别成功');
+            ElMessage.success(data.message || '识别成功');
         }
 
         formData.certificateImageUrl = data.certificateImageUrl;
@@ -227,6 +226,7 @@ const onFileChange = async (uploadFile) => {
         if (data.source === 1 && data.certificate) {
             const cert = data.certificate;
             formData.productName = cert.productName;
+            formData.productCategory = cert.productCategory;
             formData.productionArea = cert.productionArea;
             formData.quantity = cert.quantity;
             formData.unit = cert.unit || 'kg';
@@ -234,10 +234,13 @@ const onFileChange = async (uploadFile) => {
             formData.contactName = cert.contactName;
             formData.contactPhone = cert.contactPhone;
             formData.subjectName = cert.subjectName;
+            formData.subjectId = cert.subjectId;
             formData.certificateCode = cert.certificateCode;
+            formData.certificateType = cert.certificateType;
         } else if (data.source === 2 && data.ocrData) {
             const ocr = data.ocrData;
             formData.productName = ocr.productName || '';
+            formData.productCategory = ocr.productCategory || '';
             formData.productionArea = ocr.productionArea || '';
             formData.quantity = ocr.quantity || '';
             formData.unit = ocr.unit || 'kg';
@@ -246,11 +249,13 @@ const onFileChange = async (uploadFile) => {
             formData.contactPhone = ocr.contactPhone || '';
             formData.subjectName = ocr.subjectName || '';
             formData.certificateCode = ocr.certificateCode || '';
+            formData.certificateType = ocr.certificateType;
         }
 
     } catch (e) {
         console.error('识别失败', e);
-        ElMessage.error('识别服务异常，请手动填写');
+        // 如果后端传回了 msg，则显示该错误，否则显示通用提示
+        ElMessage.error(e.msg || e.message || '识别服务异常，请手动填写');
     } finally {
         loading.close();
     }
@@ -264,9 +269,11 @@ onMounted(async () => {
     if (isEdit.value) {
         try {
             const data = await getVerification(Number(route.query.id));
+            console.log(data)
             if (data) {
                 Object.assign(formData, data);
-                activeTab.value = data.source === 1 ? 'internal' : 'external';
+                formData.source = data.certificateSource;
+                activeTab.value = data.certificateSource === 1 ? 'internal' : 'external';
             }
         } catch (e) {
             console.error('加载详情失败', e);
@@ -280,22 +287,22 @@ const handleSubmit = async () => {
         return;
     }
     
+    // 使用全量合并，保留详情接口返回的所有原始字段，并覆盖修改后的值
     const submitData = {
-        certificateSource: formData.source, 
-        verificationType: 2, 
-        certificateImageUrl: formData.certificateImageUrl,
-        certificateCode: formData.certificateCode,
-        productName: formData.productName,
-        productionArea: formData.productionArea,
+        ...formData,
         quantity: Number(formData.quantity) || 0,
-        unit: formData.unit,
-        issueDate: formData.issueDate,
-        subjectName: formData.subjectName,
-        contactName: formData.contactName,
-        contactPhone: formData.contactPhone,
-        certificateType: 1,
-        remark: isEdit.value ? '后台修改存证' : '后台录入存证'
+        source: formData.source,
+        certificateSource: formData.source, // 兼容某些接口可能使用的字段名
+        certificateType: formData.certificateType || 1,
+        remark: formData.remark || (isEdit.value ? '后台修改存证' : '后台录入存证')
     };
+
+    // 按 source 映射对应编号字段
+    if (formData.source === 1) {
+        submitData.certificateCode = formData.certificateCode;
+    } else {
+        submitData.externalCertificateCode = formData.certificateCode;
+    }
 
     if (isEdit.value) {
         submitData.id = Number(route.query.id);
@@ -359,14 +366,67 @@ const handleSubmit = async () => {
     }
 
     .upload-section {
-        .upload-label { font-size: 14px; color: #1e293b; margin-bottom: 12px; }
-        .upload-drag-box {
-            display: flex; gap: 20px; align-items: flex-end;
-            .ocr-uploader {
-                flex: 1;
-                :deep(.el-upload-dragger) { border: 1px solid #e2e8f0; background-color: #f8fafc; padding: 30px; }
+        margin-bottom: 24px;
+        
+        .premium-uploader-wrap {
+            width: 100%;
+            
+            :deep(.el-upload) {
+                width: 100%;
+                .el-upload-dragger {
+                    width: 100%;
+                    height: 180px;
+                    border: 2px dashed #E2E8F0;
+                    background-color: #F8FAFC;
+                    border-radius: 12px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                    
+                    &:hover {
+                        border-color: #00B3ED;
+                        background-color: #f0f9ff;
+                        transform: translateY(-2px);
+                        box-shadow: 0 4px 12px rgba(0, 179, 237, 0.08);
+
+                        .uploader-content {
+                            .plus-icon { color: #00B3ED; }
+                        }
+                    }
+                }
             }
-            .upload-btn { height: 40px; padding: 0 24px; }
+
+            .uploader-content {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 16px;
+                transition: all 0.3s ease;
+
+                .plus-icon {
+                    font-size: 48px;
+                    color: #94a3b8;
+                    font-weight: bold;
+                    transition: all 0.3s ease;
+                }
+
+                .upload-text {
+                    text-align: center;
+                    .main-title {
+                        font-size: 16px;
+                        font-weight: 600;
+                        color: #334155;
+                        display: block;
+                        margin-bottom: 8px;
+                    }
+                    .sub-tips {
+                        font-size: 13px;
+                        color: #94a3b8;
+                        margin: 0;
+                    }
+                }
+            }
         }
     }
 

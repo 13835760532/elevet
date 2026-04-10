@@ -112,7 +112,9 @@ $input-default-width: 150px;
     height: 40px !important;
     line-height: normal; /* 确保内部居中对齐 */
 }
-
+.el-button.is-disabled{
+    opacity: 0.7!important;
+}
 .el-date-editor{
     width: 160px !important;
 }

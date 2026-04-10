@@ -535,3 +535,16 @@ export const subString = (str: string, start: number, end: number) => {
   }
   return str
 }
+
+import { AGRI_UNITS } from './constants'
+
+/**
+ * 获取农业单位的中文名称
+ * @param value 单位值 (t, kg, box...)
+ */
+export const getAgriUnitLabel = (value: string): string => {
+  const item = AGRI_UNITS.find((unit) => unit.value === value)
+  return item ? item.label : value || '--'
+}
+
+export { BluetoothPrinter, buildEscPosTestTicket } from './bluetoothPrinter'
