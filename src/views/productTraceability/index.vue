@@ -262,7 +262,7 @@
 
                 <div class="cert-body">
                     <h1 class="cert-title">承诺达标合格证</h1>
-                    <h2 class="cert-subtitle">承诺事项</h2>
+                    <h2 class="cert-subtitle">承诺事项：</h2>
                     <div class="cert-declaration-list">
                         <p v-for="(line, idx) in printCommitmentLines" :key="`trace-print-${idx}`" class="declaration-line">
                             • {{ line }}
@@ -285,7 +285,7 @@
                     </div>
 
                     <div class="info-section">
-                        <h3 class="info-title">基本信息</h3>
+                        <h3 class="info-title">基本信息：</h3>
                         <div class="info-table">
                             <div class="info-row">
                                 <div class="label">产品名称</div>

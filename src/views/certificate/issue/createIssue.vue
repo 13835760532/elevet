@@ -267,7 +267,7 @@
                         <div class="cert-no">上游合格证编号：{{ formData.upstreamCertNo }}</div>
                         <div class="cert-inner-card">
                             <h2 class="cert-main-title">承诺达标合格</h2>
-                            <div class="cert-sub-title">承诺事项</div>
+                            <div class="cert-sub-title">承诺事项：</div>
                             <div class="cert-declaration-list mini">
                                 <p style="text-align: left;" v-for="(line, idx) in computedCommitment" :key="idx" class="declaration-line">• {{ line }}</p>
                             </div>
@@ -447,7 +447,7 @@
 
                     <div class="cert-body">
                         <h1 class="cert-title">承诺达标合格证</h1>
-                        <h2 class="cert-subtitle">承诺事项</h2>
+                        <h2 class="cert-subtitle">承诺事项：</h2>
                         <div class="cert-declaration-list">
                             <p v-for="(line, idx) in computedCommitment" :key="idx" class="declaration-line">• {{ line }}</p>
                         </div>
@@ -473,7 +473,7 @@
                         <div class="divider"></div>
 
                         <div class="info-section">
-                            <h3 class="info-title">基本信息</h3>
+                            <h3 class="info-title">基本信息：</h3>
                             <div class="info-table">
                                 <div class="info-row">
                                     <div class="label">产品名称</div>

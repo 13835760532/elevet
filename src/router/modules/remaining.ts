@@ -466,6 +466,15 @@ const remainingRouter: AppRouteRecordRaw[] = [
     ]
   },
   {
+    path: '/big-screen',
+    component: () => import('@/views/visualization/BigScreen.vue'),
+    name: 'BigScreen',
+    meta: {
+      title: '平台大屏可视化',
+      hidden: true
+    }
+  },
+  {
     path: '/:pathMatch(.*)*',
     component: () => import('@/views/Error/404.vue'),
     name: '',
