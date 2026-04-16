@@ -1,24 +1,15 @@
 <template>
   <section class="left-section">
     <BigPanelCard title="农产品品类风险分布" :tabs="['检测量', '阳性率']" active-tab="检测量" :bg-image="leftCardBg">
-      <div class="pie-layout">
-        <Echart :options="categoryPieOption" height="248" />
-        <div class="category-legend">
-          <div class="legend-row" v-for="item in categoryLegend" :key="item.name">
-            <span class="dot" :style="{ background: item.color }" />
-            <span class="name">{{ item.name }}</span>
-            <span class="value">{{ item.value }}</span>
-          </div>
-        </div>
-      </div>
+      <CategoryGauges />
     </BigPanelCard>
 
     <BigPanelCard title="农产品风险 TOP 10" :tabs="['检测量', '阳性率']" active-tab="检测量" :bg-image="leftCardBg">
-      <Echart :options="riskTopOption" height="330" />
+      <Echart :options="riskTopOption" :height="330" />
     </BigPanelCard>
 
     <BigPanelCard title="农药残留风险 TOP 10" :tabs="['检测量', '阳性率']" active-tab="检测量" :bg-image="leftCardBg">
-      <Echart :options="pesticideTopOption" height="260" />
+      <Echart :options="pesticideTopOption" :height="260" />
     </BigPanelCard>
   </section>
 </template>
@@ -27,54 +18,96 @@
 import echarts from '@/plugins/echarts';
 import { Echart } from '@/components/Echart';
 import BigPanelCard from './BigPanelCard.vue';
+import CategoryGauges from './CategoryGauges.vue';
 import leftCardBg from '@/assets/imgs/echarts/首页/nclfx_bg.png';
-
-const categoryLegend = [
-  { name: '蔬菜', value: 450, color: '#2d7bff' },
-  { name: '水果', value: 256, color: '#49d3f8' },
-  { name: '畜禽', value: 378, color: '#95d34a' },
-  { name: '水产', value: 135, color: '#efbd3f' },
-  { name: '茶叶', value: 627, color: '#f49a38' }
-];
-
-const categoryPieOption = {
-  tooltip: { trigger: 'item' },
-  series: [
-    {
-      type: 'pie',
-      radius: ['58%', '74%'],
-      center: ['42%', '52%'],
-      silent: true,
-      label: { show: false },
-      itemStyle: { borderWidth: 2, borderColor: '#0a1f4e' },
-      data: categoryLegend.map((item) => ({ value: item.value, name: item.name, itemStyle: { color: item.color } }))
-    }
-  ]
-};
 
 const riskNames = ['芹菜', '菠菜', '韭菜', '萝卜', '青椒', '丝瓜', '南瓜', '黄瓜', '白菜', '生姜'];
 const riskValues = [0.9, 0.8, 0.7, 0.6, 0.52, 0.45, 0.4, 0.34, 0.29, 0.2];
+const riskRankData = riskNames.map((name, index) => ({
+  value: name,
+  rank: index + 1
+}));
 const riskTopOption = {
-  grid: { left: 58, right: 20, top: 10, bottom: 20, containLabel: true },
+  grid: { left: 120, right: 70, top: 10, bottom: 20 },
   xAxis: {
     type: 'value',
+    min: 0,
+    max: 1,
+    interval: 0.2,
     splitLine: { lineStyle: { color: 'rgba(45, 106, 184, 0.35)', type: 'dashed' } },
     axisLine: { lineStyle: { color: '#2d67ac' } },
     axisLabel: { color: '#80abd3' }
   },
-  yAxis: {
-    type: 'category',
-    inverse: true,
-    data: riskNames,
-    axisLabel: { color: '#d4ebff', fontSize: 14 },
-    axisTick: { show: false },
-    axisLine: { show: false }
-  },
+  yAxis: [
+    {
+      type: 'category',
+      inverse: true,
+      data: riskRankData,
+      axisLabel: {
+        color: '#d4ebff',
+        fontSize: 14,
+        align: 'right',
+        margin: 16,
+        formatter: (_value: string, index: number) => {
+          const rank = index + 1;
+          const rankText = rank < 10 ? `NO.${rank}` : `NO.${rank}`;
+          const colorKey = rank <= 3 ? `top${rank}` : 'normal';
+          return `{${colorKey}|${rankText}} {name|${riskNames[index]}}`;
+        },
+        rich: {
+          top1: {
+            color: '#00ffb4',
+            fontWeight: 700,
+            fontStyle: 'italic',
+            fontSize: 16
+          },
+          top2: {
+            color: '#2ee9ff',
+            fontWeight: 700,
+            fontStyle: 'italic',
+            fontSize: 16
+          },
+          top3: {
+            color: '#ffbf30',
+            fontWeight: 700,
+            fontStyle: 'italic',
+            fontSize: 16
+          },
+          normal: {
+            color: '#e4f1ff',
+            fontWeight: 700,
+            fontStyle: 'italic',
+            fontSize: 16
+          },
+          name: {
+            color: '#d4ebff',
+            fontSize: 16,
+            fontWeight: 600
+          }
+        }
+      },
+      axisTick: { show: false },
+      axisLine: { show: false }
+    },
+    {
+      type: 'category',
+      inverse: true,
+      position: 'right',
+      data: riskValues,
+      axisLabel: {
+        color: '#48e7ff',
+        fontSize: 16,
+        fontWeight: 700,
+        formatter: (val: number) => Number(val).toFixed(1)
+      },
+      axisTick: { show: false },
+      axisLine: { show: false }
+    }
+  ],
   series: [
     {
       type: 'bar',
       barWidth: 14,
-      label: { show: true, position: 'right', color: '#48e7ff' },
       itemStyle: {
         borderRadius: [0, 8, 8, 0],
         color: new echarts.graphic.LinearGradient(1, 0, 0, 0, [
@@ -120,7 +153,7 @@ const pesticideTopOption = {
 <style scoped lang="scss">
 .left-section {
   display: grid;
-  grid-template-rows: 350px 346px 308px;
+  grid-template-rows: 350px 346px 328px;
   gap: 14px;
 }
 

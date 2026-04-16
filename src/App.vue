@@ -4,6 +4,7 @@ import { useAppStore } from '@/store/modules/app'
 import { useDesign } from '@/hooks/web/useDesign'
 import { CACHE_KEY, useCache } from '@/hooks/web/useCache'
 import routerSearch from '@/components/RouterSearch/index.vue'
+import autofit from 'autofit.js'
 
 defineOptions({ name: 'APP' })
 
@@ -23,6 +24,12 @@ const setDefaultTheme = () => {
   appStore.setIsDark(isDarkTheme)
 }
 setDefaultTheme()
+  autofit.init({
+    el: 'body',
+    dh: 1180,
+    dw: 1920,
+    resize: true
+  })
 </script>
 <template>
   <ConfigGlobal :size="currentSize">
