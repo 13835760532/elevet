@@ -278,7 +278,7 @@
                                 <el-checkbox v-model="formData.p3" disabled>委托检测合格</el-checkbox>
                             </div>
                             <div class="qr-placeholder">
-                                <Qrcode v-if="formData.qrCode" :text="formData.qrCode" :width="80" />
+                                <Qrcode v-if="formData.qrCode" :text="formData.qrCode"  :options="{ errorCorrectionLevel: 'L' }" :width="80" />
                             </div>
                         </div>
                     </div>
@@ -466,7 +466,7 @@
                                 </div>
                             </div>
                             <div class="qr-code-wrapper">
-                                <Qrcode v-if="displayCertNo" :text="`https://yishizhijian.jikeyun.net/certificate/trace?qrcode=${displayCertNo}`" :width="132" />
+                                <Qrcode v-if="displayCertNo" :text="`https://yishizhijian.jikeyun.net/certificate/trace?qrcode=${displayCertNo}`"  :options="{ errorCorrectionLevel: 'L' }" :width="132" />
                             </div>
                         </div>
 
@@ -1397,7 +1397,7 @@ const printImageOptions = {
     contrast: 2.2,
     align: 'center',
     feedLines: 2,
-    feedDots: 30,
+    feedDots: 0,
     cut: false,
     widthUnit: 'bytes',
     command: 'gs-v-0'
@@ -2337,7 +2337,7 @@ const handlePrint = async (prepared) => {
     // 核心：截图时刻激发的类，强制窄屏大字
     &.printing-active {
         width: 520px !important; // 与 PRINT_TARGET_WIDTH 保持一致，避免左右偏移
-        padding: 6px 7px 20px 17px !important; // 底部增加 20px 打印留白
+        padding: 6px 7px 10px 17px !important; // 底部留白减半
         margin: 0px !important;  // 彻底无外边距
         border: none !important;
         box-shadow: none !important;

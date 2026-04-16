@@ -48,6 +48,7 @@
           </el-form-item>
           <el-form-item label="">
             <el-date-picker
+              style="width: 240px!important;"
               v-model="queryParams.time"
               type="daterange"
               range-separator="至"
@@ -87,17 +88,22 @@
 
       <!-- 数据表格 -->
       <div class="table-wrapper">
-        <el-table :data="tableList" border="false" v-loading="loading" @selection-change="handleSelectionChange">
+        <el-table :data="tableList" :border="false" v-loading="loading" @selection-change="handleSelectionChange" height="100%">
           <el-table-column type="selection" width="55" align="center" />
           <el-table-column label="序号" type="index" width="60" align="center" />
           <el-table-column label="方案编号" prop="planCode" width="160" />
           <el-table-column label="方案名称" prop="planName" min-width="200" show-overflow-tooltip />
-          <el-table-column label="目标品种" prop="targetCategory" width="100" align="center" />
-          <el-table-column label="目标区域" prop="targetArea" width="100" align="center" />
-          <el-table-column label="计划样品数量" prop="sampleCount" width="120" align="center" />
+          <el-table-column label="产品分类" prop="targetCategory" width="110" align="center">
+            <template #default="scope">
+              <span>{{ getProductCategoryLabel(scope.row.targetCategory) || scope.row.targetCategory || '--' }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="检测区域" prop="targetArea" width="110" align="center" />
+          <el-table-column label="主管单位" prop="issuerDeptName" width="180" show-overflow-tooltip />
+          <el-table-column label="方案检测总量" prop="sampleCount" width="120" align="center" />
           <el-table-column label="方案开始日期" prop="planStartDate" width="120" align="center" />
           <el-table-column label="方案结束日期" prop="planEndDate" width="120" align="center" />
-          <el-table-column label="任务完成率" width="120" align="center">
+          <el-table-column label="任务方案完成率" width="150" align="center">
             <template #default="scope">
               <span v-if="scope.row.completionRate != null">
                 {{ scope.row.completionRate }}% ({{ scope.row.taskCompletedCount || 0 }}/{{ scope.row.taskTotalCount || 0 }})
@@ -143,6 +149,7 @@ import { ElMessage, ElMessageBox } from 'element-plus';
 import { Search } from '@element-plus/icons-vue'
 import * as DetectionPlanApi from '@/api/agri/detectionPlan'
 import download from '@/utils/download'
+import { useDict, DICT_TYPE } from '@/hooks/web/useDict'
 
 const router = useRouter();
 
@@ -184,6 +191,9 @@ const statusMap = {
   3: { text: '已完成', class: 'status-completed' },
   4: { text: '已结束', class: 'status-finished' }
 };
+
+// 使用字典
+const { getLabel: getProductCategoryLabel } = useDict(DICT_TYPE.AGRI_PRODUCT_CATEGORY, 'str')
 
 // 表格数据
 const tableList = ref([]);
@@ -378,20 +388,29 @@ onMounted(() => {
 
 <style lang="scss" scoped>
 .table-container {
-  height: 100%;
-  overflow-y: auto;
-  border-radius: 10px;
+  height: calc(100vh - 86px);
   display: flex;
   flex-direction: column;
   gap: 20px;
-  border: none !important;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-.guide-card,
+.guide-card {
+  background: #fff;
+  border-radius: 10px;
+  padding: 16px;
+  flex-shrink: 0;
+}
+
 .query-card {
   background: #fff;
   border-radius: 10px;
   padding: 16px;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 
@@ -499,6 +518,8 @@ onMounted(() => {
   border-radius: 6px;
   box-shadow: none !important;
   padding: 0 12px;
+  height: 32px;
+  line-height: 32px;
 
   &:hover {
     border-color: #00B3ED;
@@ -559,7 +580,9 @@ onMounted(() => {
 
 /* 表格定制 */
 .table-wrapper {
-  margin-bottom: 24px;
+  margin-bottom: 16px;
+  flex: 1;
+  height: 0;
 }
 
 

@@ -335,12 +335,10 @@ const handleCopyPrevious = async () => {
  */
 const handleOcrUpload = async (options, imageType) => {
     try {
-        const res = await SubjectApi.ocrUpload({
+        const data = await SubjectApi.ocrUpload({
             file: options.file,
             imageType: imageType
         });
-        
-        const data = res.data; // SubjectImageOcrRespVO
         
         // 更新图片预览
         if (imageType === 1) {
@@ -357,10 +355,11 @@ const handleOcrUpload = async (options, imageType) => {
             }
         } else if (imageType === 3) {
             formData.idCardBackUrl = data.imageUrl;
-            message.success('上传成功');
+            // message.success('上传成功');
         }
         
-        return data.imageUrl;
+        // 返回符合 UploadImg 组件期望的数据结构，确保 v-model 能正常更新
+        return { data: data.imageUrl };
     } catch (error) {
         console.error('OCR 识别失败', error);
         message.error('证件识别失败，请检查图片是否清晰');

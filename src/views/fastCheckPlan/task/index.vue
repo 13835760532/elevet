@@ -42,6 +42,7 @@
                     </el-form-item>
                     <el-form-item label="">
                         <el-date-picker 
+                            style="width: 240px!important;"
                             v-model="queryDateRange" 
                             type="daterange" 
                             range-separator="至"
@@ -69,7 +70,7 @@
 
             <!-- 数据表格 -->
             <div class="table-wrapper">
-                <el-table :data="tableList" border="false" v-loading="loading">
+                <el-table :data="tableList" :border="false" v-loading="loading" height="100%">
                     <el-table-column label="序号" type="index" width="60" align="center" />
                     <el-table-column label="任务编码" prop="taskCode" width="160" align="center" />
                     <el-table-column label="任务名称" prop="taskName" min-width="180" show-overflow-tooltip />
@@ -280,20 +281,27 @@ onMounted(() => {
 
 <style lang="scss" scoped>
 .table-container {
-    height: 100%;
-    overflow-y: auto;
-    border-radius: 10px;
+    height: calc(100vh - 86px);
     display: flex;
     flex-direction: column;
     gap: 20px;
-    border: none !important;
 }
 
-.guide-card,
+.guide-card {
+    background: #fff;
+    border-radius: 10px;
+    padding: 16px;
+    flex-shrink: 0;
+}
+
 .query-card {
     background: #fff;
     border-radius: 10px;
     padding: 16px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
 }
 
 /* 指南步骤样式 */
@@ -397,6 +405,13 @@ onMounted(() => {
             color: #ccc;
         }
     }
+}
+
+/* 表格定制 */
+.table-wrapper {
+    flex: 1;
+    height: 0;
+    margin-bottom: 12px;
 }
 
 :deep(.el-table) {

@@ -80,7 +80,8 @@ const props = defineProps({
   borderradius: propTypes.string.def('8px'), // 组件边框圆角 ==> 非必传（默认为 8px）
   showDelete: propTypes.bool.def(true), // 是否显示删除按钮
   showBtnText: propTypes.bool.def(true), // 是否显示按钮文字
-  directory: propTypes.string.def(undefined) // 上传目录 ==> 非必传（默认为 undefined）
+  directory: propTypes.string.def(undefined), // 上传目录 ==> 非必传（默认为 undefined）
+  httpRequest: propTypes.func.def(undefined) // 自定义上传请求 ==> 非必传
 })
 const { t } = useI18n() // 国际化
 const message = useMessage() // 消息弹窗
@@ -100,7 +101,8 @@ const deleteImg = () => {
   emit('update:modelValue', '')
 }
 
-const { uploadUrl, httpRequest } = useUpload(props.directory)
+const { uploadUrl, httpRequest: defaultHttpRequest } = useUpload(props.directory)
+const httpRequest = props.httpRequest || defaultHttpRequest
 
 const editImg = () => {
   const dom = document.querySelector(`#${uuid.value} .el-upload__input`)

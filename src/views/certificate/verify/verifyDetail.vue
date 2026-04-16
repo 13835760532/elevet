@@ -77,7 +77,9 @@
                                         </div>
                                         <div class="right-qr">
                                             <div class="qr-placeholder">
-                                                <Qrcode :text="formData.certificateCode" :width="70" />
+                                                <Qrcode :text="formData.certificateCode"
+                                                :options="{ errorCorrectionLevel: 'M' }" 
+                                                :width="70" />
                                             </div>
                                         </div>
                                     </div>

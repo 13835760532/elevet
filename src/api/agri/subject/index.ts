@@ -75,10 +75,13 @@ export const importSubject = (data: { file: File; updateSupport: boolean }) => {
   })
 }
 // 主体证照 OCR 上传识别
-export const ocrUpload = (params: { file: File; imageType: number }) => {
+export const ocrUpload = (data: { file: File; imageType: number }) => {
+  const formData = new FormData()
+  formData.append('file', data.file)
+  formData.append('imageType', data.imageType as any)
   return request.post({
     url: '/agri/subject/ocr-upload',
-    params,
+    data: formData,
     headers: {
       'Content-Type': 'multipart/form-data'
     }

@@ -1,217 +1,203 @@
 <template>
     <div class="page-container">
-        <PageBack />
-
         <!-- 头部标题 -->
-        <div class="header-card">
-            <div class="card-header">
-             
-                <h2 class="card-title">创建检测任务</h2>
-            </div>
-            <p class="header-desc">支持检测方案按承检机构和检测行任务拆分，配置任务执行时间、检测数量、检测结果提交要求（检测品种、检测项目、检测地区、检测频率）</p>
-        </div>
-
-        <!-- 方案信息展示 -->
-        <div class="scheme-info-card">
-            <div class="info-grid">
-                <div class="info-item">
-                    <span class="label">方案编号</span>
-                    <span class="value">{{ schemeInfo.no }}</span>
-                </div>
-                <div class="info-item">
-                    <span class="label">方案名称</span>
-                    <span class="value">{{ schemeInfo.name }}</span>
-                </div>
-                <div class="info-item">
-                    <span class="label">主管单位</span>
-                    <span class="value link-text">{{ schemeInfo.dept }}</span>
-                </div>
-                <div class="info-item">
-                    <span class="label">方案类型</span>
-                    <span class="value link-text">{{ schemeInfo.type }}</span>
-                </div>
-                <div class="info-item">
-                    <span class="label">剩余发放</span>
-                    <span class="value">{{ schemeInfo.category }}</span>
-                </div>
-                <div class="info-item">
-                    <span class="label">执行时间</span>
-                    <span class="value link-text">{{ schemeInfo.executionTime }}</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- 任务拆分表单 -->
-        <div class="content-card">
-            <h3 class="section-title">任务拆分</h3>
-
-            <!-- 步骤1: 选择任务承担单位 -->
-            <div class="step-section">
-                <h4 class="step-title">1、选择任务承担单位</h4>
-                <el-row :gutter="16" style="margin-bottom: 10px;">
-                    <el-col :span="8">
-                        <el-form-item label="单位类型" style="margin-bottom: 0;">
-                            <el-select v-model="taskForm.unitType" placeholder="单位类型" class="full-width"
-                                @change="handleProvinceChange">
-                                <el-option label="承检机构" value="beijing" />
-                                <el-option label="检测机构" value="tianjin" />
-                            </el-select>
-                        </el-form-item>
-                    </el-col>
-                </el-row>
-                <el-row :gutter="16">
-                    <el-col :span="8">
-                        <el-form-item label="所属区域" style="margin-bottom: 0;">
-                            <el-select v-model="taskForm.province" placeholder="选择省份" class="full-width"
-                                @change="handleProvinceChange">
-                                <el-option label="北京市" value="beijing" />
-                                <el-option label="天津市" value="tianjin" />
-                                <el-option label="上海市" value="shanghai" />
-                                <el-option label="广东省" value="guangdong" />
-                            </el-select>
-                        </el-form-item>
-                    </el-col>
-                    <el-col :span="8">
-                        <el-select v-model="taskForm.city" placeholder="请选择市" class="full-width"
-                            :disabled="!taskForm.province">
-                            <el-option label="市辖区" value="city" />
-                        </el-select>
-                    </el-col>
-                    <el-col :span="8">
-                        <el-select v-model="taskForm.district" placeholder="请选择区/县" class="full-width"
-                            :disabled="!taskForm.city">
-                            <el-option label="朝阳区" value="chaoyang" />
-                            <el-option label="海淀区" value="haidian" />
-                        </el-select>
-                    </el-col>
-                </el-row>
-
-                <div class="search-box">
-                    <el-input v-model="searchKeyword" placeholder="输入任务机构或被检人员或检测单位" class="search-input">
-                        <template #suffix>
-                            <el-icon class="search-icon">
-                                <Search />
-                            </el-icon>
-                        </template>
-                    </el-input>
-                </div>
-
-                <div class="org-list">
-                    <div class="org-item check-all-item">
-                        <el-checkbox v-model="checkAll" :indeterminate="isIndeterminate" @change="handleCheckAllChange">
-                            全选 {{ orgOptions.length }}项
-                        </el-checkbox>
+        <pageHeader title="创建检测任务" desc="支持检测方案按承检机构和检测行任务拆分，配置任务执行时间、检测数量、检测结果提交要求（检测品种、检测项目、检测地区、检测频率）" />
+        <div class="flex-1">
+            <!-- 方案信息展示 -->
+            <div class="scheme-info-card">
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="label">方案编号</span>
+                        <span class="value">{{ schemeInfo.no }}</span>
                     </div>
-                    <el-checkbox-group v-model="selectedOrgs" @change="handleCheckedOrgsChange">
-                        <div class="org-item" v-for="org in orgOptions" :key="org.id">
-                            <el-checkbox :label="org.id">{{ org.name }}</el-checkbox>
+                    <div class="info-item">
+                        <span class="label">方案名称</span>
+                        <span class="value">{{ schemeInfo.name }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">主管单位</span>
+                        <span class="value link-text">{{ schemeInfo.dept }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">方案类型</span>
+                        <span class="value">{{ schemeInfo.type }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">产品分类</span>
+                        <span class="value">{{ schemeInfo.category }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">计划总量</span>
+                        <span class="value highlight">{{ schemeInfo.sampleCount }} 份</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">执行时间</span>
+                        <span class="value">{{ schemeInfo.executionTime }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 任务拆分表单 -->
+            <div class="content-card">
+                <h3 class="section-title">任务拆分</h3>
+
+                <!-- 步骤1: 选择任务承担单位 -->
+                <div class="step-section">
+                    <h4 class="step-title">1、选择任务承担单位</h4>
+                    <el-row :gutter="16" style="margin-bottom: 10px;">
+                        <el-col :span="8">
+                            <el-form-item label="单位类型" style="margin-bottom: 0;">
+                                <el-select v-model="taskForm.unitType" placeholder="单位类型" class="full-width">
+                                    <el-option label="承检机构" value="beijing" />
+                                    <el-option label="检测机构" value="tianjin" />
+                                </el-select>
+                            </el-form-item>
+                        </el-col>
+                    </el-row>
+                    <el-row :gutter="16" style="margin-bottom: 20px;">
+                        <el-col :span="12">
+                            <el-form-item label="所属区域" style="margin-bottom: 0;">
+                                <AreaCascader 
+                                    class="full-width"
+                                    v-model="areaPath" 
+                                    placeholder="请选择所属地区" 
+                                    @select="(val) => {
+                                        taskForm.province = val.province;
+                                        taskForm.city = val.city;
+                                        taskForm.district = val.district;
+                                    }"
+                                />
+                            </el-form-item>
+                        </el-col>
+                    </el-row>
+
+                    <div class="search-box">
+                        <el-input v-model="searchKeyword" placeholder="输入任务机构或被检人员或检测单位" class="search-input">
+                            <template #suffix>
+                                <el-icon class="search-icon">
+                                    <Search />
+                                </el-icon>
+                            </template>
+                        </el-input>
+                    </div>
+
+                    <div class="org-list">
+                        <div class="org-item check-all-item">
+                            <el-checkbox v-model="checkAll" :indeterminate="isIndeterminate" @change="handleCheckAllChange">
+                                全选 {{ orgOptions.length }}项
+                            </el-checkbox>
                         </div>
-                    </el-checkbox-group>
+                        <el-checkbox-group v-model="selectedOrgs" @change="handleCheckedOrgsChange">
+                            <div class="org-item" v-for="org in orgOptions" :key="org.id">
+                                <el-checkbox :label="org.id">{{ org.name }}</el-checkbox>
+                            </div>
+                        </el-checkbox-group>
+                    </div>
                 </div>
-            </div>
 
-            <!-- 步骤2: 设置任务分配周期 -->
-            <div class="step-section">
-                <h4 class="step-title">2、设置任务分配周期</h4>
-                <div class="allocation-config">
-                    <div class="config-row">
-                        <span class="config-label">任务检测量：</span>
-                        <el-input v-model="taskForm.quantity" placeholder="1000" type="number" class="quantity-input" />
-                        <span class="warning-text">取值规则方案检测总量-已分发量</span>
-                    </div>
-                    <div class="config-row">
-                        <span class="config-label">分发方式：</span>
-                        <el-radio-group v-model="taskForm.distributionType">
-                            <el-radio label="average">平均分配</el-radio>
-                            <el-radio label="manual">手动分配</el-radio>
-                        </el-radio-group>
-                    </div>
-                    <div class="config-row">
-                        <span class="config-label">执行时间：</span>
-                        <div class="date-range-group">
-                            <el-date-picker v-model="taskForm.startDate" type="date" placeholder="开始日期"
-                                class="date-picker" />
-                            <span class="date-separator">至</span>
-                            <el-date-picker v-model="taskForm.endDate" type="date" placeholder="结束日期"
-                                class="date-picker" />
+                <!-- 步骤2: 设置任务分配周期 -->
+                <div class="step-section">
+                    <h4 class="step-title">2、设置任务分配周期</h4>
+                    <div class="allocation-config">
+                        <div class="config-row">
+                            <span class="config-label">任务检测量：</span>
+                            <el-input v-model="taskForm.quantity" placeholder="1000" type="number" class="quantity-input" />
+                            <span class="warning-text">取值规则方案检测总量-已分发量</span>
+                        </div>
+                        <div class="config-row">
+                            <span class="config-label">分发方式：</span>
+                            <el-radio-group v-model="taskForm.distributionType">
+                                <el-radio label="average">平均分配</el-radio>
+                                <el-radio label="manual">手动分配</el-radio>
+                            </el-radio-group>
+                        </div>
+                        <div class="config-row">
+                            <span class="config-label">执行时间：</span>
+                            <div class="date-range-group">
+                                <el-date-picker v-model="taskForm.startDate" type="date" placeholder="开始日期"
+                                    class="date-picker" />
+                                <span class="date-separator">至</span>
+                                <el-date-picker v-model="taskForm.endDate" type="date" placeholder="结束日期"
+                                    class="date-picker" />
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- 步骤3: 设置具体检测要求 -->
-            <div class="step-section">
-                <h4 class="step-title">3、设置具体检测要求</h4>
-                <div class="summary-info">
-                    <span class="summary-text">已选任务分配量：</span>
-                    <span class="summary-value">20000</span>
-                    <span class="divider">|</span>
-                    <span class="summary-text">方案检测总量：</span>
-                    <span class="summary-value">50000</span>
-                    <el-button type="primary" @click="handleHighRiskQuery" class="batch-config-btn">
-                        高风险查询
-                    </el-button>
-                </div>
+                <!-- 步骤3: 设置具体检测要求 -->
+                <div class="step-section">
+                    <h4 class="step-title">3、设置具体检测要求</h4>
+                    <div class="summary-info">
+                        <span class="summary-text">已选任务分配量：</span>
+                        <span class="summary-value">20000</span>
+                        <span class="divider">|</span>
+                        <span class="summary-text">方案检测总量：</span>
+                        <span class="summary-value">{{ schemeInfo.sampleCount }}</span>
+                        <el-button type="primary" @click="handleHighRiskQuery" class="batch-config-btn">
+                            高风险查询
+                        </el-button>
+                    </div>
 
-                <div class="task-table-wrapper">
-                    <el-table :data="displayTaskList" :header-cell-style="headerCellStyle" border>
-                        <el-table-column label="序号" width="60" align="center">
-                            <template #default="scope">
-                                <div v-if="scope.row.isAdd" class="add-row-btn" @click="handleAddTaskRow">
-                                    <el-icon :size="20" color="#00B3ED">
-                                        <CirclePlusFilled />
-                                    </el-icon>
-                                </div>
-                                <span v-else>{{ scope.$index + 1 }}</span>
-                            </template>
-                        </el-table-column>
-                        <el-table-column label="承担单位" prop="dept" width="150" show-overflow-tooltip>
-                            <template #default="scope">
-                                <span v-if="!scope.row.isAdd">{{ scope.row.dept }}</span>
-                            </template>
-                        </el-table-column>
-                        <el-table-column label="检测地区" prop="region" width="100" align="center">
-                            <template #default="scope">
-                                <span v-if="!scope.row.isAdd">{{ scope.row.region }}</span>
-                            </template>
-                        </el-table-column>
-                        <el-table-column label="检测数量" prop="quantity" width="100" align="center">
-                            <template #default="scope">
-                                <span v-if="!scope.row.isAdd">{{ scope.row.quantity }}</span>
-                            </template>
-                        </el-table-column>
-                        <el-table-column label="执行时间" prop="executionTime" width="200" align="center">
-                            <template #default="scope">
-                                <span v-if="!scope.row.isAdd" class="link-text">{{ scope.row.executionTime }}</span>
-                            </template>
-                        </el-table-column>
-                        <el-table-column label="检测品种" prop="varieties" align="center">
-                            <template #default="scope">
-                                <span v-if="!scope.row.isAdd" class="link-text">{{ scope.row.varieties }}</span>
-                            </template>
-                        </el-table-column>
-                        <el-table-column label="检测项目" prop="items" align="center">
-                            <template #default="scope">
-                                <span v-if="!scope.row.isAdd" class="link-text">{{ scope.row.items }}</span>
-                            </template>
-                        </el-table-column>
-                        <el-table-column label="操作" width="130" align="center" fixed="right">
-                            <template #default="scope">
-                                <template v-if="!scope.row.isAdd">
-                                    <span class="link-text" @click="handleConfigTask(scope.row)">设置要求</span>
-                                    <span class="link-text ml10" style="color: #F56C6C;"
-                                        @click="handleDeleteTask(scope.$index)">删除</span>
+                    <div class="task-table-wrapper">
+                        <el-table :data="displayTaskList" :header-cell-style="headerCellStyle" border>
+                            <el-table-column label="序号" width="60" align="center">
+                                <template #default="scope">
+                                    <div v-if="scope.row.isAdd" class="add-row-btn" @click="handleAddTaskRow">
+                                        <el-icon :size="20" color="#00B3ED">
+                                            <CirclePlusFilled />
+                                        </el-icon>
+                                    </div>
+                                    <span v-else>{{ scope.$index + 1 }}</span>
                                 </template>
-                            </template>
-                        </el-table-column>
-                    </el-table>
+                            </el-table-column>
+                            <el-table-column label="承担单位" prop="dept" width="150" show-overflow-tooltip>
+                                <template #default="scope">
+                                    <span v-if="!scope.row.isAdd">{{ scope.row.dept }}</span>
+                                </template>
+                            </el-table-column>
+                            <el-table-column label="检测地区" prop="region" width="100" align="center">
+                                <template #default="scope">
+                                    <span v-if="!scope.row.isAdd">{{ scope.row.region }}</span>
+                                </template>
+                            </el-table-column>
+                            <el-table-column label="检测数量" prop="quantity" width="100" align="center">
+                                <template #default="scope">
+                                    <span v-if="!scope.row.isAdd">{{ scope.row.quantity }}</span>
+                                </template>
+                            </el-table-column>
+                            <el-table-column label="执行时间" prop="executionTime" width="200" align="center">
+                                <template #default="scope">
+                                    <span v-if="!scope.row.isAdd" class="link-text">{{ scope.row.executionTime }}</span>
+                                </template>
+                            </el-table-column>
+                            <el-table-column label="检测品种" prop="varieties" align="center">
+                                <template #default="scope">
+                                    <span v-if="!scope.row.isAdd" class="link-text">{{ scope.row.varieties }}</span>
+                                </template>
+                            </el-table-column>
+                            <el-table-column label="检测项目" prop="items" align="center">
+                                <template #default="scope">
+                                    <span v-if="!scope.row.isAdd" class="link-text">{{ scope.row.items }}</span>
+                                </template>
+                            </el-table-column>
+                            <el-table-column label="操作" width="130" align="center" fixed="right">
+                                <template #default="scope">
+                                    <template v-if="!scope.row.isAdd">
+                                        <span class="link-text" @click="handleConfigTask(scope.row)">设置要求</span>
+                                        <span class="link-text ml10" style="color: #F56C6C;"
+                                            @click="handleDeleteTask(scope.$index)">删除</span>
+                                    </template>
+                                </template>
+                            </el-table-column>
+                        </el-table>
+                    </div>
                 </div>
-            </div>
 
-            <!-- 底部按钮 -->
-            <div class="footer-actions">
-                <el-button @click="handleCancel" class="btn-cancel">取消</el-button>
-                <el-button type="primary" @click="handleSubmit" class="btn-submit">创建任务并下发</el-button>
+                <!-- 底部按钮 -->
+                <div class="footer-actions">
+                    <el-button @click="handleCancel" class="btn-cancel">取消</el-button>
+                    <el-button type="primary" @click="handleSubmit" class="btn-submit">创建任务并下发</el-button>
+                </div>
             </div>
         </div>
 
@@ -226,22 +212,55 @@
 
 <script setup>
 import { ref, reactive, computed } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import { Search, CirclePlusFilled } from '@element-plus/icons-vue';
 import { ElMessage } from 'element-plus';
 import RequirementDialog from '@/components/RequirementDialog/index.vue';
 import HighRiskDialog from '@/components/HighRiskDialog/index.vue';
+import AreaCascader from '@/components/AreaCascader/index.vue';
+import * as DetectionPlanApi from '@/api/agri/detectionPlan/index';
+import { useDict, DICT_TYPE } from '@/hooks/web/useDict';
+import { onMounted } from 'vue';
 
 const router = useRouter();
+const route = useRoute();
+const planId = Number(route.query.id) || 1;
 
 const schemeInfo = reactive({
-    no: 'FA-SC-202601-001',
-    name: '2026年1月北京市、天津市蔬菜快速检测工作方案',
-    dept: '农业农村部农产品质量监督检验测试中心（上海）',
-    type: '快速检测',
-    category: '1000',
-    executionTime: '2024年12月1日至2024年12月28日'
+    no: '',
+    name: '',
+    dept: '',
+    type: '',
+    category: '--',
+    executionTime: '--',
+    sampleCount: 0
 });
+
+// 使用字典
+const { getLabel: getPlanTypeLabel } = useDict(DICT_TYPE.AGRI_PLAN_TYPE, 'int')
+const { getLabel: getProductCategoryLabel } = useDict(DICT_TYPE.AGRI_PRODUCT_CATEGORY, 'str')
+
+// 加载方案详情
+const loadSchemeDetail = async () => {
+    if (!planId) return
+    try {
+        const data = await DetectionPlanApi.getDetectionPlan(planId)
+        schemeInfo.no = data.planCode
+        schemeInfo.name = data.planName
+        schemeInfo.dept = data.issuerDeptName || `部门ID: ${data.issuerDeptId}`
+        schemeInfo.type = getPlanTypeLabel(data.planType)
+        schemeInfo.category = data.targetCategory ? getProductCategoryLabel(data.targetCategory) : '--'
+        schemeInfo.executionTime = `${data.planStartDate || ''} 至 ${data.planEndDate || ''}`
+        schemeInfo.sampleCount = data.sampleCount || 0
+        
+        // 设置任务默认时间
+        taskForm.startDate = data.planStartDate
+        taskForm.endDate = data.planEndDate
+    } catch (error) {
+        console.error('获取方案详情失败:', error)
+        ElMessage.error('加载方案详情失败')
+    }
+}
 
 const taskForm = reactive({
     unitType: '',
@@ -253,6 +272,8 @@ const taskForm = reactive({
     startDate: '',
     endDate: ''
 });
+
+const areaPath = ref([]);
 
 const searchKeyword = ref('');
 const selectedOrgs = ref([]);
@@ -335,10 +356,7 @@ const headerCellStyle = {
     borderBottom: '1px solid #f0f0f0'
 };
 
-const handleProvinceChange = () => {
-    taskForm.city = '';
-    taskForm.district = '';
-};
+
 
 const handleHighRiskQuery = () => {
     showHighRiskDialog.value = true;
@@ -365,26 +383,69 @@ const handleCancel = () => {
     router.back();
 };
 
-const handleSubmit = () => {
-    if (selectedOrgs.value.length === 0) {
-        ElMessage.warning('请选择任务承担单位');
+const handleSubmit = async () => {
+    if (selectedOrgs.value.length === 0 && taskList.value.length === 0) {
+        ElMessage.warning('请选择任务承担单位或分配任务');
         return;
     }
-    if (!taskForm.quantity) {
-        ElMessage.warning('请输入任务检测量');
-        return;
+    
+    const taskSplits = taskList.value.map(item => {
+        let startDate = undefined;
+        let endDate = undefined;
+        
+        if (item.executionTime && item.executionTime !== '待设置') {
+            const times = item.executionTime.split('～');
+            if (times.length === 2) {
+                startDate = times[0].trim();
+                endDate = times[1].trim();
+            }
+        }
+        
+        return {
+            assignDeptId: item.deptId || 1, // 当前列表数据中如果没有给出 id 暂时用 1 替代
+            sampleCount: Number(item.quantity) || 0,
+            subjectId: item.subjectId || 1, // 当前接口必须项
+            taskType: 1, 
+            detectionVarieties: item.varieties !== '待设置' ? item.varieties : undefined,
+            detectionItems: item.items !== '待设置' ? item.items : undefined,
+            detectionArea: item.region !== '待设置' ? item.region : undefined,
+            startDate,
+            endDate
+        };
+    });
+
+    try {
+        await DetectionPlanApi.splitPlanTasks({
+            planId: planId,
+            taskSplits: taskSplits
+        });
+        
+        ElMessage.success('任务创建及下发成功');
+        setTimeout(() => {
+            router.back();
+        }, 1500);
+    } catch (error) {
+        console.error('任务下发失败', error);
     }
-    ElMessage.success('任务创建成功');
-    setTimeout(() => {
-        router.back();
-    }, 1500);
 };
+// 页面初始化
+onMounted(() => {
+    loadSchemeDetail()
+})
 </script>
 
 <style lang="scss" scoped>
 .page-container {
-    height: 100%;
-    overflow-y: auto;
+    height: calc(100vh - 90px);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.flex-1{
+    flex: 1;
+    overflow: auto;
     display: flex;
     flex-direction: column;
     gap: 20px;
@@ -416,15 +477,12 @@ const handleSubmit = () => {
 
     .value {
         font-size: 14px;
-        color: #333;
+        color: #1e293b;
+        font-weight: 500;
 
-        &.link-text {
-            color: #00B3ED;
-            cursor: pointer;
-
-            &:hover {
-                text-decoration: underline;
-            }
+        &.highlight {
+            color: #2563eb;
+            font-weight: 600;
         }
     }
 }

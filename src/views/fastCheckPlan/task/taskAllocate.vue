@@ -1,37 +1,34 @@
 <template>
     <div class="app-container">
-        <!-- 顶部任务详情卡片 -->
-        <div class="task-detail-card">
+        <div class="task-detail-card" v-loading="detailLoading">
             <div class="card-left">
                 <div class="info-item">
                     <span class="label">任务名称：</span>
-                    <span class="value">2026年1月北京市、天津市蔬菜快速检测-任务1</span>
+                    <span class="value">{{ taskDetail.taskName || '--' }}</span>
                 </div>
                 <div class="info-item">
                     <span class="label">任务编号：</span>
-                    <span class="value">RW20251101</span>
+                    <span class="value">{{ taskDetail.taskCode || '--' }}</span>
                 </div>
                 <div class="info-item">
                     <span class="label">承担单位：</span>
-                    <span class="value">三二一检测机构</span>
+                    <span class="value">{{ taskDetail.assignDeptId || '--' }}</span>
                 </div>
-                <!-- <div class="info-item">
-                    <span class="label">检测范围：</span>
-                    <span class="value">北京、天津</span>
-                </div> -->
                 <div class="info-item">
                     <span class="label">检测品种：</span>
                     <div class="品种-wrapper">
-                        <span class="value">芹菜、黄瓜、韭菜...</span>
+                        <span class="value">{{ taskDetail.detectionVarieties || '--' }}</span>
                     </div>
                 </div>
                 <div class="info-item">
                     <span class="label">检测项目：</span>
-                    <span class="value">对硫磷、甲拌磷</span>
+                    <span class="value">{{ taskDetail.detectionItems || '--' }}</span>
                 </div>
                 <div class="info-item">
                     <span class="label">执行时间：</span>
-                    <span class="value">2024年12月11日至2024年12月28日</span>
+                    <span class="value">
+                        {{ taskDetail.startDate ? (taskDetail.startDate + ' 至 ' + taskDetail.endDate) : '--' }}
+                    </span>
                 </div>
             </div>
 
@@ -40,37 +37,33 @@
                     <div class="info-col">
                         <div class="info-item">
                             <span class="label">所属方案：</span>
-                            <span class="value">2026年1月北京市、天津市蔬菜快速检测工作方案</span>
+                            <span class="value">{{ taskDetail.planId || '--' }}</span>
                         </div>
                         <div class="info-item">
                             <span class="label">方案编号：</span>
-                            <span class="value">FA-SC-202601-001</span>
+                            <span class="value">{{ taskDetail.planCode || '--' }}</span>
                         </div>
                         <div class="info-item">
-                            <span class="label">主管单位：</span>
-                            <span class="value">农业农村部水产品质量监督检验测试中心（上海）</span>
-                        </div>
-                        <div class="info-item">
-                            <span class="label">任务类型：</span>
-                            <span class="value">快速检测</span>
-                        </div>
-                        <div class="info-item">
-                            <span class="label">产品分类：</span>
-                            <span class="value">蔬菜</span>
+                            <span class="label">检测分类：</span>
+                            <span class="value">{{ taskDetail.taskType === 1 ? '快速检测' : (taskDetail.taskType || '--') }}</span>
                         </div>
                         <div class="info-item">
                             <span class="label">检测地区：</span>
-                            <span class="value">北京、天津</span>
+                            <span class="value">{{ taskDetail.detectionArea || '--' }}</span>
                         </div>
                         <div class="info-item">
                             <span class="label">执行时间：</span>
-                            <span class="value">2024年12月11日至2024年12月28日</span>
+                            <span class="value">
+                                {{ taskDetail.startDate ? (taskDetail.startDate + ' 至 ' + taskDetail.endDate) : '--' }}
+                            </span>
                         </div>
                     </div>
                     <div class="progress-col">
-                        <el-progress type="circle" :percentage="80" :width="120" color="#00B3ED" :stroke-width="10" />
+                        <el-progress type="circle" :percentage="taskDetail.sampleCompletionRate || 0" :width="120" color="#00B3ED" :stroke-width="10" />
                         <div class="progress-label">任务完成率</div>
-                        <div class="progress-info">(800/1000)</div>
+                        <div class="progress-info">
+                            ({{ taskDetail.sampleCompletedCount || 0 }}/{{ taskDetail.sampleCount || 0 }})
+                        </div>
                     </div>
                 </div>
             </div>
@@ -132,22 +125,30 @@
                             :header-cell-style="{ background: '#F3F4F6', color: '#333333', fontWeight: 'bold' }"
                             :row-style="{ height: '60px' }">
                             <el-table-column label="序号" type="index" width="60" align="center" />
-                            <el-table-column label="任务编号" prop="taskNo" align="center" width="120" />
+                            <el-table-column label="任务编号" prop="taskCode" align="center" width="120" />
                             <el-table-column label="任务名称" prop="taskName" align="center" min-width="180"
                                 show-overflow-tooltip />
-                            <el-table-column label="承担单位" prop="unit" align="center" min-width="120" />
-                            <el-table-column label="检测区域范围" prop="area" align="center" width="120" />
-                            <el-table-column label="检测品种" prop="category" align="center" min-width="120"
+                            <el-table-column label="承担单位" prop="assignDeptId" align="center" min-width="120" />
+                            <el-table-column label="检测区域范围" prop="detectionArea" align="center" width="120" />
+                            <el-table-column label="检测品种" prop="detectionVarieties" align="center" min-width="120"
                                 show-overflow-tooltip />
-                            <el-table-column label="检测项目" prop="items" align="center" min-width="120"
+                            <el-table-column label="检测项目" prop="detectionItems" align="center" min-width="120"
                                 show-overflow-tooltip />
-                            <el-table-column label="执行时间" prop="timeRange" align="center" width="200" />
-                            <el-table-column label="任务完成率(已完成样品数/总样品数)" align="center" width="250">
+                            <el-table-column label="执行时间" align="center" width="200">
                                 <template #default="{ row }">
-                                    {{ row.rate }}% ({{ row.finished }}/{{ row.total }})
+                                    {{ row.startDate ? (row.startDate + ' 至 ' + row.endDate) : '--' }}
                                 </template>
                             </el-table-column>
-                            <el-table-column label="状态" prop="status" align="center" width="100" />
+                            <el-table-column label="任务完成率(已完成样品数/总样品数)" align="center" width="250">
+                                <template #default="{ row }">
+                                    {{ row.sampleCompletionRate || 0 }}% ({{ row.sampleCompletedCount || 0 }}/{{ row.sampleCount || 0 }})
+                                </template>
+                            </el-table-column>
+                            <el-table-column label="状态" prop="status" align="center" width="100">
+                                <template #default="{ row }">
+                                    <dict-tag :type="DICT_TYPE.AGRI_DETECTION_TASK_STATUS" :value="row.status" />
+                                </template>
+                            </el-table-column>
                             <el-table-column label="操作" align="center" width="100" fixed="right">
                                 <template #default="{ row }">
                                     <span class="table-link" @click="handleView(row)">查看</span>
@@ -180,19 +181,25 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { Lightning } from '@element-plus/icons-vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import DetectionProgress from '@/components/DetectionProgress/index.vue'
 import ProgressHistory from '@/components/ProgressHistory/index.vue'
+import * as DetectionTaskApi from '@/api/agri/detectionTask/index'
+import { DICT_TYPE } from '@/utils/dict'
 
 const router = useRouter()
+const route = useRoute()
+const taskId = route.query.id
 
 const activeTab = ref('subtask')
 const loading = ref(false)
+const detailLoading = ref(false)
 const pageNum = ref(1)
 const pageSize = ref(10)
-const total = ref(28)
+const total = ref(0)
+const taskDetail = ref({})
 
 const tabs = [
     { label: '子任务列表', key: 'subtask' },
@@ -207,73 +214,43 @@ const queryParams = reactive({
     dateRange: []
 })
 
-const tableData = ref([
-    {
-        taskNo: 'RW20251101',
-        taskName: '2025年丹江市快速检测任务',
-        unit: '三二一检测机构',
-        area: '全国',
-        category: '芹菜、黄瓜、韭菜......',
-        items: '对硫磷、甲拌磷',
-        timeRange: '2025-10-1至2025-12-28',
-        rate: 80,
-        finished: 300,
-        total: 400,
-        status: '未开始'
-    },
-    {
-        taskNo: 'RW20251101',
-        taskName: '2025年武汉快速检测任务',
-        unit: '三二一检测机构',
-        area: '北京、上海',
-        category: '芹菜、黄瓜、韭菜......',
-        items: '对硫磷、甲拌磷',
-        timeRange: '2025-10-1至2025-12-28',
-        rate: 20,
-        finished: 100,
-        total: 500,
-        status: '进行中'
-    },
-    {
-        taskNo: 'RW20251101',
-        taskName: '2025年东北快速检测任务',
-        unit: '三二一检测机构',
-        area: '天津',
-        category: '芹菜、黄瓜、韭菜......',
-        items: '对硫磷、甲拌磷',
-        timeRange: '2025-10-1至2025-12-28',
-        rate: 20,
-        finished: 100,
-        total: 500,
-        status: '已完成'
-    },
-    {
-        taskNo: 'RW20251101',
-        taskName: '2025年南京快速检测任务',
-        unit: '三二一检测机构',
-        area: '南昌',
-        category: '芹菜、黄瓜、韭菜......',
-        items: '对硫磷、甲拌磷',
-        timeRange: '2025-10-1至2025-12-28',
-        rate: 20,
-        finished: 100,
-        total: 500,
-        status: '已完成'
-    },
-    {
-        taskNo: 'RW20251101',
-        taskName: '2025年长江快速检测任务',
-        unit: '三二一检测机构',
-        area: '武汉',
-        category: '芹菜、黄瓜、韭菜......',
-        items: '对硫磷、甲拌磷',
-        timeRange: '2025-10-1至2025-12-28',
-        rate: 20,
-        finished: 100,
-        total: 500,
-        status: '已完成'
+const tableData = ref([])
+
+const getList = async () => {
+    loading.value = true;
+    try {
+        const id = taskId || 0; 
+        if (id) {
+            const data = await DetectionTaskApi.getDetectionSubTaskList(id);
+            tableData.value = data || [];
+            total.value = tableData.value.length;
+        }
+    } catch (error) {
+        console.error('获取子任务列表失败:', error);
+    } finally {
+        loading.value = false;
     }
-])
+}
+
+const getDetail = async () => {
+    detailLoading.value = true;
+    try {
+        const id = taskId || 0; 
+        if (id) {
+            const data = await DetectionTaskApi.getDetectionTask(id);
+            taskDetail.value = data || {};
+        }
+    } catch (error) {
+        console.error('获取任务详情失败:', error);
+    } finally {
+        detailLoading.value = false;
+    }
+}
+
+onMounted(() => {
+    getDetail();
+    getList();
+})
 
 function handleQuery() {
     console.log('Query:', queryParams)

@@ -80,7 +80,7 @@ const initQrcode = async () => {
     }
   } else {
     const url = await toDataURL(renderText.value, {
-      errorCorrectionLevel: 'H',
+      errorCorrectionLevel: 'L',
       width: props.width,
       ...options
     })

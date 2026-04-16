@@ -82,10 +82,12 @@ const props = defineProps({
   height: propTypes.string.def('150px'), // 组件高度 ==> 非必传（默认为 150px）
   width: propTypes.string.def('150px'), // 组件宽度 ==> 非必传（默认为 150px）
   borderradius: propTypes.string.def('8px'), // 组件边框圆角 ==> 非必传（默认为 8px）
-  directory: propTypes.string.def(undefined) // 上传目录 ==> 非必传（默认为 undefined）
+  directory: propTypes.string.def(undefined), // 上传目录 ==> 非必传（默认为 undefined）
+  httpRequest: propTypes.func.def(undefined) // 自定义上传请求 ==> 非必传
 })
 
-const { uploadUrl, httpRequest } = useUpload(props.directory)
+const { uploadUrl, httpRequest: defaultHttpRequest } = useUpload(props.directory)
+const httpRequest = props.httpRequest || defaultHttpRequest
 
 const fileList = ref<UploadUserFile[]>([])
 const uploadNumber = ref<number>(0)

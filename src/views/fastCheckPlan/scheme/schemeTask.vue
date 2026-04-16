@@ -10,52 +10,78 @@
             </div>
 
             <div class="info-content">
-                <!-- 左侧进度环 -->
-                <div class="progress-section">
-                    <div class="progress-circle">
-                        <el-progress type="circle" :percentage="schemeInfo.progress" :width="120" :stroke-width="8"
-                            color="#00B3ED" />
+                <!-- 左侧进度预览 -->
+                <div class="progress-section-container">
+                    <div class="progress-section">
+                        <div class="progress-circle">
+                            <el-progress 
+                                type="circle" 
+                                :percentage="schemeInfo.taskProgress" 
+                                :width="110" 
+                                :stroke-width="10"
+                                color="#2563eb" 
+                            />
+                        </div>
+                        <p class="progress-label">任务总完成率</p>
+                        <p class="progress-value">{{ schemeInfo.taskCompleted }}/{{ schemeInfo.taskTotal }}</p>
                     </div>
-                    <p class="progress-label">任务方案完成率</p>
-                    <p class="progress-value">{{ schemeInfo.completed }}/{{ schemeInfo.total }}</p>
                 </div>
 
-                <!-- 右侧信息列表 -->
+                <!-- 右侧信息详情列表 -->
                 <div class="info-list">
-                    <div class="info-row">
+                    <div class="info-grid">
                         <div class="info-item">
                             <span class="info-label">主管单位</span>
-                            <span class="info-value link-text">{{ schemeInfo.deptName }}</span>
+                            <span class="info-value highlight">{{ schemeInfo.deptName }}</span>
                         </div>
                         <div class="info-item">
                             <span class="info-label">方案类型</span>
-                            <span class="info-value link-text">{{ schemeInfo.type }}</span>
+                            <span class="info-value">{{ schemeInfo.type }}</span>
                         </div>
-                    </div>
-                    <div class="info-row">
                         <div class="info-item">
                             <span class="info-label">方案周期</span>
-                            <span class="info-value link-text">{{ schemeInfo.period }}</span>
+                            <span class="info-value">{{ schemeInfo.period }}</span>
                         </div>
                         <div class="info-item">
                             <span class="info-label">检测地区</span>
-                            <span class="info-value link-text">{{ schemeInfo.region }}</span>
+                            <span class="info-value">{{ schemeInfo.region }}</span>
                         </div>
-                    </div>
-                    <div class="info-row">
                         <div class="info-item">
                             <span class="info-label">产品分类</span>
-                            <span class="info-value link-text">{{ schemeInfo.category }}</span>
+                            <span class="info-value">{{ schemeInfo.category }}</span>
                         </div>
                         <div class="info-item">
                             <span class="info-label">执行时间</span>
                             <span class="info-value">{{ schemeInfo.executionTime }}</span>
                         </div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-item full-width">
+                        <div class="info-item">
+                            <span class="info-label">方案检测量</span>
+                            <span class="info-value">{{ schemeInfo.sampleCount }} 份</span>
+                        </div>
+                        <div class="info-item">
                             <span class="info-label">方案状态</span>
                             <span :class="['status-tag', statusClass]">{{ schemeInfo.status }}</span>
+                        </div>
+                        <div class="info-item full-width">
+                            <span class="info-label">检测项目</span>
+                            <span class="info-value">{{ schemeInfo.detectionItems }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="info-footer-desc">
+                        <!-- 方案要求 -->
+                        <div class="desc-section" v-if="schemeInfo.planRequirements">
+                            <span class="info-label">方案要求</span>
+                            <div class="desc-content">{{ schemeInfo.planRequirements }}</div>
+                        </div>
+                        <!-- 附件列表 -->
+                        <div class="desc-section" v-if="schemeInfo.planAttachments && schemeInfo.planAttachments.length > 0">
+                            <span class="info-label">方案附件</span>
+                            <div class="attachments-row">
+                                <a v-for="(file, index) in schemeInfo.planAttachments" :key="index" :href="file.url" target="_blank" class="file-tag">
+                                    <el-icon><Document /></el-icon> {{ file.name }}
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -152,6 +178,7 @@ const route = useRoute();
 const activeTab = ref('list');
 
 const { getLabel: getPlanTypeLabel } = useDict(DICT_TYPE.AGRI_PLAN_TYPE);
+const { getLabel: getProductCategoryLabel } = useDict(DICT_TYPE.AGRI_PRODUCT_CATEGORY);
 
 const schemeInfo = reactive({
     id: null,
@@ -166,9 +193,16 @@ const schemeInfo = reactive({
     executionTime: '--',
     status: '--',
     statusValue: null,
-    progress: 0,
-    completed: 0,
-    total: 0
+    taskProgress: 0,
+    taskCompleted: 0,
+    taskTotal: 0,
+    sampleProgress: 0,
+    sampleCompleted: 0,
+    sampleTotal: 0,
+    sampleCount: 0,
+    detectionItems: '--',
+    planRequirements: '',
+    planAttachments: []
 });
 
 // 状态映射
@@ -218,13 +252,53 @@ const loadPlanData = async (id) => {
             schemeInfo.type = getPlanTypeLabel(data.planType);
             schemeInfo.period = formatPeriod(data);
             schemeInfo.region = data.targetArea || '--';
-            schemeInfo.category = data.targetCategory || '--';
-            schemeInfo.executionTime = `${data.planStartDate} 至 ${data.planEndDate}`;
+            // 使用字典获取分类名称
+            schemeInfo.category = data.targetCategory ? getProductCategoryLabel(data.targetCategory) : '--';
+            schemeInfo.executionTime = `${data.planStartDate || ''} 至 ${data.planEndDate || ''}`;
             schemeInfo.status = statusMap[data.status]?.text || '未知';
             schemeInfo.statusValue = data.status;
-            schemeInfo.progress = data.completionRate || 0;
-            schemeInfo.completed = data.taskCompletedCount || 0;
-            schemeInfo.total = data.taskTotalCount || 0;
+            schemeInfo.sampleCount = data.sampleCount || 0;
+            schemeInfo.detectionItems = data.detectionItems || '--';
+            schemeInfo.planRequirements = data.planRequirements || '';
+            
+            // 获取统计数据
+            try {
+                const stats = await DetectionPlanApi.getPlanStatistics(id);
+                if (stats) {
+                    schemeInfo.taskProgress = stats.completionRate || 0;
+                    schemeInfo.taskCompleted = stats.taskCompletedCount || 0;
+                    schemeInfo.taskTotal = stats.taskTotalCount || 0;
+                    
+                    schemeInfo.sampleProgress = stats.sampleCompletionRate || 0;
+                    schemeInfo.sampleCompleted = stats.sampleCompletedCount || 0;
+                    schemeInfo.sampleTotal = stats.sampleCount || 0;
+                }
+            } catch (err) {
+                console.warn('获取方案统计失败', err);
+            }
+            
+            // 处理附件解析
+            if (data.planAttachments) {
+                try {
+                    // 如果后端存储的是 JSON 字符串
+                    schemeInfo.planAttachments = JSON.parse(data.planAttachments);
+                } catch (e) {
+                    // 如果已经是对象或数组，或者解析失败
+                    if (Array.isArray(data.planAttachments)) {
+                        schemeInfo.planAttachments = data.planAttachments;
+                    } else if (typeof data.planAttachments === 'string') {
+                        // 如果逗号分隔的 URL
+                        schemeInfo.planAttachments = data.planAttachments.split(',').map((url, index) => ({
+                            name: `附件${index + 1}`,
+                            url: url.trim()
+                        }));
+                    } else {
+                        schemeInfo.planAttachments = [];
+                    }
+                }
+            } else {
+                schemeInfo.planAttachments = [];
+            }
         }
     } catch (error) {
         console.error('获取方案详情失败：', error);
@@ -421,7 +495,10 @@ const getTaskStatusClass = (status) => {
 };
 
 const handleCreateTask = () => {
-    router.push('/fastCheckPlan/createSchemeTask');
+    router.push({
+        path: '/fastCheckPlan/createSchemeTask',
+        query: { id: schemeInfo.id }
+    });
 };
 
 const handleEditTask = (row) => {
@@ -492,10 +569,17 @@ const handleViewTask = (row) => {
 
 .info-content {
     display: flex;
-    gap: 48px;
+    gap: 40px;
+    align-items: flex-start;
 }
 
-/* 进度环 */
+/* 进度环区域 */
+.progress-section-container {
+    padding: 20px 0;
+    min-width: 160px;
+    border-right: 1px solid #f0f2f5;
+}
+
 .progress-section {
     display: flex;
     flex-direction: column;
@@ -504,102 +588,167 @@ const handleViewTask = (row) => {
 
     .progress-circle {
         :deep(.el-progress__text) {
-            font-size: 18px !important;
-            font-weight: 600;
-            color: #00B3ED;
+            font-size: 16px !important;
+            font-weight: bold;
+            color: #2563eb;
         }
     }
 
     .progress-label {
         font-size: 14px;
-        color: #666;
+        color: #64748b;
         margin: 0;
     }
 
     .progress-value {
-        font-size: 16px;
+        font-size: 14px;
         font-weight: 600;
-        color: #333;
+        color: #1e293b;
         margin: 0;
     }
 }
 
-/* 信息列表 */
+/* 信息列表区域 */
 .info-list {
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 24px;
 }
 
-.info-row {
-    display: flex;
-    gap: 48px;
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px 40px;
 }
 
 .info-item {
     display: flex;
-    align-items: center;
-    gap: 16px;
-    flex: 1;
+    align-items: flex-start;
+    line-height: 1.6;
 
     &.full-width {
-        flex: none;
-        width: 100%;
+        grid-column: span 2;
     }
 
     .info-label {
+        width: 84px;
         font-size: 14px;
-        color: #666;
-        white-space: nowrap;
+        color: #64748b;
+        flex-shrink: 0;
+        position: relative;
+        padding-right: 12px;
+        
+        &::after {
+            content: "";
+            position: absolute;
+            right: 4px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 1px;
+            height: 12px;
+            background: transparent;
+        }
     }
 
     .info-value {
+        flex: 1;
         font-size: 14px;
-        color: #333;
+        color: #1e293b;
+        word-break: break-all;
 
-        &.link-text {
-            color: #00B3ED;
-            cursor: pointer;
-
-            &:hover {
-                text-decoration: underline;
-            }
+        &.highlight {
+            color: #2563eb;
+            font-weight: 500;
         }
+    }
+}
+
+.info-footer-desc {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding-top: 8px;
+}
+
+.desc-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    .info-label {
+        font-size: 14px;
+        font-weight: 600;
+        color: #1e293b;
+    }
+
+    .desc-content {
+        background: #f8fafc;
+        padding: 12px 16px;
+        border-radius: 8px;
+        font-size: 14px;
+        color: #475569;
+        line-height: 1.6;
+        border: 1px solid #f1f5f9;
+    }
+}
+
+.attachments-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.file-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: #eff6ff;
+    color: #2563eb;
+    border-radius: 6px;
+    font-size: 13px;
+    text-decoration: none;
+    border: 1px solid #dbeafe;
+    transition: all 0.2s;
+
+    &:hover {
+        background: #dbeafe;
+        transform: translateY(-1px);
     }
 }
 
 /* 状态标签 */
 .status-tag {
     display: inline-block;
-    padding: 4px 12px;
+    padding: 2px 10px;
     border-radius: 4px;
     font-size: 12px;
     font-weight: 500;
 
     &.status-not-started {
-        background: #F3F4F6;
-        color: #6B7280;
+        background: #f1f5f9;
+        color: #64748b;
     }
 
     &.status-processing {
-        background: #DBEAFE;
-        color: #1D4ED8;
+        background: #eff6ff;
+        color: #2563eb;
     }
 
     &.status-delayed {
-        background: #FEF3C7;
-        color: #D97706;
+        background: #fffbeb;
+        color: #d97706;
     }
 
     &.status-completed {
-        background: #D1FAE5;
-        color: #059669;
+        background: #f0fdf4;
+        color: #16a34a;
     }
 
     &.status-finished {
-        background: #E5E7EB;
-        color: #4B5563;
+        background: #f8fafc;
+        color: #475569;
     }
 }
 

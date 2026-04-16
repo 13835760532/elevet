@@ -196,7 +196,7 @@
                                 </div>
                             </div>
                             <div class="qr-code">
-                                <Qrcode v-if="activeCertData.qrCode" :text="activeCertData.qrCode" :width="80" />
+                                <Qrcode v-if="activeCertData.qrCode" :text="activeCertData.qrCode"  :options="{ errorCorrectionLevel: 'L' }" :width="80" />
                             </div>
                         </div>
                     </div>
@@ -280,7 +280,7 @@
                             </div>
                         </div>
                         <div class="qr-code-wrapper">
-                            <Qrcode v-if="printQrText" :text="printQrText" :width="132" />
+                            <Qrcode v-if="printQrText" :options="{ errorCorrectionLevel: 'L' }" :text="printQrText" :width="132" />
                         </div>
                     </div>
 
@@ -394,7 +394,7 @@ const printImageOptions = {
     contrast: 2.2,
     align: 'center',
     feedLines: 2,
-    feedDots: 30,
+    feedDots: 0,
     cut: false,
     widthUnit: 'bytes',
     command: 'gs-v-0'
@@ -608,8 +608,8 @@ const captureAreaToImg = async () => {
             overflow: el.style.overflow
         });
         if (el.classList.contains('print-keep-space')) {
-            // 打印时保留空白，但在当前基础上再减半（原区域 25%）
-            const reservedHeight = Math.max(0, Math.round(el.offsetHeight / 4));
+            // 打印时保留空白，进一步减半
+            const reservedHeight = Math.max(0, Math.round(el.offsetHeight / 8) - 20);
             el.style.visibility = 'hidden';
             el.style.height = `${reservedHeight}px`;
             el.style.minHeight = `${reservedHeight}px`;
@@ -1000,7 +1000,7 @@ $green-hg: #558B2F;
 
     &.printing-active {
         width: 520px !important;
-        padding: 6px 7px 20px 17px !important; // 底部增加 20px 打印留白
+        padding: 6px 7px 10px 17px !important; // 底部留白减半
         margin: 0 !important;
         border: none !important;
         box-shadow: none !important;

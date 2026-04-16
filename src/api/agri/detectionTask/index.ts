@@ -58,7 +58,7 @@ export const exportDetectionTask = (params: any) => {
 
 // 接收检测任务
 export const acceptDetectionTask = (id: number) => {
-  return request.put({ url: `/agri/detection-task/accept/${id}` })
+  return request.post({ url: `/agri/detection-task/accept/${id}` })
 }
 
 // 催办检测任务

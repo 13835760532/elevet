@@ -41,6 +41,16 @@ export const updateDetectionPlan = (data: DetectionPlanVO) => {
   return request.put({ url: '/agri/detection-plan/update', data })
 }
 
+// 删除检测方案附件
+export const deletePlanAttachment = (id: number) => {
+  return request.delete({ url: '/agri/detection-plan/delete-attachment?id=' + id })
+}
+
+// 获取方案统计信息
+export const getPlanStatistics = (planId: number) => {
+  return request.get({ url: '/agri/detection-plan/statistics/' + planId })
+}
+
 // 删除检测方案
 export const deleteDetectionPlan = (id: number) => {
   return request.delete({ url: '/agri/detection-plan/delete?id=' + id })
@@ -57,16 +67,11 @@ export const exportDetectionPlan = (params: any) => {
 }
 
 // 拆分检测方案为任务
-export const splitPlanTasks = (planId: number) => {
-  return request.post({ url: `/agri/detection-plan/split-tasks`, params: { planId } })
+export const splitPlanTasks = (data: any) => {
+  return request.post({ url: `/agri/detection-plan/split-tasks`, data })
 }
 
 // 获取方案任务列表
 export const getPlanTasks = (planId: number) => {
   return request.get({ url: `/agri/detection-plan/tasks/${planId}` })
-}
-
-// 获取方案统计数据
-export const getPlanStatistics = (planId: number) => {
-  return request.get({ url: `/agri/detection-plan/statistics/${planId}` })
 }
