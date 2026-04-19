@@ -2,7 +2,7 @@
   <header class="screen-header">
     <div class="header-side left">
       <!-- 数据配置 -->
-      <div class="data-config-btn" @click="toggleConfig">
+      <div v-if="showDataConfig" class="data-config-btn" @click="toggleConfig">
         <div class="hexagon-icon">
           <div class="inner-dot"></div>
         </div>
@@ -14,7 +14,8 @@
         class="nav-btn"
         v-for="item in leftMenus"
         :key="item.label"
-        :style="{ backgroundImage: `url(${item.bg})` }"
+        :class="{ active: activeMenu === item.key }"
+        :style="{ backgroundImage: `url(${activeMenu === item.key ? item.activeBg : item.bg})` }"
       >
         <span class="btn-label"></span>
       </div>
@@ -79,7 +80,8 @@
         class="nav-btn"
         v-for="item in rightMenus"
         :key="item.label"
-        :style="{ backgroundImage: `url(${item.bg})` }"
+        :class="{ active: activeMenu === item.key }"
+        :style="{ backgroundImage: `url(${activeMenu === item.key ? item.activeBg : item.bg})` }"
       >
         <span class="btn-label"></span>
       </div>
@@ -95,14 +97,30 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue';
+import { ref, reactive, toRefs } from 'vue';
 import { List, Aim, Checked, Bell } from '@element-plus/icons-vue';
 import botImg from '@/assets/imgs/echarts/bot.png';
 import dataConfigBg from '@/assets/imgs/echarts/首页/sjpz_bg.png';
 import taskBg from '@/assets/imgs/echarts/首页/jcrw_nor.png';
+import taskBgActive from '@/assets/imgs/echarts/首页/jcrw_pr.png';
 import inspectBg from '@/assets/imgs/echarts/首页/jiance_nor.png';
+import inspectBgActive from '@/assets/imgs/echarts/首页/jiance_pr.png';
 import certBg from '@/assets/imgs/echarts/首页/hegezheng_nor.png';
+import certBgActive from '@/assets/imgs/echarts/首页/hgz_pr.png';
 import warnBg from '@/assets/imgs/echarts/首页/xyyj_nor.png';
+import warnBgActive from '@/assets/imgs/echarts/首页/xyyj_pr.png';
+
+const props = withDefaults(
+  defineProps<{
+    showDataConfig?: boolean;
+    activeMenu?: '' | 'task' | 'inspect' | 'cert' | 'warn';
+  }>(),
+  {
+    showDataConfig: true,
+    activeMenu: ''
+  }
+);
+const { showDataConfig, activeMenu } = toRefs(props);
 
 const showConfig = ref(false);
 const configForm = reactive({
@@ -121,13 +139,13 @@ const saveConfig = () => {
 };
 
 const leftMenus = [
-  { label: '检测任务', bg: taskBg, icon: List },
-  { label: '快速检测', bg: inspectBg, icon: Aim }
+  { key: 'task', label: '检测任务', bg: taskBg, activeBg: taskBgActive, icon: List },
+  { key: 'inspect', label: '快速检测', bg: inspectBg, activeBg: inspectBgActive, icon: Aim }
 ];
 
 const rightMenus = [
-  { label: '合格证', bg: certBg, icon: Checked },
-  { label: '小壹预警', bg: warnBg, icon: Bell }
+  { key: 'cert', label: '合格证', bg: certBg, activeBg: certBgActive, icon: Checked },
+  { key: 'warn', label: '小壹预警', bg: warnBg, activeBg: warnBgActive, icon: Bell }
 ];
 </script>
 

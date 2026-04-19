@@ -475,6 +475,24 @@ const remainingRouter: AppRouteRecordRaw[] = [
     }
   },
   {
+    path: '/big-screen-certificate',
+    component: () => import('@/views/visualization/BigScreenCertificate.vue'),
+    name: 'BigScreenCertificate',
+    meta: {
+      title: '合格证大屏可视化',
+      hidden: true
+    }
+  },
+  {
+    path: '/big-screen-task',
+    component: () => import('@/views/visualization/BigScreenTask.vue'),
+    name: 'BigScreenTask',
+    meta: {
+      title: '检测任务大屏可视化',
+      hidden: true
+    }
+  },
+  {
     path: '/:pathMatch(.*)*',
     component: () => import('@/views/Error/404.vue'),
     name: '',

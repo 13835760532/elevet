@@ -14,6 +14,7 @@ const appStore = useAppStore()
 const currentSize = computed(() => appStore.getCurrentSize)
 const greyMode = computed(() => appStore.getGreyMode)
 const { wsCache } = useCache()
+const route = useRoute()
 
 // 根据浏览器当前主题设置系统主题色
 const setDefaultTheme = () => {
@@ -24,12 +25,25 @@ const setDefaultTheme = () => {
   appStore.setIsDark(isDarkTheme)
 }
 setDefaultTheme()
-  autofit.init({
-    el: 'body',
-    dh: 1180,
-    dw: 1920,
-    resize: true
-  })
+
+// 仅在大屏页面启用 autofit
+const bigScreenRoutes = ['BigScreen', 'BigScreenCertificate', 'BigScreenTask']
+watch(
+  () => route.name,
+  (newName) => {
+    if (bigScreenRoutes.includes(newName as string)) {
+      autofit.init({
+        el: 'body',
+        dh: 1180,
+        dw: 1920,
+        resize: true
+      })
+    } else {
+      autofit.off()
+    }
+  },
+  { immediate: true }
+)
 </script>
 <template>
   <ConfigGlobal :size="currentSize">

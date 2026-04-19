@@ -93,7 +93,7 @@ const projectRiskOption = {
       barWidth: 12,
       data: projectValues,
       itemStyle: {
-        borderRadius: [0, 8, 8, 0],
+        barBorderRadius: [0, 8, 8, 0],
         color: new echarts.graphic.LinearGradient(1, 0, 0, 0, [
           { offset: 0, color: '#4be9ff' },
           { offset: 1, color: '#1a53cf' }

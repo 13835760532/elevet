@@ -116,7 +116,9 @@ const include = [
   'element-plus/es/components/footer/style/css',
   'element-plus/es/components/empty/style/css',
   'element-plus/es/components/mention/style/css',
-  'element-plus/es/components/progress/style/css'
+  'element-plus/es/components/progress/style/css',
+  'maptalks',
+  'maptalks.e3'
 ]
 
 const exclude = ['@iconify/json']

@@ -1,5 +1,5 @@
 <template>
-  <section class="panel-card" :style="cardStyle">
+  <section class="panel-card">
     <header class="panel-header">
       <div class="panel-title-wrap">
         <h3 class="panel-title">{{ title }}</h3>

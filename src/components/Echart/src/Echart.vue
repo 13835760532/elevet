@@ -1,8 +1,8 @@
 <script lang="ts" setup>
-import type { EChartsOption } from 'echarts'
+// import type { EChartsOption } from 'echarts'
 import echarts from '@/plugins/echarts'
 import { debounce } from 'lodash-es'
-import 'echarts-wordcloud'
+// import 'echarts-wordcloud'
 import { propTypes } from '@/utils/propTypes'
 import { PropType } from 'vue'
 import { useAppStore } from '@/store/modules/app'
@@ -23,7 +23,7 @@ const appStore = useAppStore()
 
 const props = defineProps({
   options: {
-    type: Object as PropType<EChartsOption>,
+    type: Object as PropType<any>,
     required: true
   },
   width: propTypes.oneOfType([Number, String]).def(''),
@@ -39,14 +39,12 @@ const theme = computed(() => {
 })
 
 const options = computed(() => {
-  return Object.assign(props.options, {
-    darkMode: unref(theme)
-  })
+  return props.options
 })
 
 const elRef = ref<ElRef>()
 
-let echartRef: Nullable<echarts.ECharts> = null
+let echartRef: any = null
 
 const contentEl = ref<Element>()
 

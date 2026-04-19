@@ -1,14 +1,14 @@
 <template>
   <section class="left-section">
-    <BigPanelCard title="农产品品类风险分布" :tabs="['检测量', '阳性率']" active-tab="检测量" :bg-image="leftCardBg">
+    <BigPanelCard title="农产品品类风险分布" :tabs="['检测量', '阳性率']" active-tab="检测量">
       <CategoryGauges />
     </BigPanelCard>
 
-    <BigPanelCard title="农产品风险 TOP 10" :tabs="['检测量', '阳性率']" active-tab="检测量" :bg-image="leftCardBg">
+    <BigPanelCard title="农产品风险 TOP 10" :tabs="['检测量', '阳性率']" active-tab="检测量">
       <Echart :options="riskTopOption" :height="330" />
     </BigPanelCard>
 
-    <BigPanelCard title="农药残留风险 TOP 10" :tabs="['检测量', '阳性率']" active-tab="检测量" :bg-image="leftCardBg">
+    <BigPanelCard title="农药残留风险 TOP 10" :tabs="['检测量', '阳性率']" active-tab="检测量">
       <Echart :options="pesticideTopOption" :height="260" />
     </BigPanelCard>
   </section>
@@ -109,7 +109,7 @@ const riskTopOption = {
       type: 'bar',
       barWidth: 14,
       itemStyle: {
-        borderRadius: [0, 8, 8, 0],
+        barBorderRadius: [0, 8, 8, 0],
         color: new echarts.graphic.LinearGradient(1, 0, 0, 0, [
           { offset: 0, color: '#49e8ff' },
           { offset: 1, color: '#1d56d9' }

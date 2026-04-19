@@ -1,6 +1,6 @@
 <template>
   <section class="center-section">
-    <BigPanelCard class="big-panel-center" title="覆盖群体" :bg-image="coverBg">
+    <BigPanelCard class="big-panel-center" title="覆盖群体">
       <div class="coverage-metrics">
         <div class="metric-card" v-for="item in topMetrics" :key="item.label">
           <div class="pedestal-wrap">
@@ -14,30 +14,7 @@
       </div>
 
       <div class="map-area">
-        <div class="left-stats">
-          <div class="stat-item" v-for="item in sideStats" :key="item.label">
-            <div class="stat-content">
-              <span class="stat-label">{{ item.label }}</span>
-              <span class="stat-value">{{ item.value }}</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- 地图图例 -->
-        <div class="map-legend">
-          <div class="legend-title">测量分布</div>
-          <div class="legend-list">
-            <div class="legend-item"><span class="block" style="background: #004b99"></span> 300-499</div>
-            <div class="legend-item"><span class="block" style="background: #0066cc"></span> 200-399</div>
-            <div class="legend-item"><span class="block" style="background: #0080ff"></span> 100-299</div>
-            <div class="legend-item"><span class="block" style="background: #33a1ff"></span> 50-199</div>
-            <div class="legend-item"><span class="block" style="background: #66c2ff"></span> 30-100</div>
-            <div class="legend-item"><span class="block" style="background: #99e3ff"></span> 10-50</div>
-            <div class="legend-item"><span class="block" style="background: #ccf2ff"></span> 0-10</div>
-          </div>
-        </div>
-
-        <Echart :options="chinaMapOption" :height="470" />
+        <Map />
       </div>
     </BigPanelCard>
 
@@ -54,6 +31,7 @@ import { Echart } from '@/components/Echart';
 import chinaMap from '@/assets/map/json/china.json';
 import quzhouMap from '@/assets/map/json/quzhou.json';
 import BigPanelCard from './BigPanelCard.vue';
+import Map from '../Map.vue';
 import coverBg from '@/assets/imgs/echarts/首页/fgqt_bg.png';
 import trendBg from '@/assets/imgs/echarts/首页/jcdtl_bg.png';
 
