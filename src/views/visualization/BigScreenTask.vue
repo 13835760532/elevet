@@ -1,14 +1,6 @@
 <template>
   <div class="big-screen-shell">
     <BigScreenHeader :show-data-config="false" active-menu="task" />
-
-    <div class="screen-toolbar">
-      <div class="toolbar-select" :style="{ backgroundImage: `url(${toolbarBg})` }">
-        2025年度北京地区农产品质量安全风险预警【20250101-20251201】
-        <span class="caret">▾</span>
-      </div>
-    </div>
-
     <main class="screen-main">
       <section class="top-grid">
         <LeftTaskSection />
@@ -26,7 +18,6 @@ import LeftTaskSection from './components/bigscreenTask/LeftTaskSection.vue';
 import CenterTaskSection from './components/bigscreenTask/CenterTaskSection.vue';
 import RightTaskSection from './components/bigscreenTask/RightTaskSection.vue';
 import BottomTaskSection from './components/bigscreenTask/BottomTaskSection.vue';
-import toolbarBg from '@/assets/imgs/echarts/首页/Frame1_bg.png';
 
 defineOptions({ name: 'VisualizationBigScreenTask' });
 </script>

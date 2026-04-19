@@ -1,180 +1,210 @@
 <template>
     <div class="app-container">
-        <div class="task-detail-card" v-loading="detailLoading">
-            <div class="card-left">
-                <div class="info-item">
-                    <span class="label">任务名称：</span>
-                    <span class="value">{{ taskDetail.taskName || '--' }}</span>
-                </div>
-                <div class="info-item">
-                    <span class="label">任务编号：</span>
-                    <span class="value">{{ taskDetail.taskCode || '--' }}</span>
-                </div>
-                <div class="info-item">
-                    <span class="label">承担单位：</span>
-                    <span class="value">{{ taskDetail.assignDeptId || '--' }}</span>
-                </div>
-                <div class="info-item">
-                    <span class="label">检测品种：</span>
-                    <div class="品种-wrapper">
-                        <span class="value">{{ taskDetail.detectionVarieties || '--' }}</span>
+        <PageBack />
+        <div style="flex: 1; overflow: auto;">
+            <div class="task-detail-card" v-loading="detailLoading">
+                <div class="card-left">
+                    <div class="info-item">
+                        <span class="label">任务名称：</span>
+                        <span class="value">{{ taskDetail.taskName || '--' }}</span>
                     </div>
-                </div>
-                <div class="info-item">
-                    <span class="label">检测项目：</span>
-                    <span class="value">{{ taskDetail.detectionItems || '--' }}</span>
-                </div>
-                <div class="info-item">
-                    <span class="label">执行时间：</span>
-                    <span class="value">
-                        {{ taskDetail.startDate ? (taskDetail.startDate + ' 至 ' + taskDetail.endDate) : '--' }}
-                    </span>
-                </div>
-            </div>
-
-            <div class="card-right">
-                <div class="stats-row">
-                    <div class="info-col">
-                        <div class="info-item">
-                            <span class="label">所属方案：</span>
-                            <span class="value">{{ taskDetail.planId || '--' }}</span>
-                        </div>
-                        <div class="info-item">
-                            <span class="label">方案编号：</span>
-                            <span class="value">{{ taskDetail.planCode || '--' }}</span>
-                        </div>
-                        <div class="info-item">
-                            <span class="label">检测分类：</span>
-                            <span class="value">{{ taskDetail.taskType === 1 ? '快速检测' : (taskDetail.taskType || '--') }}</span>
-                        </div>
-                        <div class="info-item">
-                            <span class="label">检测地区：</span>
-                            <span class="value">{{ taskDetail.detectionArea || '--' }}</span>
-                        </div>
-                        <div class="info-item">
-                            <span class="label">执行时间：</span>
-                            <span class="value">
-                                {{ taskDetail.startDate ? (taskDetail.startDate + ' 至 ' + taskDetail.endDate) : '--' }}
-                            </span>
+                    <div class="info-item">
+                        <span class="label">任务编号：</span>
+                        <span class="value">{{ taskDetail.taskCode || '--' }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">承担单位：</span>
+                        <span class="value">{{ taskDetail.assignDeptId || '--' }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">检测品种：</span>
+                        <div class="品种-wrapper">
+                            <span class="value">{{ taskDetail.detectionVarieties || '--' }}</span>
                         </div>
                     </div>
-                    <div class="progress-col">
-                        <el-progress type="circle" :percentage="taskDetail.sampleCompletionRate || 0" :width="120" color="#00B3ED" :stroke-width="10" />
-                        <div class="progress-label">任务完成率</div>
-                        <div class="progress-info">
-                            ({{ taskDetail.sampleCompletedCount || 0 }}/{{ taskDetail.sampleCount || 0 }})
-                        </div>
+                    <div class="info-item">
+                        <span class="label">检测项目：</span>
+                        <span class="value">{{ taskDetail.detectionItems || '--' }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">执行时间：</span>
+                        <span class="value">
+                            {{ taskDetail.startDate ? (taskDetail.startDate + ' 至 ' + taskDetail.endDate) : '--' }}
+                        </span>
                     </div>
                 </div>
-            </div>
-        </div>
 
-        <!-- 底部列表内容区域 -->
-        <div class="list-content-area">
-            <!-- Tabs 切换 -->
-            <div class="custom-tabs">
-                <div v-for="tab in tabs" :key="tab.key" class="tab-item" :class="{ active: activeTab === tab.key }"
-                    @click="activeTab = tab.key">{{ tab.label }}</div>
-            </div>
-
-            <div class="tab-pane-container">
-                <!-- 子任务列表 Tab -->
-                <template v-if="activeTab === 'subtask'">
-                    <!-- 查询表单 -->
-                    <div class="query-section">
-                        <el-form :model="queryParams" ref="queryRef" :inline="true" class="custom-query-form">
-                            <el-form-item label="任务">
-                                <el-input v-model="queryParams.task" placeholder="请输入任务编号或任务名称" class="w200" />
-                            </el-form-item>
-                            <el-form-item label="承担单位">
-                                <el-input v-model="queryParams.unit" placeholder="" class="w150" />
-                            </el-form-item>
-                            <el-form-item label="任务状态">
-                                <el-select v-model="queryParams.status" placeholder="请选择" class="w120">
-                                    <el-option label="进行中" value="ongoing" />
-                                    <el-option label="已完成" value="completed" />
-                                </el-select>
-                            </el-form-item>
-                            <el-form-item label="执行时间">
-                                <el-date-picker v-model="queryParams.dateRange" type="daterange" range-separator="至"
-                                    start-placeholder="开始日期" end-placeholder="结束日期" class="date-picker-custom" />
-                            </el-form-item>
-                            <div class="query-btns">
-                                <el-button @click="handleReset">重置</el-button>
-                                <el-button type="primary" @click="handleQuery">查询</el-button>
+                <div class="card-right">
+                    <div class="stats-row">
+                        <div class="info-col">
+                            <div class="info-item">
+                                <span class="label">所属方案：</span>
+                                <span class="value">{{ taskDetail.planId || '--' }}</span>
                             </div>
-                        </el-form>
-                    </div>
-
-                    <!-- 装饰线及操作按钮 -->
-                    <div class="action-bar-row">
-                        <div class="action-left">
-                            <div class="brand-btn" @click="handleCreateTask">
-                                新建子任务（转派）
-                                <el-icon class="flash-icon">
-                                    <Lightning />
-                                </el-icon>
+                            <div class="info-item">
+                                <span class="label">方案编号：</span>
+                                <span class="value">{{ taskDetail.planCode || '--' }}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="label">检测分类：</span>
+                                <span class="value">{{ taskDetail.taskType === 1 ? '快速检测' : (taskDetail.taskType ||
+                                    '--') }}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="label">检测地区：</span>
+                                <span class="value">{{ taskDetail.detectionArea || '--' }}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="label">执行时间：</span>
+                                <span class="value">
+                                    {{ taskDetail.startDate ? (taskDetail.startDate + ' 至 ' + taskDetail.endDate) : '--'
+                                    }}
+                                </span>
                             </div>
                         </div>
-                        <el-button class="export-btn" type="primary" @click="handleExport">导出</el-button>
-                    </div>
-
-                    <!-- 数据表格 -->
-                    <div class="table-wrapper">
-                        <el-table v-loading="loading" :data="tableData" border
-                            :header-cell-style="{ background: '#F3F4F6', color: '#333333', fontWeight: 'bold' }"
-                            :row-style="{ height: '60px' }">
-                            <el-table-column label="序号" type="index" width="60" align="center" />
-                            <el-table-column label="任务编号" prop="taskCode" align="center" width="120" />
-                            <el-table-column label="任务名称" prop="taskName" align="center" min-width="180"
-                                show-overflow-tooltip />
-                            <el-table-column label="承担单位" prop="assignDeptId" align="center" min-width="120" />
-                            <el-table-column label="检测区域范围" prop="detectionArea" align="center" width="120" />
-                            <el-table-column label="检测品种" prop="detectionVarieties" align="center" min-width="120"
-                                show-overflow-tooltip />
-                            <el-table-column label="检测项目" prop="detectionItems" align="center" min-width="120"
-                                show-overflow-tooltip />
-                            <el-table-column label="执行时间" align="center" width="200">
-                                <template #default="{ row }">
-                                    {{ row.startDate ? (row.startDate + ' 至 ' + row.endDate) : '--' }}
-                                </template>
-                            </el-table-column>
-                            <el-table-column label="任务完成率(已完成样品数/总样品数)" align="center" width="250">
-                                <template #default="{ row }">
-                                    {{ row.sampleCompletionRate || 0 }}% ({{ row.sampleCompletedCount || 0 }}/{{ row.sampleCount || 0 }})
-                                </template>
-                            </el-table-column>
-                            <el-table-column label="状态" prop="status" align="center" width="100">
-                                <template #default="{ row }">
-                                    <dict-tag :type="DICT_TYPE.AGRI_DETECTION_TASK_STATUS" :value="row.status" />
-                                </template>
-                            </el-table-column>
-                            <el-table-column label="操作" align="center" width="100" fixed="right">
-                                <template #default="{ row }">
-                                    <span class="table-link" @click="handleView(row)">查看</span>
-                                </template>
-                            </el-table-column>
-                        </el-table>
-
-                        <!-- 分页 -->
-                        <div class="pagination-footer">
-                            <el-pagination v-model:current-page="pageNum" v-model:page-size="pageSize" :total="total"
-                                layout="prev, pager, next, jumper, total" background class="custom-pagination"
-                                @current-change="handlePageChange" />
+                        <div class="progress-col">
+                            <el-progress type="circle" :percentage="taskDetail.sampleCompletionRate || 0" :width="120"
+                                color="#00B3ED" :stroke-width="10" />
+                            <div class="progress-label">任务完成率</div>
+                            <div class="progress-info">
+                                ({{ taskDetail.sampleCompletedCount || 0 }}/{{ taskDetail.sampleCount || 0 }})
+                            </div>
                         </div>
                     </div>
-                </template>
+                </div>
+            </div>
 
-                <!-- 检测结果 Tab -->
-                <template v-if="activeTab === 'result'">
-                    <DetectionProgress :tableData="progressList" :total="progressTotal" @query="handleProgressQuery"
-                        @reset="handleProgressReset" />
-                </template>
+            <!-- 底部列表内容区域 -->
+            <div class="list-content-area">
+                <!-- Tabs 切换 -->
+                <div class="custom-tabs">
+                    <div v-for="tab in tabs" :key="tab.key" class="tab-item" :class="{ active: activeTab === tab.key }"
+                        @click="activeTab = tab.key">{{ tab.label }}</div>
+                </div>
 
-                <!-- 进度监控 Tab -->
-                <template v-if="activeTab === 'monitor'">
-                    <ProgressHistory :treeData="historyData" />
-                </template>
+                <div class="tab-pane-container">
+                    <!-- 子任务列表 Tab -->
+                    <template v-if="activeTab === 'subtask'">
+                        <!-- 数据为空时的缺省页 -->
+                        <div v-if="!loading && allTableData.length === 0" class="empty-state-container">
+                            <div class="empty-content">
+                                <div class="empty-icon-wrapper">
+                                    <!-- 使用图标组件模拟截图中的图标 -->
+                                    <el-icon class="custom-empty-icon">
+                                        <List />
+                                    </el-icon>
+                                </div>
+                                <div class="empty-text">尚未分配检测任务</div>
+                                <el-button type="primary" class="empty-action-btn" @click="handleCreateTask">
+                                    新建子任务（转派）
+                                </el-button>
+                            </div>
+                        </div>
+
+                        <!-- 原始表格展示逻辑 -->
+                        <template v-else>
+                            <!-- 查询表单 -->
+                            <div class="query-section">
+                                <el-form :model="queryParams" ref="queryRef" :inline="true"
+                                    class="custom-query-form custom-query-form-row">
+                                    <el-form-item label="">
+                                        <el-input v-model="queryParams.task" placeholder="任务编号或任务名称" class="w200" />
+                                    </el-form-item>
+                                    <el-form-item label="">
+                                        <el-input v-model="queryParams.unit" placeholder="承担单位" class="w150" />
+                                    </el-form-item>
+                                    <el-form-item label="">
+                                        <el-select v-model="queryParams.status" style="width: 150px" placeholder="任务状态"
+                                            class="w150">
+                                            <el-option label="进行中" value="ongoing" />
+                                            <el-option label="已完成" value="completed" />
+                                        </el-select>
+                                    </el-form-item>
+                                    <el-form-item label="">
+                                        <el-date-picker v-model="queryParams.dateRange" type="daterange"
+                                            style="width: 240px!important" range-separator="至" start-placeholder="开始日期"
+                                            end-placeholder="结束日期" class="date-picker-custom" />
+                                    </el-form-item>
+                                    <div class="query-btns">
+                                        <el-button @click="handleReset">重置</el-button>
+                                        <el-button type="primary" @click="handleQuery">查询</el-button>
+                                    </div>
+                                </el-form>
+                            </div>
+
+                            <!-- 装饰线及操作按钮 -->
+                            <div class="action-bar-row">
+                                <div class="action-left">
+                                    <div class="brand-btn" @click="handleCreateTask">
+                                        新建子任务（转派）
+                                        <el-icon class="flash-icon">
+                                            <Lightning />
+                                        </el-icon>
+                                    </div>
+                                </div>
+                                <el-button class="export-btn" type="primary" @click="handleExport">导出</el-button>
+                            </div>
+
+                            <!-- 数据表格 -->
+                            <div class="table-wrapper">
+                                <el-table v-loading="loading" :data="tableData" border
+                                    :header-cell-style="{ background: '#F3F4F6', color: '#333333', fontWeight: 'bold' }"
+                                    :row-style="{ height: '60px' }">
+                                    <el-table-column label="序号" type="index" width="60" align="center" />
+                                    <el-table-column label="任务编号" prop="taskCode" align="center" width="120" />
+                                    <el-table-column label="任务名称" prop="taskName" align="center" min-width="180"
+                                        show-overflow-tooltip />
+                                    <el-table-column label="承担单位" prop="assignDeptId" align="center" min-width="120" />
+                                    <el-table-column label="检测区域范围" prop="detectionArea" align="center" width="120" />
+                                    <el-table-column label="检测品种" prop="detectionVarieties" align="center"
+                                        min-width="120" show-overflow-tooltip />
+                                    <el-table-column label="检测项目" prop="detectionItems" align="center" min-width="120"
+                                        show-overflow-tooltip />
+                                    <el-table-column label="执行时间" align="center" width="200">
+                                        <template #default="{ row }">
+                                            {{ row.startDate ? (row.startDate + ' 至 ' + row.endDate) : '--' }}
+                                        </template>
+                                    </el-table-column>
+                                    <el-table-column label="任务完成率(已完成样品数/总样品数)" align="center" width="250">
+                                        <template #default="{ row }">
+                                            {{ row.sampleCompletionRate || 0 }}% ({{ row.sampleCompletedCount || 0 }}/{{
+                                                row.sampleCount || 0 }})
+                                        </template>
+                                    </el-table-column>
+                                    <el-table-column label="状态" prop="status" align="center" width="100">
+                                        <template #default="{ row }">
+                                            <dict-tag :type="DICT_TYPE.AGRI_DETECTION_TASK_STATUS"
+                                                :value="row.status" />
+                                        </template>
+                                    </el-table-column>
+                                    <el-table-column label="操作" align="center" width="100" fixed="right">
+                                        <template #default="{ row }">
+                                            <span class="table-link" @click="handleView(row)">查看</span>
+                                        </template>
+                                    </el-table-column>
+                                </el-table>
+
+                                <!-- 分页 -->
+                                <div class="pagination-footer">
+                                    <el-pagination v-model:current-page="pageNum" v-model:page-size="pageSize"
+                                        :total="total" layout="prev, pager, next, jumper, total" background
+                                        class="custom-pagination" @current-change="handlePageChange" />
+                                </div>
+                            </div>
+                        </template>
+                    </template>
+
+                    <!-- 检测结果 Tab -->
+                    <template v-if="activeTab === 'result'">
+                        <DetectionProgress :tableData="progressList" :total="progressTotal" @query="handleProgressQuery"
+                            @reset="handleProgressReset" />
+                    </template>
+
+                    <!-- 进度监控 Tab -->
+                    <template v-if="activeTab === 'monitor'">
+                        <ProgressHistory :treeData="historyData" />
+                    </template>
+                </div>
             </div>
         </div>
     </div>
@@ -182,7 +212,7 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
-import { Lightning } from '@element-plus/icons-vue'
+import { Lightning, List } from '@element-plus/icons-vue'
 import { useRouter, useRoute } from 'vue-router'
 import DetectionProgress from '@/components/DetectionProgress/index.vue'
 import ProgressHistory from '@/components/ProgressHistory/index.vue'
@@ -200,6 +230,9 @@ const pageNum = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
 const taskDetail = ref({})
+const allTableData = ref([])
+const tableData = ref([])
+const queryRef = ref()
 
 const tabs = [
     { label: '子任务列表', key: 'subtask' },
@@ -214,16 +247,17 @@ const queryParams = reactive({
     dateRange: []
 })
 
-const tableData = ref([])
+
 
 const getList = async () => {
     loading.value = true;
     try {
-        const id = taskId || 0; 
+        const id = taskId || 0;
         if (id) {
+            // 后端接口目前仅接收 parentId，我们在前端处理搜索和分页
             const data = await DetectionTaskApi.getDetectionSubTaskList(id);
-            tableData.value = data || [];
-            total.value = tableData.value.length;
+            allTableData.value = data || [];
+            handleFilter();
         }
     } catch (error) {
         console.error('获取子任务列表失败:', error);
@@ -232,10 +266,45 @@ const getList = async () => {
     }
 }
 
+// 处理前端搜索和分页
+const handleFilter = () => {
+    let result = [...allTableData.value];
+
+    // 搜索过滤
+    if (queryParams.task) {
+        result = result.filter(item =>
+            (item.taskName && item.taskName.includes(queryParams.task)) ||
+            (item.taskCode && item.taskCode.includes(queryParams.task))
+        );
+    }
+    if (queryParams.unit) {
+        // 假设 unit 对应 assignDeptId，暂时搜索 ID 或如果后端返回了单位名称字段则搜索名称
+        result = result.filter(item => String(item.assignDeptId).includes(queryParams.unit));
+    }
+    if (queryParams.status) {
+        result = result.filter(item => item.status === queryParams.status);
+    }
+    if (queryParams.dateRange && queryParams.dateRange.length === 2) {
+        const start = queryParams.dateRange[0].getTime();
+        const end = queryParams.dateRange[1].getTime();
+        result = result.filter(item => {
+            const itemDate = new Date(item.startDate).getTime();
+            return itemDate >= start && itemDate <= end;
+        });
+    }
+
+    total.value = result.length;
+
+    // 分页切片
+    const startIdx = (pageNum.value - 1) * pageSize.value;
+    const endIdx = startIdx + pageSize.value;
+    tableData.value = result.slice(startIdx, endIdx);
+}
+
 const getDetail = async () => {
     detailLoading.value = true;
     try {
-        const id = taskId || 0; 
+        const id = taskId || 0;
         if (id) {
             const data = await DetectionTaskApi.getDetectionTask(id);
             taskDetail.value = data || {};
@@ -253,18 +322,26 @@ onMounted(() => {
 })
 
 function handleQuery() {
-    console.log('Query:', queryParams)
+    pageNum.value = 1;
+    handleFilter();
 }
 
 function handleReset() {
+    if (queryRef.value) {
+        queryRef.value.resetFields();
+    }
     queryParams.task = ''
     queryParams.unit = ''
     queryParams.status = ''
     queryParams.dateRange = []
+    handleQuery();
 }
 
 function handleCreateTask() {
-    console.log('Create Subtask')
+    router.push({
+        path: '/fastCheckPlan/task/createSchemeTask',
+        query: { id: taskId }
+    })
 }
 
 function handleExport() {
@@ -272,15 +349,17 @@ function handleExport() {
 }
 
 function handleView(row) {
-    console.log('View Item:', row)
-    router.push({
-        path: '/taskDetection/taskDetail',
-        query: { id: row.sampleNo }
-    });
+    if (row.id) {
+        router.push({
+            path: '/fastCheckPlan/task/taskAllocate',
+            query: { id: row.id }
+        });
+    }
 }
 
 function handlePageChange(page) {
-    pageNum.value = page
+    pageNum.value = page;
+    handleFilter();
 }
 
 // 检测进度数据
@@ -376,7 +455,7 @@ function handleProgressReset() {
 <style lang="scss" scoped>
 .app-container {
     padding: 0px;
-    height: 100%;
+    height: calc(100vh - 86px);
     display: flex;
     flex-direction: column;
     overflow-y: auto;
@@ -393,6 +472,7 @@ function handleProgressReset() {
     grid-template-columns: 1fr 1.5fr;
     gap: 40px;
     box-shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.05);
+    margin-bottom: 12px;
 
     .info-item {
         display: flex;
@@ -599,6 +679,51 @@ function handleProgressReset() {
 
     &:hover {
         color: #00B3ED;
+    }
+}
+
+/* 缺省页样式 */
+.empty-state-container {
+    padding: 60px 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    .empty-content {
+        width: 100%;
+        max-width: 800px;
+        min-height: 300px;
+        background: #FFFFFF;
+        border: 1px solid #E5E7EB;
+        border-radius: 4px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 24px;
+        // box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+
+    .empty-icon-wrapper {
+        .custom-empty-icon {
+            font-size: 64px;
+            color: #9CA3AF;
+            padding: 12px;
+            border: 2px solid #9CA3AF;
+            border-radius: 8px;
+        }
+    }
+
+    .empty-text {
+        font-size: 20px;
+        color: #333;
+        font-weight: 500;
+    }
+
+    .empty-action-btn {
+        padding: 12px 60px;
+        font-size: 16px;
+        height: 48px;
     }
 }
 </style>

@@ -2,161 +2,164 @@
     <div class="page-container">
         <PageBack />
 
-        <!-- 方案信息卡片 -->
-        <div class="scheme-info-card">
-            <div class="info-header">
-                <h2 class="scheme-title">{{ schemeInfo.name }}</h2>
-                <span class="scheme-no">（编号：{{ schemeInfo.no }}）</span>
-            </div>
+        <div style="flex:1;overflow-y: auto;">
 
-            <div class="info-content">
-                <!-- 左侧进度预览 -->
-                <div class="progress-section-container">
-                    <div class="progress-section">
-                        <div class="progress-circle">
-                            <el-progress 
-                                type="circle" 
-                                :percentage="schemeInfo.taskProgress" 
-                                :width="110" 
-                                :stroke-width="10"
-                                color="#2563eb" 
-                            />
-                        </div>
-                        <p class="progress-label">任务总完成率</p>
-                        <p class="progress-value">{{ schemeInfo.taskCompleted }}/{{ schemeInfo.taskTotal }}</p>
-                    </div>
+            <!-- 方案信息卡片 -->
+            <div class="scheme-info-card">
+                <div class="info-header">
+                    <h2 class="scheme-title">{{ schemeInfo.name }}</h2>
+                    <span class="scheme-no">（编号：{{ schemeInfo.no }}）</span>
                 </div>
 
-                <!-- 右侧信息详情列表 -->
-                <div class="info-list">
-                    <div class="info-grid">
-                        <div class="info-item">
-                            <span class="info-label">主管单位</span>
-                            <span class="info-value highlight">{{ schemeInfo.deptName }}</span>
-                        </div>
-                        <div class="info-item">
-                            <span class="info-label">方案类型</span>
-                            <span class="info-value">{{ schemeInfo.type }}</span>
-                        </div>
-                        <div class="info-item">
-                            <span class="info-label">方案周期</span>
-                            <span class="info-value">{{ schemeInfo.period }}</span>
-                        </div>
-                        <div class="info-item">
-                            <span class="info-label">检测地区</span>
-                            <span class="info-value">{{ schemeInfo.region }}</span>
-                        </div>
-                        <div class="info-item">
-                            <span class="info-label">产品分类</span>
-                            <span class="info-value">{{ schemeInfo.category }}</span>
-                        </div>
-                        <div class="info-item">
-                            <span class="info-label">执行时间</span>
-                            <span class="info-value">{{ schemeInfo.executionTime }}</span>
-                        </div>
-                        <div class="info-item">
-                            <span class="info-label">方案检测量</span>
-                            <span class="info-value">{{ schemeInfo.sampleCount }} 份</span>
-                        </div>
-                        <div class="info-item">
-                            <span class="info-label">方案状态</span>
-                            <span :class="['status-tag', statusClass]">{{ schemeInfo.status }}</span>
-                        </div>
-                        <div class="info-item full-width">
-                            <span class="info-label">检测项目</span>
-                            <span class="info-value">{{ schemeInfo.detectionItems }}</span>
+                <div class="info-content">
+                    <!-- 左侧进度预览 -->
+                    <div class="progress-section-container">
+                        <div class="progress-section">
+                            <div class="progress-circle">
+                                <el-progress 
+                                    type="circle" 
+                                    :percentage="schemeInfo.taskProgress" 
+                                    :width="110" 
+                                    :stroke-width="10"
+                                    color="#2563eb" 
+                                />
+                            </div>
+                            <p class="progress-label">任务总完成率</p>
+                            <p class="progress-value">{{ schemeInfo.taskCompleted }}/{{ schemeInfo.taskTotal }}</p>
                         </div>
                     </div>
-                    
-                    <div class="info-footer-desc">
-                        <!-- 方案要求 -->
-                        <div class="desc-section" v-if="schemeInfo.planRequirements">
-                            <span class="info-label">方案要求</span>
-                            <div class="desc-content">{{ schemeInfo.planRequirements }}</div>
+
+                    <!-- 右侧信息详情列表 -->
+                    <div class="info-list">
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <span class="info-label">主管单位</span>
+                                <span class="info-value highlight">{{ schemeInfo.deptName }}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">方案类型</span>
+                                <span class="info-value">{{ schemeInfo.type }}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">方案周期</span>
+                                <span class="info-value">{{ schemeInfo.period }}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">检测地区</span>
+                                <span class="info-value">{{ schemeInfo.region }}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">产品分类</span>
+                                <span class="info-value">{{ schemeInfo.category }}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">执行时间</span>
+                                <span class="info-value">{{ schemeInfo.executionTime }}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">方案检测量</span>
+                                <span class="info-value">{{ schemeInfo.sampleCount }} 份</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">方案状态</span>
+                                <span :class="['status-tag', statusClass]">{{ schemeInfo.status }}</span>
+                            </div>
+                            <div class="info-item full-width">
+                                <span class="info-label">检测项目</span>
+                                <span class="info-value">{{ schemeInfo.detectionItems }}</span>
+                            </div>
                         </div>
-                        <!-- 附件列表 -->
-                        <div class="desc-section" v-if="schemeInfo.planAttachments && schemeInfo.planAttachments.length > 0">
-                            <span class="info-label">方案附件</span>
-                            <div class="attachments-row">
-                                <a v-for="(file, index) in schemeInfo.planAttachments" :key="index" :href="file.url" target="_blank" class="file-tag">
-                                    <el-icon><Document /></el-icon> {{ file.name }}
-                                </a>
+                        
+                        <div class="info-footer-desc">
+                            <!-- 方案要求 -->
+                            <div class="desc-section" v-if="schemeInfo.planRequirements">
+                                <span class="info-label">方案要求</span>
+                                <div class="desc-content">{{ schemeInfo.planRequirements }}</div>
+                            </div>
+                            <!-- 附件列表 -->
+                            <div class="desc-section" v-if="schemeInfo.planAttachments && schemeInfo.planAttachments.length > 0">
+                                <span class="info-label">方案附件</span>
+                                <div class="attachments-row">
+                                    <a v-for="(file, index) in schemeInfo.planAttachments" :key="index" :href="file.url" target="_blank" class="file-tag">
+                                        <el-icon><Document /></el-icon> {{ file.name }}
+                                    </a>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- 标签页内容 -->
-        <div class="content-card">
-            <div class="tabs-header">
-                <div class="tab-item" :class="{ active: activeTab === 'list' }" @click="activeTab = 'list'">
-                    任务列表
-                </div>
-                <div class="tab-item" :class="{ active: activeTab === 'progress' }" @click="activeTab = 'progress'">
-                    检测结果
-                </div>
-                <div class="tab-item" :class="{ active: activeTab === 'history' }" @click="activeTab = 'history'">
-                    进度监控
-                </div>
-            </div>
-
-            <!-- 任务列表 -->
-            <div v-if="activeTab === 'list'" class="tab-content">
-                <div v-if="taskList.length === 0" class="empty-state">
-                    <el-icon class="empty-icon" :size="64">
-                        <Document />
-                    </el-icon>
-                    <p class="empty-text">尚未分配检测任务</p>
-                    <el-button type="primary" @click="handleCreateTask">
-                        新建检测任务
-                    </el-button>
-                </div>
-
-                <div v-else class="task-table">
-                    <el-table :data="taskList" :header-cell-style="headerCellStyle" border>
-                        <el-table-column label="序号" type="index" width="60" align="center" />
-                        <el-table-column label="任务编号" prop="taskNo" width="160" />
-                        <el-table-column label="任务名称" prop="taskName" min-width="200" show-overflow-tooltip />
-                        <el-table-column label="承担单位" prop="dept" min-width="150" show-overflow-tooltip />
-                        <el-table-column label="检测数量" prop="quantity" width="100" align="center" />
-                        <el-table-column label="完成数量" prop="completed" width="100" align="center" />
-                        <el-table-column label="任务状态" prop="status" width="100" align="center">
-                            <template #default="scope">
-                                <span :class="['status-tag', getTaskStatusClass(scope.row.status)]">
-                                    {{ scope.row.status }}
-                                </span>
-                            </template>
-                        </el-table-column>
-                        <el-table-column label="操作" width="180" align="center" fixed="right">
-                            <template #default="scope">
-                                <div class="table-operate-action-btns">
-                                    <span class="table-edit-operate" @click="handleEditTask(scope.row)">编辑</span>
-                                    <span class="table-delete-operate" @click="handleDeleteTask(scope.row)">删除</span>
-                                    <span class="table-view-operate" @click="handleViewTask(scope.row)">查看</span>
-                                </div>
-                            </template>
-                        </el-table-column>
-                    </el-table>
-
-                    <!-- 分页 -->
-                    <div class="pagination-wrapper">
-                        <el-pagination v-model:current-page="pageParams.pageNum" v-model:page-size="pageParams.pageSize"
-                            :total="total" background layout="prev, pager, next" class="custom-pagination" />
+            <!-- 标签页内容 -->
+            <div class="content-card">
+                <div class="tabs-header">
+                    <div class="tab-item" :class="{ active: activeTab === 'list' }" @click="activeTab = 'list'">
+                        任务列表
+                    </div>
+                    <div class="tab-item" :class="{ active: activeTab === 'progress' }" @click="activeTab = 'progress'">
+                        检测结果
+                    </div>
+                    <div class="tab-item" :class="{ active: activeTab === 'history' }" @click="activeTab = 'history'">
+                        进度监控
                     </div>
                 </div>
-            </div>
 
-            <!-- 检测进度 -->
-            <div v-if="activeTab === 'progress'" class="tab-content">
-                <DetectionProgress :tableData="progressList" :total="progressTotal" @query="handleProgressQuery"
-                    @reset="handleProgressReset" />
-            </div>
+                <!-- 任务列表 -->
+                <div v-if="activeTab === 'list'" class="tab-content">
+                    <div v-if="taskList.length === 0" class="empty-state">
+                        <el-icon class="empty-icon" :size="64">
+                            <Document />
+                        </el-icon>
+                        <p class="empty-text">尚未分配检测任务</p>
+                        <el-button type="primary" @click="handleCreateTask">
+                            新建检测任务
+                        </el-button>
+                    </div>
 
-            <!-- 进度历史 -->
-            <div v-if="activeTab === 'history'" class="tab-content">
-                <ProgressHistory :treeData="historyData" />
+                    <div v-else class="task-table">
+                        <el-table :data="taskList" :header-cell-style="headerCellStyle" border>
+                            <el-table-column label="序号" type="index" width="60" align="center" />
+                            <el-table-column label="任务编号" prop="taskNo" width="160" />
+                            <el-table-column label="任务名称" prop="taskName" min-width="200" show-overflow-tooltip />
+                            <el-table-column label="承担单位" prop="dept" min-width="150" show-overflow-tooltip />
+                            <el-table-column label="检测数量" prop="quantity" width="100" align="center" />
+                            <el-table-column label="完成数量" prop="completed" width="100" align="center" />
+                            <el-table-column label="任务状态" prop="status" width="100" align="center">
+                                <template #default="scope">
+                                    <span :class="['status-tag', getTaskStatusClass(scope.row.status)]">
+                                        {{ scope.row.status }}
+                                    </span>
+                                </template>
+                            </el-table-column>
+                            <el-table-column label="操作" width="180" align="center" fixed="right">
+                                <template #default="scope">
+                                    <div class="table-operate-action-btns">
+                                        <span class="table-edit-operate" @click="handleEditTask(scope.row)">编辑</span>
+                                        <span class="table-delete-operate" @click="handleDeleteTask(scope.row)">删除</span>
+                                        <span class="table-view-operate" @click="handleViewTask(scope.row)">查看</span>
+                                    </div>
+                                </template>
+                            </el-table-column>
+                        </el-table>
+
+                        <!-- 分页 -->
+                        <div class="pagination-wrapper">
+                            <el-pagination v-model:current-page="pageParams.pageNum" v-model:page-size="pageParams.pageSize"
+                                :total="total" background layout="prev, pager, next" class="custom-pagination" />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 检测进度 -->
+                <div v-if="activeTab === 'progress'" class="tab-content">
+                    <DetectionProgress :tableData="progressList" :total="progressTotal" @query="handleProgressQuery"
+                        @reset="handleProgressReset" />
+                </div>
+
+                <!-- 进度历史 -->
+                <div v-if="activeTab === 'history'" class="tab-content">
+                    <ProgressHistory :treeData="historyData" />
+                </div>
             </div>
         </div>
     </div>
@@ -534,7 +537,7 @@ const handleViewTask = (row) => {
 
 <style lang="scss" scoped>
 .page-container {
-    height: 100%;
+    height: calc(100vh - 86px);
     overflow-y: auto;
     display: flex;
     flex-direction: column;
@@ -546,6 +549,7 @@ const handleViewTask = (row) => {
     background: #fff;
     border-radius: 10px;
     padding: var( --page-container-padding);
+    margin-bottom: 12px;
 }
 
 .info-header {

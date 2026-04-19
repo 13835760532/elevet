@@ -1,22 +1,50 @@
 <template>
   <div id="big-screen-shell" class="big-screen-shell">
-    <BigScreenHeader />
+    <BigScreenHeader v-model:active-menu="activeMenu" />
 
-    <main class="screen-main">
-      <LeftSection />
-      <CenterSection />
-      <RightSection />
+    <main class="screen-main" :class="activeMenu">
+      <template v-if="activeMenu === 'cert'">
+        <LeftCertificateSection />
+        <CenterCertificateSection />
+        <RightCertificateSection />
+      </template>
+      <template v-else-if="activeMenu === 'task'">
+        <LeftTaskSection />
+        <div class="center-task-layout">
+          <CenterTaskSection />
+          <BottomTaskSection />
+        </div>
+        <RightTaskSection />
+      </template>
+      <template v-else>
+        <LeftSection />
+        <CenterSection />
+        <RightSection />
+      </template>
     </main>
   </div>
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue';
 import BigScreenHeader from './components/bigscreen/BigScreenHeader.vue';
+// 首页组件
 import LeftSection from './components/bigscreen/LeftSection.vue';
 import CenterSection from './components/bigscreen/CenterSection.vue';
 import RightSection from './components/bigscreen/RightSection.vue';
+// 任务视角
+import LeftTaskSection from './components/bigscreenTask/LeftTaskSection.vue';
+import CenterTaskSection from './components/bigscreenTask/CenterTaskSection.vue';
+import RightTaskSection from './components/bigscreenTask/RightTaskSection.vue';
+import BottomTaskSection from './components/bigscreenTask/BottomTaskSection.vue';
+// 合格证视角
+import LeftCertificateSection from './components/bigscreenCertificate/LeftCertificateSection.vue';
+import CenterCertificateSection from './components/bigscreenCertificate/CenterCertificateSection.vue';
+import RightCertificateSection from './components/bigscreenCertificate/RightCertificateSection.vue';
 
 defineOptions({ name: 'VisualizationBigScreen' });
+
+const activeMenu = ref('cert'); // 默认进入合格证视角以查看效果
 </script>
 
 <style scoped lang="scss">

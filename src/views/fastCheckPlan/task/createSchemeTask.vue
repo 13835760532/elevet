@@ -1,7 +1,7 @@
 <template>
     <div class="page-container">
         <!-- 头部标题 -->
-        <pageHeader title="创建检测任务" desc="支持检测方案按承检机构和检测行任务拆分，配置任务执行时间、检测数量、检测结果提交要求（检测品种、检测项目、检测地区、检测频率）" />
+        <pageHeader title="任务转派" desc="对接收的任务进行转派分发" />
         <div class="flex-1">
             <!-- 方案信息展示 -->
             <div class="scheme-info-card">
@@ -44,8 +44,8 @@
                 <!-- 步骤1: 选择任务承担单位 -->
                 <div class="step-section">
                     <h4 class="step-title">1、选择任务承担单位</h4>
-                    <el-row :gutter="16" style="margin-bottom: 10px;">
 
+                    <el-row :gutter="16" style="margin-bottom: 20px;">
                         <el-col :span="12">
                             <el-form-item label="所属区域" style="margin-bottom: 0;">
                                 <AreaCascader class="full-width" v-model="areaPath" placeholder="请选择所属地区" @select="(val) => {
@@ -192,9 +192,6 @@ const areaPath = ref([]);
 
 const searchKeyword = ref('');
 const selectedOrgs = ref([]);
-const showRequirementDialog = ref(false);
-const showHighRiskDialog = ref(false);
-const currentTaskData = ref(null);
 
 const checkAll = ref(false);
 const isIndeterminate = ref(false);

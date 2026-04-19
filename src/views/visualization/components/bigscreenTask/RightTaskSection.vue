@@ -76,7 +76,7 @@ const tableData = [
   td {
     padding: 0 2px;
     border-bottom: 1px solid rgba(35, 92, 168, 0.35);
-    font-size: 11px;
+    font-size: 14px;
     line-height: 1;
     text-align: center;
     color: #d6eefe;
@@ -88,7 +88,7 @@ const tableData = [
   th {
     color: #8fb7dc;
     font-weight: 600;
-    font-size: 12px;
+    font-size: 14px;
     height: 28px;
     background: rgba(13, 45, 96, 0.5);
   }

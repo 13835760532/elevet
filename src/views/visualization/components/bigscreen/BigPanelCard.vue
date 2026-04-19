@@ -5,13 +5,7 @@
         <h3 class="panel-title">{{ title }}</h3>
       </div>
       <div v-if="tabs.length" class="panel-tabs">
-        <button
-          v-for="tab in tabs"
-          :key="tab"
-          class="panel-tab"
-          :class="{ active: tab === activeTab }"
-          type="button"
-        >
+        <button v-for="tab in tabs" :key="tab" class="panel-tab" :class="{ active: tab === activeTab }" type="button">
           {{ tab }}
         </button>
       </div>
@@ -46,6 +40,10 @@ const props = withDefaults(
   background-size: 100% 100%;
   box-shadow: inset 0 0 28px rgba(2, 74, 168, 0.2);
   position: relative;
+  /* 支撑自适应高度 */
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .panel-header {
@@ -57,7 +55,15 @@ const props = withDefaults(
   background: url('../../../../assets/imgs/echarts/首页/bg_fxgg.png') no-repeat center center;
   background-size: 100% 100%;
 }
-.big-panel-center{
+
+/* 中间特殊布局适配 */
+.big-panel-center {
+  height: 100%;
+
+  .panel-body {
+    padding: 0;
+  }
+
   .panel-header {
     height: 46px;
     padding: 0 14px;
@@ -66,9 +72,6 @@ const props = withDefaults(
     justify-content: space-between;
     background: url('../../../../assets/imgs/echarts/首页/fgqt_bg.png') no-repeat center center;
     background-size: 100% 100%;
-  }
-  .panel-body {
-    padding: 0;
   }
 }
 
@@ -119,5 +122,9 @@ const props = withDefaults(
 
 .panel-body {
   padding: 12px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 </style>

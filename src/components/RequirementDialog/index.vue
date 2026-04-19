@@ -68,9 +68,9 @@ const visible = computed({
 const selectAll = ref(false);
 
 const requirementList = ref([
-    { selected: true, product: '高昌', testItem: '甲霜灵' },
+    { selected: true, product: '豇豆', testItem: '灭蝇胺' },
     { selected: true, product: '大葱', testItem: '克百威' },
-    { selected: false, product: '其他', testItem: '其他' }
+    { selected: false, product: '芹菜', testItem: '毒死蜱' }
 ]);
 
 watch(() => props.modelValue, (val) => {

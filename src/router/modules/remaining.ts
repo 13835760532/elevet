@@ -256,6 +256,12 @@ const remainingRouter: AppRouteRecordRaw[] = [
         component: () => import('@/views/fastCheckPlan/task/taskAllocate.vue'),
         name: 'CheckTaskAllocate',
         meta: { title: '任务转派', activeMenu: '/fastCheckPlan/task' }
+      },
+      {
+        path: 'task/createSchemeTask',
+        component: () => import('@/views/fastCheckPlan/task/createSchemeTask.vue'),
+        name: 'TaskCreateSchemeTask',
+        meta: { title: '任务分发', activeMenu: '/fastCheckPlan/task', hidden: true, canTo: true }
       }
     ]
   },

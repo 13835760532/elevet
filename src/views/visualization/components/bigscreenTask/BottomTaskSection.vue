@@ -1,10 +1,10 @@
 <template>
   <section class="bottom-section">
-    <BigPanelCard title="任务检测量态势" :bg-image="bottomBg">
+    <BigPanelCard class="big-panel-center" title="任务检测量态势" :bg-image="bottomBg">
       <Echart :options="leftTrendOption" :height="200" />
     </BigPanelCard>
 
-    <BigPanelCard title="检测风险态势" :bg-image="bottomBg">
+    <BigPanelCard class="big-panel-center" title="检测风险态势" :bg-image="bottomBg">
       <Echart :options="rightTrendOption" :height="200" />
     </BigPanelCard>
   </section>
@@ -14,7 +14,7 @@
 import echarts from '@/plugins/echarts';
 import { Echart } from '@/components/Echart';
 import BigPanelCard from '../bigscreen/BigPanelCard.vue';
-import bottomBg from '@/assets/imgs/echarts/检测任务/Frame 69.png';
+import bottomBg from '@/assets/imgs/echarts/检测任务/69.png';
 
 const xData = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
 const lineBase = {

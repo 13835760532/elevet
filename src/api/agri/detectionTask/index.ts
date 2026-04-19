@@ -82,8 +82,8 @@ export const getDetectionSubTaskTree = (taskId: number) => {
 }
 
 // 获取直接子任务列表
-export const getDetectionSubTaskList = (parentId: number) => {
-  return request.get({ url: `/agri/detection-task/sub-tasks/${parentId}` })
+export const getDetectionSubTaskList = (parentId: number, params?: any) => {
+  return request.get({ url: `/agri/detection-task/sub-tasks/${parentId}`, params })
 }
 
 // 拆分子任务

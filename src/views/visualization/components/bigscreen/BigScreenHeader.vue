@@ -13,9 +13,10 @@
       <div
         class="nav-btn"
         v-for="item in leftMenus"
-        :key="item.label"
+        :key="item.key"
         :class="{ active: activeMenu === item.key }"
         :style="{ backgroundImage: `url(${activeMenu === item.key ? item.activeBg : item.bg})` }"
+        @click="$emit('update:activeMenu', item.key)"
       >
         <span class="btn-label"></span>
       </div>
@@ -79,9 +80,10 @@
       <div
         class="nav-btn"
         v-for="item in rightMenus"
-        :key="item.label"
+        :key="item.key"
         :class="{ active: activeMenu === item.key }"
         :style="{ backgroundImage: `url(${activeMenu === item.key ? item.activeBg : item.bg})` }"
+        @click="$emit('update:activeMenu', item.key)"
       >
         <span class="btn-label"></span>
       </div>
@@ -121,6 +123,7 @@ const props = withDefaults(
   }
 );
 const { showDataConfig, activeMenu } = toRefs(props);
+const emit = defineEmits(['update:activeMenu', 'toggleConfig']);
 
 const showConfig = ref(false);
 const configForm = reactive({

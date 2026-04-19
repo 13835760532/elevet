@@ -2,14 +2,7 @@
   <section class="center-section">
     <BigPanelCard class="big-panel-center" title="合格证地区分布图" :tabs="['开具', '存证']" active-tab="开具" :bg-image="mapBg">
       <div class="map-area">
-        <div class="map-legend">
-          <div class="legend-title">合格证开具分布</div>
-          <div class="legend-item" v-for="item in legendData" :key="item.label">
-            <span class="dot" :style="{ background: item.color }"></span>
-            <span>{{ item.label }}</span>
-          </div>
-        </div>
-        <Echart :options="mapOption" :height="520" />
+        <Map />
       </div>
     </BigPanelCard>
 
@@ -23,67 +16,13 @@
 <script setup lang="ts">
 import echarts from '@/plugins/echarts';
 import { Echart } from '@/components/Echart';
-import quzhouMap from '@/assets/map/json/quzhou.json';
+
 import BigPanelCard from '../bigscreen/BigPanelCard.vue';
+import Map from '../Map.vue';
 import mapBg from '@/assets/imgs/echarts/合格证/Frame 57_bg.png';
 import trendBg from '@/assets/imgs/echarts/合格证/Frame 59_bg.png';
 
-echarts.registerMap('quzhou-cert', quzhouMap as any);
 
-const legendData = [
-  { label: '300-499', color: '#004b99' },
-  { label: '200-399', color: '#0066cc' },
-  { label: '100-299', color: '#0080ff' },
-  { label: '50-199', color: '#33a1ff' },
-  { label: '30-100', color: '#66c2ff' },
-  { label: '10-50', color: '#99e3ff' },
-  { label: '0-10', color: '#ccf2ff' }
-];
-
-const mapOption = {
-  tooltip: {
-    trigger: 'item',
-    backgroundColor: 'rgba(3, 24, 58, 0.92)',
-    borderColor: '#42e5ff',
-    textStyle: { color: '#e8f6ff' },
-    formatter: '{b}<br/>合格证开具量: 5688<br/>合格证存证量: 5688'
-  },
-  geo: {
-    map: 'quzhou-cert',
-    roam: false,
-    zoom: 1.15,
-    itemStyle: {
-      areaColor: '#0b2b64',
-      borderColor: '#2ee8ff',
-      borderWidth: 1.4,
-      shadowBlur: 16,
-      shadowColor: 'rgba(43, 227, 255, 0.28)'
-    },
-    emphasis: {
-      itemStyle: { areaColor: '#1c5fb5', borderColor: '#73efff' },
-      label: { show: false }
-    }
-  },
-  series: [
-    {
-      type: 'map',
-      geoIndex: 0,
-      data: (quzhouMap as any).features.map((f: any) => ({ name: f.properties.name, value: Math.round(Math.random() * 600) }))
-    },
-    {
-      type: 'effectScatter',
-      coordinateSystem: 'geo',
-      data: [
-        { name: '衢州', value: [118.87, 28.93, 100] },
-        { name: '杭州', value: [120.15, 30.28, 96] },
-        { name: '宁波', value: [121.55, 29.88, 88] }
-      ],
-      symbolSize: 8,
-      itemStyle: { color: '#ffd84f' },
-      rippleEffect: { color: '#fff5ae', scale: 3 }
-    }
-  ]
-};
 
 const trendOption = {
   grid: { left: 45, right: 20, top: 14, bottom: 26 },
@@ -156,6 +95,7 @@ const trendOption = {
 .map-area {
   position: relative;
   min-height: 0;
+  flex: 1;
 }
 
 .map-legend {

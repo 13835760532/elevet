@@ -57,8 +57,11 @@
                                     <el-option :label="2025" :value="2025" />
                                     <el-option :label="2024" :value="2024" />
                                 </el-select>
-                                <el-select v-model="formData.planPeriodMonth" placeholder="月份" v-if="formData.planPeriodType === 2 || formData.planPeriodType === 3">
+                                <el-select v-model="formData.planPeriodMonth" placeholder="月份" v-if="formData.planPeriodType === 2">
                                     <el-option v-for="m in 12" :key="m" :label="`${m}月`" :value="m" />
+                                </el-select>
+                                 <el-select v-model="formData.planPeriodWeek" placeholder="周" v-if="formData.planPeriodType === 3">
+                                    <el-option v-for="m in 53" :key="m" :label="`${m}周`" :value="m" />
                                 </el-select>
                             </div>
                         </el-form-item>

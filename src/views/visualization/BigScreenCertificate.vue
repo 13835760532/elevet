@@ -1,14 +1,6 @@
 <template>
   <div class="big-screen-shell">
     <BigScreenHeader :show-data-config="false" active-menu="cert" />
-
-    <div class="screen-toolbar">
-      <div class="toolbar-select" :style="{ backgroundImage: `url(${toolbarBg})` }">
-        2025年度北京地区农产品质量安全风险预警【20250101-20251201】
-        <span class="caret">▾</span>
-      </div>
-    </div>
-
     <main class="screen-main">
       <LeftCertificateSection />
       <CenterCertificateSection />
@@ -22,7 +14,6 @@ import BigScreenHeader from './components/bigscreen/BigScreenHeader.vue';
 import LeftCertificateSection from './components/bigscreenCertificate/LeftCertificateSection.vue';
 import CenterCertificateSection from './components/bigscreenCertificate/CenterCertificateSection.vue';
 import RightCertificateSection from './components/bigscreenCertificate/RightCertificateSection.vue';
-import toolbarBg from '@/assets/imgs/echarts/首页/Frame1_bg.png';
 
 defineOptions({ name: 'VisualizationBigScreenCertificate' });
 </script>
