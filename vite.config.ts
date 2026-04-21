@@ -103,10 +103,21 @@ export default ({command, mode}: ConfigEnv): UserConfig => {
                         }
                         return 'assets/others/[name]-[hash][extname]' // 其余资产
                     },
-                    manualChunks: {
-                      echarts: ['echarts'], // 将 echarts 单独打包，参考 https://gitee.com/yudaocode/yudao-ui-admin-vue3/issues/IAB1SX 讨论
-                      'form-create': ['@form-create/element-ui'], // 参考 https://github.com/yudaocode/yudao-ui-admin-vue3/issues/148 讨论
-                      'form-designer': ['@form-create/designer'],
+                    manualChunks(id) {
+                        if (id.includes('node_modules')) {
+                            if (id.includes('element-plus')) return 'element-plus';
+                            if (id.includes('echarts')) return 'echarts';
+                            if (id.includes('@form-create')) return 'form-create';
+                            if (id.includes('wangeditor')) return 'wangeditor';
+                            if (id.includes('video.js')) return 'videojs';
+                            if (id.includes('maptalks')) return 'maptalks';
+                            if (id.includes('lodash-es')) return 'lodash';
+                            return 'vendor';
+                        }
+                        // 处理大型地图 JSON
+                        if (id.includes('assets/map/json')) {
+                            return 'map-data';
+                        }
                     }
                 },
             },

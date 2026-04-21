@@ -16,13 +16,8 @@
                     <div class="progress-section-container">
                         <div class="progress-section">
                             <div class="progress-circle">
-                                <el-progress 
-                                    type="circle" 
-                                    :percentage="schemeInfo.taskProgress" 
-                                    :width="110" 
-                                    :stroke-width="10"
-                                    color="#2563eb" 
-                                />
+                                <el-progress type="circle" :percentage="schemeInfo.taskProgress" :width="110"
+                                    :stroke-width="10" color="#00B3ED" />
                             </div>
                             <p class="progress-label">任务总完成率</p>
                             <p class="progress-value">{{ schemeInfo.taskCompleted }}/{{ schemeInfo.taskTotal }}</p>
@@ -69,7 +64,7 @@
                                 <span class="info-value">{{ schemeInfo.detectionItems }}</span>
                             </div>
                         </div>
-                        
+
                         <div class="info-footer-desc">
                             <!-- 方案要求 -->
                             <div class="desc-section" v-if="schemeInfo.planRequirements">
@@ -77,12 +72,17 @@
                                 <div class="desc-content">{{ schemeInfo.planRequirements }}</div>
                             </div>
                             <!-- 附件列表 -->
-                            <div class="desc-section" v-if="schemeInfo.planAttachments && schemeInfo.planAttachments.length > 0">
+                            <div class="desc-section"
+                                v-if="schemeInfo.planAttachments && schemeInfo.planAttachments.length > 0">
                                 <span class="info-label">方案附件</span>
                                 <div class="attachments-row">
-                                    <a v-for="(file, index) in schemeInfo.planAttachments" :key="index" :href="file.url" target="_blank" class="file-tag">
-                                        <el-icon><Document /></el-icon> {{ file.name }}
-                                    </a>
+                                    <div v-for="(file, index) in schemeInfo.planAttachments" :key="index"
+                                        class="file-tag" @click="handlePreviewFile(file)">
+                                        <el-icon>
+                                            <Document />
+                                        </el-icon> {{ file.name }}
+                                        <span class="preview-hint">预览</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -117,43 +117,58 @@
                     </div>
 
                     <div v-else class="task-table">
-                        <el-table :data="taskList" :header-cell-style="headerCellStyle" border>
+                        <el-table :data="taskList" :header-cell-style="headerCellStyle" border style="width: 100%">
                             <el-table-column label="序号" type="index" width="60" align="center" />
-                            <el-table-column label="任务编号" prop="taskNo" width="160" />
+                            <el-table-column label="任务编号" prop="taskNo" width="140" align="center" />
                             <el-table-column label="任务名称" prop="taskName" min-width="200" show-overflow-tooltip />
-                            <el-table-column label="承担单位" prop="dept" min-width="150" show-overflow-tooltip />
-                            <el-table-column label="检测数量" prop="quantity" width="100" align="center" />
-                            <el-table-column label="完成数量" prop="completed" width="100" align="center" />
-                            <el-table-column label="任务状态" prop="status" width="100" align="center">
+                            <el-table-column label="承担单位" prop="dept" min-width="160" show-overflow-tooltip />
+                            <el-table-column label="检测区域范围" prop="region" width="120" align="center"
+                                show-overflow-tooltip />
+                            <el-table-column label="检测品种" prop="varieties" min-width="150" align="center"
+                                show-overflow-tooltip />
+                            <el-table-column label="检测项目" prop="items" min-width="150" align="center"
+                                show-overflow-tooltip />
+                            <el-table-column label="执行时间" prop="timeRange" width="200" align="center" />
+                            <el-table-column label="任务完成率 (已完成样品数/总样品数)" width="220" align="center">
+                                <template #default="scope">
+                                    <div class="completion-rate-cell">
+                                        <span class="rate-pct">{{ scope.row.percentage }}%</span>
+                                        <span class="rate-counts">({{ scope.row.completed }}/{{ scope.row.total
+                                        }})</span>
+                                    </div>
+                                </template>
+                            </el-table-column>
+                            <el-table-column label="状态" prop="status" width="100" align="center">
                                 <template #default="scope">
                                     <span :class="['status-tag', getTaskStatusClass(scope.row.status)]">
                                         {{ scope.row.status }}
                                     </span>
                                 </template>
                             </el-table-column>
-                            <el-table-column label="操作" width="180" align="center" fixed="right">
+                            <el-table-column label="操作" width="160" align="center" fixed="right">
                                 <template #default="scope">
                                     <div class="table-operate-action-btns">
-                                        <span class="table-edit-operate" @click="handleEditTask(scope.row)">编辑</span>
-                                        <span class="table-delete-operate" @click="handleDeleteTask(scope.row)">删除</span>
                                         <span class="table-view-operate" @click="handleViewTask(scope.row)">查看</span>
+                                        <span class="table-edit-operate" style="color: #00B3ED; margin-left: 10px;"
+                                            @click="handleCreateSubTask(scope.row)">新建子任务</span>
                                     </div>
                                 </template>
                             </el-table-column>
                         </el-table>
 
                         <!-- 分页 -->
-                        <div class="pagination-wrapper">
-                            <el-pagination v-model:current-page="pageParams.pageNum" v-model:page-size="pageParams.pageSize"
-                                :total="total" background layout="prev, pager, next" class="custom-pagination" />
+                        <div class="pagination-wrapper" style="margin-top: 20px;">
+                            <el-pagination :current-page="pageParams.pageNum" :page-size="pageParams.pageSize"
+                                :total="total" background layout="prev, pager, next" class="custom-pagination"
+                                @current-change="handleTaskPageChange" @size-change="handleTaskSizeChange" />
                         </div>
                     </div>
                 </div>
 
                 <!-- 检测进度 -->
                 <div v-if="activeTab === 'progress'" class="tab-content">
-                    <DetectionProgress :tableData="progressList" :total="progressTotal" @query="handleProgressQuery"
-                        @reset="handleProgressReset" />
+                    <DetectionProgress :tableData="progressList" :total="progressTotal" :task-options="taskOptions"
+                        :category-options="categoryOptions" @query="handleProgressQuery" @reset="handleProgressReset" />
                 </div>
 
                 <!-- 进度历史 -->
@@ -162,6 +177,9 @@
                 </div>
             </div>
         </div>
+
+        <!-- 图片预览组件 -->
+        <el-image-viewer v-if="showImageViewer" :url-list="[previewImageUrl]" @close="showImageViewer = false" />
     </div>
 </template>
 
@@ -171,6 +189,8 @@ import { useRouter, useRoute } from 'vue-router';
 import { Document, TrendCharts, Clock } from '@element-plus/icons-vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import * as DetectionPlanApi from '@/api/agri/detectionPlan';
+import * as DeptApi from '@/api/system/dept';
+import * as DetectionRecordApi from '@/api/agri/detectionRecord';
 import { useDict, DICT_TYPE } from '@/hooks/web/useDict';
 import DetectionProgress from '@/components/DetectionProgress/index.vue';
 import ProgressHistory from '@/components/ProgressHistory/index.vue';
@@ -181,7 +201,7 @@ const route = useRoute();
 const activeTab = ref('list');
 
 const { getLabel: getPlanTypeLabel } = useDict(DICT_TYPE.AGRI_PLAN_TYPE);
-const { getLabel: getProductCategoryLabel } = useDict(DICT_TYPE.AGRI_PRODUCT_CATEGORY);
+const { getLabel: getProductCategoryLabel, options: productCategoryOptions } = useDict(DICT_TYPE.AGRI_PRODUCT_CATEGORY);
 
 const schemeInfo = reactive({
     id: null,
@@ -208,6 +228,24 @@ const schemeInfo = reactive({
     planAttachments: []
 });
 
+// 附件预览相关
+const showImageViewer = ref(false);
+const previewImageUrl = ref('');
+
+const handlePreviewFile = (file) => {
+    if (!file.url) return;
+    const url = file.url.toLowerCase();
+    const isImg = /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(url);
+
+    if (isImg) {
+        previewImageUrl.value = file.url;
+        showImageViewer.value = true;
+    } else {
+        // PDF, Word, Excel 等其他文件，在新标签页打开（浏览器通常会处理 PDF 预览，其他文件会下载）
+        window.open(file.url, '_blank');
+    }
+};
+
 // 状态映射
 const statusMap = {
     0: { text: '未开始', class: 'status-not-started' },
@@ -221,15 +259,10 @@ const statusClass = computed(() => {
     return statusMap[schemeInfo.statusValue]?.class || '';
 });
 
-// 部门列表映射（模拟，实际可从后端获取）
+// 部门列表映射（从后端获取）
+const deptMap = ref({});
 const getDeptLabel = (value) => {
-    const map = {
-        1: '北京市农业农村局',
-        2: '农业农村部（上海）',
-        3: '天津市农业农村委员会',
-        4: '重庆市农业局'
-    };
-    return map[value] || '--';
+    return deptMap.value[value] || '--';
 };
 
 /** 组装周期文本 */
@@ -263,7 +296,7 @@ const loadPlanData = async (id) => {
             schemeInfo.sampleCount = data.sampleCount || 0;
             schemeInfo.detectionItems = data.detectionItems || '--';
             schemeInfo.planRequirements = data.planRequirements || '';
-            
+
             // 获取统计数据
             try {
                 const stats = await DetectionPlanApi.getPlanStatistics(id);
@@ -271,7 +304,7 @@ const loadPlanData = async (id) => {
                     schemeInfo.taskProgress = stats.completionRate || 0;
                     schemeInfo.taskCompleted = stats.taskCompletedCount || 0;
                     schemeInfo.taskTotal = stats.taskTotalCount || 0;
-                    
+
                     schemeInfo.sampleProgress = stats.sampleCompletionRate || 0;
                     schemeInfo.sampleCompleted = stats.sampleCompletedCount || 0;
                     schemeInfo.sampleTotal = stats.sampleCount || 0;
@@ -279,25 +312,39 @@ const loadPlanData = async (id) => {
             } catch (err) {
                 console.warn('获取方案统计失败', err);
             }
-            
+
             // 处理附件解析
             if (data.planAttachments) {
                 try {
-                    // 如果后端存储的是 JSON 字符串
-                    schemeInfo.planAttachments = JSON.parse(data.planAttachments);
-                } catch (e) {
-                    // 如果已经是对象或数组，或者解析失败
-                    if (Array.isArray(data.planAttachments)) {
-                        schemeInfo.planAttachments = data.planAttachments;
+                    let parsed;
+                    if (typeof data.planAttachments === 'string') {
+                        parsed = JSON.parse(data.planAttachments);
+                    } else {
+                        parsed = data.planAttachments;
+                    }
+
+                    if (Array.isArray(parsed)) {
+                        schemeInfo.planAttachments = parsed.map((item, index) => {
+                            // 格式 1: 字符串 URL ["http://..."]
+                            if (typeof item === 'string') {
+                                return {
+                                    name: item.substring(item.lastIndexOf('/') + 1) || `附件${index + 1}`,
+                                    url: item
+                                };
+                            }
+                            // 格式 2: 对象 {name, url}
+                            return item;
+                        });
                     } else if (typeof data.planAttachments === 'string') {
-                        // 如果逗号分隔的 URL
+                        // 兜底: 非 JSON 的普通逗号分隔字符串
                         schemeInfo.planAttachments = data.planAttachments.split(',').map((url, index) => ({
-                            name: `附件${index + 1}`,
+                            name: url.substring(url.lastIndexOf('/') + 1) || `附件${index + 1}`,
                             url: url.trim()
                         }));
-                    } else {
-                        schemeInfo.planAttachments = [];
                     }
+                } catch (e) {
+                    console.warn('解析附件失败', e);
+                    schemeInfo.planAttachments = [];
                 }
             } else {
                 schemeInfo.planAttachments = [];
@@ -312,16 +359,62 @@ const loadPlanData = async (id) => {
 const loadTaskList = async (id) => {
     try {
         const tasks = await DetectionPlanApi.getPlanTasks(id);
-        taskList.value = tasks.map(t => ({
-            id: t.id,
-            taskNo: t.taskCode,
-            taskName: t.taskName,
-            dept: getDeptLabel(t.assignDeptId), // 假设后端返回了承担部门ID
-            quantity: t.sampleCount,
-            completed: t.completedCount || 0, // 假设后端返回了完成数
-            status: t.status === 3 ? '已完成' : (t.status === 1 ? '进行中' : '未开始')
-        }));
+        const allTasks = tasks || [];
+        
+        taskList.value = allTasks.map(t => {
+            const total = t.sampleCount || 0;
+            const completed = t.completedCount || 0;
+            const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+            return {
+                id: t.id,
+                parentId: t.parentId,
+                taskNo: t.taskCode,
+                taskName: t.taskName,
+                dept: t.assignDeptName || getDeptLabel(t.assignDeptId),
+                region: t.detectionArea || '--',
+                varieties: t.detectionVarieties || '--',
+                items: t.detectionItems || '--',
+                timeRange: t.startDate && t.endDate ? `${t.startDate}至${t.endDate}` : '--',
+                total,
+                completed,
+                percentage,
+                status: t.status === 3 ? '已完成' : (t.status === 2 ? '已延期' : (t.status === 1 ? '进行中' : '未开始'))
+            };
+        });
+        taskOptions.value = taskList.value.map(t => ({ label: t.taskName, value: t.id }));
         total.value = taskList.value.length;
+
+        // 根据 parentId 组装历史进度树形数据
+        const taskMap = new Map();
+        const treeRoots = [];
+
+        allTasks.forEach(t => {
+            const total = t.sampleCount || 0;
+            const completed = t.completedCount || 0;
+            taskMap.set(t.id, {
+                id: t.id,
+                name: t.taskName || t.assignDeptName || getDeptLabel(t.assignDeptId) || '未命名任务',
+                progress: total > 0 ? `(${completed}/${total})` : '',
+                warning: t.status === 2,
+                children: [],
+                parentId: t.parentId
+            });
+        });
+
+        allTasks.forEach(t => {
+            const node = taskMap.get(t.id);
+            if (node.parentId && node.parentId !== 0 && taskMap.has(node.parentId)) {
+                taskMap.get(node.parentId).children.push(node);
+            } else {
+                treeRoots.push(node);
+            }
+        });
+
+        historyData.value = {
+            name: schemeInfo.name || '监测方案',
+            children: treeRoots
+        };
     } catch (error) {
         console.error('获取任务列表失败：', error);
     }
@@ -330,8 +423,22 @@ const loadTaskList = async (id) => {
 onMounted(async () => {
     const id = route.query.id;
     if (id) {
+        // 先加载部门字典数据
+        try {
+            const depts = await DeptApi.getSimpleDeptList();
+            const map = {};
+            depts.forEach(d => {
+                map[d.id] = d.name;
+            });
+            deptMap.value = map;
+        } catch (e) {
+            console.warn('获取部门列表失败', e);
+        }
+
         await loadPlanData(Number(id));
         await loadTaskList(Number(id));
+        // 初始化加载检测结果
+        handleProgressQuery();
     } else {
         ElMessage.warning('方案参数错误');
         router.back();
@@ -346,6 +453,17 @@ const pageParams = reactive({
     pageSize: 10
 });
 
+const handleTaskSizeChange = (val) => {
+    pageParams.pageSize = val;
+    pageParams.pageNum = 1;
+    // loadTaskList(route.query.id); 重新加载
+};
+
+const handleTaskPageChange = (val) => {
+    pageParams.pageNum = val;
+    // loadTaskList(route.query.id); 重新加载
+};
+
 const progressQuery = reactive({
     task: '',
     org: '',
@@ -355,122 +473,69 @@ const progressQuery = reactive({
     status: ''
 });
 
-const progressTotal = ref(100);
 const progressPage = reactive({
     pageNum: 1,
     pageSize: 10
 });
 
-const progressList = ref([
-    {
-        sampleNo: 'yp20242132131',
-        sampleName: '豇豆',
-        category: '蔬菜',
-        origin: '山东-济南',
-        subject: '北京章三商户',
-        region: '北京市-大兴区',
-        org: '盒马鲜生',
-        testTime: '--',
-        result: '--',
-        status: '未检测'
-    },
-    {
-        sampleNo: 'yp20242132131',
-        sampleName: '草莓',
-        category: '水果',
-        origin: '山东-济南',
-        subject: '北京章三商户',
-        region: '北京市-大兴区',
-        org: '北京市平谷区农业综合检验检测中心',
-        testTime: '2023-09-09',
-        result: '阴性',
-        status: '已检测'
-    },
-    {
-        sampleNo: 'yp20242132131',
-        sampleName: '桂鱼',
-        category: '水产品',
-        origin: '辽宁-大连',
-        subject: '北京章三商户',
-        region: '北京市-大兴区',
-        org: '北京果村蔬菜专业合作社',
-        testTime: '2023-09-09',
-        result: '结果异常',
-        status: '失败'
+const progressList = ref([]);
+const progressTotal = ref(0);
+let isLoadingResults = false; // 防重入锁
+
+/** 加载检测结果列表 */
+const loadDetectionResults = async (params = {}) => {
+    if (isLoadingResults) return; // 防止递归调用
+    isLoadingResults = true;
+    try {
+        const id = route.query.id;
+        if (!id) return;
+
+        const queryParams = {
+            planId: id,
+            pageNo: params.pageNum || 1,
+            pageSize: params.pageSize || 10,
+            keyword: params.sample || undefined,
+            productCategory: params.category || undefined,
+            overallResult: params.result === 'qualified' ? 0 : (params.result === 'unqualified' ? 1 : undefined),
+            status: params.status === 'tested' ? 1 : (params.status === 'untested' ? 0 : undefined)
+        };
+
+        const data = await DetectionRecordApi.getDetectionRecordPage(queryParams);
+        progressList.value = (data.list || []).map(item => ({
+            sampleNo: item.sampleCode || '--',
+            sampleName: item.productName || '--',
+            category: item.productCategory || '--',
+            origin: item.sampleArea || '--',
+            subject: item.subjectName || '--',
+            region: item.detectionArea || '--',
+            org: item.detectionOrgName || '--',
+            testTime: item.detectionDate ? item.detectionDate.substring(0, 10) : '--',
+            result: item.overallResult === 0 ? '阴性' : (item.overallResult === 1 ? '阳性' : (item.overallResult === 2 ? '结果异常' : '--')),
+            status: item.status === 1 ? '已检测' : (item.status === 0 ? '未检测' : '失败')
+        }));
+        progressTotal.value = data.total || 0;
+    } catch (error) {
+        console.error('加载检测结果失败:', error);
+    } finally {
+        isLoadingResults = false;
     }
-]);
+};
 
 // 进度历史树形数据
-const historyData = reactive({
-    name: '农产品例行检测',
-    children: [
-        {
-            name: '海淀区任务检测中心',
-            progress: '(100/500)',
-            children: [
-                {
-                    name: '三一检测机构',
-                    progress: '(100/400)',
-                    children: [
-                        { name: '朝阳大悦城检测中心' },
-                        { name: '顺意检测' }
-                    ]
-                },
-                {
-                    name: '三二检测机构',
-                    progress: '(0/100)',
-                    warning: true
-                }
-            ]
-        },
-        {
-            name: '朝阳区任务检测中心',
-            children: [
-                { name: '三三检测机构' },
-                { name: '三四检测机构' },
-                { name: '三五检测机构' }
-            ]
-        },
-        {
-            name: '大兴区任务检测中心',
-            children: [
-                { name: '兴隆检测机构' }
-            ]
-        },
-        {
-            name: '昌平区任务检测中心',
-            children: [
-                { name: '七一检测机构' },
-                { name: '七二检测机构' },
-                { name: '七三检测机构' },
-                { name: '七四检测机构' },
-                { name: '七五检测机构' },
-                { name: '七六检测机构' },
-                { name: '七七检测机构' },
-                { name: '七八检测机构' },
-                { name: '七九检测机构' },
-                { name: '八十检测机构' }
-            ]
-        },
-        {
-            name: '西城区任务检测中心',
-            children: []
-        }
-    ]
+const historyData = ref({
+    name: '监测方案',
+    children: []
 });
 
-const handleProgressQuery = () => {
-    ElMessage.success('查询成功');
+const categoryOptions = ref((productCategoryOptions.value || []).map(opt => ({ label: opt.label, value: opt.value })));
+const taskOptions = ref([]);
+
+const handleProgressQuery = (params) => {
+    loadDetectionResults(params);
 };
 
 const handleProgressReset = () => {
-    progressQuery.task = '';
-    progressQuery.org = '';
-    progressQuery.sample = '';
-    progressQuery.category = '';
-    progressQuery.result = '';
-    progressQuery.status = '';
-    ElMessage.success('重置成功');
+    loadDetectionResults();
 };
 
 const handleSingleInput = () => {
@@ -533,6 +598,17 @@ const handleViewTask = (row) => {
         query: { id: row.taskNo }
     });
 };
+
+const handleCreateSubTask = (row) => {
+    router.push({
+        path: '/fastCheckPlan/createSchemeTask',
+        query: {
+            id: schemeInfo.id,
+            parentId: row.id,
+            mode: 'sub'
+        }
+    });
+};
 </script>
 
 <style lang="scss" scoped>
@@ -548,7 +624,7 @@ const handleViewTask = (row) => {
 .scheme-info-card {
     background: #fff;
     border-radius: 10px;
-    padding: var( --page-container-padding);
+    padding: var(--page-container-padding);
     margin-bottom: 12px;
 }
 
@@ -584,6 +660,49 @@ const handleViewTask = (row) => {
     border-right: 1px solid #f0f2f5;
 }
 
+/* 任务列表表格自定义样式 */
+.completion-rate-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+
+    .rate-pct {
+        font-weight: 600;
+        color: #1e293b;
+    }
+
+    .rate-counts {
+        font-size: 12px;
+        color: #64748b;
+    }
+}
+
+.table-operate-action-btns {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+
+    span {
+        cursor: pointer;
+        font-size: 14px;
+        transition: opacity 0.2s;
+
+        &:hover {
+            opacity: 0.8;
+        }
+    }
+
+    .table-view-operate {
+        color: #00B3ED;
+    }
+
+    .table-edit-operate {
+        color: #00B3ED;
+        font-weight: 500;
+    }
+}
+
 .progress-section {
     display: flex;
     flex-direction: column;
@@ -594,7 +713,7 @@ const handleViewTask = (row) => {
         :deep(.el-progress__text) {
             font-size: 16px !important;
             font-weight: bold;
-            color: #2563eb;
+            color: #00B3ED;
         }
     }
 
@@ -642,7 +761,7 @@ const handleViewTask = (row) => {
         flex-shrink: 0;
         position: relative;
         padding-right: 12px;
-        
+
         &::after {
             content: "";
             position: absolute;
@@ -662,7 +781,7 @@ const handleViewTask = (row) => {
         word-break: break-all;
 
         &.highlight {
-            color: #2563eb;
+            color: #00B3ED;
             font-weight: 500;
         }
     }
@@ -709,16 +828,29 @@ const handleViewTask = (row) => {
     gap: 6px;
     padding: 6px 12px;
     background: #eff6ff;
-    color: #2563eb;
+    color: #00B3ED;
     border-radius: 6px;
     font-size: 13px;
     text-decoration: none;
     border: 1px solid #dbeafe;
     transition: all 0.2s;
+    cursor: pointer;
 
     &:hover {
         background: #dbeafe;
         transform: translateY(-1px);
+
+        .preview-hint {
+            opacity: 1;
+        }
+    }
+
+    .preview-hint {
+        font-size: 11px;
+        opacity: 0.6;
+        margin-left: 4px;
+        border-left: 1px solid rgba(37, 99, 235, 0.2);
+        padding-left: 6px;
     }
 }
 
@@ -737,12 +869,12 @@ const handleViewTask = (row) => {
 
     &.status-processing {
         background: #eff6ff;
-        color: #2563eb;
+        color: #00B3ED;
     }
 
     &.status-delayed {
-        background: #fffbeb;
-        color: #d97706;
+        background: #FEF2F2;
+        color: #B91C1C;
     }
 
     &.status-completed {
@@ -934,6 +1066,7 @@ const handleViewTask = (row) => {
         justify-content: flex-end;
         background: rgba(255, 255, 255, 0.2);
         border-top: 1px solid rgba(235, 238, 245, 0.3);
+        margin-top: 20px;
     }
 }
 

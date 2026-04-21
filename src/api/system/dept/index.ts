@@ -12,9 +12,21 @@ export interface DeptVO {
   createTime: Date
 }
 
+export interface DeptSearchReqVO {
+  deptType?: string | number
+  areaCode?: string
+  areaLevel?: string | number
+  keyword?: string
+}
+
 // 查询部门（精简)列表
 export const getSimpleDeptList = (): Promise<DeptVO[]> => {
-  return request.get({ url: '/system/dept/simple-list' })
+  return request.get({ url: '/system/dept/list-all-simple' })
+}
+
+// 搜索部门列表（按部门类型、区域、关键词）
+export const searchDeptList = (params: DeptSearchReqVO) => {
+  return request.get({ url: '/system/dept/search', params })
 }
 
 // 查询部门列表

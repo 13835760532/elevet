@@ -14,7 +14,7 @@
                     </div>
                     <div class="info-item">
                         <span class="label">承担单位：</span>
-                        <span class="value">{{ taskDetail.assignDeptId || '--' }}</span>
+                        <span class="value">{{ getDeptLabel(taskDetail.assignDeptId) }}</span>
                     </div>
                     <div class="info-item">
                         <span class="label">检测品种：</span>
@@ -154,7 +154,11 @@
                                     <el-table-column label="任务编号" prop="taskCode" align="center" width="120" />
                                     <el-table-column label="任务名称" prop="taskName" align="center" min-width="180"
                                         show-overflow-tooltip />
-                                    <el-table-column label="承担单位" prop="assignDeptId" align="center" min-width="120" />
+                                    <el-table-column label="承担单位" prop="assignDeptId" align="center" min-width="120">
+                                        <template #default="{ row }">
+                                            {{ row.assignDeptName || getDeptLabel(row.assignDeptId) }}
+                                        </template>
+                                    </el-table-column>
                                     <el-table-column label="检测区域范围" prop="detectionArea" align="center" width="120" />
                                     <el-table-column label="检测品种" prop="detectionVarieties" align="center"
                                         min-width="120" show-overflow-tooltip />
@@ -218,6 +222,8 @@ import DetectionProgress from '@/components/DetectionProgress/index.vue'
 import ProgressHistory from '@/components/ProgressHistory/index.vue'
 import * as DetectionTaskApi from '@/api/agri/detectionTask/index'
 import { DICT_TYPE } from '@/utils/dict'
+import * as DeptApi from '@/api/system/dept'
+import * as DetectionRecordApi from '@/api/agri/detectionRecord'
 
 const router = useRouter()
 const route = useRoute()
@@ -234,6 +240,11 @@ const allTableData = ref([])
 const tableData = ref([])
 const queryRef = ref()
 
+const deptMap = ref({})
+const getDeptLabel = (value) => {
+    return deptMap.value[value] || value || '--'
+}
+
 const tabs = [
     { label: '子任务列表', key: 'subtask' },
     { label: '检测结果', key: 'result' },
@@ -249,7 +260,7 @@ const queryParams = reactive({
 
 
 
-const getList = async () => {
+const loadTaskList = async () => {
     loading.value = true;
     try {
         const id = taskId || 0;
@@ -258,6 +269,39 @@ const getList = async () => {
             const data = await DetectionTaskApi.getDetectionSubTaskList(id);
             allTableData.value = data || [];
             handleFilter();
+
+            // 组装历史进度树形数据
+            const allTasks = data || [];
+            const taskMap = new Map();
+            const treeRoots = [];
+
+            allTasks.forEach(t => {
+                const total = t.sampleCount || 0;
+                const completed = t.sampleCompletedCount || t.completedCount || 0; 
+                taskMap.set(t.id, {
+                    id: t.id,
+                    name: t.taskName || t.assignDeptName || getDeptLabel(t.assignDeptId) || '未命名任务',
+                    progress: total > 0 ? `(${completed}/${total})` : '',
+                    warning: t.status === 2,
+                    children: [],
+                    parentId: t.parentId
+                });
+            });
+
+            allTasks.forEach(t => {
+                const node = taskMap.get(t.id);
+                // 当前页面的列表仅返回直接子任务（有的接口会返回整个树的平铺形式）
+                if (node.parentId && node.parentId !== Number(id) && node.parentId !== 0 && taskMap.has(node.parentId)) {
+                    taskMap.get(node.parentId).children.push(node);
+                } else {
+                    treeRoots.push(node);
+                }
+            });
+
+            historyData.value = {
+                name: taskDetail.value?.taskName || '分配任务',
+                children: treeRoots
+            };
         }
     } catch (error) {
         console.error('获取子任务列表失败:', error);
@@ -316,9 +360,24 @@ const getDetail = async () => {
     }
 }
 
-onMounted(() => {
-    getDetail();
-    getList();
+onMounted(async () => {
+    if (taskId) {
+        try {
+            const depts = await DeptApi.getSimpleDeptList();
+            const map = {};
+            depts.forEach(d => {
+                map[d.id] = d.name;
+            });
+            deptMap.value = map;
+        } catch (e) {
+            console.warn('获取部门列表失败', e);
+        }
+
+        await getDetail();
+        await loadTaskList();
+        // 初始化加载检测结果
+        handleProgressQuery();
+    }
 })
 
 function handleQuery() {
@@ -363,92 +422,61 @@ function handlePageChange(page) {
 }
 
 // 检测进度数据
-const progressTotal = ref(100)
-const progressList = ref([
-    {
-        sampleNo: 'yp20242132131',
-        sampleName: '豇豆',
-        category: '蔬菜',
-        origin: '山东-济南',
-        subject: '北京章三商户',
-        region: '北京市-大兴区',
-        org: '盒马鲜生',
-        testTime: '--',
-        result: '--',
-        status: '未检测'
-    },
-    {
-        sampleNo: 'yp20242132132',
-        sampleName: '草莓',
-        category: '水果',
-        origin: '山东-济南',
-        subject: '北京章三商户',
-        region: '北京市-大兴区',
-        org: '北京市平谷区农业综合检验检测中心',
-        testTime: '2023-09-09',
-        result: '阴性',
-        status: '已检测'
-    },
-    {
-        sampleNo: 'yp20242132133',
-        sampleName: '桂鱼',
-        category: '水产品',
-        origin: '辽宁-大连',
-        subject: '北京章三商户',
-        region: '北京市-大兴区',
-        org: '北京果村蔬菜专业合作社',
-        testTime: '2023-09-09',
-        result: '结果异常',
-        status: '失败'
+const progressTotal = ref(0)
+const progressList = ref([])
+
+let isLoadingResults = false; // 防重入锁
+
+const loadDetectionResults = async (params = {}) => {
+    if (isLoadingResults) return; // 防止递归调用
+    isLoadingResults = true;
+    try {
+        const id = taskId;
+        if (!id) return;
+
+        const queryParams = {
+            taskId: id, // 使用 taskId
+            pageNo: params.pageNum || 1,
+            pageSize: params.pageSize || 10,
+            keyword: params.sample || undefined,
+            productCategory: params.category || undefined,
+            overallResult: params.result === 'qualified' ? 0 : (params.result === 'unqualified' ? 1 : undefined),
+            status: params.status === 'tested' ? 1 : (params.status === 'untested' ? 0 : undefined)
+        };
+
+        const data = await DetectionRecordApi.getDetectionRecordPage(queryParams);
+        progressList.value = (data.list || []).map(item => ({
+            sampleNo: item.sampleCode || '--',
+            sampleName: item.productName || '--',
+            category: item.productCategory || '--',
+            origin: item.sampleArea || '--',
+            subject: item.subjectName || '--',
+            region: item.detectionArea || '--',
+            org: item.detectionOrgName || '--',
+            testTime: item.detectionDate ? item.detectionDate.substring(0, 10) : '--',
+            result: item.overallResult === 0 ? '阴性' : (item.overallResult === 1 ? '阳性' : (item.overallResult === 2 ? '结果异常' : '--')),
+            status: item.status === 1 ? '已检测' : (item.status === 0 ? '未检测' : '失败')
+        }));
+        progressTotal.value = data.total || 0;
+    } catch (error) {
+        console.error('加载检测结果失败:', error);
+    } finally {
+        isLoadingResults = false;
     }
-])
+};
 
 // 进度历史树形数据
-const historyData = reactive({
-    name: '农产品例行检测',
-    children: [
-        {
-            name: '海淀区任务检测中心',
-            progress: '(100/500)',
-            children: [
-                {
-                    name: '三一检测机构',
-                    progress: '(100/400)',
-                    children: [
-                        { name: '朝阳大悦城检测中心' },
-                        { name: '顺意检测' }
-                    ]
-                },
-                {
-                    name: '三二检测机构',
-                    progress: '(0/100)',
-                    warning: true
-                }
-            ]
-        },
-        {
-            name: '朝阳区任务检测中心',
-            children: [
-                { name: '三三检测机构' },
-                { name: '三四检测机构' },
-                { name: '三五检测机构' }
-            ]
-        },
-        {
-            name: '大兴区任务检测中心',
-            children: [
-                { name: '兴隆检测机构' }
-            ]
-        }
-    ]
+const historyData = ref({
+    name: '任务节点',
+    children: []
 })
 
 function handleProgressQuery(params) {
-    console.log('Progress Query:', params)
+    loadDetectionResults(params || {});
 }
 
 function handleProgressReset() {
-    console.log('Progress Reset')
+    loadDetectionResults({});
 }
 </script>
 

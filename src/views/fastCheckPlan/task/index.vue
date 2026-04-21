@@ -37,7 +37,7 @@
                     </el-form-item>
                     <el-form-item label="">
                         <el-select v-model="queryParams.status" placeholder="任务状态" class="custom-select" clearable style="width: 140px">
-                            <el-option v-for="dict in getIntDictOptions(DICT_TYPE.AGRI_DETECTION_TASK_STATUS)" :key="dict.value" :label="dict.label" :value="dict.value" />
+                            <el-option v-for="dict in taskStatusOptions" :key="dict.value" :label="dict.label" :value="dict.value" />
                         </el-select>
                     </el-form-item>
                     <el-form-item label="">
@@ -102,7 +102,7 @@
                     </el-table-column>
                     <el-table-column label="任务状态" prop="status" width="100" align="center">
                         <template #default="scope">
-                            <dict-tag :type="DICT_TYPE.AGRI_DETECTION_TASK_STATUS" :value="scope.row.status" />
+                            <dict-tag type="agri_task_status" :value="scope.row.status" />
                         </template>
                     </el-table-column>
                     <el-table-column label="操作" width="180" align="center" fixed="right">
@@ -141,13 +141,14 @@ import { Search } from '@element-plus/icons-vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import * as DetectionTaskApi from '@/api/agri/detectionTask/index';
 import { formatDate } from '@/utils/formatTime';
-import { DICT_TYPE, getIntDictOptions } from '@/utils/dict';
+import { useDict } from '@/hooks/web/useDict';
 
 defineOptions({
     name: 'DetectionTaskIndex'
 });
 
 const router = useRouter();
+const { options: taskStatusOptions } = useDict('agri_task_status', 'int');
 
 // 第一行步骤
 const stepsRow1 = [

@@ -28,11 +28,16 @@
                     <!-- 第二行：主管单位与类型 -->
                     <el-col :span="12">
                         <el-form-item label="主管单位" prop="issuerDeptId">
-                            <el-select v-model="formData.issuerDeptId" placeholder="请选择主管单位" class="full-width" filterable>
-                                <el-option label="北京市农业农村局" :value="1" />
-                                <el-option label="农业农村部农产品质量安全监管司" :value="2" />
-                                <el-option label="天津市农业农村委员会" :value="3" />
-                            </el-select>
+                            <el-tree-select
+                                v-model="formData.issuerDeptId"
+                                :data="deptTreeOptions"
+                                :props="defaultProps"
+                                placeholder="请选择主管单位"
+                                class="full-width"
+                                filterable
+                                check-strictly
+                                clearable
+                            />
                         </el-form-item>
                     </el-col>
                     <el-col :span="12">
@@ -247,6 +252,8 @@ import { useRouter, useRoute } from 'vue-router';
 import { Plus, UploadFilled, Document, Close } from '@element-plus/icons-vue';
 import { ElMessage } from 'element-plus';
 import * as DetectionPlanApi from '@/api/agri/detectionPlan'
+import * as DeptApi from '@/api/system/dept'
+import { handleTree } from '@/utils/tree'
 import { useFileUpload } from '@/hooks/web/useFileUpload'
 import { useDict, DICT_TYPE } from '@/hooks/web/useDict'
 
@@ -310,6 +317,26 @@ const formData = reactive({
     issuerDeptId: undefined,
     status: undefined
 });
+
+/** 部门树 - 原型设计配套数据 */
+const deptTreeOptions = ref([]);
+const deptList = ref([]);
+const defaultProps = {
+    children: 'children',
+    label: 'name',
+    value: 'id'
+};
+
+/** 加载部门列表 */
+const loadDeptList = async () => {
+    try {
+        const data = await DeptApi.getSimpleDeptList();
+        deptList.value = data;
+        deptTreeOptions.value = handleTree(data);
+    } catch (error) {
+        console.error('加载部门列表失败:', error);
+    }
+};
 
 // 表单校验规则
 const formRules = {
@@ -416,14 +443,22 @@ const loadPlanDetail = async (id) => {
     }
 }
 
+const findDeptName = (id, list) => {
+    for (const node of list) {
+        if (node.id === id) return node.name;
+        if (node.children?.length) {
+            const name = findDeptName(id, node.children);
+            if (name) return name;
+        }
+    }
+    return null;
+}
+
 // 标签显示辅助方法
 const getDeptLabel = (value) => {
-    const map = {
-        1: '北京市农业农村局',
-        2: '农业农村部农产品质量安全监管司',
-        3: '天津市农业农村委员会'
-    };
-    return map[value] || '--';
+    if (!value) return '--';
+    const found = findDeptName(value, deptTreeOptions.value);
+    return found || '--';
 };
 
 
@@ -447,6 +482,7 @@ const getExecutionTime = () => {
 
 // 页面初始化
 onMounted(() => {
+    loadDeptList()
     const id = route.query.id
     if (id) {
         // 编辑模式：加载方案详情

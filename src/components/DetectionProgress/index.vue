@@ -2,38 +2,54 @@
     <div class="detection-progress">
         <!-- 查询区域 - 玻璃拟态子卡片 -->
         <div class="glass-sub-card query-card">
-            <el-form :model="query" :inline="true" class="custom-query-form" label-position="left">
-                <el-form-item label="所属任务">
-                    <el-select v-model="query.task" placeholder="请选择" clearable class="custom-select w200">
-                        <el-option v-for="task in taskOptions" :key="task.value" :label="task.label"
-                            :value="task.value" />
-                    </el-select>
+            <el-form :model="query" :inline="true" class="custom-query-form" label-position="left" label-width="80px">
+                <el-form-item label="所属任务" label-width="80px">
+                    <el-select-v2
+                        v-model="query.task"
+                        placeholder="请选择"
+                        clearable
+                        class="custom-select w200"
+                        :options="taskOptions"
+                    />
                 </el-form-item>
-                <el-form-item label="抽检机构">
-                    <el-select v-model="query.org" placeholder="请选择" clearable class="custom-select w150">
-                        <el-option v-for="org in orgOptions" :key="org.value" :label="org.label" :value="org.value" />
-                    </el-select>
+                <el-form-item label="抽检机构" label-width="80px">
+                    <el-select-v2
+                        v-model="query.org"
+                        placeholder="请选择"
+                        clearable
+                        class="custom-select w150"
+                        :options="orgOptions"
+                    />
                 </el-form-item>
-                <el-form-item label="样品">
+                <el-form-item label="样品" label-width="80px">
                     <el-input v-model="query.sample" placeholder="请输入样品编号/名称" clearable class="custom-input w200" />
                 </el-form-item>
-                <el-form-item label="产品分类">
-                    <el-select v-model="query.category" placeholder="请选择" clearable class="custom-select w120">
-                        <el-option v-for="cat in categoryOptions" :key="cat.value" :label="cat.label"
-                            :value="cat.value" />
-                    </el-select>
+                <el-form-item label="产品分类" label-width="80px">
+                    <el-select-v2
+                        v-model="query.category"
+                        placeholder="请选择"
+                        clearable
+                        class="custom-select w120"
+                        :options="categoryOptions"
+                    />
                 </el-form-item>
-                <el-form-item label="检测结果">
-                    <el-select v-model="query.result" placeholder="请选择" clearable class="custom-select w120">
-                        <el-option label="合格" value="qualified" />
-                        <el-option label="不合格" value="unqualified" />
-                    </el-select>
+                <el-form-item label="检测结果" label-width="80px">
+                    <el-select-v2
+                        v-model="query.result"
+                        placeholder="请选择"
+                        clearable
+                        class="custom-select w120"
+                        :options="resultOptions"
+                    />
                 </el-form-item>
-                <el-form-item label="检测状态">
-                    <el-select v-model="query.status" placeholder="请选择" clearable class="custom-select w120">
-                        <el-option label="已检测" value="tested" />
-                        <el-option label="未检测" value="untested" />
-                    </el-select>
+                <el-form-item label="检测状态" label-width="80px">
+                    <el-select-v2
+                        v-model="query.status"
+                        placeholder="请选择"
+                        clearable
+                        class="custom-select w120"
+                        :options="statusOptions"
+                    />
                 </el-form-item>
 
                 <div class="query-btns">
@@ -66,8 +82,20 @@
                 <el-table-column label="抽检地区" prop="region" width="120" align="center" />
                 <el-table-column label="抽检机构" prop="org" min-width="180" show-overflow-tooltip />
                 <el-table-column label="检测时间" prop="testTime" width="110" align="center" />
-                <el-table-column label="检测结果" prop="result" width="100" align="center" />
-                <el-table-column label="检测状态" prop="status" width="90" align="center" />
+                <el-table-column label="检测结果" prop="result" width="110" align="center">
+                    <template #default="scope">
+                        <el-tag :type="getResultTagType(scope.row.result)" size="small" effect="light"
+                            class="status-pill">
+                            {{ scope.row.result }}
+                        </el-tag>
+                    </template>
+                </el-table-column>
+                <el-table-column label="检测状态" prop="status" width="100" align="center">
+                    <template #default="scope">
+                        <span :class="['status-dot', getStatusDotClass(scope.row.status)]"></span>
+                        <span class="status-name">{{ scope.row.status }}</span>
+                    </template>
+                </el-table-column>
                 <el-table-column label="操作" width="100" align="center" fixed="right">
                     <template #default="scope">
                         <span class="table-link" @click="handleViewDetail(scope.row)">查看详情</span>
@@ -75,17 +103,17 @@
                 </el-table-column>
             </el-table>
 
-            <!-- 分页 -->
             <div class="pagination-wrapper">
-                <el-pagination v-model:current-page="page.pageNum" v-model:page-size="page.pageSize" :total="total"
-                    background layout="prev, pager, next" class="custom-pagination" />
+                <el-pagination :current-page="page.pageNum" :page-size="page.pageSize" :total="total"
+                    background layout="prev, pager, next" class="custom-pagination"
+                    @current-change="handleCurrentChange" @size-change="handleSizeChange" />
             </div>
         </div>
     </div>
 </template>
 
 <script setup>
-import { ref, reactive, defineProps, defineEmits } from 'vue';
+import { reactive } from 'vue';
 import { useRouter } from 'vue-router';
 
 const props = defineProps({
@@ -102,32 +130,33 @@ const props = defineProps({
     // 任务选项
     taskOptions: {
         type: Array,
-        default: () => [
-            { label: '任务A', value: 'taskA' },
-            { label: '任务B', value: 'taskB' }
-        ]
+        default: () => []
     },
     // 机构选项
     orgOptions: {
         type: Array,
-        default: () => [
-            { label: '机构A', value: 'orgA' },
-            { label: '机构B', value: 'orgB' }
-        ]
+        default: () => []
     },
     // 产品分类选项
     categoryOptions: {
         type: Array,
-        default: () => [
-            { label: '蔬菜', value: 'vegetable' },
-            { label: '水果', value: 'fruit' }
-        ]
+        default: () => []
     }
 });
 
 const emit = defineEmits(['query', 'reset', 'single-input', 'batch-import', 'view-detail', 'page-change']);
 
 const router = useRouter();
+
+const resultOptions = [
+    { label: '合格', value: 'qualified' },
+    { label: '不合格', value: 'unqualified' }
+];
+
+const statusOptions = [
+    { label: '已检测', value: 'tested' },
+    { label: '未检测', value: 'untested' }
+];
 
 // 查询参数
 const query = reactive({
@@ -148,6 +177,17 @@ const page = reactive({
 // 查询
 const handleQuery = () => {
     emit('query', { ...query, ...page });
+};
+
+const handleSizeChange = (val) => {
+    page.pageSize = val;
+    page.pageNum = 1;
+    handleQuery();
+};
+
+const handleCurrentChange = (val) => {
+    page.pageNum = val;
+    handleQuery();
 };
 
 // 重置
@@ -180,6 +220,24 @@ const handleViewDetail = (row) => {
         path: '/taskDetection/taskDetail',
         query: { id: row.sampleNo }
     });
+};
+
+const getResultTagType = (result) => {
+    switch (result) {
+        case '阴性': return 'success';
+        case '阳性': return 'danger';
+        case '结果异常': return 'warning';
+        default: return 'info';
+    }
+};
+
+const getStatusDotClass = (status) => {
+    switch (status) {
+        case '已检测': return 'dot-success';
+        case '未检测': return 'dot-info';
+        case '失败': return 'dot-danger';
+        default: return '';
+    }
 };
 </script>
 
@@ -255,11 +313,44 @@ const handleViewDetail = (row) => {
 
     .pagination-wrapper {
         margin-top: 14px;
-        padding: 20px;
+        padding: 16px 20px;
         display: flex;
         justify-content: flex-end;
-        background: rgba(255, 255, 255, 0.2);
-        border-top: 1px solid rgba(235, 238, 245, 0.3);
     }
+}
+
+.status-pill {
+    font-weight: 600;
+    border-radius: 4px;
+    padding: 0 8px;
+}
+
+.status-dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    margin-right: 8px;
+    vertical-align: middle;
+}
+
+.dot-success {
+    background-color: #52c41a;
+    box-shadow: 0 0 4px rgba(82, 196, 26, 0.4);
+}
+
+.dot-info {
+    background-color: #bfbfbf;
+}
+
+.dot-danger {
+    background-color: #ff4d4f;
+    box-shadow: 0 0 4px rgba(255, 77, 79, 0.4);
+}
+
+.status-name {
+    font-size: 13px;
+    color: #475569;
+    vertical-align: middle;
 }
 </style>

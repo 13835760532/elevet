@@ -4,46 +4,43 @@
 
         <!-- 查询栏 -->
         <div class="filter-header">
-            <el-select v-model="queryParams.timeType" placeholder="请选择" class="filter-select" style="width: 120px;">
-                <el-option label="累计" value="cumulative" />
-                <el-option label="本月" value="month" />
-                <el-option label="本年" value="year" />
-            </el-select>
+            <el-input v-model="queryParams.foodCategory" placeholder="食品大类" class="filter-input" clearable />
+            <el-input v-model="queryParams.foodSubcategory" placeholder="食品亚类" class="filter-input" clearable />
+            <el-input v-model="queryParams.foodType" placeholder="食品品类" class="filter-input" clearable />
 
-            <el-select v-model="queryParams.region" placeholder="请选择" class="filter-select"
-                style="width: 150px; margin-left: 12px;">
-                <el-option label="北京市海淀区" value="haidian" />
-                <el-option label="北京市朝阳区" value="chaoyang" />
-                <el-option label="北京市西城区" value="xicheng" />
-                <el-option label="北京市东城区" value="dongcheng" />
-                <el-option label="北京市丰台区" value="fengtai" />
-                <el-option label="北京市石景山区" value="shijingshan" />
-                <el-option label="北京市大兴区" value="daxing" />
-                <el-option label="北京市通州区" value="tongzhou" />
-                <el-option label="北京市顺义区" value="shunyi" />
-            </el-select>
-
-            <el-button type="primary" class="query-btn" @click="handleQuery"
-                style="margin-left: 16px; padding: 0 30px;">
+            <el-button type="primary" class="query-btn" @click="handleQuery" :loading="loading">
                 查询
             </el-button>
         </div>
 
         <!-- 表格部分 -->
-        <div class="table-containers" style="border-radius: 4px;">
+        <div class="table-containers" v-loading="loading">
             <el-table :data="tableData" border @selection-change="handleSelectionChange"
-                :header-cell-style="{ textAlign: 'center', backgroundColor: '#FFFFFF', color: '#333', fontWeight: 'bold' }"
-                :cell-style="{ textAlign: 'center' }">
+                :header-cell-style="{ textAlign: 'center', backgroundColor: '#F9FAFB', color: '#111827', fontWeight: 'bold' }"
+                :cell-style="{ textAlign: 'center' }" height="400">
 
                 <el-table-column type="selection" width="55" />
                 <el-table-column label="序号" type="index" width="60" />
-                <el-table-column label="农产品" prop="product" />
-                <el-table-column label="检测项" prop="testItem" />
-                <el-table-column label="检测数量" prop="testCount" />
-                <el-table-column label="阳性数量" prop="positiveCount" />
-                <el-table-column label="阳性率" prop="positiveRate" />
-
+                <el-table-column label="食品大类" prop="foodCategory" show-overflow-tooltip />
+                <el-table-column label="食品亚类" prop="foodSubcategory" show-overflow-tooltip />
+                <el-table-column label="食品品类" prop="foodType" show-overflow-tooltip />
+                <el-table-column label="不合格项" prop="unqualifiedItem" show-overflow-tooltip />
+                <el-table-column label="不合格频次" prop="unqualifiedCount" width="120" />
             </el-table>
+
+            <!-- 分页 -->
+            <div class="pagination-container">
+                <el-pagination
+                    v-model:current-page="queryParams.pageNo"
+                    v-model:page-size="queryParams.pageSize"
+                    :total="total"
+                    :page-sizes="[10, 20, 50, 100]"
+                    background
+                    layout="total, sizes, prev, pager, next"
+                    @size-change="handleQuery"
+                    @current-change="handleQuery"
+                />
+            </div>
         </div>
 
         <!-- 底部按钮 -->
@@ -57,7 +54,8 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed } from 'vue';
+import { ref, reactive, computed, onMounted, watch } from 'vue';
+import * as StaticRiskListApi from '@/api/agri/staticRiskList'
 
 const props = defineProps({
     modelValue: {
@@ -75,100 +73,30 @@ const visible = computed({
 
 // 查询参数
 const queryParams = reactive({
-    timeType: 'cumulative',
-    region: 'haidian'
+    foodCategory: '',
+    foodSubcategory: '',
+    foodType: '',
+    pageNo: 1,
+    pageSize: 10
 });
 
-// 选中的数据
+const loading = ref(false);
+const total = ref(0);
+const tableData = ref([]);
 const selectedItems = ref([]);
 
-// 模拟表格数据
-const tableData = ref([
-    {
-        id: 1,
-        product: '豇豆',
-        testItem: '灭蝇胺、倍硫磷',
-        testCount: '156',
-        positiveCount: '3',
-        positiveRate: '1.92%'
-    },
-    {
-        id: 2,
-        product: '韭菜',
-        testItem: '腐霉利、毒死蜱',
-        testCount: '142',
-        positiveCount: '2',
-        positiveRate: '1.41%'
-    },
-    {
-        id: 3,
-        product: '莴苣',
-        testItem: '甲霜灵',
-        testCount: '98',
-        positiveCount: '1',
-        positiveRate: '1.02%'
-    },
-    {
-        id: 4,
-        product: '大葱',
-        testItem: '克百威、三唑磷',
-        testCount: '115',
-        positiveCount: '1',
-        positiveRate: '0.87%'
-    },
-    {
-        id: 5,
-        product: '芹菜',
-        testItem: '毒死蜱、甲拌磷',
-        testCount: '130',
-        positiveCount: '1',
-        positiveRate: '0.77%'
-    },
-    {
-        id: 6,
-        product: '辣椒',
-        testItem: '杀螟硫磷',
-        testCount: '85',
-        positiveCount: '0',
-        positiveRate: '0%'
-    },
-    {
-        id: 7,
-        product: '油菜',
-        testItem: '氟虫腈',
-        testCount: '76',
-        positiveCount: '0',
-        positiveRate: '0%'
-    },
-    {
-        id: 8,
-        product: '番茄',
-        testItem: '毒死蜱',
-        testCount: '64',
-        positiveCount: '0',
-        positiveRate: '0%'
-    },
-    {
-        id: 9,
-        product: '豆芽',
-        testItem: '6-苄基腺嘌呤',
-        testCount: '52',
-        positiveCount: '0',
-        positiveRate: '0%'
-    },
-    {
-        id: 10,
-        product: '草莓',
-        testItem: '烯酰吗啉',
-        testCount: '48',
-        positiveCount: '0',
-        positiveRate: '0%'
+/** 加载数据 */
+const handleQuery = async () => {
+    loading.value = true;
+    try {
+        const data = await StaticRiskListApi.getHighRiskList(queryParams);
+        tableData.value = data.list || [];
+        total.value = data.total || 0;
+    } catch (error) {
+        console.error('获取高风险清单失败:', error);
+    } finally {
+        loading.value = false;
     }
-]);
-
-const handleQuery = () => {
-    // 处理查询逻辑
-    console.log('Query with:', queryParams);
 };
 
 const handleSelectionChange = (selection) => {
@@ -180,9 +108,19 @@ const handleClose = () => {
 };
 
 const handleSetAsTarget = () => {
+    if (selectedItems.value.length === 0) {
+        ElMessage.warning('请选择需要设置的风险记录');
+        return;
+    }
     emit('confirm', selectedItems.value);
     visible.value = false;
 };
+
+watch(() => visible.value, (val) => {
+    if (val && tableData.value.length === 0) {
+        handleQuery();
+    }
+});
 </script>
 
 
@@ -220,56 +158,73 @@ const handleSetAsTarget = () => {
 .filter-header {
     display: flex;
     align-items: center;
-    margin-bottom: 14px;
+    margin-bottom: 20px;
+    gap: 12px;
+
+    .filter-input {
+        width: 180px;
+
+        :deep(.el-input__wrapper) {
+            box-shadow: 0 0 0 1px #e2e8f0 inset;
+            border-radius: 6px;
+        }
+    }
+
+    .query-btn {
+        background-color: #00B3ED;
+        border-color: #00B3ED;
+        padding: 0 24px;
+        height: 38px;
+    }
+}
+
+.table-containers {
+    background: #fff;
+    padding: 16px;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+
+    :deep(.el-table) {
+        --el-table-header-bg-color: #f8fafc;
+        border-radius: 8px;
+        overflow: hidden;
+
+        .el-table__header {
+            th {
+                border-bottom: 1px solid #e2e8f0;
+            }
+        }
+    }
+
+    .pagination-container {
+        margin-top: 16px;
+        display: flex;
+        justify-content: flex-end;
+    }
 }
 
 .dialog-footer {
     display: flex;
     justify-content: center;
-    gap: 20px;
+    gap: 16px;
 
     .action-btn {
-        background-color: #fff;
-        border: 1px solid #e2e8f0;
-        color: #334155;
-        padding: 10px 28px;
+        padding: 10px 24px;
         height: 40px;
+        border-radius: 8px;
         font-weight: 500;
-        font-size: 14px;
-        border-radius: 6px;
-        transition: all 0.3s;
-
-        &:hover {
-            background-color: #f1f5f9;
-            border-color: #cbd5e1;
-            color: #0f172a;
-        }
+        transition: all 0.2s;
 
         &:first-child {
             background-color: #00B3ED;
             border-color: #00B3ED;
             color: #fff;
-
+            
             &:hover {
                 background-color: #0099cc;
-                border-color: #0099cc;
-                box-shadow: 0 4px 12px rgba(0, 179, 237, 0.2);
+                opacity: 0.9;
             }
-        }
-    }
-}
-.table-containers {
-    background: #fff;
-    padding: 12px;
-    border: 1px solid #e2e8f0;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-
-    :deep(.el-table) {
-        --el-table-border-color: #f1f5f9;
-        font-size: 13px;
-        
-        thead {
-            color: #475569;
         }
     }
 }

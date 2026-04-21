@@ -354,10 +354,16 @@ const remainingRouter: AppRouteRecordRaw[] = [
         meta: { title: '任务检测', activeMenu: '/rapidDetection/task' }
       },
       {
+        path: 'taskResultList',
+        component: () => import('@/views/rapidDetection/task/taskResultList.vue'),
+        name: 'RapidTaskResultList',
+        meta: { title: '检测结果列表', activeMenu: '/rapidDetection/task' }
+      },
+      {
         path: 'taskResult',
         component: () => import('@/views/rapidDetection/task/taskResult.vue'),
         name: 'RapidTaskResult',
-        meta: { title: '任务结果', activeMenu: '/rapidDetection/task' }
+        meta: { title: '检测详情', activeMenu: '/rapidDetection/task' }
       },
       {
         path: 'self',
@@ -495,6 +501,15 @@ const remainingRouter: AppRouteRecordRaw[] = [
     name: 'BigScreenTask',
     meta: {
       title: '检测任务大屏可视化',
+      hidden: true
+    }
+  },
+  {
+    path: '/big-screen-quick',
+    component: () => import('@/views/visualization/BigScreenQuick.vue'),
+    name: 'BigScreenQuick',
+    meta: {
+      title: '快速检测大屏可视化',
       hidden: true
     }
   },

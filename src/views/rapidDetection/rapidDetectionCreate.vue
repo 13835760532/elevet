@@ -1,10 +1,11 @@
 <template>
     <div class="page-container">
         <div class="header-fixed-container">
-            <PageHeader v-if="currentStep== 2" title="拍照判读" desc="对检测结果进行拍照上传判读" :showBack="true"></PageHeader>
-            <PageHeader v-else-if="currentStep== 3" title="检测结果" desc="对检测结果进行拍照上传判读后的结果" :showBack="true"></PageHeader>
-                        <PageHeader v-else-if="currentStep== 4" title="检测报告" desc="对检测结果进行拍照上传判读后的结果" :showBack="true"></PageHeader>
-            <PageHeader v-else title="抽样检测" desc="请根据您的实际情况选择相应的备案类型，我们为企业和个人提供专业的备案服务，确保您的备案流程顺利进行。" :showBack="true"></PageHeader>
+            <PageHeader v-if="currentStep == 2" title="拍照判读" desc="对检测结果进行拍照上传判读" :showBack="true"></PageHeader>
+            <PageHeader v-else-if="currentStep == 3" title="检测结果" desc="对检测结果进行拍照上传判读后的结果" :showBack="true"></PageHeader>
+            <PageHeader v-else-if="currentStep == 4" title="检测报告" desc="对检测结果进行拍照上传判读后的结果" :showBack="true"></PageHeader>
+            <PageHeader v-else title="抽样检测" desc="请根据您的实际情况选择相应的备案类型，我们为企业和个人提供专业的备案服务，确保您的备案流程顺利进行。" :showBack="true">
+            </PageHeader>
         </div>
 
         <!-- 步骤条 -->
@@ -41,23 +42,11 @@
                                 <el-radio :value="true">是</el-radio>
                             </el-radio-group>
                             <div v-if="formState.linkProduct" class="scan-input-group">
-                                <el-select 
-                                    v-model="formData.sample.productId" 
-                                    filterable 
-                                    remote 
-                                    reserve-keyword
-                                    placeholder="输入关键词匹配产品" 
-                                    :remote-method="remoteSearchProduct"
-                                    :loading="productLoading"
-                                    @change="handleProductChange"
-                                    style="flex: 1"
-                                >
-                                    <el-option 
-                                        v-for="item in productOptions" 
-                                        :key="item.id" 
-                                        :label="item.productName" 
-                                        :value="item.id" 
-                                    />
+                                <el-select v-model="formData.sample.productId" filterable remote reserve-keyword
+                                    placeholder="输入关键词匹配产品" :remote-method="remoteSearchProduct"
+                                    :loading="productLoading" @change="handleProductChange" style="flex: 1">
+                                    <el-option v-for="item in productOptions" :key="item.id" :label="item.productName"
+                                        :value="item.id" />
                                 </el-select>
                                 <el-button type="primary" class="scan-btn">
                                     <el-icon>
@@ -75,26 +64,31 @@
 
                     <!-- 样品名称 -->
                     <el-form-item label="样品名称" prop="sample.sampleName">
-                        <el-input v-model="formData.sample.sampleName" placeholder="如：白菜" :disabled="formState.linkProduct" />
+                        <el-input v-model="formData.sample.sampleName" placeholder="如：白菜"
+                            :disabled="formState.linkProduct" />
                     </el-form-item>
 
                     <!-- 产品分类 (仅未关联档案时显示) -->
                     <el-form-item v-if="!formState.linkProduct" label="产品分类" prop="sampleCategory">
                         <el-select v-model="formState.productCategory" placeholder="请选择产品分类" class="full-width">
-                            <el-option v-for="dict in productCategoryOptions" :key="dict.value" :label="dict.label" :value="dict.value" />
+                            <el-option v-for="dict in productCategoryOptions" :key="dict.value" :label="dict.label"
+                                :value="dict.value" />
                         </el-select>
                     </el-form-item>
 
                     <!-- 样品产地 -->
                     <el-form-item label="样品产地" prop="sample.productionArea">
-                        <AreaCascader v-model="formState.origin" @select="handleAreaSelect" placeholder="选择产地" :disabled="formState.linkProduct" />
+                        <AreaCascader v-model="formState.origin" @select="handleAreaSelect" placeholder="选择产地"
+                            :disabled="formState.linkProduct" />
                     </el-form-item>
 
                     <!-- 数量（重量） -->
                     <el-form-item label="数量（重量）" prop="sample.sampleQuantity">
                         <div class="compound-input">
-                            <el-input-number v-model="formData.sample.sampleQuantity" :min="0" style="flex: 1" controls-position="right" :disabled="formState.linkProduct" />
-                            <el-select v-model="formState.quantityUnit" placeholder="单位" style="width: 140px" :disabled="formState.linkProduct">
+                            <el-input-number v-model="formData.sample.sampleQuantity" :min="0" style="flex: 1"
+                                controls-position="right" :disabled="formState.linkProduct" />
+                            <el-select v-model="formState.quantityUnit" placeholder="单位" style="width: 140px"
+                                :disabled="formState.linkProduct">
                                 <el-option label="kg" value="kg" />
                                 <el-option label="吨" value="ton" />
                                 <el-option label="箱" value="box" />
@@ -104,7 +98,8 @@
                     </el-form-item>
 
                     <el-form-item label="样品来源环节" prop="sample.sampleSource">
-                        <el-select v-model="formData.sample.sampleSource" placeholder="选择采样来源" class="full-width" multiple collapse-tags>
+                        <el-select v-model="formData.sample.sampleSource" placeholder="选择采样来源" class="full-width"
+                            multiple collapse-tags>
                             <el-option label="田间" value="田间" />
                             <el-option label="市场" value="市场" />
                             <el-option label="商超" value="商超" />
@@ -117,29 +112,22 @@
                     <el-form-item label="生产经营主体" prop="subjectName">
                         <div class="subject-search-wrapper">
                             <div class="search-input-group">
-                                <el-select 
-                                    v-model="formData.subjectName" 
-                                    filterable 
-                                    remote 
-                                    placeholder="搜索企业名称或信用代码查询主体"
-                                    :remote-method="remoteSearchSubject"
-                                    :loading="subjectLoading"
-                                    class="subject-select"
-                                    :disabled="formState.linkProduct"
-                                >
+                                <el-select v-model="formData.subjectName" filterable remote
+                                    placeholder="搜索企业名称或信用代码查询主体" :remote-method="remoteSearchSubject"
+                                    :loading="subjectLoading" class="subject-select" :disabled="formState.linkProduct">
                                     <template #prefix>
-                                        <el-icon><Search /></el-icon>
+                                        <el-icon>
+                                            <Search />
+                                        </el-icon>
                                     </template>
-                                    <el-option 
-                                        v-for="item in subjectOptions" 
-                                        :key="item.id" 
-                                        :label="item.name" 
-                                        :value="item.name" 
-                                        @click="handleSubjectSelect(item)"
-                                    />
+                                    <el-option v-for="item in subjectOptions" :key="item.id" :label="item.name"
+                                        :value="item.name" @click="handleSubjectSelect(item)" />
                                 </el-select>
-                                <el-button type="primary" class="add-subject-btn" @click="handleCreateSubject" :disabled="formState.linkProduct">
-                                    <el-icon><Plus /></el-icon> 新增主体
+                                <el-button type="primary" class="add-subject-btn" @click="handleCreateSubject"
+                                    :disabled="formState.linkProduct">
+                                    <el-icon>
+                                        <Plus />
+                                    </el-icon> 新增主体
                                 </el-button>
                             </div>
                             <p v-if="!formData.subjectName" class="subject-tip">*如果未找到，请先创建主体建档</p>
@@ -147,7 +135,9 @@
                             <!-- 主体详细信息回显 -->
                             <div v-if="formState.selectedSubject" class="subject-detail-card">
                                 <div class="card-title">
-                                    <el-icon class="title-icon"><OfficeBuilding /></el-icon>
+                                    <el-icon class="title-icon">
+                                        <OfficeBuilding />
+                                    </el-icon>
                                     主体详细信息
                                 </div>
                                 <div class="detail-grid">
@@ -157,30 +147,38 @@
                                     </div>
                                     <div class="grid-item">
                                         <div class="field-label">信用代码</div>
-                                        <div class="field-value">{{ formState.selectedSubject.socialCreditCode || '--' }}</div>
+                                        <div class="field-value">{{ formState.selectedSubject.socialCreditCode || '--'
+                                            }}</div>
                                     </div>
                                     <div class="grid-item">
                                         <div class="field-label">主体类型</div>
                                         <div class="field-value">
-                                            <span class="category-tag">{{ getSubjectCategoryLabel(formState.selectedSubject.category) }}</span>
+                                            <span class="category-tag">{{
+                                                getSubjectCategoryLabel(formState.selectedSubject.category) }}</span>
                                         </div>
                                     </div>
                                     <div class="grid-item">
                                         <div class="field-label">备案类型</div>
-                                        <div class="field-value">{{ getFilingTypeLabel(formState.selectedSubject.type) }}</div>
+                                        <div class="field-value">{{ getFilingTypeLabel(formState.selectedSubject.type)
+                                            }}</div>
                                     </div>
                                     <div class="grid-item">
                                         <div class="field-label">联系人</div>
-                                        <div class="field-value">{{ formState.selectedSubject.contactName || '--' }}</div>
+                                        <div class="field-value">{{ formState.selectedSubject.contactName || '--' }}
+                                        </div>
                                     </div>
                                     <div class="grid-item">
                                         <div class="field-label">联系电话</div>
-                                        <div class="field-value">{{ formState.selectedSubject.contactPhone || '--' }}</div>
+                                        <div class="field-value">{{ formState.selectedSubject.contactPhone || '--' }}
+                                        </div>
                                     </div>
                                     <div class="grid-item full-row">
                                         <div class="field-label">所属地区及详细地址</div>
                                         <div class="field-value">
-                                            {{ formState.selectedSubject.provinceCode || '' }}{{ formState.selectedSubject.cityCode || '' }}{{ formState.selectedSubject.districtCode || '' }} {{ formState.selectedSubject.address || '' }}
+                                            {{ formState.selectedSubject.provinceCode || '' }}{{
+                                            formState.selectedSubject.cityCode || '' }}{{
+                                            formState.selectedSubject.districtCode || '' }} {{
+                                            formState.selectedSubject.address || '' }}
                                         </div>
                                     </div>
                                 </div>
@@ -207,11 +205,11 @@
             <!-- 步骤2: 拍照AI判读 -->
             <div v-show="currentStep === 2" class="step-content">
                 <h3 class="section-title">拍照AI判读</h3>
-                
+
                 <el-form :model="formData" label-width="120px" class="ai-info-form">
                     <el-form-item label="检测单位">
                         <div class="with-desc">
-                           <el-input v-model="formData.detectionOrgName" placeholder="获取用户机构名称" />
+                            <el-input v-model="formData.detectionOrgName" placeholder="获取用户机构名称" />
                             <span class="field-desc-red">获取当前用户机构名称，支持手动更改名称。</span>
                         </div>
                     </el-form-item>
@@ -239,28 +237,16 @@
 
                     <el-form-item label="检测时间">
                         <div class="with-desc">
-                            <el-date-picker 
-                                v-model="formData.detectionDate" 
-                                type="datetime" 
-                                placeholder="选择日期时间" 
-                                format="YYYY-MM-DD HH:mm:ss"
-                                value-format="YYYY-MM-DD HH:mm:ss"
-                                readonly
-                                style="width: 260px!important"
-                            />
+                            <el-date-picker v-model="formData.detectionDate" type="datetime" placeholder="选择日期时间"
+                                format="YYYY-MM-DD HH:mm:ss" value-format="YYYY-MM-DD HH:mm:ss" readonly
+                                style="width: 260px!important" />
                             <span class="field-desc-red">读取系统时间</span>
                         </div>
                     </el-form-item>
 
                     <el-form-item label="检测标准">
-                        <el-select 
-                            v-model="formData.detectStandard" 
-                            placeholder="请选择或输入检测标准" 
-                            filterable 
-                            allow-create 
-                            default-first-option
-                            style="width: 100%"
-                        >
+                        <el-select v-model="formData.detectStandard" placeholder="请选择或输入检测标准" filterable allow-create
+                            default-first-option style="width: 100%">
                             <el-option label="GB2763-2021" value="GB2763-2021" />
                             <el-option label="GB21650-2019" value="GB21650-2019" />
                         </el-select>
@@ -269,16 +255,12 @@
                     <el-form-item label="检测照片上传">
                         <div class="upload-container">
                             <!-- 使用 el-upload 以获得原始 File 对象以便调用 AI 接口 -->
-                            <el-upload
-                                class="ai-uploader"
-                                action="#"
-                                :auto-upload="false"
-                                :on-change="handleFileChange"
-                                :show-file-list="false"
-                                drag
-                            >
+                            <el-upload class="ai-uploader" action="#" :auto-upload="false" :on-change="handleFileChange"
+                                :show-file-list="false" drag>
                                 <div v-if="!formState.tempFileUrl" class="upload-inner">
-                                    <el-icon class="el-icon--upload"><UploadFilled /></el-icon>
+                                    <el-icon class="el-icon--upload">
+                                        <UploadFilled />
+                                    </el-icon>
                                     <div class="el-upload__text">
                                         拖拽图片至此或 <em>点击上传</em>
                                     </div>
@@ -295,15 +277,13 @@
                     </el-form-item>
                 </el-form>
 
-                <div v-if="formData.overallResult !== undefined || formData.aiRecognitionResultText" class="ai-result-panel">
+                <div v-if="formData.overallResult !== undefined || formData.aiRecognitionResultText"
+                    class="ai-result-panel">
                     <p><strong>AI 识别建议：</strong> {{ formData.aiRecognitionResultText || '正在处理结果' }}</p>
                     <div v-if="formState.aiDetailResults && formState.aiDetailResults.length" class="result-list">
-                        <el-tag 
-                            v-for="(res, idx) in formState.aiDetailResults" 
-                            :key="idx"
+                        <el-tag v-for="(res, idx) in formState.aiDetailResults" :key="idx"
                             :type="res.status.includes('阳') ? 'danger' : 'success'"
-                            style="margin-right: 8px; margin-bottom: 8px;"
-                        >
+                            style="margin-right: 8px; margin-bottom: 8px;">
                             {{ res.codeName }}: {{ res.status }} ({{ res.result }})
                         </el-tag>
                     </div>
@@ -319,7 +299,7 @@
                             {{ overallStatusLabel }}
                         </div>
                     </div>
-                    
+
                     <!-- 基础信息列表 -->
                     <div class="info-list">
                         <div class="info-item">
@@ -328,7 +308,9 @@
                         </div>
                         <div class="info-item">
                             <span class="label">样品来源：</span>
-                            <span class="value">{{ Array.isArray(formData.sample.sampleSource) ? formData.sample.sampleSource.join(', ') : (formData.sample.sampleSource || '--') }}</span>
+                            <span class="value">{{ Array.isArray(formData.sample.sampleSource) ?
+                                formData.sample.sampleSource.join(', ') : (formData.sample.sampleSource || '--')
+                                }}</span>
                         </div>
                         <div class="info-item">
                             <span class="label">样品名称：</span>
@@ -371,8 +353,8 @@
                     <el-table :data="formState.aiDetailResults" border class="result-table">
                         <el-table-column property="cardChannel" label="通道" width="100" />
                         <el-table-column property="codeName" label="检测项目" />
-                        <el-table-column property="result" label="检测值（T/C值）" >
-                             <template #default="scope">
+                        <el-table-column property="result" label="检测值（T/C值）">
+                            <template #default="scope">
                                 {{ Number(scope.row.result).toFixed(3) || 0 }}
                             </template>
                         </el-table-column>
@@ -383,7 +365,8 @@
                         </el-table-column>
                         <el-table-column property="status" label="检测结果">
                             <template #default="scope">
-                                <span :class="scope.row.status.includes('阳') ? 'text-red' : 'text-green'">{{ scope.row.status }}</span>
+                                <span :class="scope.row.status.includes('阳') ? 'text-red' : 'text-green'">{{
+                                    scope.row.status }}</span>
                             </template>
                         </el-table-column>
                     </el-table>
@@ -398,14 +381,8 @@
                     <!-- 备注 -->
                     <div class="remarks-section">
                         <div class="section-label">备 注：</div>
-                        <el-input
-                            v-model="formData.remarks"
-                            type="textarea"
-                            :rows="4"
-                            maxlength="50"
-                            show-word-limit
-                            placeholder="请输入备注（最多50个字符）"
-                        />
+                        <el-input v-model="formData.remarks" type="textarea" :rows="4" maxlength="50" show-word-limit
+                            placeholder="请输入备注（最多50个字符）" />
                         <p class="remarks-tip">备注仅对当前结果生效，最多50个字符</p>
                     </div>
 
@@ -417,18 +394,15 @@
 
             <!-- 步骤4: 检测报告 -->
             <div v-show="currentStep === 4" class="step-content">
-                <RapidDetectionReport 
-                    ref="reportRef" 
-                    :data="formData" 
-                    :results="formState.aiDetailResults" 
-                />
+                <RapidDetectionReport ref="reportRef" :data="formData" :results="formState.aiDetailResults" />
             </div>
 
             <!-- 底部按钮 -->
             <div class="footer-actions">
                 <template v-if="currentStep < 4">
                     <el-button @click="handleCancel" class="btn-cancel">取消</el-button>
-                    <el-button v-if="currentStep > 1 && !(isRecheck && currentStep === 2)" @click="handlePrev">上一步</el-button>
+                    <el-button v-if="currentStep > 1 && !(isRecheck && currentStep === 2)"
+                        @click="handlePrev">上一步</el-button>
                     <el-button type="primary" @click="handleNext" class="btn-next">下一步</el-button>
                 </template>
                 <template v-else>
@@ -489,11 +463,11 @@ const formState = reactive({
     linkProduct: false,
     selectedProduct: null,
     selectedSubject: null,
-    productCategory: undefined, 
+    productCategory: undefined,
     quantityUnit: 'kg',
-    origin: [], 
-    tempFileUrl: '', 
-    rawFile: null, 
+    origin: [],
+    tempFileUrl: '',
+    rawFile: null,
     aiDetailResults: []
 });
 
@@ -504,8 +478,8 @@ const overallStatusValue = computed(() => {
     // 检查是否有异常
     const hasAbnormal = formState.aiDetailResults.some(item => item.status && item.status.includes('异常'));
     if (hasAbnormal) return '异常';
-    
-    const isUnqualified = formState.aiDetailResults.some(item => 
+
+    const isUnqualified = formState.aiDetailResults.some(item =>
         item.status && (item.status.includes('阳') || item.status.includes('不合格'))
     );
     return isUnqualified ? '阳性' : '阴性';
@@ -516,7 +490,7 @@ const overallStatusLabel = computed(() => {
     return overallStatusValue.value === '阳性' ? '不合格' : '合格';
 });
 
-const reportInfo = ref(null); 
+const reportInfo = ref(null);
 
 // 监听关联开关，选择“否”时清空关联数据
 watch(() => formState.linkProduct, (newVal) => {
@@ -552,7 +526,7 @@ const formData = reactive({
         productionArea: '',
         status: 1
     },
-    taskId: undefined,
+    taskId: route.query.taskId || undefined,
     detectionType: 1,
     detectionDate: formatDate(new Date(), 'YYYY-MM-DD HH:mm:ss'),
     subjectName: '',
@@ -563,8 +537,8 @@ const formData = reactive({
     detectionMethod: '酶抑制法',
     detectStandard: 'GB/T 5009.199-2003',
     testPaperImageUrl: '',
-    aiRecognitionResult: '', 
-    aiRecognitionResultText: '', 
+    aiRecognitionResult: '',
+    aiRecognitionResultText: '',
     remarks: '',
     status: 1,
     publicFlag: true
@@ -587,9 +561,11 @@ const remoteSearchProduct = async (query) => {
         productLoading.value = true;
         try {
             let queryData = query.includes('PROD') ? query : ""
-            const data = await ProductApi.getProductPage({ productName: queryData? '' : query,
+            const data = await ProductApi.getProductPage({
+                productName: queryData ? '' : query,
                 productCode: queryData,
-                pageSize: 20 });
+                pageSize: 20
+            });
             productOptions.value = data.list;
         } finally { productLoading.value = false; }
     }
@@ -613,7 +589,7 @@ const handleSubjectSelect = (item) => {
     // 回显产地/地区信息
     if (item.provinceCode) {
         formData.detectionArea = `${item.provinceCode}${item.cityCode ? '-' + item.cityCode : ''}${item.districtCode ? '-' + item.districtCode : ''}`;
-        
+
         // 核心修复：仅当用户尚未手动选择产地时，才自动同步主体的地址作为产地
         if (!formData.sample.productionArea || formData.sample.productionArea === '--') {
             formData.sample.productionArea = formData.detectionArea;
@@ -642,10 +618,10 @@ const handleProductChange = async (val) => {
         formData.sample.sampleName = p.productName;
         formData.sample.productionArea = p.productionArea;
         formData.detectStandard = p.standard || 'AI';
-        
+
         // 回显数量（重量）
         if (p.productSpec) {
-             formData.sample.sampleQuantity = Number(p.productSpec);
+            formData.sample.sampleQuantity = Number(p.productSpec);
         }
         // 回显单位
         if (p.productUnit) {
@@ -663,7 +639,7 @@ const handleProductChange = async (val) => {
             // 兜底策略：如果只有拼接字符串，尝试按 '-' 分隔（如果数据格式支持）
             formState.origin = p.productionArea.includes('-') ? p.productionArea.split('-') : [p.productionArea];
         }
-        
+
         // 核心：回显生产经营主体
         if (p.subjectId) {
             try {
@@ -703,7 +679,7 @@ const handleCancel = () => { router.back(); };
 
 const handlePrev = () => { if (currentStep.value > 1) currentStep.value--; };
 
-const handlePrint = () => { 
+const handlePrint = () => {
     if (reportRef.value) {
         reportRef.value.handleDownload();
     }
@@ -716,15 +692,15 @@ const handleNext = async () => {
         // 第一步校验：基础信息
         formRef.value.validate(async (valid) => {
             if (valid) {
-                 // 额外校验产品关联
-                 if (formState.linkProduct && !formData.sample.productId) {
-                     ElMessage.warning('请选择关联的产品档案');
-                     return;
-                 }
-                   // 没有产品关联，实现产品静默创建 (复检不需要创建产品)
-                if(!formState.linkProduct && !formData.sample.productId && !isRecheck.value && !formData.id){
+                // 额外校验产品关联
+                if (formState.linkProduct && !formData.sample.productId) {
+                    ElMessage.warning('请选择关联的产品档案');
+                    return;
+                }
+                // 没有产品关联，实现产品静默创建 (复检不需要创建产品)
+                if (!formState.linkProduct && !formData.sample.productId && !isRecheck.value && !formData.id) {
                     try {
-                        
+
                         const productData = {
                             productName: formData.sample.sampleName,
                             productCode: 'PRD' + new Date().getTime(),
@@ -744,43 +720,43 @@ const handleNext = async () => {
                         return false;
                     }
                 }
-                 submitting.value = true;
-                 try {
-                     const submitData = getSubmitData();
-                     if (formData.id) {
-                         await DetectionRecordApi.updateDetectionRecord(submitData);
-                         ElMessage.success('数据已成功保存');
-                     } else {
-                         const res = await DetectionRecordApi.createDetectionRecord(submitData);
-                         formData.id = res; 
-                         inspectionRecordId.value = res;
-                         formData.inspectionRecordId = res;
-                     }
-                     
-                     // 自动初始化 Step 2 的环境信息
-                     if (!formData.detectionOrgName) formData.detectionOrgName = userStore.user.deptName;
-                     if (!formData.detector) formData.detector = userStore.user.nickname;
-                     if (!formData.detectionArea) formData.detectionArea = formData.sample.productionArea; 
-                     if (!formData.detectionDate) formData.detectionDate = new Date().toISOString();
-                     
-                     currentStep.value++;
-                 } catch (e) {
-                     console.error('预存失败', e);
-                     ElMessage.error('样本信息预存失败，请检查网络');
-                 } finally {
-                     submitting.value = false;
-                 }
+                submitting.value = true;
+                try {
+                    const submitData = getSubmitData();
+                    if (formData.id) {
+                        await DetectionRecordApi.updateDetectionRecord(submitData);
+                        ElMessage.success('数据已成功保存');
+                    } else {
+                        const res = await DetectionRecordApi.createDetectionRecord(submitData);
+                        formData.id = res;
+                        inspectionRecordId.value = res;
+                        formData.inspectionRecordId = res;
+                    }
+
+                    // 自动初始化 Step 2 的环境信息
+                    if (!formData.detectionOrgName) formData.detectionOrgName = userStore.user.deptName;
+                    if (!formData.detector) formData.detector = userStore.user.nickname;
+                    if (!formData.detectionArea) formData.detectionArea = formData.sample.productionArea;
+                    if (!formData.detectionDate) formData.detectionDate = new Date().toISOString();
+
+                    currentStep.value++;
+                } catch (e) {
+                    console.error('预存失败', e);
+                    ElMessage.error('样本信息预存失败，请检查网络');
+                } finally {
+                    submitting.value = false;
+                }
             } else {
                 ElMessage.warning('请填写必填项');
             }
         });
     } else if (currentStep.value === 2) {
         // 第二步校验：试纸照片
-        if ( formData.aiRecognitionResult === undefined || !formData.aiRecognitionResult)  {
+        if (formData.aiRecognitionResult === undefined || !formData.aiRecognitionResult) {
             ElMessage.warning('请先上传试纸照片并完成 AI 识别');
             return;
         }
-      
+
         submitting.value = true;
         try {
             if (isRecheck.value) {
@@ -804,13 +780,13 @@ const handleNext = async () => {
         try {
             // 提交最新的备注数据 (仅当内容发生变化时)
             if (formData.id && formData.remarks !== lastSavedRemarks.value) {
-                await DetectionRecordApi.updateDetectionRecordRemarks({ 
-                    id: formData.id, 
-                    remarks: formData.remarks 
+                await DetectionRecordApi.updateDetectionRecordRemarks({
+                    id: formData.id,
+                    remarks: formData.remarks
                 });
                 lastSavedRemarks.value = formData.remarks;
             }
-            
+
             // 一键生成检测报告
             const reportId = await DetectionReportApi.generateReport({ recordId: formData.id });
             if (reportId) {
@@ -842,7 +818,7 @@ const handleFileChange = (file) => {
 
 const handleAiDetect = async () => {
     if (!formState.rawFile) return;
-    
+
     aiLoading.value = true;
     try {
         const res = await AiDetectionApi.detectImage(formData.sample.sampleName || '未知样品', formState.rawFile);
@@ -851,16 +827,16 @@ const handleAiDetect = async () => {
         if (res && res.results && res.results.length > 0) {
             formState.aiDetailResults = res.results;
             const first = res.results[0];
-            
+
             // 1. 将完整的 res 存为 JSON 字符串，作为核心入参写入 aiRecognitionResult
             formData.aiRecognitionResult = JSON.stringify(res);
-            
+
             // 2. 将易读的结论描述存入新加字段，用于页面回显展示
             formData.aiRecognitionResultText = `分析完成。共检测到 ${res.results.length} 项，主项 [${first.codeName}] 结论为: ${first.status}`;
-            
+
             // 如果某项通过 OCR 识别结果，可以额外回显 (不改变现有结果)
             if (first.codeName && !formData.detectStandard) {
-                 // 这里视具体业务对应，比如码名可能是标准名的一部分
+                // 这里视具体业务对应，比如码名可能是标准名的一部分
             }
         }
         ElMessage.success('AI 检测识别完成');
@@ -876,9 +852,9 @@ const handleSave = async () => {
     submitting.value = true;
     try {
         if (formData.id) {
-            await DetectionRecordApi.updateDetectionRecordRemarks({ 
-                id: formData.id, 
-                remarks: formData.remarks 
+            await DetectionRecordApi.updateDetectionRecordRemarks({
+                id: formData.id,
+                remarks: formData.remarks
             });
             lastSavedRemarks.value = formData.remarks;
             ElMessage.success('备注已成功更新');
@@ -900,7 +876,7 @@ const handleSubmit = async () => {
 
         // 由于第一步已经走了一次 create，后续流程均应走 update
         if (formData.id) {
-            if(route.query.action == 'recheck'){
+            if (route.query.action == 'recheck') {
                 // 如果是复检，调用 /recheck 接口
                 const submitData = getSubmitData();
                 await DetectionRecordApi.recheckDetectionRecord(submitData);
@@ -951,7 +927,7 @@ onMounted(async () => {
                 formData.id = record.id;
                 formData.recordCode = record.recordCode;
                 formData.inspectionRecordId = record.inspectionRecordId;
-                
+
                 // 样品信息回填 (Step 1的内容)
                 formData.sample = {
                     ...formData.sample,
@@ -963,7 +939,7 @@ onMounted(async () => {
                     sampleQuantity: record.sampleQuantity,
                     productId: record.productId
                 };
-                
+
                 // 主体信息回填
                 formData.subjectName = record.subjectName;
                 formState.selectedSubject = { name: record.subjectName };
@@ -975,7 +951,7 @@ onMounted(async () => {
                             formState.selectedSubject = sList.list[0];
                         }
                     } catch (e) {
-                         console.warn('获取主体详情失败，仅使用基本名称', e);
+                        console.warn('获取主体详情失败，仅使用基本名称', e);
                     }
                 }
 
@@ -983,7 +959,7 @@ onMounted(async () => {
                 formData.detectionOrgName = userStore.user.deptName || record.detectionOrgName;
                 formData.detector = userStore.user.nickname || record.detector;
                 formData.detectionDate = action === 'recheck' ? formatDate(new Date(), 'YYYY-MM-DD HH:mm:ss') : (record.detectionDate || formatDate(new Date(), 'YYYY-MM-DD HH:mm:ss'));
-                
+
                 if (record.detectionArea) formData.detectionArea = record.detectionArea;
                 if (record.detectionLocation) formData.detectionLocation = record.detectionLocation;
                 if (record.detectStandard) formData.detectStandard = record.detectStandard;
@@ -1000,7 +976,7 @@ onMounted(async () => {
 
 <style lang="scss" scoped>
 .page-container {
-    height: calc(100vh - 86px)!important;
+    height: calc(100vh - 86px) !important;
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -1114,7 +1090,7 @@ onMounted(async () => {
         color: #333;
         font-size: 14px;
         padding-bottom: 8px;
-        
+
         // 自定义星号样式
         &::before {
             content: '*' !important;
@@ -1241,6 +1217,7 @@ onMounted(async () => {
             color: #666;
             line-height: 1.6;
         }
+
         .notice-value {
             margin-top: 4px;
             font-weight: 600;
@@ -1259,6 +1236,7 @@ onMounted(async () => {
 
         .subject-select {
             flex: 1;
+
             :deep(.el-select__wrapper) {
                 height: 48px;
                 border-radius: 8px;
@@ -1383,9 +1361,11 @@ onMounted(async () => {
 
         .ai-uploader {
             width: 100%;
+
             :deep(.el-upload) {
                 width: 100%;
             }
+
             :deep(.el-upload-dragger) {
                 width: 100%;
                 max-width: 200px;
@@ -1499,8 +1479,13 @@ onMounted(async () => {
                 color: #111827;
                 font-weight: 500;
 
-                &.text-red { color: #ef4444; }
-                &.text-green { color: #10b981; }
+                &.text-red {
+                    color: #ef4444;
+                }
+
+                &.text-green {
+                    color: #10b981;
+                }
             }
         }
     }
@@ -1521,8 +1506,15 @@ onMounted(async () => {
             font-weight: 600;
         }
 
-        .text-red { color: #ef4444; font-weight: 600; }
-        .text-green { color: #10b981; font-weight: 600; }
+        .text-red {
+            color: #ef4444;
+            font-weight: 600;
+        }
+
+        .text-green {
+            color: #10b981;
+            font-weight: 600;
+        }
     }
 
     .result-image-box {
@@ -1536,7 +1528,7 @@ onMounted(async () => {
             max-width: 300px;
             max-height: 400px;
             border-radius: 8px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
         }
     }
 
@@ -1577,7 +1569,7 @@ onMounted(async () => {
     min-height: 297mm;
     margin: 0 auto;
     padding: 20mm 15mm;
-    box-shadow: 0 0 20px rgba(0,0,0,0.05);
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
     position: relative;
     color: #333;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -1586,6 +1578,7 @@ onMounted(async () => {
     .report-header {
         text-align: center;
         margin-bottom: 60px;
+
         h1 {
             font-size: 28px;
             font-weight: 700;
@@ -1593,6 +1586,7 @@ onMounted(async () => {
             margin: 0;
             letter-spacing: 2px;
         }
+
         .sub-title {
             font-size: 32px;
             font-weight: 700;
@@ -1605,9 +1599,10 @@ onMounted(async () => {
     .cover-info {
         margin-bottom: 40px;
         padding-left: 60px;
-        
+
         .top-fields {
             margin-bottom: 30px;
+
             p {
                 margin: 10px 0;
                 font-size: 16px;
@@ -1617,6 +1612,7 @@ onMounted(async () => {
 
         .org-container {
             text-align: center;
+
             .org-line {
                 font-size: 18px;
                 font-weight: 500;
@@ -1627,7 +1623,7 @@ onMounted(async () => {
                 gap: 10px;
                 min-width: 320px;
                 justify-content: center;
-                
+
                 .edit-icon {
                     font-size: 18px;
                     color: #666;
@@ -1658,7 +1654,7 @@ onMounted(async () => {
             background: rgba(255, 255, 255, 0.9);
             z-index: 10;
             letter-spacing: 2px;
-            
+
             &.合格 {
                 border-color: #67c23a;
                 color: #67c23a;
@@ -1667,7 +1663,7 @@ onMounted(async () => {
 
         .field-list-grid {
             border-top: 1.5px solid #eee;
-            
+
             .f-row {
                 display: flex;
                 border-bottom: 1.5px solid #eee;
@@ -1687,9 +1683,16 @@ onMounted(async () => {
                     padding: 10px 15px;
                     color: #333;
                 }
-                
-                .text-red { color: #f56c6c; font-weight: bold; }
-                .text-green { color: #67c23a; font-weight: bold; }
+
+                .text-red {
+                    color: #f56c6c;
+                    font-weight: bold;
+                }
+
+                .text-green {
+                    color: #67c23a;
+                    font-weight: bold;
+                }
             }
         }
 
@@ -1706,23 +1709,31 @@ onMounted(async () => {
             width: 100%;
             border-collapse: collapse;
             border: 1.5px solid #eee;
-            
-            th, td {
+
+            th,
+            td {
                 border: 1.5px solid #eee;
                 padding: 12px 8px;
                 text-align: center;
                 font-size: 14px;
                 color: #333;
             }
-            
+
             th {
                 background: #fff;
                 font-weight: 700;
                 color: #000;
             }
-            
-            .text-red { color: #f56c6c; font-weight: bold; }
-            .text-green { color: #67c23a; font-weight: bold; }
+
+            .text-red {
+                color: #f56c6c;
+                font-weight: bold;
+            }
+
+            .text-green {
+                color: #67c23a;
+                font-weight: bold;
+            }
         }
     }
 }

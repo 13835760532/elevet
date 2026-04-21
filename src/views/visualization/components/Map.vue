@@ -7,15 +7,18 @@ import * as maptalks from 'maptalks'
 // @ts-ignore
 import { E3Layer } from 'maptalks.e3'
 import 'maptalks/dist/maptalks.css'
-import mapIndex from '@/assets/data/map/map.json'
 import fillImg from '@/assets/imgs/echarts/topographic_fill.png'
 
-// 使用 glob 动态加载地理数据，Vite 建议 glob 模式使用相对路径以保证可靠性
-const geoFiles = import.meta.glob('../../../assets/data/map/geo/*.json')
-
-
-
 defineOptions({ name: 'VisualizationMap' })
+
+let REMOTE_GEO_URL = ''
+if (import.meta.env.DEV) {
+  // 本地
+  REMOTE_GEO_URL = window.location.origin + '/assets/data/map/geo/130000.json'
+} else {
+  // 服务器
+  REMOTE_GEO_URL = 'http://101.42.184.189:555/assets/data/map/geo/130000.json'
+}
 
 const mapRef = ref<HTMLElement | null>(null)
 const loading = ref(true)
@@ -37,7 +40,7 @@ const state = reactive({
   chinaFullGeo: null as any
 })
 
-const geoCache = new Map<string, any>()
+let remoteGeoCache: any = null
 
 const ui = reactive({
   title: '中国物流监控中心',
@@ -191,119 +194,23 @@ const initECharts = () => {
 }
 
 
-const findGeoLoader = (code: string) => {
-  const keys = Object.keys(geoFiles)
-  return keys.find(k => k.endsWith(`/${code}.json`))
-}
-
-const loadGeoByCode = async (code: string) => {
-  if (geoCache.has(code)) return geoCache.get(code)
-  const matchKey = findGeoLoader(code)
-  if (!matchKey) return null
-  const module: any = await geoFiles[matchKey]()
-  const geoJson = module.default
+const loadRemoteGeoJson = async () => {
+  if (remoteGeoCache) return remoteGeoCache
+  const response = await fetch(REMOTE_GEO_URL)
+  if (!response.ok) {
+    throw new Error(`Load remote geojson failed: ${response.status}`)
+  }
+  const geoJson = await response.json()
   if (geoJson?.features?.length && !geoJson.__decoded) {
     geoJson.features.forEach((f: any) => decodeFeature(f))
     geoJson.__decoded = true
   }
-  if (geoCache.size >= MAX_GEO_CACHE) {
-    const keys = Array.from(geoCache.keys())
-    const evictKey = keys.find((k) => k !== 'china') ?? keys[0]
-    geoCache.delete(evictKey)
-  }
-  geoCache.set(code, geoJson)
+  remoteGeoCache = geoJson
   return geoJson
 }
 
 const drillDown = async (geometry: any) => {
-  if (isSwitching.value || ui.isDrilled) return
-  isSwitching.value = true
-  hideTooltip()
-  const provinceName = geometry.getProperties().name
-  const entry = mapIndex.find((item) => item.name === provinceName || provinceName.startsWith(item.name))
-  const code = entry ? entry.code : null
-
-  if (!code) {
-    isSwitching.value = false
-    return
-  }
-
-  // 1. 隐藏全国层的所有几何体
-  state.provinceLayer.getGeometries().forEach(g => g.hide())
-  if (state.labelLayer) state.labelLayer.hide()
-
-  try {
-    const geoJson = await loadGeoByCode(code)
-    if (!geoJson) {
-      isSwitching.value = false
-      return
-    }
-
-    if (state.detailLayer) state.detailLayer.clear()
-    else {
-      state.detailLayer = new maptalks.VectorLayer('detail-layer', {
-        zIndex: 6,
-        enableSimplify: true,
-        simplifyTolerance: 1.2
-      }).addTo(state.map)
-    }
-
-    const geometries = maptalks.GeoJSON.toGeometry(geoJson)
-    if (geometries && geometries.length > 0) {
-      if (state.detailLabelLayer) state.detailLabelLayer.clear()
-
-      let labelCount = 0
-      geometries.forEach((geo: any) => {
-        const props = geo.getProperties()
-        geo.setSymbol({
-          'polygonPatternFile': fillImg,
-          'polygonFill': 'rgba(15, 23, 42, 0.7)',
-          'lineColor': '#38bdf8',
-          'lineWidth': 1,
-          'lineOpacity': 0.6
-        })
-
-        // 限制下钻标签数量，避免大量文本渲染导致卡顿
-        if (props && props.name && props.cp && labelCount < DRILL_LABEL_LIMIT) {
-          labelCount += 1
-          new maptalks.Label(props.name.substring(0, 2), props.cp, {
-            draggable: false,
-            textSymbol: {
-              textFaceName: 'sans-serif',
-              textFill: '#ffffff',
-              textSize: 13,
-              textOpacity: 1,
-              textWeight: 'bold',
-              textDx: 0, textDy: 0
-            }
-          }).addTo(state.detailLabelLayer)
-        }
-        geo.addTo(state.detailLayer)
-      })
-    }
-  } catch (err) {
-    console.warn('[Map] Load local geojson failed', err)
-    isSwitching.value = false
-    return
-  }
-
-  // 4. 平滑缩放
-  state.map.animateTo({
-    center: geometry.getCenter(),
-    zoom: ['内蒙古自治区', '新疆维吾尔自治区', '西藏自治区'].includes(provinceName) ? 5.5 : 7.5,
-    pitch: 0,
-    bearing: 0
-  }, { duration: 500 })
-
-  // 5. 隐藏 ECharts 业务图层（如全国 Hub）
-  if (state.e3Layer) state.e3Layer.hide()
-
-  // 更新 UI 状态
-  ui.title = provinceName + '监控中心'
-  ui.subtitle = 'Regional Hub Monitoring'
-  ui.isDrilled = true
-  ui.status = 'ACTIVE'
-  isSwitching.value = false
+  return geometry
 }
 
 
@@ -385,8 +292,8 @@ const applyChinaMask = () => {
 const initMap = async () => {
   if (!mapRef.value) return
 
-  // 确保 echarts 在全局可用
-  ; (window as any).echarts = echarts
+    // 确保 echarts 在全局可用
+    ; (window as any).echarts = echarts
   state.map = new maptalks.Map(mapRef.value, {
     center: HOME_CENTER,
     zoom: HOME_ZOOM,
@@ -417,7 +324,7 @@ const initMap = async () => {
 
   // 4. 加载数据并渲染
   try {
-    state.chinaFullGeo = await loadGeoByCode('china')
+    state.chinaFullGeo = await loadRemoteGeoJson()
 
     if (state.chinaFullGeo) {
       const geometries = maptalks.GeoJSON.toGeometry(state.chinaFullGeo)
@@ -447,9 +354,16 @@ const initMap = async () => {
             })
           }
           geo.on('click', (e: any) => drillDown(e.target))
-          
+
           geo.addTo(state.provinceLayer)
         })
+        const extent = state.provinceLayer.getExtent?.()
+        if (extent) {
+          state.map.fitExtent(extent, 0, {
+            animation: false,
+            padding: { top: 40, right: 40, bottom: 40, left: 40 }
+          })
+        }
       }
     }
     renderNationalLabels()
@@ -515,7 +429,7 @@ onUnmounted(() => {
       const ins = state.e3Layer.getEChartsInstance()
       if (ins) ins.dispose?.()
     }
-    geoCache.clear()
+    remoteGeoCache = null
     state.map.remove()
   }
 })
@@ -552,7 +466,7 @@ onUnmounted(() => {
         class="tooltip-content p-4 rounded-xl border border-cyan-400/50 bg-[#0c1e2dcc] backdrop-blur-md shadow-[0_0_20px_rgba(34,211,238,0.3)]">
         <h3 class="text-white font-bold mb-3 pb-2 border-b border-cyan-400/20 text-lg">{{
           tooltipData.name
-          }}</h3>
+        }}</h3>
         <div class="space-y-3">
           <div class="flex justify-between gap-8 items-center">
             <span class="text-cyan-400/80 text-sm">样品量</span>
