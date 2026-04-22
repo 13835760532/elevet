@@ -39,11 +39,11 @@
                         <div class="info-col">
                             <div class="info-item">
                                 <span class="label">所属方案：</span>
-                                <span class="value">{{ taskDetail.planId || '--' }}</span>
+                                <span class="value">{{ taskDetail.planInfo?.planName || '--' }}</span>
                             </div>
                             <div class="info-item">
                                 <span class="label">方案编号：</span>
-                                <span class="value">{{ taskDetail.planCode || '--' }}</span>
+                                <span class="value">{{ taskDetail.planInfo?.planCode || '--' }}</span>
                             </div>
                             <div class="info-item">
                                 <span class="label">检测分类：</span>
@@ -156,7 +156,7 @@
                                         show-overflow-tooltip />
                                     <el-table-column label="承担单位" prop="assignDeptId" align="center" min-width="120">
                                         <template #default="{ row }">
-                                            {{ row.assignDeptName || getDeptLabel(row.assignDeptId) }}
+                                            {{ row.issuerDeptName || getDeptLabel(row.assignDeptId) }}
                                         </template>
                                     </el-table-column>
                                     <el-table-column label="检测区域范围" prop="detectionArea" align="center" width="120" />
@@ -277,7 +277,7 @@ const loadTaskList = async () => {
 
             allTasks.forEach(t => {
                 const total = t.sampleCount || 0;
-                const completed = t.sampleCompletedCount || t.completedCount || 0; 
+                const completed = t.sampleCompletedCount || t.completedCount || 0;
                 taskMap.set(t.id, {
                     id: t.id,
                     name: t.taskName || t.assignDeptName || getDeptLabel(t.assignDeptId) || '未命名任务',
@@ -410,7 +410,7 @@ function handleExport() {
 function handleView(row) {
     if (row.id) {
         router.push({
-            path: '/fastCheckPlan/task/taskAllocate',
+            path: '/fastCheckPlan/taskAllocate',
             query: { id: row.id }
         });
     }

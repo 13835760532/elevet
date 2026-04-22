@@ -1,7 +1,7 @@
 <template>
   <section class="left-section">
     <BigScreenSelector />
-    
+
     <BigPanelCard title="任务下发概况" :bg-image="leftBg">
       <div class="summary-flex">
         <div class="summary-item" v-for="(item, index) in summaryData" :key="item.label">
@@ -36,42 +36,66 @@
 
     <BigPanelCard title="下发检测产品品类" :bg-image="leftBg">
       <div class="pie-container">
-        <Echart :options="categoryPieOption" height="260px" width="100%" />
+        <Echart :options="categoryPieOption" height="230px" width="100%" />
       </div>
     </BigPanelCard>
   </section>
 </template>
 
 <script setup lang="ts">
-import { reactive } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
 import { Echart } from '@/components/Echart';
 import BigPanelCard from '../bigscreen/BigPanelCard.vue';
 import BigScreenSelector from '../bigscreen/BigScreenSelector.vue';
 import leftBg from '@/assets/imgs/echarts/检测任务/erji_bg.png';
 import iconOrg from '@/assets/imgs/echarts/检测任务/68.png';
 import iconFactory from '@/assets/imgs/echarts/检测任务/69.png';
+import {
+  getTaskCategoryDistribution,
+  getTaskOverview,
+  type DashboardTaskOverviewRespVO,
+  type TaskCategoryDistributionRespVO
+} from '@/api/agri/dashboard/task';
 
-const summaryData = [
-  { label: '任务下发', value: 6138 },
-  { label: '任务完成', value: 2688 },
-  { label: '任务完成率', value: '21%' }
-];
+const overview = ref<DashboardTaskOverviewRespVO>({});
+const categoryDistribution = ref<TaskCategoryDistributionRespVO[]>([]);
 
-const coverData = [
-  { label: '检测机构', value: 213, icon: iconOrg },
-  { label: '生产经营主体', value: 2261, icon: iconFactory }
-];
+const formatCount = (value?: number) => Number(value || 0);
+const formatRate = (value?: number) => `${Number(value || 0).toFixed(2)}%`;
+
+const summaryData = computed(() => [
+  { label: '任务下发', value: formatCount(overview.value.taskIssuedCount) },
+  { label: '任务完成', value: formatCount(overview.value.taskCompletedCount) },
+  { label: '任务完成率', value: formatRate(overview.value.taskCompletionRate) }
+]);
+
+const coverData = computed(() => [
+  { label: '检测机构', value: formatCount(overview.value.detectionOrgCount), icon: iconOrg },
+  { label: '生产经营主体', value: formatCount(overview.value.enterpriseCount), icon: iconFactory }
+]);
+
+const loadOverviewData = async () => {
+  try {
+    const data = await getTaskOverview();
+    overview.value = data || {};
+  } catch (error) {
+    console.error('加载检测任务概览失败', error);
+    overview.value = {};
+  }
+};
+
+const pieColors = ['#3b82f6', '#f59e0b', '#06b6d4', '#cbd5e1', '#22d3ee', '#34d399', '#f97316'];
 
 const categoryPieOption = reactive({
   tooltip: { trigger: 'item' },
   legend: {
     orient: 'vertical',
     right: 30,
-    top: 'center',
+    top: 10,
     itemWidth: 12,
     itemHeight: 12,
     textStyle: { color: '#8fb6da', fontSize: 13 },
-    data: ['蔬菜', '水果', '茶叶', '畜禽', '水产']
+    data: []
   },
   series: [
     {
@@ -102,16 +126,35 @@ const categoryPieOption = reactive({
         lineStyle: { color: 'rgba(187, 219, 250, 0.4)' }
       },
       itemStyle: { borderColor: '#05112a', borderWidth: 2 },
-      data: [
-        { value: 18886, name: '蔬菜' },
-        { value: 18886, name: '水果' },
-        { value: 18886, name: '茶叶' },
-        { value: 18886, name: '畜禽' },
-        { value: 18886, name: '水产' }
-      ],
-      color: ['#3b82f6', '#f59e0b', '#06b6d4', '#cbd5e1', '#22d3ee']
+      data: [],
+      color: pieColors
     }
   ]
+});
+
+const updateCategoryChart = (list: TaskCategoryDistributionRespVO[] = []) => {
+  const chartData = list.map((item) => ({
+    value: Number(item.sampleCount || 0),
+    name: item.category || '--'
+  }));
+  categoryPieOption.legend.data = chartData.map((item) => item.name);
+  categoryPieOption.series[0].data = chartData;
+};
+
+const loadCategoryDistribution = async () => {
+  try {
+    const data = await getTaskCategoryDistribution();
+    categoryDistribution.value = Array.isArray(data) ? data : [];
+  } catch (error) {
+    console.error('加载检测任务品类分布失败', error);
+    categoryDistribution.value = [];
+  }
+  updateCategoryChart(categoryDistribution.value);
+};
+
+onMounted(() => {
+  loadOverviewData();
+  loadCategoryDistribution();
 });
 </script>
 

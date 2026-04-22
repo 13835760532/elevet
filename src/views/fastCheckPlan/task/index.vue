@@ -17,8 +17,8 @@
                     </div>
                     <div v-if="index < stepsRow1.length - 1" class="step-arrow">
                         <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="arrow-svg">
-                            <path d="M5 12H19M19 12L13 6M19 12L13 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round" />
+                            <path d="M5 12H19M19 12L13 6M19 12L13 18" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round" />
                         </svg>
                     </div>
                 </div>
@@ -31,26 +31,23 @@
                 <h2 class="card-title">快检任务查询</h2>
             </div>
             <div class="query-form-wrapper">
-                <el-form :inline="true" :model="queryParams" class="custom-query-form custom-query-form-row" label-position="left">
+                <el-form :inline="true" :model="queryParams" class="custom-query-form custom-query-form-row"
+                    label-position="left">
                     <el-form-item label="">
-                        <el-input :prefix-icon="Search" v-model="queryParams.taskName" placeholder="搜索任务名称或编号" class="custom-input w220" clearable @keyup.enter="handleQuery" />
+                        <el-input :prefix-icon="Search" v-model="queryParams.taskName" placeholder="搜索任务名称或编号"
+                            class="custom-input w220" clearable @keyup.enter="handleQuery" />
                     </el-form-item>
                     <el-form-item label="">
-                        <el-select v-model="queryParams.status" placeholder="任务状态" class="custom-select" clearable style="width: 140px">
-                            <el-option v-for="dict in taskStatusOptions" :key="dict.value" :label="dict.label" :value="dict.value" />
+                        <el-select v-model="queryParams.status" placeholder="任务状态" class="custom-select" clearable
+                            style="width: 140px">
+                            <el-option v-for="dict in taskStatusOptions" :key="dict.value" :label="dict.label"
+                                :value="dict.value" />
                         </el-select>
                     </el-form-item>
                     <el-form-item label="">
-                        <el-date-picker 
-                            style="width: 240px!important;"
-                            v-model="queryDateRange" 
-                            type="daterange" 
-                            range-separator="至"
-                            start-placeholder="开始日期" 
-                            end-placeholder="结束日期" 
-                            value-format="YYYY-MM-DD"
-                            @change="handleDateChange"
-                        />
+                        <el-date-picker style="width: 240px!important;" v-model="queryDateRange" type="daterange"
+                            range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期"
+                            value-format="YYYY-MM-DD" @change="handleDateChange" />
                     </el-form-item>
                     <div class="query-btns">
                         <el-button @click="handleReset" class="reset-btn">重置</el-button>
@@ -79,13 +76,10 @@
                     <el-table-column label="检测进度" width="180" align="center">
                         <template #default="scope">
                             <div class="progress-box">
-                                <el-progress 
-                                    :percentage="scope.row.sampleCompletionRate || 0" 
-                                    :stroke-width="8" 
-                                    color="#00B3ED"
-                                    :show-text="false"
-                                />
-                                <span class="progress-text">{{ scope.row.sampleCompletedCount }}/{{ scope.row.sampleCount }}</span>
+                                <el-progress :percentage="scope.row.sampleCompletionRate || 0" :stroke-width="8"
+                                    color="#00B3ED" :show-text="false" />
+                                <span class="progress-text">{{ scope.row.sampleCompletedCount }}/{{
+                                    scope.row.sampleCount }}</span>
                             </div>
                         </template>
                     </el-table-column>
@@ -97,7 +91,8 @@
                     <el-table-column label="最后催办" prop="lastUrgeTime" width="160" align="center">
                         <template #default="scope">
                             <span>{{ scope.row.lastUrgeTime ? formatDate(scope.row.lastUrgeTime) : '--' }}</span>
-                            <el-tag v-if="scope.row.urgeCount" size="small" type="danger" style="margin-left: 4px">{{ scope.row.urgeCount }}</el-tag>
+                            <el-tag v-if="scope.row.urgeCount" size="small" type="danger" style="margin-left: 4px">{{
+                                scope.row.urgeCount }}</el-tag>
                         </template>
                     </el-table-column>
                     <el-table-column label="任务状态" prop="status" width="100" align="center">
@@ -108,8 +103,10 @@
                     <el-table-column label="操作" width="180" align="center" fixed="right">
                         <template #default="scope">
                             <div class="table-operate-action-btns">
-                                <el-button link type="primary" @click="handleReceive(scope.row)" v-if="scope.row.status === 1">接收任务</el-button>
-                                <el-button link type="primary" @click="handleUrge(scope.row)" v-if="scope.row.status === 2">项目催办</el-button>
+                                <el-button link type="primary" @click="handleReceive(scope.row)"
+                                    v-if="scope.row.status === 1">接收任务</el-button>
+                                <el-button link type="primary" @click="handleUrge(scope.row)"
+                                    v-if="scope.row.status === 2">项目催办</el-button>
                                 <el-button link type="primary" @click="handleView(scope.row)">查看详情</el-button>
                             </div>
                         </template>
@@ -119,16 +116,9 @@
 
             <!-- 分页区域 -->
             <div class="pagination-wrapper">
-                <el-pagination 
-                    v-model:current-page="queryParams.pageNo" 
-                    v-model:page-size="queryParams.pageSize"
-                    :total="total" 
-                    background 
-                    layout="total, sizes, prev, pager, next, jumper" 
-                    class="custom-pagination"
-                    @size-change="handleSizeChange"
-                    @current-change="handleCurrentChange"
-                />
+                <el-pagination v-model:current-page="queryParams.pageNo" v-model:page-size="queryParams.pageSize"
+                    :total="total" background layout="total, sizes, prev, pager, next, jumper" class="custom-pagination"
+                    @size-change="handleSizeChange" @current-change="handleCurrentChange" />
             </div>
         </div>
     </div>
@@ -142,6 +132,7 @@ import { ElMessage, ElMessageBox } from 'element-plus';
 import * as DetectionTaskApi from '@/api/agri/detectionTask/index';
 import { formatDate } from '@/utils/formatTime';
 import { useDict } from '@/hooks/web/useDict';
+import download from '@/utils/download';
 
 defineOptions({
     name: 'DetectionTaskIndex'
@@ -225,9 +216,16 @@ const handleExport = async () => {
             type: 'warning'
         });
         exportLoading.value = true;
-        await DetectionTaskApi.exportDetectionTask(queryParams);
+        const res = await DetectionTaskApi.exportDetectionTask(queryParams);
+        if (res) {
+            download.excel(res, '检测任务列表.xls');
+            ElMessage.success('导出成功');
+        }
     } catch (error) {
-        console.error('导出失败', error);
+        if (error !== 'cancel') {
+            console.error('导出失败', error);
+            ElMessage.error('导出失败');
+        }
     } finally {
         exportLoading.value = false;
     }
@@ -330,26 +328,29 @@ onMounted(() => {
         align-items: flex-start;
         gap: 12px;
         flex-shrink: 0;
-        
+
         &.is-disabled {
             .step-icon {
                 border-color: #d9d9d9;
                 color: #d9d9d9;
             }
+
             .step-title {
                 color: #999;
             }
+
             .step-desc {
                 color: #bfbfbf;
             }
         }
-        
+
         &.is-highlight {
             .step-icon {
                 background: #00B3ED;
                 color: #fff;
                 border-color: #00B3ED;
             }
+
             .step-title {
                 color: #00B3ED;
                 font-weight: 600;
@@ -397,7 +398,7 @@ onMounted(() => {
         align-items: center;
         justify-content: center;
         padding: 0 4px;
-        margin-top: 12px; 
+        margin-top: 12px;
         align-self: flex-start;
 
         .arrow-svg {
@@ -428,11 +429,11 @@ onMounted(() => {
     flex-direction: column;
     align-items: center;
     gap: 4px;
-    
+
     .el-progress {
         width: 100%;
     }
-    
+
     .progress-text {
         font-size: 12px;
         color: #64748B;
@@ -446,8 +447,13 @@ onMounted(() => {
     border-radius: 6px;
     box-shadow: none !important;
 
-    &:hover { border-color: #00B3ED; }
-    &.is-focus { border-color: #00B3ED; }
+    &:hover {
+        border-color: #00B3ED;
+    }
+
+    &.is-focus {
+        border-color: #00B3ED;
+    }
 }
 
 /* 操作按钮 */

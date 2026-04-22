@@ -246,6 +246,12 @@ const remainingRouter: AppRouteRecordRaw[] = [
         meta: { title: '创建任务', activeMenu: '/fastCheckPlan/scheme' }
       },
       {
+        path: 'resultDetail',
+        component: () => import('@/views/fastCheckPlan/resultDetail.vue'),
+        name: 'CheckResultDetail',
+        meta: { title: '检测详情', activeMenu: '/fastCheckPlan/scheme', hidden: true, canTo: true }
+      },
+      {
         path: 'task',
         component: () => import('@/views/fastCheckPlan/task/index.vue'),
         name: 'CheckTask',

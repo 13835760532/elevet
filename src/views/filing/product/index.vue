@@ -240,9 +240,15 @@ const handleExport = async () => {
             params.createTime = [queryParams.archiveTime[0] + ' 00:00:00', queryParams.archiveTime[1] + ' 23:59:59']
         }
         const res = await ProductApi.exportProduct(params);
-        download.excel(res, '产品档案导出.xls');
+        if (res) {
+            download.excel(res, '产品档案导出.xls');
+            message.success('导出成功');
+        }
     } catch (error) {
-        console.error('导出失败', error);
+        if (error !== 'cancel') {
+            console.error('导出失败', error);
+            message.error('导出失败');
+        }
     } finally {
         exportLoading.value = false;
     }

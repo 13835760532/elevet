@@ -29,7 +29,8 @@
                         <div class="info-grid">
                             <div class="info-item">
                                 <span class="info-label">主管单位</span>
-                                <span class="info-value highlight">{{ schemeInfo.deptName }}</span>
+                                <span class="info-value highlight">
+                                    {{ schemeInfo.issuerDeptName || schemeInfo.deptName }}</span>
                             </div>
                             <div class="info-item">
                                 <span class="info-label">方案类型</span>
@@ -106,17 +107,67 @@
 
                 <!-- 任务列表 -->
                 <div v-if="activeTab === 'list'" class="tab-content">
-                    <div v-if="taskList.length === 0" class="empty-state">
+                    <div class="task-list-operations">
+                        <!-- 查询区域 -->
+                        <div class="query-section">
+                            <el-form :model="queryParams" :inline="true"
+                                class="custom-query-form custom-query-form-row">
+                                <el-form-item label="">
+                                    <el-input v-model="queryParams.task" placeholder="输入任务编号/任务名称" class="w200"
+                                        clearable />
+                                </el-form-item>
+                                <el-form-item label="">
+                                    <el-select v-model="queryParams.unit" placeholder="检测机构" style="width: 150px;"
+                                        clearable>
+                                        <el-option v-for="(name, id) in deptMap" :key="id" :label="name" :value="id" />
+                                    </el-select>
+                                </el-form-item>
+                                <el-form-item label="">
+                                    <el-select v-model="queryParams.status" placeholder="任务状态" style="width: 150px;"
+                                        class="w120" clearable>
+                                        <el-option label="进行中" value="进行中" />
+                                        <el-option label="已完成" value="已完成" />
+                                        <el-option label="已延期" value="已延期" />
+                                        <el-option label="未开始" value="未开始" />
+                                    </el-select>
+                                </el-form-item>
+                                <el-form-item label="">
+                                    <el-date-picker v-model="queryParams.dateRange" type="daterange" range-separator="-"
+                                        start-placeholder="开始日期" end-placeholder="结束日期" class="date-picker-custom"
+                                        style="width: 280px!important" value-format="YYYY-MM-DD" />
+                                </el-form-item>
+                                <div class="query-btns">
+                                    <el-button @click="handleReset">重置</el-button>
+                                    <el-button type="primary" class="search-btn" @click="handleQuery">查询</el-button>
+                                </div>
+                            </el-form>
+                        </div>
+
+                        <div class="separator-line"></div>
+
+                        <!-- 操作按钮区域 -->
+                        <div class="action-bar">
+                            <el-button type="primary" class="new-task-btn" @click="handleCreateTask">
+                                新建检测任务
+                            </el-button>
+                            <el-button type="primary" class="export-btn" @click="handleExport">
+                                导出
+                            </el-button>
+                        </div>
+                    </div>
+
+                    <div v-if="taskList.length === 0 && !loading" class="empty-state">
                         <el-icon class="empty-icon" :size="64">
                             <Document />
                         </el-icon>
                         <p class="empty-text">尚未分配检测任务</p>
-                        <el-button type="primary" @click="handleCreateTask">
+                        <el-button type="primary" class="new-task-btn" @click="handleCreateTask">
                             新建检测任务
                         </el-button>
                     </div>
 
                     <div v-else class="task-table">
+
                         <el-table :data="taskList" :header-cell-style="headerCellStyle" border style="width: 100%">
                             <el-table-column label="序号" type="index" width="60" align="center" />
                             <el-table-column label="任务编号" prop="taskNo" width="140" align="center" />
@@ -168,7 +219,8 @@
                 <!-- 检测进度 -->
                 <div v-if="activeTab === 'progress'" class="tab-content">
                     <DetectionProgress :tableData="progressList" :total="progressTotal" :task-options="taskOptions"
-                        :category-options="categoryOptions" @query="handleProgressQuery" @reset="handleProgressReset" />
+                        :category-options="categoryOptions" @query="handleProgressQuery" @reset="handleProgressReset"
+                        @view-detail="handleViewDetail" />
                 </div>
 
                 <!-- 进度历史 -->
@@ -189,20 +241,27 @@ import { useRouter, useRoute } from 'vue-router';
 import { Document, TrendCharts, Clock } from '@element-plus/icons-vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import * as DetectionPlanApi from '@/api/agri/detectionPlan';
+import * as DetectionTaskApi from '@/api/agri/detectionTask';
 import * as DeptApi from '@/api/system/dept';
 import * as DetectionRecordApi from '@/api/agri/detectionRecord';
 import { useDict, DICT_TYPE } from '@/hooks/web/useDict';
+import download from '@/utils/download';
 import DetectionProgress from '@/components/DetectionProgress/index.vue';
 import ProgressHistory from '@/components/ProgressHistory/index.vue';
 
 const router = useRouter();
 const route = useRoute();
 
-const activeTab = ref('list');
+
 
 const { getLabel: getPlanTypeLabel } = useDict(DICT_TYPE.AGRI_PLAN_TYPE);
 const { getLabel: getProductCategoryLabel, options: productCategoryOptions } = useDict(DICT_TYPE.AGRI_PRODUCT_CATEGORY);
 
+// --- 状态定义 ---
+const loading = ref(false);
+const activeTab = ref('list');
+
+// 方案基础信息
 const schemeInfo = reactive({
     id: null,
     name: '--',
@@ -227,6 +286,51 @@ const schemeInfo = reactive({
     planRequirements: '',
     planAttachments: []
 });
+
+// 任务列表相关
+const allTaskList = ref([]);
+const taskList = ref([]);
+const taskOptions = ref([]);
+const total = ref(0);
+
+const queryParams = reactive({
+    task: '',
+    unit: '',
+    status: '',
+    dateRange: []
+});
+
+const pageParams = reactive({
+    pageNum: 1,
+    pageSize: 10
+});
+
+// 检测进度/结果相关
+const progressQuery = reactive({
+    task: '',
+    org: '',
+    sample: '',
+    category: '',
+    result: '',
+    status: ''
+});
+
+const progressPage = reactive({
+    pageNum: 1,
+    pageSize: 10
+});
+
+const progressList = ref([]);
+const progressTotal = ref(0);
+let isLoadingResults = false;
+
+// 历史进度相关
+const historyData = ref({
+    name: '监测方案',
+    children: []
+});
+
+const categoryOptions = ref([]);
 
 // 附件预览相关
 const showImageViewer = ref(false);
@@ -360,12 +464,11 @@ const loadTaskList = async (id) => {
     try {
         const tasks = await DetectionPlanApi.getPlanTasks(id);
         const allTasks = tasks || [];
-        
-        taskList.value = allTasks.map(t => {
+
+        const results = allTasks.map(t => {
             const total = t.sampleCount || 0;
             const completed = t.completedCount || 0;
             const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
-
             return {
                 id: t.id,
                 parentId: t.parentId,
@@ -376,26 +479,31 @@ const loadTaskList = async (id) => {
                 varieties: t.detectionVarieties || '--',
                 items: t.detectionItems || '--',
                 timeRange: t.startDate && t.endDate ? `${t.startDate}至${t.endDate}` : '--',
+                startDate: t.startDate,
+                endDate: t.endDate,
                 total,
                 completed,
                 percentage,
                 status: t.status === 3 ? '已完成' : (t.status === 2 ? '已延期' : (t.status === 1 ? '进行中' : '未开始'))
             };
         });
-        taskOptions.value = taskList.value.map(t => ({ label: t.taskName, value: t.id }));
-        total.value = taskList.value.length;
+        allTaskList.value = results;
+        applyFilters();
+
+        taskOptions.value = results.map(t => ({ label: t.taskName, value: t.id }));
+        total.value = results.length;
 
         // 根据 parentId 组装历史进度树形数据
         const taskMap = new Map();
         const treeRoots = [];
 
         allTasks.forEach(t => {
-            const total = t.sampleCount || 0;
-            const completed = t.completedCount || 0;
+            const totalCount = t.sampleCount || 0;
+            const completedCount = t.completedCount || 0;
             taskMap.set(t.id, {
                 id: t.id,
                 name: t.taskName || t.assignDeptName || getDeptLabel(t.assignDeptId) || '未命名任务',
-                progress: total > 0 ? `(${completed}/${total})` : '',
+                progress: totalCount > 0 ? `(${completedCount}/${totalCount})` : '',
                 warning: t.status === 2,
                 children: [],
                 parentId: t.parentId
@@ -435,6 +543,9 @@ onMounted(async () => {
             console.warn('获取部门列表失败', e);
         }
 
+        // 初始化进度树形分类选项
+        categoryOptions.value = (productCategoryOptions.value || []).map(opt => ({ label: opt.label, value: opt.value }));
+
         await loadPlanData(Number(id));
         await loadTaskList(Number(id));
         // 初始化加载检测结果
@@ -445,13 +556,7 @@ onMounted(async () => {
     }
 });
 
-const taskList = ref([]);
-const total = ref(0);
 
-const pageParams = reactive({
-    pageNum: 1,
-    pageSize: 10
-});
 
 const handleTaskSizeChange = (val) => {
     pageParams.pageSize = val;
@@ -464,23 +569,7 @@ const handleTaskPageChange = (val) => {
     // loadTaskList(route.query.id); 重新加载
 };
 
-const progressQuery = reactive({
-    task: '',
-    org: '',
-    sample: '',
-    category: '',
-    result: '',
-    status: ''
-});
 
-const progressPage = reactive({
-    pageNum: 1,
-    pageSize: 10
-});
-
-const progressList = ref([]);
-const progressTotal = ref(0);
-let isLoadingResults = false; // 防重入锁
 
 /** 加载检测结果列表 */
 const loadDetectionResults = async (params = {}) => {
@@ -521,15 +610,6 @@ const loadDetectionResults = async (params = {}) => {
     }
 };
 
-// 进度历史树形数据
-const historyData = ref({
-    name: '监测方案',
-    children: []
-});
-
-const categoryOptions = ref((productCategoryOptions.value || []).map(opt => ({ label: opt.label, value: opt.value })));
-const taskOptions = ref([]);
-
 const handleProgressQuery = (params) => {
     loadDetectionResults(params);
 };
@@ -548,7 +628,7 @@ const handleBatchImport = () => {
 
 const handleViewDetail = (row) => {
     router.push({
-        path: '/taskDetection/taskDetail',
+        path: '/fastCheckPlan/resultDetail',
         query: { id: row.sampleNo }
     });
 };
@@ -560,6 +640,82 @@ const getTaskStatusClass = (status) => {
         '已完成': 'status-completed'
     };
     return statusMap[status] || '';
+};
+
+const handleQuery = () => {
+    applyFilters();
+};
+
+const handleReset = () => {
+    queryParams.task = '';
+    queryParams.unit = '';
+    queryParams.status = '';
+    queryParams.dateRange = [];
+    applyFilters();
+};
+
+const applyFilters = () => {
+    let filtered = [...allTaskList.value];
+
+    if (queryParams.task) {
+        const keyword = queryParams.task.toLowerCase();
+        filtered = filtered.filter(t =>
+            (t.taskNo && t.taskNo.toLowerCase().includes(keyword)) ||
+            (t.taskName && t.taskName.toLowerCase().includes(keyword))
+        );
+    }
+
+    if (queryParams.unit) {
+        filtered = filtered.filter(t => String(t.dept).includes(getDeptLabel(queryParams.unit)));
+    }
+
+    if (queryParams.status) {
+        filtered = filtered.filter(t => t.status === queryParams.status);
+    }
+
+    if (queryParams.dateRange && queryParams.dateRange.length === 2) {
+        const start = new Date(queryParams.dateRange[0]);
+        const end = new Date(queryParams.dateRange[1]);
+        filtered = filtered.filter(t => {
+            if (!t.startDate) return false;
+            const taskDate = new Date(t.startDate);
+            return taskDate >= start && taskDate <= end;
+        });
+    }
+
+    taskList.value = filtered;
+};
+
+const handleExport = async () => {
+    try {
+        await ElMessageBox.confirm('是否确认导出所有检测任务数据？', '提示', {
+            confirmButtonText: '确定',
+            cancelButtonText: '取消',
+            type: 'warning'
+        });
+        
+        const params = {
+            planId: route.query.id,
+            taskName: queryParams.task || undefined,
+            status: queryParams.status === '进行中' ? 1 : 
+                    (queryParams.status === '已完成' ? 3 : 
+                    (queryParams.status === '已延期' ? 2 : 
+                    (queryParams.status === '未开始' ? 0 : undefined))),
+            // 注意：OpenAPI 中 unit 对应关系可能需要根据实际业务调整，此处暂传为 subjectId
+            subjectId: queryParams.unit || undefined
+        };
+        
+        const res = await DetectionTaskApi.exportDetectionTask(params);
+        if (res) {
+            download.excel(res, '检测任务导出.xls');
+            ElMessage.success('导出成功');
+        }
+    } catch (error) {
+        if (error !== 'cancel') {
+            console.error('导出任务失败：', error);
+            ElMessage.error('导出任务失败');
+        }
+    }
 };
 
 const handleCreateTask = () => {
@@ -594,8 +750,8 @@ const handleDeleteTask = (row) => {
 
 const handleViewTask = (row) => {
     router.push({
-        path: '/taskDetection/taskDetail',
-        query: { id: row.taskNo }
+        path: '/fastCheckPlan/taskAllocate',
+        query: { id: row.id }
     });
 };
 
@@ -1004,22 +1160,69 @@ const handleCreateSubTask = (row) => {
         display: flex;
         gap: 16px;
 
-        // .el-button {
-        //     height: 44px;
-        //     min-width: 120px;
-        //     border-radius: 8px;
-        //     font-weight: 600;
-        //     letter-spacing: 1px;
-        //     transition: all 0.2s;
+    }
+}
 
-        //     &:hover {
-        //         transform: scale(1.02);
-        //     }
+/* 任务列表操作区域 */
+.task-list-operations {
+    padding-bottom: 20px;
 
-        //     &:active {
-        //         transform: scale(0.98);
-        //     }
-        // }
+    .query-section {
+        padding: 10px 0;
+
+        .custom-query-form {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+
+            :deep(.el-form-item) {
+                margin-right: 0;
+                margin-bottom: 0;
+                display: flex;
+                align-items: center;
+
+                .el-form-item__label {
+                    padding-right: 8px;
+                    font-weight: 500;
+                    color: #475569;
+                }
+            }
+
+            .query-btns {
+                margin-left: auto;
+                display: flex;
+                gap: 12px;
+
+                .search-btn {
+                    background-color: #00B3ED;
+                    border-color: #00B3ED;
+                }
+            }
+        }
+    }
+
+    .separator-line {
+        height: 1px;
+        background-color: #f1f5f9;
+        margin: 15px 0;
+    }
+
+    .action-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 5px 0;
+
+        .new-task-btn,
+        .export-btn {
+            background-color: #00B3ED;
+            border-color: #00B3ED;
+        }
+
+        .export-btn {
+            margin-left: auto;
+        }
     }
 }
 
@@ -1050,13 +1253,14 @@ const handleCreateSubTask = (row) => {
     }
 
     .table-link {
-        color: #999;
+        color: #00B3ED;
         cursor: pointer;
         font-weight: 500;
         transition: all 0.2s;
 
         &:hover {
-            color: #00B3ED;
+            opacity: 0.8;
+            text-decoration: underline;
         }
     }
 

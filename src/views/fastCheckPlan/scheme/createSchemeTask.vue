@@ -153,8 +153,9 @@
 </template>
 
 <script setup>
-import { ref, reactive, watch, computed } from 'vue';
+import { ref, reactive, watch, computed, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
+import { useDebounceFn } from '@vueuse/core';
 import { Search } from '@element-plus/icons-vue';
 import { ElMessage } from 'element-plus';
 import DetectionRequirementSection from '@/components/DetectionRequirementSection/index.vue';
@@ -368,7 +369,8 @@ const handleCancel = () => {
     router.back();
 };
 
-const handleSubmit = async () => {
+/** 提交并下发任务 */
+const handleSubmit = useDebounceFn(async () => {
     if (selectedOrgs.value.length === 0 && taskList.value.length === 0) {
         ElMessage.warning('请选择任务承担单位');
         return;
@@ -429,7 +431,7 @@ const handleSubmit = async () => {
         console.error('任务下发失败', error);
         ElMessage.error('任务下发失败');
     }
-};
+}, 300);
 // 页面初始化
 onMounted(() => {
     loadSchemeDetail()

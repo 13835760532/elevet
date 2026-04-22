@@ -2,32 +2,9 @@
   <section class="left-section">
     <BigScreenSelector />
 
-    <BigPanelCard title="合格证概况" :bg-image="leftBg">
-      <div class="overview-grid">
-        <div class="overview-card" :class="item.type" v-for="item in overviewData" :key="item.label">
-          <!-- 装饰角 -->
-          <div class="corner-mark top-left"></div>
-          <div class="corner-mark bottom-right"></div>
-
-          <div class="card-inner">
-            <div class="card-label">{{ item.label }}</div>
-            <div class="card-body">
-              <div class="icon-box">
-                <img src="@/assets/imgs/echarts/合格证/icon.png" alt="">
-              </div>
-              <div class="num-box">
-                <span class="value-text">{{ item.value }}</span>
-                <span class="unit-text">{{ item.unit }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </BigPanelCard>
-
-    <BigPanelCard title="合格证服务主体" :bg-image="leftBg">
+    <BigPanelCard title="快速检测概况" :bg-image="leftBg">
       <div class="subject-grid">
-        <div class="subject-item" v-for="(item, index) in subjectData" :key="item.label">
+        <div class="subject-item" v-for="(item, index) in overviewData" :key="item.label">
           <div class="item-inner">
             <p class="label">{{ item.label }}</p>
             <div class="value-container">
@@ -37,38 +14,80 @@
             </div>
           </div>
           <!-- 分隔线 -->
-          <div v-if="index < subjectData.length - 1" class="separator"></div>
+          <div v-if="index < overviewData.length - 1" class="separator"></div>
         </div>
       </div>
     </BigPanelCard>
 
-    <BigPanelCard title="各品类合格证开具量" :bg-image="leftBg">
-      <div class="pie-wrap" style="height: 300px;">
-        <Echart :options="categoryPieOption" :height="280" width="100%" />
+    <BigPanelCard title="快检覆盖范围" :bg-image="leftBg">
+      <div class="cover-flex">
+        <div class="cover-dial" v-for="(item, index) in subjectData" :key="item.label">
+          <div class="dial-wrap">
+            <div class="dial-outer"></div>
+            <img :src="item.icon" class="dial-icon" />
+          </div>
+          <div class="dial-info">
+            <p class="label">{{ item.label }}</p>
+            <p class="value">{{ item.value }}</p>
+          </div>
+          <div v-if="index === 0" class="separator"></div>
+        </div>
+      </div>
+    </BigPanelCard>
+
+    <BigPanelCard title="快检产品品类" :bg-image="leftBg">
+      <div class="pie-wrap" style="height: 260px;">
+        <Echart :options="categoryPieOption" :height="240" width="100%" />
       </div>
     </BigPanelCard>
   </section>
 </template>
 
 <script setup lang="ts">
-import { reactive } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
 import { Echart } from '@/components/Echart';
 import BigPanelCard from '../bigscreen/BigPanelCard.vue';
 import BigScreenSelector from '../bigscreen/BigScreenSelector.vue';
 import leftBg from '@/assets/imgs/echarts/合格证/Frame 58_bg.png';
+import iconOrg from '@/assets/imgs/echarts/检测任务/68.png';
+import iconFactory from '@/assets/imgs/echarts/检测任务/69.png';
+import {
+  getFastCategoryDistribution,
+  getFastOverview,
+  type DashboardFastOverviewRespVO,
+  type FastCategoryDistributionRespVO
+} from '@/api/agri/dashboard/fast';
 
-const overviewData = [
-  { label: '合格证开具', value: '128813', unit: '份', type: 'blue' },
-  { label: '合格证存证', value: '128813', unit: '份', type: 'green' },
-  { label: '合格证查验', value: '128813', unit: '次', type: 'cyan' },
-  { label: '合格证溯源', value: '128813', unit: '次', type: 'orange' }
-];
+const overview = ref<DashboardFastOverviewRespVO>({});
+const categoryDistribution = ref<FastCategoryDistributionRespVO[]>([]);
 
-const subjectData = [
-  { label: '监管机构/检测机构', value: 213 },
-  { label: '企业', value: 2568 },
-  { label: '个人', value: 2568 }
-];
+const overviewData = computed(() => [
+  { label: '样品批次', value: Number(overview.value.sampleBatchCount || 0), unit: '', type: 'blue' },
+  { label: '检测项次', value: Number(overview.value.detectionItemCount || 0), unit: '', type: 'green' },
+  {
+    label: '检测项阳性率',
+    value: Number(overview.value.itemPositiveRate || 0),
+    unit: '%',
+    type: 'cyan'
+  }
+]);
+
+const subjectData = computed(() => [
+  { label: '生产经营主体', value: Number(overview.value.enterpriseCount || 0), icon: iconOrg },
+  { label: '农产品品种', value: Number(overview.value.productVarietyCount || 0), icon: iconFactory }
+]);
+
+const loadOverview = async () => {
+  try {
+    const data = await getFastOverview();
+    overview.value = data || {};
+  } catch (error) {
+    console.error('加载快速检测概览失败', error);
+    overview.value = {};
+  }
+};
+
+const pieColors = ['#3b82f6', '#f59e0b', '#06b6d4', '#cbd5e1', '#22d3ee', '#34d399', '#f97316'];
 
 const categoryPieOption = reactive({
   tooltip: { trigger: 'item' },
@@ -79,7 +98,7 @@ const categoryPieOption = reactive({
     itemWidth: 12,
     itemHeight: 12,
     textStyle: { color: '#8eb6db', fontSize: 14 },
-    data: ['蔬菜', '水果', '茶叶', '畜禽', '水产']
+    data: []
   },
   series: [
     {
@@ -113,23 +132,42 @@ const categoryPieOption = reactive({
         borderWidth: 2,
         borderColor: '#020617'
       },
-      data: [
-        { value: 18886, name: '蔬菜' },
-        { value: 18886, name: '水果' },
-        { value: 18886, name: '茶叶' },
-        { value: 18886, name: '畜禽' },
-        { value: 18886, name: '水产' }
-      ],
-      color: ['#3b82f6', '#f59e0b', '#06b6d4', '#cbd5e1', '#22d3ee']
+      data: [],
+      color: pieColors
     }
   ]
+});
+
+const updateCategoryChart = (list: FastCategoryDistributionRespVO[] = []) => {
+  const chartData = list.map((item) => ({
+    value: Number(item.sampleCount || 0),
+    name: item.category || '--'
+  }));
+  categoryPieOption.legend.data = chartData.map((item) => item.name);
+  categoryPieOption.series[0].data = chartData;
+};
+
+const loadCategoryDistribution = async () => {
+  try {
+    const data = await getFastCategoryDistribution();
+    categoryDistribution.value = Array.isArray(data) ? data : [];
+  } catch (error) {
+    console.error('加载快速检测品类分布失败', error);
+    categoryDistribution.value = [];
+  }
+  updateCategoryChart(categoryDistribution.value);
+};
+
+onMounted(() => {
+  loadOverview();
+  loadCategoryDistribution();
 });
 </script>
 
 <style scoped lang="scss">
 .left-section {
   display: grid;
-  grid-template-rows: auto 0.8fr 0.6fr 1.1fr;
+  grid-template-rows: auto 200px 200px minmax(0, 1fr);
   gap: 12px;
   height: 100%;
   min-height: 0;
@@ -137,7 +175,7 @@ const categoryPieOption = reactive({
 
 .overview-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 12px;
   padding: 10px 4px;
 }
@@ -258,7 +296,7 @@ const categoryPieOption = reactive({
   display: flex;
   justify-content: space-around;
   align-items: center;
-  padding-top: 30px;
+  padding-top: 18px;
 }
 
 .subject-item {
@@ -303,14 +341,15 @@ const categoryPieOption = reactive({
     }
   }
 
-  .separator {
-    width: 1px;
-    height: 40px;
-    background: linear-gradient(to bottom, transparent, rgba(255, 255, 255, 0.3), transparent);
-    position: absolute;
-    right: 0;
-    top: 20px;
-  }
+}
+
+.separator {
+  width: 2px;
+  height: 80px;
+  background: linear-gradient(to bottom, transparent, rgba(255, 255, 255, 0.3), transparent);
+  position: absolute;
+  right: 0;
+  top: 20px;
 }
 
 .hologram-effect {
@@ -362,6 +401,90 @@ const categoryPieOption = reactive({
 .pie-wrap {
   width: 100%;
   height: 100%;
-  padding-top: 40px;
+  padding-top: 10px;
+}
+
+.cover-flex {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding: 10px 0;
+}
+
+.cover-dial {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  position: relative;
+  padding-top: 20px;
+
+  .dial-wrap {
+    position: relative;
+    width: 80px;
+    height: 80px;
+
+    .dial-outer {
+      position: absolute;
+      inset: -4px;
+      border: 2px dashed rgba(58, 226, 255, 0.4);
+      border-radius: 50%;
+      animation: dialRotate 10s linear infinite;
+    }
+
+    .dial-inner {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle, rgba(14, 39, 90, 0.6) 0%, rgba(7, 20, 50, 0.9) 100%);
+      border: 2px solid rgba(58, 226, 255, 0.6);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 15px rgba(58, 226, 255, 0.3);
+
+      &::after {
+        content: '';
+        position: absolute;
+        inset: 4px;
+        border: 1px solid rgba(58, 226, 255, 0.2);
+        border-radius: 50%;
+      }
+    }
+
+    .dial-icon {
+      width: 80px;
+      height: 80px;
+      z-index: 2;
+      filter: drop-shadow(0 0 5px rgba(58, 226, 255, 0.5));
+    }
+  }
+
+  .dial-info {
+    .label {
+      margin: 0;
+      color: #9ebfe0;
+      font-size: 16px;
+      margin-bottom: 4px;
+    }
+
+    .value {
+      margin: 0;
+      color: #7ce9ff;
+      font-family: 'DIN Alternate', sans-serif;
+      font-size: 38px;
+      font-weight: 700;
+      line-height: 1;
+    }
+  }
+
+  .dial-separator {
+    width: 1px;
+    height: 50px;
+    background: linear-gradient(to bottom, transparent, rgba(255, 255, 255, 0.2), transparent);
+    position: absolute;
+    right: -20px;
+  }
 }
 </style>

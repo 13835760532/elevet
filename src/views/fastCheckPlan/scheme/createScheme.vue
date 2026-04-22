@@ -28,22 +28,16 @@
                     <!-- 第二行：主管单位与类型 -->
                     <el-col :span="12">
                         <el-form-item label="主管单位" prop="issuerDeptId">
-                            <el-tree-select
-                                v-model="formData.issuerDeptId"
-                                :data="deptTreeOptions"
-                                :props="defaultProps"
-                                placeholder="请选择主管单位"
-                                class="full-width"
-                                filterable
-                                check-strictly
-                                clearable
-                            />
+                            <el-tree-select v-model="formData.issuerDeptId" :data="deptTreeOptions"
+                                :props="defaultProps" placeholder="请选择主管单位" class="full-width" filterable check-strictly
+                                clearable />
                         </el-form-item>
                     </el-col>
                     <el-col :span="12">
                         <el-form-item label="方案类型" prop="planType">
                             <el-select v-model="formData.planType" placeholder="请选择方案类型" class="full-width">
-                                <el-option v-for="dict in planTypeOptions" :key="dict.value" :label="dict.label" :value="dict.value" />
+                                <el-option v-for="dict in planTypeOptions" :key="dict.value" :label="dict.label"
+                                    :value="dict.value" />
                             </el-select>
                         </el-form-item>
                     </el-col>
@@ -62,10 +56,12 @@
                                     <el-option :label="2025" :value="2025" />
                                     <el-option :label="2024" :value="2024" />
                                 </el-select>
-                                <el-select v-model="formData.planPeriodMonth" placeholder="月份" v-if="formData.planPeriodType === 2">
+                                <el-select v-model="formData.planPeriodMonth" placeholder="月份"
+                                    v-if="formData.planPeriodType === 2">
                                     <el-option v-for="m in 12" :key="m" :label="`${m}月`" :value="m" />
                                 </el-select>
-                                 <el-select v-model="formData.planPeriodWeek" placeholder="周" v-if="formData.planPeriodType === 3">
+                                <el-select v-model="formData.planPeriodWeek" placeholder="周"
+                                    v-if="formData.planPeriodType === 3">
                                     <el-option v-for="m in 53" :key="m" :label="`${m}周`" :value="m" />
                                 </el-select>
                             </div>
@@ -73,7 +69,8 @@
                     </el-col>
                     <el-col :span="12">
                         <el-form-item label="方案检测总量" prop="sampleCount">
-                            <el-input v-model.number="formData.sampleCount" min="1" placeholder="请填写检测样品总量" type="number" />
+                            <el-input v-model.number="formData.sampleCount" min="1" placeholder="请填写检测样品总量"
+                                type="number" />
                         </el-form-item>
                     </el-col>
 
@@ -86,9 +83,11 @@
                     <el-col :span="12">
                         <el-form-item label="执行时间" prop="planStartDate">
                             <div class="date-range-group">
-                                <el-date-picker v-model="formData.planStartDate" type="date" placeholder="开始" value-format="YYYY-MM-DD" />
+                                <el-date-picker v-model="formData.planStartDate" type="date" placeholder="开始"
+                                    value-format="YYYY-MM-DD" />
                                 <span class="date-separator">至</span>
-                                <el-date-picker v-model="formData.planEndDate" type="date" placeholder="结束" value-format="YYYY-MM-DD" />
+                                <el-date-picker v-model="formData.planEndDate" type="date" placeholder="结束"
+                                    value-format="YYYY-MM-DD" />
                             </div>
                         </el-form-item>
                     </el-col>
@@ -97,37 +96,46 @@
                     <el-col :span="12">
                         <el-form-item label="农产品行业分类" prop="targetCategory">
                             <el-select v-model="formData.targetCategory" placeholder="请选择产品类别" class="full-width">
-                                <el-option v-for="dict in uniqueCategoryOptions" :key="dict.value" :label="dict.label" :value="dict.value" />
+                                <el-option v-for="dict in uniqueCategoryOptions" :key="dict.value" :label="dict.label"
+                                    :value="dict.value" />
                             </el-select>
                         </el-form-item>
                     </el-col>
-                    <el-col :span="12">
+                    <!-- <el-col :span="12">
                         <el-form-item label="检测项目" prop="detectionItems">
                             <el-input v-model="formData.detectionItems" placeholder="请输入检测项目，多个用逗号分隔" />
                         </el-form-item>
-                    </el-col>
+                    </el-col> -->
 
                     <!-- 备注与附件：全宽 -->
                     <el-col :span="24">
                         <el-form-item label="方案要求" prop="planRequirements">
-                            <el-input v-model="formData.planRequirements" type="textarea" :rows="3" placeholder="请输入具体执行要求或注意事项" />
+                            <el-input v-model="formData.planRequirements" type="textarea" :rows="3"
+                                placeholder="请输入具体执行要求或注意事项" />
                         </el-form-item>
                     </el-col>
 
                     <el-col :span="24">
                         <el-form-item label="方案附件">
                             <div class="upload-wrapper">
-                                <el-upload class="line-upload" drag action="#" :auto-upload="false" :on-change="handleFileChange" :show-file-list="false">
+                                <el-upload class="line-upload" drag action="#" :auto-upload="false"
+                                    :on-change="handleFileChange" :show-file-list="false">
                                     <div class="upload-inner">
-                                        <el-icon><UploadFilled /></el-icon>
+                                        <el-icon>
+                                            <UploadFilled />
+                                        </el-icon>
                                         <span>点击或拖拽上传方案附件文件</span>
                                     </div>
                                 </el-upload>
                                 <div class="file-list" v-if="fileList.length">
                                     <div v-for="(file, index) in fileList" :key="file.uid" class="file-item">
-                                        <el-icon><Document /></el-icon>
+                                        <el-icon>
+                                            <Document />
+                                        </el-icon>
                                         <span class="name">{{ file.name }}</span>
-                                        <el-icon class="close" @click="handleFileRemove(index)"><Close /></el-icon>
+                                        <el-icon class="close" @click="handleFileRemove(index)">
+                                            <Close />
+                                        </el-icon>
                                     </div>
                                 </div>
                             </div>
@@ -229,7 +237,9 @@
                     </div>
                     <div class="attachments-preview">
                         <div v-for="(file, index) in fileList" :key="index" class="attachment-preview-item">
-                            <el-icon><Document /></el-icon>
+                            <el-icon>
+                                <Document />
+                            </el-icon>
                             <span>{{ file.name }}</span>
                         </div>
                     </div>
@@ -270,27 +280,27 @@ const { options: productCategoryOptions } = useDict(DICT_TYPE.AGRI_PRODUCT_CATEG
 
 // 分类去重，防止字典项重复渲染
 const uniqueCategoryOptions = computed(() => {
-  const seen = new Set()
-  return productCategoryOptions.value.filter(item => {
-    if (seen.has(item.value)) return false
-    seen.add(item.value)
-    return true
-  })
+    const seen = new Set()
+    return productCategoryOptions.value.filter(item => {
+        if (seen.has(item.value)) return false
+        seen.add(item.value)
+        return true
+    })
 })
 
 // 使用文件上传 hook
 const {
-  fileList,
-  uploading,
-  handleChange: handleFileChange,
-  handleRemove: handleFileRemove,
-  getAttachmentsJson,
-  setAttachments
+    fileList,
+    uploading,
+    handleChange: handleFileChange,
+    handleRemove: handleFileRemove,
+    getAttachmentsJson,
+    setAttachments
 } = useFileUpload({
-  directory: 'detection-plan',
-  maxSize: 10,
-  accept: ['.docx', '.pdf', '.jpg', '.jpeg', '.png'],
-  maxCount: 5
+    directory: 'detection-plan',
+    maxSize: 10,
+    accept: ['.docx', '.pdf', '.jpg', '.jpeg', '.png'],
+    maxCount: 5
 })
 
 // 判断是否为编辑模式
@@ -542,7 +552,7 @@ onMounted(() => {
         color: #475569;
         font-size: 14px;
         padding-bottom: 6px;
-        
+
         &::before {
             margin-right: 4px;
         }
@@ -557,12 +567,12 @@ onMounted(() => {
         height: 40px;
         background-color: #fff !important;
         transition: border-color 0.2s;
-        
+
         &:hover {
             border-color: #cbd5e1 !important;
         }
-        
-        &.is-focus, 
+
+        &.is-focus,
         &:focus {
             border-color: #2563eb !important;
             box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.05) !important;
@@ -579,10 +589,20 @@ onMounted(() => {
     display: flex;
     gap: 8px;
     width: 100%;
-    
-    .el-select:first-child { width: 110px !important; flex: none; }
-    .el-select:nth-child(2) { width: 110px !important; flex: none; }
-    .el-select:nth-child(3) { flex: 1; }
+
+    .el-select:first-child {
+        width: 110px !important;
+        flex: none;
+    }
+
+    .el-select:nth-child(2) {
+        width: 110px !important;
+        flex: none;
+    }
+
+    .el-select:nth-child(3) {
+        flex: 1;
+    }
 }
 
 .date-range-group {
@@ -590,13 +610,20 @@ onMounted(() => {
     align-items: center;
     gap: 8px;
     width: 100%;
-    .el-date-editor { flex: 1; }
-    .date-separator { color: #94a3b8; font-size: 12px; }
+
+    .el-date-editor {
+        flex: 1;
+    }
+
+    .date-separator {
+        color: #94a3b8;
+        font-size: 12px;
+    }
 }
 
 .upload-wrapper {
     width: 100%;
-    
+
     .line-upload {
         :deep(.el-upload-dragger) {
             height: 48px;
@@ -607,20 +634,23 @@ onMounted(() => {
             border: 1px dashed #cbd5e1;
             border-radius: 8px;
             padding: 0;
-            
+
             &:hover {
                 border-color: #2563eb;
                 background: #eff6ff;
             }
         }
-        
+
         .upload-inner {
             display: flex;
             align-items: center;
             gap: 8px;
             color: #64748b;
             font-size: 14px;
-            .el-icon { font-size: 18px; }
+
+            .el-icon {
+                font-size: 18px;
+            }
         }
     }
 }
@@ -640,9 +670,25 @@ onMounted(() => {
     border-radius: 6px;
     gap: 10px;
     border: 1px solid #e2e8f0;
-    
-    .name { flex: 1; font-size: 13px; color: #475569; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .close { cursor: pointer; color: #94a3b8; font-size: 14px; &:hover { color: #ef4444; } }
+
+    .name {
+        flex: 1;
+        font-size: 13px;
+        color: #475569;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .close {
+        cursor: pointer;
+        color: #94a3b8;
+        font-size: 14px;
+
+        &:hover {
+            color: #ef4444;
+        }
+    }
 }
 
 /* 底部按钮 */
@@ -718,6 +764,7 @@ onMounted(() => {
 
     &.scheme-name {
         border-color: rgba(0, 179, 237, 0.1);
+
         .header-card-value {
             background: #f0faff;
             color: #0085B3;
@@ -727,6 +774,7 @@ onMounted(() => {
 
     &.scheme-code {
         border-color: rgba(82, 196, 26, 0.1);
+
         .header-card-value {
             background: #f6ffed;
             color: #52C41A;
@@ -816,14 +864,37 @@ onMounted(() => {
         }
 
         /* 装饰点颜色 */
-        .dot.d1 { background: #00B3ED; }
-        .dot.d2 { background: #52C41A; }
-        .dot.d3 { background: #F5A623; }
-        .dot.d4 { background: #722ED1; }
-        .dot.d5 { background: #EB2F96; }
-        .dot.d6 { background: #13C2C2; }
-        .dot.d7 { background: #FA541C; }
-        .dot.d8 { background: #2F54EB; }
+        .dot.d1 {
+            background: #00B3ED;
+        }
+
+        .dot.d2 {
+            background: #52C41A;
+        }
+
+        .dot.d3 {
+            background: #F5A623;
+        }
+
+        .dot.d4 {
+            background: #722ED1;
+        }
+
+        .dot.d5 {
+            background: #EB2F96;
+        }
+
+        .dot.d6 {
+            background: #13C2C2;
+        }
+
+        .dot.d7 {
+            background: #FA541C;
+        }
+
+        .dot.d8 {
+            background: #2F54EB;
+        }
     }
 }
 

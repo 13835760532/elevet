@@ -1,19 +1,20 @@
 <template>
   <section class="center-section">
-    <BigPanelCard class="big-panel-center" title="合格证地区分布图" :tabs="['开具', '存证']" active-tab="开具" :bg-image="mapBg">
+    <BigPanelCard class="big-panel-center" title="合格证地区分布图" :tabs="['开具', '存证']" v-model:active-tab="mapTab" :bg-image="mapBg">
       <div class="map-area">
-        <Map />
+        <Map mode="certificate" :certificate-tab="mapTab" />
       </div>
     </BigPanelCard>
 
     <BigPanelCard class="big-panel-center" title="合格证服务趋势图" :bg-image="trendBg">
-      <div class="trend-head">2026年 3月 9日</div>
-      <Echart :options="trendOption" :height="210" />
+      <div class="trend-head">{{ trendHead }}</div>
+      <Echart :options="currentTrendOption" :height="210" />
     </BigPanelCard>
   </section>
 </template>
 
 <script setup lang="ts">
+import { computed, onMounted, ref } from 'vue';
 import echarts from '@/plugins/echarts';
 import { Echart } from '@/components/Echart';
 
@@ -21,10 +22,27 @@ import BigPanelCard from '../bigscreen/BigPanelCard.vue';
 import Map from '../Map.vue';
 import mapBg from '@/assets/imgs/echarts/合格证/Frame 57_bg.png';
 import trendBg from '@/assets/imgs/echarts/合格证/Frame 59_bg.png';
+import {
+  getCertificateServiceTrend,
+  type CertificateServiceTrendRespVO
+} from '@/api/agri/dashboard/certificate';
 
+const mapTab = ref('开具');
+const trendData = ref<CertificateServiceTrendRespVO>({});
 
+const defaultMonths = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
 
-const trendOption = {
+const normalizeSeries = (series?: number[], length = 12) => {
+  const result = Array.from({ length }, (_, index) => Number(series?.[index] || 0));
+  return result;
+};
+
+const createTrendOption = (
+  xAxisData: string[],
+  issueData: number[],
+  storeData: number[],
+  traceData: number[]
+) => ({
   grid: { left: 45, right: 20, top: 14, bottom: 26 },
   tooltip: { trigger: 'axis' },
   legend: {
@@ -36,13 +54,13 @@ const trendOption = {
   xAxis: {
     type: 'category',
     boundaryGap: false,
-    data: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'],
+    data: xAxisData,
     axisLabel: { color: '#8fb6da' },
     axisLine: { lineStyle: { color: '#2d67ac' } }
   },
   yAxis: {
     type: 'value',
-    axisLabel: { color: '#8fb6da', formatter: '{value}%' },
+    axisLabel: { color: '#8fb6da' },
     splitLine: { lineStyle: { color: 'rgba(45, 106, 184, 0.35)', type: 'dashed' } }
   },
   series: [
@@ -60,7 +78,7 @@ const trendOption = {
           { offset: 1, color: 'rgba(85, 232, 255, 0.02)' }
         ])
       },
-      data: [12, 32, 24, 36, 41, 44, 26, 33, 37, 31, 25, 24]
+      data: issueData
     },
     {
       name: '存证次数',
@@ -69,7 +87,7 @@ const trendOption = {
       symbolSize: 5,
       lineStyle: { color: '#7bd644', width: 2 },
       itemStyle: { color: '#7bd644' },
-      data: [18, 35, 30, 44, 47, 50, 35, 40, 43, 37, 31, 30]
+      data: storeData
     },
     {
       name: '溯源次数',
@@ -78,10 +96,44 @@ const trendOption = {
       symbolSize: 5,
       lineStyle: { color: '#7d60ff', width: 2 },
       itemStyle: { color: '#7d60ff' },
-      data: [22, 39, 35, 48, 50, 53, 39, 44, 46, 39, 34, 33]
+      data: traceData
     }
   ]
+});
+
+const xAxisData = computed(() => {
+  const axis = trendData.value.xaxis || [];
+  return axis.length ? axis : defaultMonths;
+});
+
+const currentTrendOption = computed(() =>
+  createTrendOption(
+    xAxisData.value,
+    normalizeSeries(trendData.value.issueCounts, xAxisData.value.length),
+    normalizeSeries(trendData.value.verificationCounts, xAxisData.value.length),
+    normalizeSeries(trendData.value.traceCounts, xAxisData.value.length)
+  )
+);
+
+const trendHead = computed(() => {
+  const axis = xAxisData.value;
+  if (!axis.length) return '';
+  return `${axis[0]} - ${axis[axis.length - 1]}`;
+});
+
+const loadTrendData = async () => {
+  try {
+    const data = await getCertificateServiceTrend();
+    trendData.value = data || {};
+  } catch (error) {
+    console.error('加载合格证服务趋势失败', error);
+    trendData.value = {};
+  }
 };
+
+onMounted(() => {
+  loadTrendData();
+});
 </script>
 
 <style scoped lang="scss">

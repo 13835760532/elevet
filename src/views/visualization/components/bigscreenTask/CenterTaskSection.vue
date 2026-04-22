@@ -2,7 +2,7 @@
   <section class="center-section">
     <BigPanelCard class="big-panel-center" title="检测任务地域发布" :bg-image="centerBg">
       <div class="map-area">
-        <Map />
+        <Map mode="task" />
       </div>
     </BigPanelCard>
   </section>
@@ -18,6 +18,14 @@ import centerBg from '@/assets/imgs/echarts/检测任务/rwjcfx_bg.png';
 <style scoped lang="scss">
 .center-section {
   min-width: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.big-panel-center {
+  flex: 1;
+  min-height: 0;
 }
 
 .map-area {

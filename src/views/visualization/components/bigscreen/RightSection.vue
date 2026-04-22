@@ -9,7 +9,7 @@
       </div>
     </BigPanelCard>
 
-    <BigPanelCard title="风险集中区域 TOP 10" :tabs="['产地', '检测地']" active-tab="产地" :bg-image="rankBg">
+    <BigPanelCard title="风险集中区域 TOP 10" :tabs="['产地', '检测地']" v-model:active-tab="rankTab" :bg-image="rankBg">
       <div class="rank-table-wrap">
         <table class="rank-table">
           <thead>
@@ -19,7 +19,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(city, idx) in rankData" :key="city + idx">
+            <tr v-for="(city, idx) in currentRankData" :key="city + idx">
               <td><span class="rank-badge" :class="`top-${idx + 1}`">{{ String(idx + 1).padStart(2, '0') }}</span></td>
               <td>{{ city }}</td>
             </tr>
@@ -28,19 +28,26 @@
       </div>
     </BigPanelCard>
 
-    <BigPanelCard title="产品检测项风险TOP10" :tabs="['检测量', '阳性率']" active-tab="检测量" :bg-image="riskBg">
-      <Echart :options="projectRiskOption" :height="300" />
+    <BigPanelCard title="产品检测项风险TOP10" :tabs="['检测量', '阳性率']" v-model:active-tab="projectRiskTab" :bg-image="riskBg">
+      <Echart :options="currentProjectRiskOption" :height="300" />
     </BigPanelCard>
   </section>
 </template>
 
 <script setup lang="ts">
+import { computed, onMounted, ref, watch } from 'vue';
 import echarts from '@/plugins/echarts';
 import { Echart } from '@/components/Echart';
 import BigPanelCard from './BigPanelCard.vue';
 import noticeBg from '@/assets/imgs/echarts/首页/bg_fxgg.png';
 import rankBg from '@/assets/imgs/echarts/首页/fxjzqy_bg.png';
 import riskBg from '@/assets/imgs/echarts/首页/nclfx_bg.png';
+import {
+  getProductPesticideTop10,
+  getRiskAreaTop10,
+  type ProductPesticideTopRespVO,
+  type RiskAreaTopRespVO
+} from '@/api/agri/dashboard';
 
 const announcements = [
   { time: '2025-10-01 17:56', text: 'xx农产品(生产经营主体:xx)，发现xxx项目不合格。(检测机构:xx)' },
@@ -48,20 +55,26 @@ const announcements = [
   { time: '2025-10-01 17:56', text: 'xx农产品(生产经营主体:xx)，发现xxx项目不合格。(检测机构:xx)' }
 ];
 
-const rankData = ['福州', '南京', '广州', '台湾', '广州', '台湾', '广州', '台湾', '广州', '南京'];
-const projectItems = ['丝瓜-甲氨基', '地瓜-阿维菌素', '四季豆-倍硫磷', '南瓜-氟虫腈', '西瓜-氟虫腈', '白菜-毒死蜱', '白菜-毒死蜱', '白菜-毒死蜱', '白菜-毒死蜱', '白菜-毒死蜱'];
-const projectValues = [0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.33, 0.29, 0.21, 0.2];
+const rankTab = ref('产地');
+const projectRiskTab = ref('检测量');
+const rankList = ref<RiskAreaTopRespVO[]>([]);
+const projectRiskList = ref<ProductPesticideTopRespVO[]>([]);
 
-const projectRiskOption = {
+const createProjectRiskOption = (
+  labels: string[],
+  values: number[],
+  max: number,
+  formatter: (val: number) => string
+) => ({
   grid: { left: 96, right: 52, top: 8, bottom: 20 },
   xAxis: {
     type: 'value',
     min: 0,
-    max: 1,
-    interval: 0.2,
+    max,
+    interval: max <= 1 ? 0.2 : 100,
     splitLine: { lineStyle: { color: 'rgba(45, 106, 184, 0.35)', type: 'dashed' } },
     axisLine: { lineStyle: { color: '#2d67ac' } },
-    axisLabel: { color: '#80abd3' }
+    axisLabel: { color: '#80abd3', formatter }
   },
   yAxis: [
     {
@@ -70,7 +83,7 @@ const projectRiskOption = {
       axisLine: { show: false },
       axisTick: { show: false },
       axisLabel: { color: '#d4ebff', fontSize: 12 },
-      data: projectItems
+      data: labels
     },
     {
       type: 'category',
@@ -82,16 +95,16 @@ const projectRiskOption = {
         color: '#4deaff',
         fontSize: 16,
         fontWeight: 700,
-        formatter: (val: number) => Number(val).toFixed(1)
+        formatter
       },
-      data: projectValues
+      data: values
     }
   ],
   series: [
     {
       type: 'bar',
       barWidth: 12,
-      data: projectValues,
+      data: values,
       itemStyle: {
         barBorderRadius: [0, 8, 8, 0],
         color: new echarts.graphic.LinearGradient(1, 0, 0, 0, [
@@ -101,7 +114,99 @@ const projectRiskOption = {
       }
     }
   ]
+});
+
+const currentRankData = computed(() => rankList.value.map((item) => item.areaName || '--'));
+const projectLabels = computed(() =>
+  projectRiskList.value.length
+    ? projectRiskList.value.map((item) => item.combineName || '--')
+    : [
+        '丝瓜-甲氨基',
+        '地瓜-阿维菌素',
+        '四季豆-倍硫磷',
+        '南瓜-氟虫腈',
+        '西瓜-氟虫腈',
+        '白菜-毒死蜱',
+        '白菜-毒死蜱',
+        '白菜-毒死蜱',
+        '白菜-毒死蜱',
+        '白菜-毒死蜱'
+      ]
+);
+const projectValues = computed(() =>
+  projectRiskList.value.length
+    ? projectRiskList.value.map((item) => Number(item.statValue || 0))
+    : projectRiskTab.value === '阳性率'
+    ? [0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.33, 0.29, 0.21, 0.2]
+    : [490, 430, 380, 320, 280, 210, 180, 150, 110, 95]
+);
+const projectMax = computed(() => {
+  const maxValue = Math.max(...projectValues.value, 0);
+  if (projectRiskTab.value === '阳性率') {
+    return Math.max(1, Math.ceil(maxValue / 0.2) * 0.2);
+  }
+  if (maxValue <= 0) return 100;
+  return Math.ceil(maxValue * 1.1);
+});
+const currentProjectRiskOption = computed(() =>
+  projectRiskTab.value === '阳性率'
+    ? createProjectRiskOption(
+        projectLabels.value,
+        projectValues.value,
+        projectMax.value,
+        (val: number) => `${Number(val).toFixed(2)}%`
+      )
+    : createProjectRiskOption(
+        projectLabels.value,
+        projectValues.value,
+        projectMax.value,
+        (val: number) => String(Math.round(val))
+      )
+);
+
+const loadRiskAreaTop10 = async () => {
+  try {
+    const data = await getRiskAreaTop10({
+      areaType: rankTab.value === '产地' ? '1' : '2',
+      areaLevel: '1'
+    });
+    rankList.value = Array.isArray(data) ? data : [];
+  } catch (error) {
+    console.error('加载风险集中区域 TOP10 失败', error);
+    rankList.value = [];
+  }
 };
+
+const loadProductPesticideTop10 = async () => {
+  try {
+    const data = await getProductPesticideTop10({
+      statType: projectRiskTab.value === '阳性率' ? '2' : '1'
+    });
+    projectRiskList.value = Array.isArray(data) ? data : [];
+  } catch (error) {
+    console.error('加载产品检测项风险 TOP10 失败', error);
+    projectRiskList.value = [];
+  }
+};
+
+watch(
+  () => rankTab.value,
+  () => {
+    loadRiskAreaTop10();
+  }
+);
+
+watch(
+  () => projectRiskTab.value,
+  () => {
+    loadProductPesticideTop10();
+  }
+);
+
+onMounted(() => {
+  loadRiskAreaTop10();
+  loadProductPesticideTop10();
+});
 </script>
 
 <style scoped lang="scss">

@@ -1,7 +1,7 @@
 <template>
   <section class="left-section">
     <BigScreenSelector />
-    
+
     <BigPanelCard title="合格证概况" :bg-image="leftBg">
       <div class="overview-grid">
         <div class="overview-card" :class="item.type" v-for="item in overviewData" :key="item.label">
@@ -51,24 +51,48 @@
 </template>
 
 <script setup lang="ts">
-import { reactive } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
 import { Echart } from '@/components/Echart';
 import BigPanelCard from '../bigscreen/BigPanelCard.vue';
 import BigScreenSelector from '../bigscreen/BigScreenSelector.vue';
 import leftBg from '@/assets/imgs/echarts/合格证/Frame 58_bg.png';
+import {
+  getCertificateCategoryDistribution,
+  getCertificateOverview,
+  type CertificateCategoryDistributionRespVO,
+  type DashboardCertificateOverviewRespVO
+} from '@/api/agri/dashboard/certificate';
 
-const overviewData = [
-  { label: '合格证开具', value: '128813', unit: '份', type: 'blue' },
-  { label: '合格证存证', value: '128813', unit: '份', type: 'green' },
-  { label: '合格证查验', value: '128813', unit: '次', type: 'cyan' },
-  { label: '合格证溯源', value: '128813', unit: '次', type: 'orange' }
-];
+const overview = ref<DashboardCertificateOverviewRespVO>({});
+const categoryDistribution = ref<CertificateCategoryDistributionRespVO[]>([]);
 
-const subjectData = [
-  { label: '监管机构/检测机构', value: 213 },
-  { label: '企业', value: 2568 },
-  { label: '个人', value: 2568 }
-];
+const overviewData = computed(() => [
+  { label: '合格证开具', value: Number(overview.value.issueCount || 0), unit: '份', type: 'blue' },
+  {
+    label: '合格证存证',
+    value: Number(overview.value.verificationCount || 0),
+    unit: '份',
+    type: 'green'
+  },
+  { label: '合格证溯源', value: Number(overview.value.traceCount || 0), unit: '次', type: 'orange' }
+]);
+
+const subjectData = computed(() => [
+  { label: '开具主体', value: Number(overview.value.issueSubjectCount || 0) },
+  { label: '存证主体', value: Number(overview.value.verificationSubjectCount || 0) }
+]);
+
+const loadOverviewData = async () => {
+  try {
+    const data = await getCertificateOverview();
+    overview.value = data || {};
+  } catch (error) {
+    console.error('加载合格证概览数据失败', error);
+    overview.value = {};
+  }
+};
+
+const pieColors = ['#3b82f6', '#f59e0b', '#06b6d4', '#cbd5e1', '#22d3ee', '#34d399', '#f97316'];
 
 const categoryPieOption = reactive({
   tooltip: { trigger: 'item' },
@@ -79,7 +103,7 @@ const categoryPieOption = reactive({
     itemWidth: 12,
     itemHeight: 12,
     textStyle: { color: '#8eb6db', fontSize: 14 },
-    data: ['蔬菜', '水果', '茶叶', '畜禽', '水产']
+    data: []
   },
   series: [
     {
@@ -113,16 +137,35 @@ const categoryPieOption = reactive({
         borderWidth: 2,
         borderColor: '#020617'
       },
-      data: [
-        { value: 18886, name: '蔬菜' },
-        { value: 18886, name: '水果' },
-        { value: 18886, name: '茶叶' },
-        { value: 18886, name: '畜禽' },
-        { value: 18886, name: '水产' }
-      ],
-      color: ['#3b82f6', '#f59e0b', '#06b6d4', '#cbd5e1', '#22d3ee']
+      data: [],
+      color: pieColors
     }
   ]
+});
+
+const updateCategoryChart = (list: CertificateCategoryDistributionRespVO[] = []) => {
+  const chartData = list.map((item) => ({
+    value: Number(item.issueCount || 0),
+    name: item.category || '--'
+  }));
+  categoryPieOption.legend.data = chartData.map((item) => item.name);
+  categoryPieOption.series[0].data = chartData;
+};
+
+const loadCategoryDistribution = async () => {
+  try {
+    const data = await getCertificateCategoryDistribution();
+    categoryDistribution.value = Array.isArray(data) ? data : [];
+  } catch (error) {
+    console.error('加载合格证品类分布失败', error);
+    categoryDistribution.value = [];
+  }
+  updateCategoryChart(categoryDistribution.value);
+};
+
+onMounted(() => {
+  loadOverviewData();
+  loadCategoryDistribution();
 });
 </script>
 
@@ -304,8 +347,8 @@ const categoryPieOption = reactive({
   }
 
   .separator {
-    width: 1px;
-    height: 40px;
+    width: 2px;
+    height: 80px;
     background: linear-gradient(to bottom, transparent, rgba(255, 255, 255, 0.3), transparent);
     position: absolute;
     right: 0;

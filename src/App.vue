@@ -27,7 +27,7 @@ const setDefaultTheme = () => {
 setDefaultTheme()
 
 // 仅在大屏页面启用 autofit
-const bigScreenRoutes = ['BigScreen', 'BigScreenCertificate', 'BigScreenTask']
+const bigScreenRoutes = ['BigScreen', 'BigScreenCertificate', 'BigScreenTask', 'BigScreenQuick']
 watch(
   () => route.name,
   (newName) => {

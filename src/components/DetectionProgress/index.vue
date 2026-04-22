@@ -2,54 +2,30 @@
     <div class="detection-progress">
         <!-- 查询区域 - 玻璃拟态子卡片 -->
         <div class="glass-sub-card query-card">
-            <el-form :model="query" :inline="true" class="custom-query-form" label-position="left" label-width="80px">
-                <el-form-item label="所属任务" label-width="80px">
-                    <el-select-v2
-                        v-model="query.task"
-                        placeholder="请选择"
-                        clearable
-                        class="custom-select w200"
-                        :options="taskOptions"
-                    />
+            <el-form :model="query" :inline="true" class="custom-query-form custom-query-form-row" label-position="left"
+                label-width="80px">
+                <el-form-item label="" label-width="80px">
+                    <el-select-v2 v-model="query.task" placeholder="所属任务" clearable class="custom-select w200"
+                        :options="taskOptions" />
                 </el-form-item>
-                <el-form-item label="抽检机构" label-width="80px">
-                    <el-select-v2
-                        v-model="query.org"
-                        placeholder="请选择"
-                        clearable
-                        class="custom-select w150"
-                        :options="orgOptions"
-                    />
+                <el-form-item label="" label-width="80px">
+                    <el-select-v2 v-model="query.org" placeholder="抽检机构" clearable class="custom-select w150"
+                        :options="orgOptions" />
                 </el-form-item>
-                <el-form-item label="样品" label-width="80px">
+                <el-form-item label="" label-width="80px">
                     <el-input v-model="query.sample" placeholder="请输入样品编号/名称" clearable class="custom-input w200" />
                 </el-form-item>
-                <el-form-item label="产品分类" label-width="80px">
-                    <el-select-v2
-                        v-model="query.category"
-                        placeholder="请选择"
-                        clearable
-                        class="custom-select w120"
-                        :options="categoryOptions"
-                    />
+                <el-form-item label="" label-width="80px">
+                    <el-select-v2 v-model="query.category" placeholder="产品分类" clearable class="custom-select w120"
+                        :options="categoryOptions" />
                 </el-form-item>
-                <el-form-item label="检测结果" label-width="80px">
-                    <el-select-v2
-                        v-model="query.result"
-                        placeholder="请选择"
-                        clearable
-                        class="custom-select w120"
-                        :options="resultOptions"
-                    />
+                <el-form-item label="" label-width="80px">
+                    <el-select-v2 v-model="query.result" placeholder="检测结果" clearable class="custom-select w120"
+                        :options="resultOptions" />
                 </el-form-item>
-                <el-form-item label="检测状态" label-width="80px">
-                    <el-select-v2
-                        v-model="query.status"
-                        placeholder="请选择"
-                        clearable
-                        class="custom-select w120"
-                        :options="statusOptions"
-                    />
+                <el-form-item label="" label-width="80px">
+                    <el-select-v2 v-model="query.status" placeholder="检测状态" clearable class="custom-select w120"
+                        :options="statusOptions" />
                 </el-form-item>
 
                 <div class="query-btns">
@@ -61,12 +37,10 @@
 
         <!-- 操作按钮与表格间隙 -->
         <div class="operation-header">
-            <div class="left-hint">
-                <span class="import-hint">*支持第三方检测结果批量导入</span>
-            </div>
+
             <div class="right-actions">
                 <el-button type="primary" class="btn-input" @click="handleSingleInput">单条录入</el-button>
-                <el-button type="primary" class="btn-import" @click="handleBatchImport">批量导入</el-button>
+
             </div>
         </div>
 
@@ -104,9 +78,9 @@
             </el-table>
 
             <div class="pagination-wrapper">
-                <el-pagination :current-page="page.pageNum" :page-size="page.pageSize" :total="total"
-                    background layout="prev, pager, next" class="custom-pagination"
-                    @current-change="handleCurrentChange" @size-change="handleSizeChange" />
+                <el-pagination :current-page="page.pageNum" :page-size="page.pageSize" :total="total" background
+                    layout="prev, pager, next" class="custom-pagination" @current-change="handleCurrentChange"
+                    @size-change="handleSizeChange" />
             </div>
         </div>
     </div>
@@ -203,19 +177,22 @@ const handleReset = () => {
 
 // 单条录入
 const handleSingleInput = () => {
-    emit('single-input');
-    router.push('/rapidDetection/create');
+    //  emit('single-input');
+    router.push({
+        path: '/rapidDetection/create',
+        query: { id: router.currentRoute.value.query.id }
+    });
 };
 
 // 批量导入
 const handleBatchImport = () => {
-    emit('batch-import');
+    //   emit('batch-import');
     router.push('/rapidDetection/batchImportData');
 };
 
 // 查看详情
 const handleViewDetail = (row) => {
-    emit('view-detail', row);
+    // emit('view-detail', row);
     router.push({
         path: '/taskDetection/taskDetail',
         query: { id: row.sampleNo }

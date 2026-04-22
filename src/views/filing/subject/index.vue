@@ -13,63 +13,39 @@
                 <h2 class="card-title">主体建档查询</h2>
             </div>
             <div class="query-form-wrapper">
-                <el-form :inline="true" :model="queryParams" class="custom-query-form custom-query-form-row" label-position="left">
+                <el-form :inline="true" :model="queryParams" class="custom-query-form custom-query-form-row"
+                    label-position="left">
                     <el-form-item label="">
-                        <el-input 
-                            clearable 
-                            v-model="queryParams.name" 
-                            placeholder="请输入主体名称" 
-                            class="custom-input w180" 
-                        />
+                        <el-input clearable v-model="queryParams.name" placeholder="请输入主体名称"
+                            class="custom-input w180" />
                     </el-form-item>
                     <el-form-item label="">
                         <el-select v-model="queryParams.type" placeholder="备案类型" class="custom-select w130" clearable>
                             <el-option label="全部" value="" />
-                            <el-option 
-                                v-for="dict in filingTypeOptions" 
-                                :key="dict.value" 
-                                :label="dict.label" 
-                                :value="dict.value" 
-                            />
+                            <el-option v-for="dict in filingTypeOptions" :key="dict.value" :label="dict.label"
+                                :value="dict.value" />
                         </el-select>
                     </el-form-item>
                     <el-form-item label="">
-                        <el-select v-model="queryParams.category" placeholder="主体类型" class="custom-select w130" clearable>
+                        <el-select v-model="queryParams.category" placeholder="主体类型" class="custom-select w130"
+                            clearable>
                             <el-option label="全部类别" value="" />
-                            <el-option 
-                                v-for="dict in categoryOptions" 
-                                :key="dict.value" 
-                                :label="dict.label" 
-                                :value="dict.value" 
-                            />
+                            <el-option v-for="dict in categoryOptions" :key="dict.value" :label="dict.label"
+                                :value="dict.value" />
                         </el-select>
                     </el-form-item>
                     <el-form-item label="">
-                        <AreaCascader 
-                            v-model="queryParams.region" 
-                            placeholder="请选择所属地区"
-                            class="custom-cascader w180"
-                            @select="handleAreaSelect"
-                        />
+                        <AreaCascader v-model="queryParams.region" placeholder="请选择所属地区" class="custom-cascader w180"
+                            @select="handleAreaSelect" />
                     </el-form-item>
                     <el-form-item label="">
-                        <el-input 
-                            clearable 
-                            v-model="queryParams.socialCreditCodeOrIdCard" 
-                            placeholder="请输入企业代码或身份证"
-                            class="custom-input w180" 
-                        />
+                        <el-input clearable v-model="queryParams.socialCreditCodeOrIdCard" placeholder="请输入企业代码或身份证"
+                            class="custom-input w180" />
                     </el-form-item>
                     <el-form-item label="">
-                        <el-date-picker
-                            v-model="queryParams.createTime"
-                            type="daterange"
-                            start-placeholder="开始日期"
-                            end-placeholder="结束日期"
-                            value-format="YYYY-MM-DD"
-                            class="custom-datepicker w240"
-                            style="width: 260px !important; flex-shrink: 0;"
-                        />
+                        <el-date-picker v-model="queryParams.createTime" type="daterange" start-placeholder="开始日期"
+                            end-placeholder="结束日期" value-format="YYYY-MM-DD" class="custom-datepicker w240"
+                            style="width: 260px !important; flex-shrink: 0;" />
                     </el-form-item>
 
                     <div class="query-btns">
@@ -106,12 +82,14 @@
                     <el-table-column label="主体名称" prop="name" min-width="180" show-overflow-tooltip />
                     <el-table-column label="所属地区" align="center" width="160" show-overflow-tooltip>
                         <template #default="scope">
-                            {{ scope.row.provinceCode ? `${scope.row.provinceCode}${scope.row.cityCode}${scope.row.districtCode}` : '--' }}
+                            {{ scope.row.provinceCode ? `${scope.row.provinceCode}${scope.row.cityCode ?
+                                scope.row.cityCode : ''}${scope.row.districtCode ? scope.row.districtCode : ''}` : '--' }}
                         </template>
                     </el-table-column>
                     <el-table-column label="备案类型" prop="type" width="100" align="center">
                         <template #default="scope">
-                            {{ scope.row.type !== undefined && scope.row.type !== null ? getFilingTypeLabel(scope.row.type) : '--' }}
+                            {{ scope.row.type !== undefined && scope.row.type !== null ?
+                                getFilingTypeLabel(scope.row.type) : '--' }}
                         </template>
                     </el-table-column>
                     <el-table-column label="主体类型" prop="category" width="100" align="center">
@@ -119,15 +97,17 @@
                             {{ scope.row.category ? getCategoryLabel(scope.row.category) : '--' }}
                         </template>
                     </el-table-column>
-                    <el-table-column label="主营产品" prop="mainProducts" width="120" align="center" show-overflow-tooltip />
+                    <el-table-column label="主营产品" prop="mainProducts" width="120" align="center"
+                        show-overflow-tooltip />
                     <el-table-column label="联系人" prop="contactName" width="100" align="center" />
                     <el-table-column label="电话" prop="contactPhone" width="130" align="center">
                         <template #default="scope">
                             {{ maskPhone(scope.row.contactPhone) }}
                         </template>
                     </el-table-column>
-                 
-                    <el-table-column label="创建时间" prop="createTime" width="160" align="center" :formatter="dateFormatter2" />
+
+                    <el-table-column label="创建时间" prop="createTime" width="160" align="center"
+                        :formatter="dateFormatter2" />
                     <el-table-column label="操作" width="160" align="center" fixed="right">
                         <template #default="scope">
                             <div class="table-operate-action-btns">
@@ -143,7 +123,7 @@
             <!-- 分页区域 -->
             <div class="pagination-wrapper">
                 <el-pagination v-model:current-page="pageParams.pageNo" v-model:page-size="pageParams.pageSize"
-                    :total="total" background layout="total, prev, pager, next, sizes" class="custom-pagination" 
+                    :total="total" background layout="total, prev, pager, next, sizes" class="custom-pagination"
                     @size-change="getList" @current-change="getList" />
             </div>
         </div>
@@ -214,7 +194,7 @@ const getList = async () => {
             params.cityCode = selectedAreaNames.value[1];
             params.districtCode = selectedAreaNames.value[2];
         }
-  
+
         // 处理时间范围
         if (queryParams.createTime && queryParams.createTime.length === 2) {
             params.beginCreateTime = queryParams.createTime[0] + ' 00:00:00';
@@ -250,7 +230,7 @@ const handleExport = async () => {
     try {
         await message.exportConfirm();
         exportLoading.value = true;
-        
+
         const params = {
             ...queryParams,
             pageNo: pageParams.pageNo,
@@ -270,9 +250,15 @@ const handleExport = async () => {
         }
 
         const res = await SubjectApi.exportSubject(params);
-        download.excel(res, '主体档案导出.xls');
+        if (res) {
+            download.excel(res, '主体档案导出.xls');
+            message.success('导出成功');
+        }
     } catch (error) {
-        console.error('导出失败', error);
+        if (error !== 'cancel') {
+            console.error('导出失败', error);
+            message.error('导出失败');
+        }
     } finally {
         exportLoading.value = false;
     }
@@ -293,7 +279,7 @@ const handleDelete = async (row) => {
         await SubjectApi.deleteSubject(row.id);
         message.success('删除成功');
         getList();
-    } catch (error) {}
+    } catch (error) { }
 };
 
 const handleView = (row) => { router.push('/filing/subjectDetail?id=' + row.id); };
@@ -324,7 +310,8 @@ onMounted(() => {
     height: 100%;
     display: flex;
     flex-direction: column;
-    overflow: hidden !important; /* 强制禁止外层滚动条 */
+    overflow: hidden !important;
+    /* 强制禁止外层滚动条 */
 }
 
 .query-card {
@@ -333,7 +320,8 @@ onMounted(() => {
     flex-direction: column;
     overflow: hidden;
     margin-bottom: 0;
-    min-height: 0; /* 允许 Flex 子项收缩 */
+    min-height: 0;
+    /* 允许 Flex 子项收缩 */
 }
 
 .table-wrapper {
@@ -343,14 +331,32 @@ onMounted(() => {
 }
 
 /* 响应式调整 */
-.w180 { width: 180px !important; }
-.w100 { width: 100px !important; }
-.w60 { width: 60px !important; }
-.w80 { width: 80px !important; }
-.w130 { width: 130px !important; }
-.w200 { width: 200px !important; }
-.w240 { 
-    width: 380px !important; 
+.w180 {
+    width: 180px !important;
+}
+
+.w100 {
+    width: 100px !important;
+}
+
+.w60 {
+    width: 60px !important;
+}
+
+.w80 {
+    width: 80px !important;
+}
+
+.w130 {
+    width: 130px !important;
+}
+
+.w200 {
+    width: 200px !important;
+}
+
+.w240 {
+    width: 380px !important;
     min-width: 380px !important;
     flex-shrink: 0;
 }
@@ -358,6 +364,7 @@ onMounted(() => {
 @media (max-width: 1500px) {
     .custom-query-form-row {
         gap: 12px;
+
         :deep(.el-form-item) {
             margin-right: 12px !important;
         }

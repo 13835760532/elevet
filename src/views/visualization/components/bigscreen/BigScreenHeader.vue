@@ -10,14 +10,9 @@
         <div class="caret-icon"></div>
       </div>
 
-      <div
-        class="nav-btn"
-        v-for="item in leftMenus"
-        :key="item.key"
-        :class="{ active: activeMenu === item.key }"
+      <div class="nav-btn" v-for="item in leftMenus" :key="item.key" :class="{ active: activeMenu === item.key }"
         :style="{ backgroundImage: `url(${activeMenu === item.key ? item.activeBg : item.bg})` }"
-        @click="$emit('update:activeMenu', item.key)"
-      >
+        @click="$emit('update:activeMenu', item.key)">
         <span class="btn-label"></span>
       </div>
       <!-- 数据配置弹窗 -->
@@ -33,15 +28,8 @@
         <div class="panel-body">
           <div class="form-item">
             <div class="item-label">数据时间范围</div>
-            <el-date-picker
-              v-model="configForm.timeRange"
-              type="daterange"
-              range-separator="至"
-              start-placeholder="开始日期"
-              end-placeholder="结束日期"
-              size="small"
-              class="custom-date-picker"
-            />
+            <el-date-picker v-model="configForm.timeRange" type="daterange" range-separator="至" start-placeholder="开始日期"
+              end-placeholder="结束日期" size="small" class="custom-date-picker" />
           </div>
 
           <div class="form-item">
@@ -55,13 +43,8 @@
             <div class="item-label">风险公告更新频次</div>
             <div class="frequency-input">
               <span>每</span>
-              <el-input-number
-                v-model="configForm.frequency"
-                :min="1"
-                :controls="false"
-                size="small"
-                class="custom-number-input"
-              />
+              <el-input-number v-model="configForm.frequency" :min="1" :controls="false" size="small"
+                class="custom-number-input" />
               <span>分钟更新一次</span>
             </div>
           </div>
@@ -73,18 +56,13 @@
         </div>
       </div>
     </div>
-    <div class="header-center" >
+    <div class="header-center">
       <h1>链安食检数智服务平台</h1>
     </div>
     <div class="header-side right">
-      <div
-        class="nav-btn"
-        v-for="item in rightMenus"
-        :key="item.key"
-        :class="{ active: activeMenu === item.key }"
+      <div class="nav-btn" v-for="item in rightMenus" :key="item.key" :class="{ active: activeMenu === item.key }"
         :style="{ backgroundImage: `url(${activeMenu === item.key ? item.activeBg : item.bg})` }"
-        @click="$emit('update:activeMenu', item.key)"
-      >
+        @click="$emit('update:activeMenu', item.key)">
         <span class="btn-label"></span>
       </div>
       <div class="assistant-badge">
@@ -106,7 +84,7 @@ import dataConfigBg from '@/assets/imgs/echarts/首页/sjpz_bg.png';
 import taskBg from '@/assets/imgs/echarts/首页/jcrw_nor.png';
 import taskBgActive from '@/assets/imgs/echarts/首页/jcrw_pr.png';
 import inspectBg from '@/assets/imgs/echarts/首页/jiance_nor.png';
-import inspectBgActive from '@/assets/imgs/echarts/首页/jiance_pr.png';
+import inspectBgActive from '@/assets/imgs/echarts/首页/jiance_pr.jpg';
 import certBg from '@/assets/imgs/echarts/首页/hegezheng_nor.png';
 import certBgActive from '@/assets/imgs/echarts/首页/hgz_pr.png';
 import warnBg from '@/assets/imgs/echarts/首页/xyyj_nor.png';
@@ -166,10 +144,12 @@ const rightMenus = [
 .header-side {
   display: flex;
   justify-content: flex-end;
-  column-gap: 2px; /* 增加间距 */
+  column-gap: 2px;
+  /* 增加间距 */
   padding: 12px 30px 0;
   align-self: start;
-  position: relative; /* 为弹窗定位 */
+  position: relative;
+  /* 为弹窗定位 */
 
   &.right {
     justify-content: flex-start;
@@ -266,7 +246,8 @@ const rightMenus = [
     pointer-events: none;
     z-index: 1;
   }
-  &::after{
+
+  &::after {
     content: "";
     position: absolute;
     width: 14px;
@@ -331,14 +312,17 @@ const rightMenus = [
     background: transparent !important;
     color: #d4eaff !important;
     font-size: 18px !important;
+
     &::placeholder {
       color: rgba(212, 234, 255, 0.5) !important;
     }
   }
+
   .el-range-separator {
     color: #9ebfdd !important;
     font-size: 18px;
   }
+
   .el-icon {
     color: #43e4ff !important;
     font-size: 18px;
@@ -347,16 +331,19 @@ const rightMenus = [
 
 :deep(.custom-select) {
   width: 100% !important;
+
   .el-input__wrapper {
     background: rgba(13, 35, 75, 0.6) !important;
     box-shadow: 0 0 0 1px #3a87e3 inset !important;
     border-radius: 2px;
   }
+
   .el-input__inner {
     color: #d4eaff !important;
     font-size: 18px !important;
     height: 42px !important;
   }
+
   .el-select__caret {
     color: #00daff !important;
     font-size: 20px;
@@ -365,12 +352,14 @@ const rightMenus = [
 
 :deep(.custom-number-input) {
   width: 100px !important;
+
   .el-input__wrapper {
     background: rgba(13, 35, 75, 0.6) !important;
     box-shadow: 0 0 0 1px #3a87e3 inset !important;
     border-radius: 2px;
     padding: 0 8px;
   }
+
   .el-input__inner {
     color: #d4eaff !important;
     font-size: 20px !important;
@@ -394,6 +383,7 @@ const rightMenus = [
   .save-btn {
     background: #18acb2 !important;
     color: #fff !important;
+
     &:hover {
       opacity: 0.9;
     }
@@ -403,6 +393,7 @@ const rightMenus = [
     background: transparent !important;
     border: 1px solid rgba(57, 141, 231, 0.6) !important;
     color: #9ebfdd !important;
+
     &:hover {
       background: rgba(57, 141, 231, 0.1) !important;
     }

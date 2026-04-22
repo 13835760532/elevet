@@ -5,7 +5,14 @@
         <h3 class="panel-title">{{ title }}</h3>
       </div>
       <div v-if="tabs.length" class="panel-tabs">
-        <button v-for="tab in tabs" :key="tab" class="panel-tab" :class="{ active: tab === activeTab }" type="button">
+        <button
+          v-for="tab in tabs"
+          :key="tab"
+          class="panel-tab"
+          :class="{ active: tab === currentActiveTab }"
+          type="button"
+          @click="handleTabClick(tab)"
+        >
           {{ tab }}
         </button>
       </div>
@@ -32,6 +39,18 @@ const props = withDefaults(
     bgImage: ''
   }
 );
+
+const emit = defineEmits<{
+  (e: 'update:activeTab', value: string): void;
+  (e: 'tab-click', value: string): void;
+}>();
+
+const currentActiveTab = computed(() => props.activeTab || props.tabs[0] || '');
+
+const handleTabClick = (tab: string) => {
+  emit('update:activeTab', tab);
+  emit('tab-click', tab);
+};
 </script>
 
 <style scoped lang="scss">

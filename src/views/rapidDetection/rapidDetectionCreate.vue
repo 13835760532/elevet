@@ -2,8 +2,10 @@
     <div class="page-container">
         <div class="header-fixed-container">
             <PageHeader v-if="currentStep == 2" title="拍照判读" desc="对检测结果进行拍照上传判读" :showBack="true"></PageHeader>
-            <PageHeader v-else-if="currentStep == 3" title="检测结果" desc="对检测结果进行拍照上传判读后的结果" :showBack="true"></PageHeader>
-            <PageHeader v-else-if="currentStep == 4" title="检测报告" desc="对检测结果进行拍照上传判读后的结果" :showBack="true"></PageHeader>
+            <PageHeader v-else-if="currentStep == 3" title="检测结果" desc="对检测结果进行拍照上传判读后的结果" :showBack="true">
+            </PageHeader>
+            <PageHeader v-else-if="currentStep == 4" title="检测报告" desc="对检测结果进行拍照上传判读后的结果" :showBack="true">
+            </PageHeader>
             <PageHeader v-else title="抽样检测" desc="请根据您的实际情况选择相应的备案类型，我们为企业和个人提供专业的备案服务，确保您的备案流程顺利进行。" :showBack="true">
             </PageHeader>
         </div>
@@ -148,7 +150,7 @@
                                     <div class="grid-item">
                                         <div class="field-label">信用代码</div>
                                         <div class="field-value">{{ formState.selectedSubject.socialCreditCode || '--'
-                                            }}</div>
+                                        }}</div>
                                     </div>
                                     <div class="grid-item">
                                         <div class="field-label">主体类型</div>
@@ -160,7 +162,7 @@
                                     <div class="grid-item">
                                         <div class="field-label">备案类型</div>
                                         <div class="field-value">{{ getFilingTypeLabel(formState.selectedSubject.type)
-                                            }}</div>
+                                        }}</div>
                                     </div>
                                     <div class="grid-item">
                                         <div class="field-label">联系人</div>
@@ -176,9 +178,9 @@
                                         <div class="field-label">所属地区及详细地址</div>
                                         <div class="field-value">
                                             {{ formState.selectedSubject.provinceCode || '' }}{{
-                                            formState.selectedSubject.cityCode || '' }}{{
-                                            formState.selectedSubject.districtCode || '' }} {{
-                                            formState.selectedSubject.address || '' }}
+                                                formState.selectedSubject.cityCode || '' }}{{
+                                                formState.selectedSubject.districtCode || '' }} {{
+                                                formState.selectedSubject.address || '' }}
                                         </div>
                                     </div>
                                 </div>
@@ -310,7 +312,7 @@
                             <span class="label">样品来源：</span>
                             <span class="value">{{ Array.isArray(formData.sample.sampleSource) ?
                                 formData.sample.sampleSource.join(', ') : (formData.sample.sampleSource || '--')
-                                }}</span>
+                            }}</span>
                         </div>
                         <div class="info-item">
                             <span class="label">样品名称：</span>
@@ -533,7 +535,7 @@ const formData = reactive({
     detectionOrgName: userStore.user.deptName || '',
     detector: userStore.user.nickname || '管理员',
     detectionArea: '',
-    detectionLocation: '现场抽检',
+    detectionLocation: '',
     detectionMethod: '酶抑制法',
     detectStandard: 'GB/T 5009.199-2003',
     testPaperImageUrl: '',

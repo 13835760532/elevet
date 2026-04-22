@@ -9,12 +9,18 @@
         <RightCertificateSection />
       </template>
       <template v-else-if="activeMenu === 'task'">
-        <LeftTaskSection />
-        <div class="center-task-layout">
+        <div class="task-top-layout">
+          <LeftTaskSection />
           <CenterTaskSection />
-          <BottomTaskSection />
+          <RightTaskSection />
         </div>
-        <RightTaskSection />
+        <BottomTaskSection class="task-bottom-panel" />
+      </template>
+      <template v-else-if="activeMenu === 'inspect'">
+        <LeftQuickSection class="quick-left-panel" />
+        <CenterQuickSection class="quick-center-panel" />
+        <BottomQuickTrends class="quick-bottom-panel" />
+        <RightQuickSection class="quick-right-panel" />
       </template>
       <template v-else>
         <LeftSection />
@@ -37,6 +43,11 @@ import LeftTaskSection from './components/bigscreenTask/LeftTaskSection.vue';
 import CenterTaskSection from './components/bigscreenTask/CenterTaskSection.vue';
 import RightTaskSection from './components/bigscreenTask/RightTaskSection.vue';
 import BottomTaskSection from './components/bigscreenTask/BottomTaskSection.vue';
+// 快检视角
+import LeftQuickSection from './components/bigscreenQuick/LeftQuickSection.vue';
+import CenterQuickSection from './components/bigscreenQuick/CenterQuickSection.vue';
+import RightQuickSection from './components/bigscreenQuick/RightQuickSection.vue';
+import BottomQuickTrends from './components/bigscreenQuick/BottomQuickTrends.vue';
 // 合格证视角
 import LeftCertificateSection from './components/bigscreenCertificate/LeftCertificateSection.vue';
 import CenterCertificateSection from './components/bigscreenCertificate/CenterCertificateSection.vue';
@@ -97,5 +108,55 @@ const activeMenu = ref('cert'); // 默认进入合格证视角以查看效果
   display: grid;
   grid-template-columns: 470px 1fr 470px;
   gap: 14px;
+}
+
+.screen-main.task {
+  padding: 6px 12px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.task-top-layout {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 470px minmax(0, 1fr) 560px;
+  gap: 10px;
+}
+
+.task-bottom-panel {
+  height: 260px;
+  flex-shrink: 0;
+}
+
+.screen-main.inspect {
+  padding: 6px 12px 10px;
+  grid-template-columns: 470px minmax(0, 1fr) 460px;
+  grid-template-rows: minmax(0, 1fr) 268px;
+  grid-template-areas:
+    'left center right'
+    'bottom bottom right';
+  gap: 10px;
+}
+
+.quick-left-panel {
+  grid-area: left;
+  min-height: 0;
+}
+
+.quick-center-panel {
+  grid-area: center;
+  min-height: 0;
+}
+
+.quick-bottom-panel {
+  grid-area: bottom;
+  min-height: 0;
+}
+
+.quick-right-panel {
+  grid-area: right;
+  min-height: 0;
 }
 </style>

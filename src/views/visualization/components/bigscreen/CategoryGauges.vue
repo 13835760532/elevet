@@ -1,12 +1,12 @@
 <template>
   <div class="category-gauges">
-    <div class="gauge-item" v-for="item in items" :key="item.name">
+    <div class="gauge-item" v-for="item in displayItems" :key="item.name">
       <div class="gauge-wrap">
         <div class="gauge-wrap-img"></div>
         <!-- 中间文本 -->
         <div class="gauge-text">
           <div class="label">{{ item.name }}</div>
-          <div class="value" :style="{ color: item.color }">{{ item.value }}%</div>
+          <div class="value" :style="{ color: item.color }">{{ item.value }}{{ suffix }}</div>
         </div>
       </div>
     </div>
@@ -14,13 +14,67 @@
 </template>
 
 <script setup lang="ts">
-const items = [
-  { name: '蔬菜', value: 49, color: '#2d7bff' },
-  { name: '水果', value: 49, color: '#49d3f8' },
-  { name: '禽畜', value: 49, color: '#95d34a' },
-  { name: '水产', value: 49, color: '#efbd3f' },
-  { name: '茶叶', value: 49, color: '#f49a38' }
+import { computed, onMounted, ref, watch } from 'vue';
+import { getCategoryRisk, type CategoryRiskRespVO } from '@/api/agri/dashboard';
+
+const props = withDefaults(
+  defineProps<{
+    mode?: '检测量' | '阳性率';
+  }>(),
+  {
+    mode: '检测量'
+  }
+);
+
+const categoryRiskList = ref<CategoryRiskRespVO[]>([]);
+const baseColors = ['#2d7bff', '#49d3f8', '#95d34a', '#efbd3f', '#f49a38', '#a855f7', '#14b8a6'];
+const fallbackItems = [
+  { name: '蔬菜', value: 450, color: '#2d7bff' },
+  { name: '水果', value: 256, color: '#49d3f8' },
+  { name: '禽畜', value: 378, color: '#95d34a' },
+  { name: '水产', value: 135, color: '#efbd3f' },
+  { name: '茶叶', value: 627, color: '#f49a38' }
 ];
+
+const displayItems = computed(() =>
+  categoryRiskList.value.length
+    ? categoryRiskList.value.map((item, index) => ({
+        name: item.category || '--',
+        value:
+          props.mode === '阳性率'
+            ? Number(item.statValue || 0).toFixed(2)
+            : Number(item.statValue || 0),
+        color: baseColors[index % baseColors.length]
+      }))
+    : props.mode === '阳性率'
+    ? fallbackItems.map((item) => ({ ...item, value: Number(49).toFixed(2) }))
+    : fallbackItems
+);
+
+const suffix = computed(() => (props.mode === '阳性率' ? '%' : ''));
+
+const loadCategoryRiskData = async () => {
+  try {
+    const data = await getCategoryRisk({
+      statType: props.mode === '阳性率' ? '2' : '1'
+    });
+    categoryRiskList.value = Array.isArray(data) ? data : [];
+  } catch (error) {
+    console.error('加载农产品品类风险分布失败', error);
+    categoryRiskList.value = [];
+  }
+};
+
+watch(
+  () => props.mode,
+  () => {
+    loadCategoryRiskData();
+  }
+);
+
+onMounted(() => {
+  loadCategoryRiskData();
+});
 </script>
 
 <style scoped lang="scss">

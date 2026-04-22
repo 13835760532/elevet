@@ -20,7 +20,7 @@
           <tbody>
             <tr v-for="(item, idx) in issueRank" :key="item.name + idx">
               <td>
-                <div class="rank-badge" :class="`top-${idx + 1}`">
+                <div class="rank-badge" :class="{ '': idx == 4, [`top-${idx + 1}`]: idx != 4 }">
                   {{ String(idx + 1).padStart(2, '0') }}
                 </div>
               </td>
@@ -60,11 +60,52 @@
 </template>
 
 <script setup lang="ts">
+import { computed, onMounted, ref } from 'vue';
 import { Echart } from '@/components/Echart';
 import BigPanelCard from '../bigscreen/BigPanelCard.vue';
 import rightBg from '@/assets/imgs/echarts/合格证/Frame 60_bg.png';
+import {
+  getCertificateIssueTop10,
+  getCertificateTypeDistribution,
+  getCertificateVerificationTop10,
+  type CertificateIssueTopRespVO,
+  type CertificateTypeDistributionRespVO,
+  type CertificateVerificationTopRespVO
+} from '@/api/agri/dashboard/certificate';
 
-const analysisOption = {
+interface RankItem {
+  name: string
+  value: number
+}
+
+const PIE_TYPE_META: Record<
+  number,
+  { name: string; color: string }
+> = {
+  1: { name: '生产者', color: '#3ba4ff' },
+  2: { name: '收购者', color: '#76cf3f' },
+  3: { name: '批发市场', color: '#f6b23c' }
+};
+
+const issueRank = ref<RankItem[]>([]);
+const distributionData = ref<CertificateTypeDistributionRespVO[]>([]);
+const storeRank = ref<RankItem[]>([]);
+
+const normalizeDistribution = (list: CertificateTypeDistributionRespVO[] = []) => {
+  const map = new Map(list.map((item) => [item.certificateType, item]));
+  return [1, 2, 3].map((type) => {
+    const current = map.get(type);
+    const meta = PIE_TYPE_META[type];
+    return {
+      value: Number(current?.count || 0),
+      name: current?.typeName || meta.name,
+      itemStyle: { color: meta.color },
+      label: { color: meta.color }
+    };
+  });
+};
+
+const analysisOption = computed(() => ({
   legend: {
     right: 20,
     top: 'center',
@@ -99,38 +140,44 @@ const analysisOption = {
         length2: 18,
         lineStyle: { color: 'rgba(158, 194, 229, 0.5)' }
       },
-      data: [
-        {
-          value: 890886,
-          name: '生产者',
-          itemStyle: { color: '#3ba4ff' },
-          label: { color: '#3ba4ff' }
-        },
-        {
-          value: 18886,
-          name: '收购者',
-          itemStyle: { color: '#76cf3f' },
-          label: { color: '#76cf3f' }
-        }
-      ]
+      data: normalizeDistribution(distributionData.value)
     }
   ]
+}));
+
+const formatRankList = (list: CertificateVerificationTopRespVO[] = []) =>
+  list.map((item) => ({
+    name: item.subjectName || '--',
+    value: Number(item.count || 0)
+  }));
+
+const formatIssueRankList = (list: CertificateIssueTopRespVO[] = []) =>
+  list.map((item) => ({
+    name: item.subjectName || '--',
+    value: Number(item.count || 0)
+  }));
+
+const loadDashboardData = async () => {
+  try {
+    const [typeDistribution, issueTop10, verificationTop10] = await Promise.all([
+      getCertificateTypeDistribution(),
+      getCertificateIssueTop10(),
+      getCertificateVerificationTop10()
+    ]);
+    distributionData.value = Array.isArray(typeDistribution) ? typeDistribution : [];
+    issueRank.value = formatIssueRankList(Array.isArray(issueTop10) ? issueTop10 : []);
+    storeRank.value = formatRankList(Array.isArray(verificationTop10) ? verificationTop10 : []);
+  } catch (error) {
+    console.error('加载合格证大屏右侧数据失败', error);
+    distributionData.value = [];
+    issueRank.value = [];
+    storeRank.value = [];
+  }
 };
 
-const issueRank = [
-  { name: '福州', value: 12334 },
-  { name: '南京', value: 3445 },
-  { name: '广州', value: 66778 },
-  { name: '台湾', value: 34566 },
-  { name: '广州', value: 6788 },
-  { name: '台湾', value: 45678 },
-  { name: '广州', value: 56788 },
-  { name: '台湾', value: 24521 },
-  { name: '广州', value: 23456 },
-  { name: '南京', value: 77999 }
-];
-
-const storeRank = [...issueRank];
+onMounted(() => {
+  loadDashboardData();
+});
 </script>
 
 <style scoped lang="scss">

@@ -35,7 +35,7 @@ import WxReplySelect, { Reply, ReplyType } from '@/views/mp/components/wx-reply'
 import MsgList from './components/MsgList.vue'
 import { getMessagePage, sendMessage } from '@/api/mp/message'
 import { getUser } from '@/api/mp/user'
-import profile from '@/assets/imgs/profile.jpg'
+import profile from '@/assets/imgs/avatar.jpg'
 import { User } from './types'
 
 defineOptions({ name: 'WxMsg' })

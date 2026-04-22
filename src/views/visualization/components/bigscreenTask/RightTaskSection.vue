@@ -38,27 +38,63 @@
 </template>
 
 <script setup lang="ts">
+import { computed, onMounted, ref } from 'vue';
 import BigPanelCard from '../bigscreen/BigPanelCard.vue';
 import rightBg from '@/assets/imgs/echarts/检测任务/rwjcfx_bg.png';
+import { getTaskAnalysisPage, type TaskAnalysisRespVO } from '@/api/agri/dashboard/task';
 
-const tableData = [
-  { name: '2026年北京蔬菜专项检测任务', org: '海淀区农检站', total: 2051, done: 1026, rate: '51%' },
-  { name: '2026年北京蔬菜专项检测任务', org: '朝阳区农检站', total: 3025, done: 625, rate: '25%' },
-  { name: '2026年北京蔬菜专项检测任务', org: '昌平区农检站', total: 2021, done: 421, rate: '21%' },
-  { name: '2026年北京蔬菜专项检测任务', org: '海淀区农检站', total: 2088, done: 1688, rate: '88%' },
-  { name: '2026年北京蔬菜专项检测任务', org: '西城区农检站', total: 2025, done: 525, rate: '25%' },
-  { name: '2026年北京蔬菜专项检测任务', org: '东城区农检站', total: 1122, done: 112, rate: '12%' },
-  { name: '2026年北京蔬菜专项检测任务', org: '顺义区农检站', total: 6525, done: 3525, rate: '65%' },
-  { name: '2025年北京蔬菜专项检测任务', org: '朝阳区农检站', total: 2098, done: 498, rate: '20%' },
-  { name: '2025年北京蔬菜专项检测任务', org: '海淀区农检站', total: 1025, done: 105, rate: '12%' },
-  { name: '2025年北京蔬菜专项检测任务', org: '东城区农检站', total: 2778, done: 778, rate: '27%' }
-];
+const analysisList = ref<TaskAnalysisRespVO[]>([]);
+
+const formatRate = (value?: number) => `${Number(value || 0).toFixed(2)}%`;
+
+const tableData = computed(() =>
+  analysisList.value.map((item) => ({
+    taskId: item.taskId,
+    name: item.taskName || '--',
+    org: item.undertakeDeptName || '--',
+    total: Number(item.sampleCount || 0),
+    done: Number(item.sampleCompletedCount || 0),
+    rate: formatRate(item.completionRate)
+  }))
+);
+
+const loadAnalysisPage = async () => {
+  try {
+    const data = await getTaskAnalysisPage({
+      pageNo: 1,
+      pageSize: 10
+    });
+    analysisList.value = Array.isArray(data?.list) ? data.list : [];
+  } catch (error) {
+    console.error('加载任务检测分析失败', error);
+    analysisList.value = [];
+  }
+};
+
+onMounted(() => {
+  loadAnalysisPage();
+});
 </script>
 
 <style scoped lang="scss">
 .right-section {
   min-width: 0;
   min-height: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+
+  :deep(.big-panel-card) {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    
+    .card-content {
+      flex: 1;
+      min-height: 0;
+    }
+  }
 }
 
 .table-wrap {

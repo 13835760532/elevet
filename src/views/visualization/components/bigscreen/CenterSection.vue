@@ -18,58 +18,85 @@
       </div>
     </BigPanelCard>
 
-    <BigPanelCard class="big-panel-center" title="检测量动态 | 阳性率态势(检测项)" :tabs="['检测量', '阳性率']" active-tab="检测量"
+    <BigPanelCard class="big-panel-center" title="检测量动态 | 阳性率态势(检测项)" :tabs="['检测量', '阳性率']" v-model:active-tab="trendTab"
       :bg-image="trendBg">
-      <Echart :options="lineTrendOption" :height="260" />
+      <Echart :options="currentLineTrendOption" :height="260" />
     </BigPanelCard>
   </section>
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import echarts from '@/plugins/echarts';
 import { Echart } from '@/components/Echart';
 import BigPanelCard from './BigPanelCard.vue';
 import Map from '../Map.vue';
-import coverBg from '@/assets/imgs/echarts/首页/fgqt_bg.png';
 import trendBg from '@/assets/imgs/echarts/首页/jcdtl_bg.png';
+import {
+  getDashboardOverview,
+  getDashboardTrend,
+  type DashboardOverviewRespVO,
+  type TrendRespVO
+} from '@/api/agri/dashboard';
 
 import n1 from '@/assets/imgs/echarts/首页/fgqt1.png';
 import n2 from '@/assets/imgs/echarts/首页/fgqt2.png';
 import n3 from '@/assets/imgs/echarts/首页/fgqt3.png';
 
-const topMetrics = [
-  { img: n1, label: '监管机构', value: 213 },
-  { img: n2, label: '检测机构', value: 213 },
-  { img: n3, label: '生产经营主体', value: 213 }
-];
+const trendTab = ref('检测量');
+const trendData = ref<TrendRespVO[]>([]);
+const overview = ref<DashboardOverviewRespVO>({});
 
-const sideStats = [
-  { label: '任务下发项次', value: '6875' },
-  { label: '任务完成项次', value: '6875' },
-  { label: '任务完成率', value: '68%' },
-  { label: '检测样品量', value: '6875' },
-  { label: '检测项次', value: '6875' },
-  { label: '合格证开具份', value: '6875' },
-  { label: '合格证收证份', value: '6875' }
-];
+const topMetrics = computed(() => [
+  { img: n1, label: '监管机构', value: Number(overview.value.supervisorCount || 0) },
+  { img: n2, label: '检测机构', value: Number(overview.value.detectionOrgCount || 0) },
+  { img: n3, label: '生产经营主体', value: Number(overview.value.enterpriseCount || 0) }
+]);
 
-onMounted(() => {
+const defaultXAxis = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
+const formatMonthLabel = (month?: string) => {
+  if (!month) return '--';
+  const value = String(month).trim();
+  const monthPart = value.split('-')[1];
+  return monthPart ? `${Number(monthPart)}月` : value;
+};
+
+const xAxisData = computed(() =>
+  trendData.value.length ? trendData.value.map((item) => formatMonthLabel(item.month)) : defaultXAxis
+);
+
+const lineValues = computed(() =>
+  trendData.value.length
+    ? trendData.value.map((item) => Number(item.statValue || 0))
+    : trendTab.value === '阳性率'
+    ? [3.2, 6.4, 5.1, 7, 8, 8.7, 5.3, 6.5, 7.2, 6.3, 5.2, 5.2]
+    : [1200, 2800, 2400, 3600, 4200, 4600, 2800, 3400, 3900, 3500, 2900, 2700]
+);
+
+const yAxisMax = computed(() => {
+  const maxValue = Math.max(...lineValues.value, 0);
+  if (trendTab.value === '阳性率') {
+    return Math.max(10, Math.ceil(maxValue / 5) * 5);
+  }
+  if (maxValue <= 0) return 100;
+  return Math.ceil(maxValue * 1.2);
 });
 
-const lineTrendOption = {
+const createLineTrendOption = (data: number[], max: number, formatter?: string) => ({
   grid: { left: 45, right: 20, top: 24, bottom: 24 },
   tooltip: { trigger: 'axis' },
   xAxis: {
     type: 'category',
     boundaryGap: false,
-    data: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'],
+    data: xAxisData.value,
     axisLabel: { color: '#90b5da' },
     axisLine: { lineStyle: { color: '#2d67ac' } }
   },
   yAxis: {
     type: 'value',
-    axisLabel: { color: '#90b5da', formatter: '{value}%' },
+    min: 0,
+    max,
+    axisLabel: { color: '#90b5da', formatter: formatter || '{value}' },
     splitLine: { lineStyle: { color: 'rgba(45, 106, 184, 0.35)', type: 'dashed' } }
   },
   series: [
@@ -89,7 +116,47 @@ const lineTrendOption = {
       data: [3.2, 6.4, 5.1, 7, 8, 8.7, 5.3, 6.5, 7.2, 6.3, 5.2, 5.2]
     }
   ]
+});
+
+const currentLineTrendOption = computed(() =>
+  trendTab.value === '阳性率'
+    ? createLineTrendOption(lineValues.value, yAxisMax.value, '{value}%')
+    : createLineTrendOption(lineValues.value, yAxisMax.value)
+);
+
+const loadTrendData = async () => {
+  try {
+    const data = await getDashboardTrend({
+      statType: trendTab.value === '阳性率' ? '2' : '1'
+    });
+    trendData.value = Array.isArray(data) ? data : [];
+  } catch (error) {
+    console.error('加载首页月度趋势失败', error);
+    trendData.value = [];
+  }
 };
+
+const loadOverviewData = async () => {
+  try {
+    const data = await getDashboardOverview();
+    overview.value = data || {};
+  } catch (error) {
+    console.error('加载首页概览统计失败', error);
+    overview.value = {};
+  }
+};
+
+watch(
+  () => trendTab.value,
+  () => {
+    loadTrendData();
+  }
+);
+
+onMounted(() => {
+  loadOverviewData();
+  loadTrendData();
+});
 </script>
 
 <style scoped lang="scss">

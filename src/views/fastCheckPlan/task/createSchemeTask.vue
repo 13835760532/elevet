@@ -180,7 +180,7 @@ const loadSchemeDetail = async () => {
         schemeInfo.type = getPlanTypeLabel(data.taskType)
         schemeInfo.category = data.targetCategory ? getProductCategoryLabel(data.targetCategory) : '--'
         schemeInfo.executionTime = `${data.startDate || ''} 至 ${data.endDate || ''}`
-        schemeInfo.executionTimeLabel = data.startDate && data.endDate 
+        schemeInfo.executionTimeLabel = data.startDate && data.endDate
             ? `${data.startDate.slice(0, 4)}年${data.startDate.slice(5, 7)}月${data.startDate.slice(8, 10)}日至${data.endDate.slice(0, 4)}年${data.endDate.slice(5, 7)}月${data.endDate.slice(8, 10)}日`
             : '--'
         schemeInfo.sampleCount = data.sampleCount || 0
@@ -439,6 +439,8 @@ onMounted(() => {
     overflow: auto;
     display: flex;
     flex-direction: column;
+    background: #fff;
+    border-radius: 6px;
     gap: 20px;
 }
 

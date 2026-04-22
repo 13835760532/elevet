@@ -1,48 +1,83 @@
 <template>
   <section class="left-section">
-    <BigPanelCard title="农产品品类风险分布" :tabs="['检测量', '阳性率']" active-tab="检测量">
-      <CategoryGauges />
+    <BigPanelCard title="农产品品类风险分布" :tabs="['检测量', '阳性率']" v-model:active-tab="categoryTab">
+      <CategoryGauges :mode="categoryTab" />
     </BigPanelCard>
 
-    <BigPanelCard title="农产品风险 TOP 10" :tabs="['检测量', '阳性率']" active-tab="检测量">
-      <Echart :options="riskTopOption" :height="330" />
+    <BigPanelCard title="农产品风险 TOP 10" :tabs="['检测量', '阳性率']" v-model:active-tab="riskTab">
+      <Echart :options="currentRiskTopOption" :height="330" />
     </BigPanelCard>
 
-    <BigPanelCard title="农药残留风险 TOP 10" :tabs="['检测量', '阳性率']" active-tab="检测量">
-      <Echart :options="pesticideTopOption" :height="260" />
+    <BigPanelCard title="农药残留风险 TOP 10" :tabs="['检测量', '阳性率']" v-model:active-tab="pesticideTab">
+      <Echart :options="currentPesticideTopOption" :height="260" />
     </BigPanelCard>
   </section>
 </template>
 
 <script setup lang="ts">
+import { computed, onMounted, ref, watch } from 'vue';
 import echarts from '@/plugins/echarts';
 import { Echart } from '@/components/Echart';
 import BigPanelCard from './BigPanelCard.vue';
 import CategoryGauges from './CategoryGauges.vue';
-import leftCardBg from '@/assets/imgs/echarts/首页/nclfx_bg.png';
+import {
+  getPesticideRiskTop10,
+  getProduceRiskTop10,
+  type PesticideRiskTopRespVO,
+  type ProduceRiskTopRespVO
+} from '@/api/agri/dashboard';
 
-const riskNames = ['芹菜', '菠菜', '韭菜', '萝卜', '青椒', '丝瓜', '南瓜', '黄瓜', '白菜', '生姜'];
-const riskValues = [0.9, 0.8, 0.7, 0.6, 0.52, 0.45, 0.4, 0.34, 0.29, 0.2];
-const riskRankData = riskNames.map((name, index) => ({
+const categoryTab = ref<'检测量' | '阳性率'>('检测量');
+const riskTab = ref<'检测量' | '阳性率'>('检测量');
+const pesticideTab = ref<'检测量' | '阳性率'>('检测量');
+
+const produceRiskList = ref<ProduceRiskTopRespVO[]>([]);
+const pesticideRiskList = ref<PesticideRiskTopRespVO[]>([]);
+
+const fallbackRiskNames = ['芹菜', '菠菜', '韭菜', '萝卜', '青椒', '丝瓜', '南瓜', '黄瓜', '白菜', '生姜'];
+const fallbackRiskRateValues = [0.9, 0.8, 0.7, 0.6, 0.52, 0.45, 0.4, 0.34, 0.29, 0.2];
+const fallbackRiskCountValues = [460, 420, 390, 355, 320, 285, 260, 220, 210, 180];
+
+const riskNames = computed(() =>
+  produceRiskList.value.length
+    ? produceRiskList.value.map((item) => item.productName || '--')
+    : fallbackRiskNames
+);
+const riskValues = computed(() =>
+  produceRiskList.value.length
+    ? produceRiskList.value.map((item) => Number(item.statValue || 0))
+    : riskTab.value === '阳性率'
+    ? fallbackRiskRateValues
+    : fallbackRiskCountValues
+);
+const riskMax = computed(() => {
+  const maxValue = Math.max(...riskValues.value, 0);
+  if (riskTab.value === '阳性率') {
+    return Math.max(1, Math.ceil(maxValue / 0.2) * 0.2);
+  }
+  if (maxValue <= 0) return 100;
+  return Math.ceil(maxValue * 1.1);
+});
+const riskRankData = computed(() => riskNames.value.map((name, index) => ({
   value: name,
   rank: index + 1
-}));
-const riskTopOption = {
+})));
+const createRiskTopOption = (values: number[], max: number, formatter: (val: number) => string) => ({
   grid: { left: 120, right: 70, top: 10, bottom: 20 },
   xAxis: {
     type: 'value',
     min: 0,
-    max: 1,
-    interval: 0.2,
+    max,
+    interval: max <= 1 ? 0.2 : 100,
     splitLine: { lineStyle: { color: 'rgba(45, 106, 184, 0.35)', type: 'dashed' } },
     axisLine: { lineStyle: { color: '#2d67ac' } },
-    axisLabel: { color: '#80abd3' }
+    axisLabel: { color: '#80abd3', formatter }
   },
   yAxis: [
     {
       type: 'category',
       inverse: true,
-      data: riskRankData,
+      data: riskRankData.value,
       axisLabel: {
         color: '#d4ebff',
         fontSize: 14,
@@ -52,7 +87,7 @@ const riskTopOption = {
           const rank = index + 1;
           const rankText = rank < 10 ? `NO.${rank}` : `NO.${rank}`;
           const colorKey = rank <= 3 ? `top${rank}` : 'normal';
-          return `{${colorKey}|${rankText}} {name|${riskNames[index]}}`;
+          return `{${colorKey}|${rankText}} {name|${riskNames.value[index]}}`;
         },
         rich: {
           top1: {
@@ -93,12 +128,12 @@ const riskTopOption = {
       type: 'category',
       inverse: true,
       position: 'right',
-      data: riskValues,
+      data: values,
       axisLabel: {
         color: '#48e7ff',
         fontSize: 16,
         fontWeight: 700,
-        formatter: (val: number) => Number(val).toFixed(1)
+        formatter
       },
       axisTick: { show: false },
       axisLine: { show: false }
@@ -115,22 +150,55 @@ const riskTopOption = {
           { offset: 1, color: '#1d56d9' }
         ])
       },
-      data: riskValues
+      data: values
     }
   ]
-};
+});
 
-const pesticideTopOption = {
+const fallbackPesticideNames = ['甲氨基', '氟虫胺', '毒死蜱', '毒死蜱', '氟虫', '阿维菌素', '腈虫胺', '溴氰菊酯', '咪鲜胺'];
+const fallbackPesticideRateValues = [0.82, 0.72, 0.61, 0.55, 0.46, 0.4, 0.36, 0.28, 0.21];
+const fallbackPesticideCountValues = [400, 350, 300, 270, 230, 200, 180, 150, 100];
+
+const pesticideLabels = computed(() =>
+  pesticideRiskList.value.length
+    ? pesticideRiskList.value.map((item) => item.pesticideName || '--')
+    : fallbackPesticideNames
+);
+const pesticideValues = computed(() =>
+  pesticideRiskList.value.length
+    ? pesticideRiskList.value.map((item) => Number(item.statValue || 0))
+    : pesticideTab.value === '阳性率'
+    ? fallbackPesticideRateValues
+    : fallbackPesticideCountValues
+);
+const pesticideMax = computed(() => {
+  const maxValue = Math.max(...pesticideValues.value, 0);
+  if (pesticideTab.value === '阳性率') {
+    return Math.max(1, Math.ceil(maxValue / 0.2) * 0.2);
+  }
+  if (maxValue <= 0) return 100;
+  return Math.ceil(maxValue * 1.1);
+});
+
+const createPesticideTopOption = (
+  labels: string[],
+  values: number[],
+  max: number,
+  formatter?: (value: number) => string
+) => ({
   grid: { left: 46, right: 10, top: 24, bottom: 40 },
   xAxis: {
     type: 'category',
-    data: ['甲氨基', '氟虫胺', '毒死蜱', '毒死蜱', '氟虫', '阿维菌素', '腈虫胺', '溴氰菊酯', '咪鲜胺'],
+    data: labels,
     axisLabel: { color: '#80abd3', fontSize: 12, interval: 0, rotate: 22 },
     axisLine: { lineStyle: { color: '#2d67ac' } }
   },
   yAxis: {
     type: 'value',
-    axisLabel: { color: '#80abd3' },
+    min: 0,
+    max,
+    interval: max <= 1 ? 0.2 : 100,
+    axisLabel: { color: '#80abd3', formatter },
     splitLine: { lineStyle: { color: 'rgba(45, 106, 184, 0.35)', type: 'dashed' } },
     axisLine: { show: false }
   },
@@ -138,7 +206,7 @@ const pesticideTopOption = {
     {
       type: 'bar',
       barWidth: 12,
-      data: [400, 350, 300, 270, 230, 200, 180, 150, 100],
+      data: values,
       itemStyle: {
         color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
           { offset: 0, color: '#4be9ff' },
@@ -147,7 +215,72 @@ const pesticideTopOption = {
       }
     }
   ]
+});
+
+const currentRiskTopOption = computed(() =>
+  riskTab.value === '阳性率'
+    ? createRiskTopOption(riskValues.value, riskMax.value, (val: number) => `${Number(val).toFixed(2)}%`)
+    : createRiskTopOption(riskValues.value, riskMax.value, (val: number) => String(Math.round(val)))
+);
+
+const currentPesticideTopOption = computed(() =>
+  pesticideTab.value === '阳性率'
+    ? createPesticideTopOption(
+        pesticideLabels.value,
+        pesticideValues.value,
+        pesticideMax.value,
+        (val: number) => `${Number(val).toFixed(2)}%`
+      )
+    : createPesticideTopOption(
+        pesticideLabels.value,
+        pesticideValues.value,
+        pesticideMax.value,
+        (val: number) => String(Math.round(val))
+      )
+);
+
+const loadProduceRiskTop10 = async () => {
+  try {
+    const data = await getProduceRiskTop10({
+      statType: riskTab.value === '阳性率' ? '2' : '1'
+    });
+    produceRiskList.value = Array.isArray(data) ? data : [];
+  } catch (error) {
+    console.error('加载农产品风险 TOP10 失败', error);
+    produceRiskList.value = [];
+  }
 };
+
+const loadPesticideRiskTop10 = async () => {
+  try {
+    const data = await getPesticideRiskTop10({
+      statType: pesticideTab.value === '阳性率' ? '2' : '1'
+    });
+    pesticideRiskList.value = Array.isArray(data) ? data : [];
+  } catch (error) {
+    console.error('加载农药残留风险 TOP10 失败', error);
+    pesticideRiskList.value = [];
+  }
+};
+
+watch(
+  () => riskTab.value,
+  () => {
+    loadProduceRiskTop10();
+  }
+);
+
+watch(
+  () => pesticideTab.value,
+  () => {
+    loadPesticideRiskTop10();
+  }
+);
+
+onMounted(() => {
+  loadProduceRiskTop10();
+  loadPesticideRiskTop10();
+});
 </script>
 
 <style scoped lang="scss">

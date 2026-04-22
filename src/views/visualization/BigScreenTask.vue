@@ -2,12 +2,10 @@
   <div class="big-screen-shell">
     <BigScreenHeader :show-data-config="false" active-menu="task" />
     <main class="screen-main">
-      <section class="top-grid">
-        <LeftTaskSection />
-        <CenterTaskSection />
-        <RightTaskSection />
-      </section>
-      <BottomTaskSection />
+      <LeftTaskSection class="task-left-panel" />
+      <CenterTaskSection class="task-center-panel" />
+      <BottomTaskSection class="task-bottom-panel" />
+      <RightTaskSection class="task-right-panel" />
     </main>
   </div>
 </template>
@@ -66,17 +64,33 @@ defineOptions({ name: 'VisualizationBigScreenTask' });
 .screen-main {
   flex: 1;
   min-height: 0;
-  padding: 6px 12px 0;
+  padding: 6px 12px 10px;
   display: grid;
-  grid-template-rows: minmax(0, 1fr) 240px;
+  grid-template-columns: 470px minmax(0, 1fr) 560px;
+  grid-template-rows: minmax(0, 1fr) 280px;
+  grid-template-areas:
+    'left center right'
+    'bottom bottom .';
   gap: 10px;
 }
 
-.top-grid {
+.task-left-panel {
+  grid-area: left;
   min-height: 0;
-  display: grid;
-  grid-template-columns: 470px minmax(0, 1fr) 560px;
-  gap: 10px;
-  overflow: hidden;
+}
+
+.task-center-panel {
+  grid-area: center;
+  min-height: 0;
+}
+
+.task-bottom-panel {
+  grid-area: bottom;
+  min-height: 0;
+}
+
+.task-right-panel {
+  grid-area: right;
+  min-height: 0;
 }
 </style>
