@@ -45,9 +45,14 @@
 
       <!-- 备案按钮区域 -->
       <div class="action-section">
-        <el-button type="primary" :disabled="hasFiling" class="beian-submit-btn" @click="handleBeian">
+        <el-button type="primary" :disabled="hasFiling" class="beian-submit-btn" :class="{ 'disabled': hasFiling }"
+          @click="handleBeian">
           立即账号备案
         </el-button>
+        <div class="beian-tips">
+          <p>本企业已备案，<span class="link-text" @click="handleLinkFiling">去关联备案信息</span></p>
+          <p><span class="link-text" @click="handleBeian">*在线自助备案（立即账号备案）</span>，或线下联系运营方工作人员完成备案</p>
+        </div>
       </div>
 
       <!-- 便携式打印机区域 -->
@@ -137,6 +142,13 @@ onMounted(() => {
 const handleBeian = () => {
   // 根据新配置路由跳转至备案表单
   router.push('/filing/subjectCreate');
+};
+
+/**
+ * 去关联备案信息
+ */
+const handleLinkFiling = () => {
+  router.push('/filing/subject');
 };
 
 /**
@@ -301,8 +313,31 @@ const handleOneClickPrint = async () => {
 .action-section {
   width: 100%;
   display: flex;
+  flex-direction: column;
+  align-items: center;
   justify-content: center;
   margin-bottom: 30px;
+
+  .beian-tips {
+    margin-top: 16px;
+    font-size: 14px;
+    color: #333;
+    text-align: center;
+
+    p {
+      margin: 0;
+    }
+
+    .link-text {
+      color: #00B3ED;
+      cursor: pointer;
+      text-decoration: none;
+
+      &:hover {
+        opacity: 0.8;
+      }
+    }
+  }
 
   .beian-submit-btn {
     width: 420px;
@@ -323,6 +358,18 @@ const handleOneClickPrint = async () => {
 
     &:active {
       transform: translateY(0);
+    }
+  }
+
+  .disabled {
+    background: #e9e9e9;
+    cursor: not-allowed;
+    color: #888888;
+
+    &:hover {
+      opacity: 1;
+      transform: translateY(-2px);
+      box-shadow: inherit
     }
   }
 }

@@ -93,9 +93,12 @@
                     <div class="allocation-config">
                         <div class="config-row">
                             <span class="config-label">任务检测量：</span>
-                            <el-input v-model="taskForm.quantity" placeholder="1000" type="number"
-                                class="quantity-input" />
-                            <span class="warning-text">取值规则方案检测总量-已分发量</span>
+                            <el-input v-model="taskForm.quantity" placeholder="任务检测量" type="number"
+                                :disabled="taskForm.distributionType === 'manual'" class="quantity-input"
+                                :class="{ 'error-input': isExceedLimit }" />
+                            <span class="warning-text" :class="{ 'error-text': isExceedLimit }">
+                                {{ isExceedLimit ? `超出可用总量（剩余可用：${schemeInfo.sampleCount}）` : '取值规则方案检测总量-已分发量' }}
+                            </span>
                         </div>
                         <div class="config-row">
                             <span class="config-label">分发方式：</span>
@@ -117,7 +120,7 @@
                     </div>
                 </div>
 
-                <DetectionRequirementSection v-model="taskList" :sample-count="taskForm.quantity"
+                <DetectionRequirementSection v-model="taskList" :sample-count="schemeInfo.sampleCount"
                     :distribution-type="taskForm.distributionType" :org-options="selectedOrgOptions"
                     :default-time-range="[taskForm.startDate, taskForm.endDate]" />
 
@@ -160,7 +163,9 @@ const schemeInfo = reactive({
     category: '--',
     executionTime: '--',
     executionTimeLabel: '--',
-    sampleCount: 0
+    sampleCount: 0,
+    varieties: '',
+    items: ''
 });
 
 // 使用字典
@@ -169,27 +174,32 @@ const { getLabel: getProductCategoryLabel } = useDict(DICT_TYPE.AGRI_PRODUCT_CAT
 
 // 加载方案详情
 const loadSchemeDetail = async () => {
-    if (!planId) return
     try {
-        const data = await DetectionTaskApi.getDetectionTask(planId)
+        const data = JSON.parse(window.sessionStorage.getItem('planInfo')) || {}
+        console.log('Task Detail for echo:', data)
+        const planInfo = data.planInfo || {}
+
         schemeInfo.no = data.taskCode
         schemeInfo.name = data.taskName
-        schemeInfo.planNo = data.planCode
-        schemeInfo.planName = data.planName
-        schemeInfo.dept = data.issuerDeptName || `部门ID: ${data.issuerDeptId}`
-        schemeInfo.type = getPlanTypeLabel(data.taskType)
-        schemeInfo.category = data.targetCategory ? getProductCategoryLabel(data.targetCategory) : '--'
+        schemeInfo.planNo = planInfo.planCode
+        schemeInfo.planName = planInfo.planName
+        schemeInfo.dept = planInfo.issuerDeptName || `部门ID: ${planInfo.issuerDeptId}`
+        schemeInfo.type = getPlanTypeLabel(planInfo.planType)
+        schemeInfo.category = planInfo.targetCategory ? getProductCategoryLabel(planInfo.targetCategory) : '--'
         schemeInfo.executionTime = `${data.startDate || ''} 至 ${data.endDate || ''}`
         schemeInfo.executionTimeLabel = data.startDate && data.endDate
             ? `${data.startDate.slice(0, 4)}年${data.startDate.slice(5, 7)}月${data.startDate.slice(8, 10)}日至${data.endDate.slice(0, 4)}年${data.endDate.slice(5, 7)}月${data.endDate.slice(8, 10)}日`
             : '--'
         schemeInfo.sampleCount = data.sampleCount || 0
+        schemeInfo.varieties = data.detectionVarieties || ''
+        schemeInfo.items = data.detectionItems || ''
 
-        // 设置任务默认时间
+        // 设置任务默认数据
+        taskForm.quantity = data.sampleCount
         taskForm.startDate = data.startDate ? String(data.startDate).slice(0, 10) : ''
         taskForm.endDate = data.endDate ? String(data.endDate).slice(0, 10) : ''
     } catch (error) {
-        console.error('获取任务详情失败:', error)
+        console.error('解析任务回显信息失败:', error)
         ElMessage.error('加载任务详情失败')
     }
 }
@@ -200,7 +210,7 @@ const taskForm = reactive({
     province: '',
     city: '',
     district: '',
-    quantity: '',
+    quantity: 0,
     distributionType: 'average',
     startDate: '',
     endDate: ''
@@ -223,6 +233,10 @@ const orgMapById = computed(() => {
 
 const selectedOrgOptions = computed(() => {
     return selectedOrgs.value.map(id => orgMapById.value.get(id)).filter(Boolean);
+});
+
+const isExceedLimit = computed(() => {
+    return Number(taskForm.quantity) > Number(schemeInfo.sampleCount);
 });
 
 const getAreaFilter = () => {
@@ -304,7 +318,7 @@ const buildTaskRowsBySelectedOrgs = () => {
 
     return orgIds.map((orgId, index) => {
         const org = orgMapById.value.get(orgId);
-        const quantity = isAverage ? avg + (index < remain ? 1 : 0) : total;
+        const quantity = isAverage ? avg + (index < remain ? 1 : 0) : 0; // 手动分配初始为 0
         return {
             deptId: orgId,
             subjectId: orgId,
@@ -312,8 +326,8 @@ const buildTaskRowsBySelectedOrgs = () => {
             region,
             quantity: String(Math.max(0, quantity)),
             executionTime,
-            varieties: '待设置',
-            items: '待设置'
+            varieties: schemeInfo.varieties || '待设置',
+            items: schemeInfo.items || '待设置'
         };
     });
 };
@@ -352,8 +366,63 @@ watch(
     },
     { deep: true }
 );
-
 const taskList = ref([]);
+
+// 监听任务列表变化，手动分配时同步汇总检测总量
+watch(
+    taskList,
+    (newVal) => {
+        if (taskForm.distributionType === 'manual') {
+            const total = (newVal || []).reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
+            taskForm.quantity = total > 0 ? total : 0;
+        }
+    },
+    { deep: true, immediate: true }
+);
+
+// 核心修复：监听选中机构变化，实时同步任务列表行
+watch(
+    () => selectedOrgs.value,
+    (newIds) => {
+        const currentList = [...taskList.value];
+        // 移除不再选中的机构
+        const filteredList = currentList.filter(item => newIds.includes(item.deptId));
+        
+        // 添加新选中的机构
+        newIds.forEach(id => {
+            if (!filteredList.find(item => item.deptId === id)) {
+                const org = orgMapById.value.get(id);
+                filteredList.push({
+                    deptId: id,
+                    subjectId: id,
+                    dept: org?.name || `机构${id}`,
+                    region: buildDefaultDetectionArea() || '待设置',
+                    quantity: 0,
+                    executionTime: buildDefaultExecutionTime(),
+                    varieties: schemeInfo.varieties || '待设置',
+                    items: schemeInfo.items || '待设置'
+                });
+            }
+        });
+        taskList.value = filteredList;
+    },
+    { deep: true }
+);
+// 切换分配方式时的处理
+watch(
+    () => taskForm.distributionType,
+    (val) => {
+        if (val === 'manual') {
+            // 切换到手动时，根据当前列表重新计算总量
+            const total = taskList.value.reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
+            taskForm.quantity = total;
+        } else {
+            // 切换回平均分配时，通常恢复为原始可用总量
+            const data = JSON.parse(window.sessionStorage.getItem('planInfo')) || {}
+            taskForm.quantity = data.sampleCount || 0
+        }
+    }
+);
 
 const handleCancel = () => {
     router.back();
@@ -368,6 +437,11 @@ const handleSubmit = async () => {
     const rows = taskList.value.length ? taskList.value : buildTaskRowsBySelectedOrgs();
     if (!rows.length) {
         ElMessage.warning('请先在第3步配置任务拆分');
+        return;
+    }
+
+    if (isExceedLimit.value) {
+        ElMessage.error(`任务检测总量 (${taskForm.quantity}) 不能超过总任务量 (${schemeInfo.sampleCount})`);
         return;
     }
 
@@ -420,8 +494,8 @@ const handleSubmit = async () => {
 };
 // 页面初始化
 onMounted(() => {
-    loadSchemeDetail()
     loadOrgOptions()
+    loadSchemeDetail()
 })
 </script>
 
@@ -661,5 +735,20 @@ onMounted(() => {
         background: #00B3ED;
         border-color: #00B3ED;
     }
+}
+
+.error-input {
+    :deep(.el-input__wrapper) {
+        box-shadow: 0 0 0 1px #f56c6c inset !important;
+
+        &.is-disabled {
+            box-shadow: 0 0 0 1px #f56c6c inset !important;
+            background-color: #fffbfa !important; /* 超额时即使禁用也显示淡红色背景 */
+        }
+    }
+}
+
+.error-text {
+    color: #f56c6c !important;
 }
 </style>

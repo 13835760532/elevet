@@ -11,7 +11,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import echarts from '@/plugins/echarts';
 import { Echart } from '@/components/Echart';
 import BigPanelCard from '../bigscreen/BigPanelCard.vue';
@@ -22,6 +22,7 @@ import {
   type TaskRiskTrendRespVO,
   type TaskVolumeTrendRespVO
 } from '@/api/agri/dashboard/task';
+import { getBigScreenQueryParams, subscribeBigScreenRefresh } from '../bigscreen/config';
 
 const xData = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
 const volumeTrend = ref<TaskVolumeTrendRespVO>({});
@@ -143,7 +144,7 @@ const rightTrendOption = computed(() => ({
 
 const loadVolumeTrend = async () => {
   try {
-    const data = await getTaskVolumeTrend();
+    const data = await getTaskVolumeTrend(getBigScreenQueryParams());
     volumeTrend.value = data || {};
   } catch (error) {
     console.error('加载检测任务量态势失败', error);
@@ -153,7 +154,7 @@ const loadVolumeTrend = async () => {
 
 const loadRiskTrend = async () => {
   try {
-    const data = await getTaskRiskTrend();
+    const data = await getTaskRiskTrend(getBigScreenQueryParams());
     riskTrend.value = data || {};
   } catch (error) {
     console.error('加载检测风险态势失败', error);
@@ -164,6 +165,15 @@ const loadRiskTrend = async () => {
 onMounted(() => {
   loadVolumeTrend();
   loadRiskTrend();
+});
+
+const disposeRefresh = subscribeBigScreenRefresh(() => {
+  loadVolumeTrend();
+  loadRiskTrend();
+});
+
+onUnmounted(() => {
+  disposeRefresh();
 });
 </script>
 

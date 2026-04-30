@@ -60,10 +60,10 @@
                                 <span class="info-label">方案状态</span>
                                 <span :class="['status-tag', statusClass]">{{ schemeInfo.status }}</span>
                             </div>
-                            <div class="info-item full-width">
+                            <!-- <div class="info-item full-width">
                                 <span class="info-label">检测项目</span>
                                 <span class="info-value">{{ schemeInfo.detectionItems }}</span>
-                            </div>
+                            </div> -->
                         </div>
 
                         <div class="info-footer-desc">
@@ -109,7 +109,7 @@
                 <div v-if="activeTab === 'list'" class="tab-content">
                     <div class="task-list-operations">
                         <!-- 查询区域 -->
-                        <div class="query-section">
+                        <div class="query-section" v-if="taskList.length">
                             <el-form :model="queryParams" :inline="true"
                                 class="custom-query-form custom-query-form-row">
                                 <el-form-item label="">
@@ -143,7 +143,7 @@
                             </el-form>
                         </div>
 
-                        <div class="separator-line"></div>
+                        <div class="separator-line" v-if="taskList.length"></div>
 
                         <!-- 操作按钮区域 -->
                         <div class="action-bar">
@@ -185,7 +185,7 @@
                                     <div class="completion-rate-cell">
                                         <span class="rate-pct">{{ scope.row.percentage }}%</span>
                                         <span class="rate-counts">({{ scope.row.completed }}/{{ scope.row.total
-                                        }})</span>
+                                            }})</span>
                                     </div>
                                 </template>
                             </el-table-column>
@@ -210,7 +210,7 @@
                         <!-- 分页 -->
                         <div class="pagination-wrapper" style="margin-top: 20px;">
                             <el-pagination :current-page="pageParams.pageNum" :page-size="pageParams.pageSize"
-                                :total="total" background layout="prev, pager, next" class="custom-pagination"
+                                :total="total" background layout="total, sizes, prev, pager, next, jumper" class="custom-pagination"
                                 @current-change="handleTaskPageChange" @size-change="handleTaskSizeChange" />
                         </div>
                     </div>
@@ -693,18 +693,18 @@ const handleExport = async () => {
             cancelButtonText: '取消',
             type: 'warning'
         });
-        
+
         const params = {
             planId: route.query.id,
             taskName: queryParams.task || undefined,
-            status: queryParams.status === '进行中' ? 1 : 
-                    (queryParams.status === '已完成' ? 3 : 
-                    (queryParams.status === '已延期' ? 2 : 
-                    (queryParams.status === '未开始' ? 0 : undefined))),
+            status: queryParams.status === '进行中' ? 1 :
+                (queryParams.status === '已完成' ? 3 :
+                    (queryParams.status === '已延期' ? 2 :
+                        (queryParams.status === '未开始' ? 0 : undefined))),
             // 注意：OpenAPI 中 unit 对应关系可能需要根据实际业务调整，此处暂传为 subjectId
             subjectId: queryParams.unit || undefined
         };
-        
+
         const res = await DetectionTaskApi.exportDetectionTask(params);
         if (res) {
             download.excel(res, '检测任务导出.xls');

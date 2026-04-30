@@ -61,7 +61,7 @@
 
                     <!-- 样品编号 -->
                     <el-form-item label="记录编码" prop="recordCode">
-                        <el-input v-model="formData.recordCode" :disabled="true" placeholder="系统自动生成或自定义" />
+                        <el-input :disabled="true" placeholder="系统自动生成" />
                     </el-form-item>
 
                     <!-- 样品名称 -->
@@ -101,7 +101,7 @@
 
                     <el-form-item label="样品来源环节" prop="sample.sampleSource">
                         <el-select v-model="formData.sample.sampleSource" placeholder="选择采样来源" class="full-width"
-                            multiple collapse-tags>
+                            multiple>
                             <el-option label="田间" value="田间" />
                             <el-option label="市场" value="市场" />
                             <el-option label="商超" value="商超" />
@@ -431,6 +431,7 @@ import * as ProductApi from '@/api/agri/product';
 import * as DetectionReportApi from '@/api/agri/detectionReport';
 import * as DetectionTaskApi from '@/api/agri/detectionTask';
 import { AiDetectionApi } from '@/api/agri/aiDetection';
+import * as DeptApi from '@/api/system/dept';
 import { useUserStore } from '@/store/modules/user';
 import { formatDate } from '@/utils/formatTime';
 import AreaCascader from '@/components/AreaCascader/index.vue';
@@ -543,8 +544,35 @@ const formData = reactive({
     aiRecognitionResultText: '',
     remarks: '',
     status: 1,
-    publicFlag: true
+    publicFlag: true,
+    issuerDeptId: undefined
 });
+
+// 获取部门名称用于回显
+const issuerDeptName = ref('');
+
+// 初始化获取部门信息
+const initDeptInfo = async () => {
+    const userDeptId = userStore.user?.deptId
+    if (userDeptId) {
+        formData.issuerDeptId = userDeptId
+        try {
+            const res = await DeptApi.getDept(userDeptId)
+            issuerDeptName.value = res.name
+            // 填充检测单位
+            if (!formData.detectionOrgName) {
+                formData.detectionOrgName = res.name
+            }
+            // 填充检测区划 (根据部门代码)
+            if (!formData.detectionArea) {
+                const areaParts = [res.provinceCode, res.cityCode, res.districtCode].filter(Boolean)
+                formData.detectionArea = areaParts.join('-')
+            }
+        } catch (error) {
+            console.error('获取部门信息失败', error)
+        }
+    }
+}
 
 const formRules = {
     recordCode: [{ required: true, message: '请输入记录编码', trigger: 'blur' }],
@@ -619,7 +647,7 @@ const handleProductChange = async (val) => {
     if (p) {
         formData.sample.sampleName = p.productName;
         formData.sample.productionArea = p.productionArea;
-        formData.detectStandard = p.standard || 'AI';
+        formData.detectStandard = p.standard || '';
 
         // 回显数量（重量）
         if (p.productSpec) {
@@ -916,6 +944,8 @@ onMounted(async () => {
     ]);
     productOptions.value = pData.list;
     subjectOptions.value = sData.list;
+
+    initDeptInfo();
 
     const action = route.query.action;
     const id = route.query.id;

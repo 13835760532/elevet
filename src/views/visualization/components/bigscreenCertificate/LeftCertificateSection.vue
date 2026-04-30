@@ -1,6 +1,6 @@
 <template>
   <section class="left-section">
-    <BigScreenSelector />
+    <BigScreenSelector label="年度合格证总览" />
 
     <BigPanelCard title="合格证概况" :bg-image="leftBg">
       <div class="overview-grid">
@@ -51,7 +51,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, onUnmounted, reactive, ref } from 'vue';
 import { Echart } from '@/components/Echart';
 import BigPanelCard from '../bigscreen/BigPanelCard.vue';
 import BigScreenSelector from '../bigscreen/BigScreenSelector.vue';
@@ -62,6 +62,7 @@ import {
   type CertificateCategoryDistributionRespVO,
   type DashboardCertificateOverviewRespVO
 } from '@/api/agri/dashboard/certificate';
+import { getBigScreenQueryParams, subscribeBigScreenRefresh } from '../bigscreen/config';
 
 const overview = ref<DashboardCertificateOverviewRespVO>({});
 const categoryDistribution = ref<CertificateCategoryDistributionRespVO[]>([]);
@@ -84,7 +85,7 @@ const subjectData = computed(() => [
 
 const loadOverviewData = async () => {
   try {
-    const data = await getCertificateOverview();
+    const data = await getCertificateOverview(getBigScreenQueryParams());
     overview.value = data || {};
   } catch (error) {
     console.error('加载合格证概览数据失败', error);
@@ -154,7 +155,7 @@ const updateCategoryChart = (list: CertificateCategoryDistributionRespVO[] = [])
 
 const loadCategoryDistribution = async () => {
   try {
-    const data = await getCertificateCategoryDistribution();
+    const data = await getCertificateCategoryDistribution(getBigScreenQueryParams());
     categoryDistribution.value = Array.isArray(data) ? data : [];
   } catch (error) {
     console.error('加载合格证品类分布失败', error);
@@ -166,6 +167,15 @@ const loadCategoryDistribution = async () => {
 onMounted(() => {
   loadOverviewData();
   loadCategoryDistribution();
+});
+
+const disposeRefresh = subscribeBigScreenRefresh(() => {
+  loadOverviewData();
+  loadCategoryDistribution();
+});
+
+onUnmounted(() => {
+  disposeRefresh();
 });
 </script>
 

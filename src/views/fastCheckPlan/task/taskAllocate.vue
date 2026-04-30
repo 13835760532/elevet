@@ -22,10 +22,10 @@
                             <span class="value">{{ taskDetail.detectionVarieties || '--' }}</span>
                         </div>
                     </div>
-                    <div class="info-item">
+                    <!-- <div class="info-item">
                         <span class="label">检测项目：</span>
                         <span class="value">{{ taskDetail.detectionItems || '--' }}</span>
-                    </div>
+                    </div> -->
                     <div class="info-item">
                         <span class="label">执行时间：</span>
                         <span class="value">
@@ -162,8 +162,8 @@
                                     <el-table-column label="检测区域范围" prop="detectionArea" align="center" width="120" />
                                     <el-table-column label="检测品种" prop="detectionVarieties" align="center"
                                         min-width="120" show-overflow-tooltip />
-                                    <el-table-column label="检测项目" prop="detectionItems" align="center" min-width="120"
-                                        show-overflow-tooltip />
+                                    <!-- <el-table-column label="检测项目" prop="detectionItems" align="center" min-width="120"
+                                        show-overflow-tooltip /> -->
                                     <el-table-column label="执行时间" align="center" width="200">
                                         <template #default="{ row }">
                                             {{ row.startDate ? (row.startDate + ' 至 ' + row.endDate) : '--' }}
@@ -191,7 +191,7 @@
                                 <!-- 分页 -->
                                 <div class="pagination-footer">
                                     <el-pagination v-model:current-page="pageNum" v-model:page-size="pageSize"
-                                        :total="total" layout="prev, pager, next, jumper, total" background
+                                        :total="total" layout="total, sizes, prev, pager, next, jumper" background
                                         class="custom-pagination" @current-change="handlePageChange" />
                                 </div>
                             </div>
@@ -401,6 +401,7 @@ function handleCreateTask() {
         path: '/fastCheckPlan/task/createSchemeTask',
         query: { id: taskId }
     })
+    window.sessionStorage.setItem('planInfo', JSON.stringify(taskDetail.value))
 }
 
 function handleExport() {

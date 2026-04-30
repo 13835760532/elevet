@@ -26,7 +26,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import echarts from '@/plugins/echarts';
 import { Echart } from '@/components/Echart';
 import BigPanelCard from './BigPanelCard.vue';
@@ -38,6 +38,7 @@ import {
   type DashboardOverviewRespVO,
   type TrendRespVO
 } from '@/api/agri/dashboard';
+import { getBigScreenQueryParams, subscribeBigScreenRefresh } from './config';
 
 import n1 from '@/assets/imgs/echarts/首页/fgqt1.png';
 import n2 from '@/assets/imgs/echarts/首页/fgqt2.png';
@@ -127,6 +128,7 @@ const currentLineTrendOption = computed(() =>
 const loadTrendData = async () => {
   try {
     const data = await getDashboardTrend({
+      ...getBigScreenQueryParams(),
       statType: trendTab.value === '阳性率' ? '2' : '1'
     });
     trendData.value = Array.isArray(data) ? data : [];
@@ -138,7 +140,7 @@ const loadTrendData = async () => {
 
 const loadOverviewData = async () => {
   try {
-    const data = await getDashboardOverview();
+    const data = await getDashboardOverview(getBigScreenQueryParams());
     overview.value = data || {};
   } catch (error) {
     console.error('加载首页概览统计失败', error);
@@ -156,6 +158,15 @@ watch(
 onMounted(() => {
   loadOverviewData();
   loadTrendData();
+});
+
+const disposeRefresh = subscribeBigScreenRefresh(() => {
+  loadOverviewData();
+  loadTrendData();
+});
+
+onUnmounted(() => {
+  disposeRefresh();
 });
 </script>
 

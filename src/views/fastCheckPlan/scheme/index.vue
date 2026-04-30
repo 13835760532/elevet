@@ -30,12 +30,16 @@
         <h2 class="card-title">检测方案查询</h2>
       </div>
       <div class="query-form-wrapper">
-        <el-form :inline="true" :model="queryParams" class="custom-query-form custom-query-form-row" label-position="left">
+        <el-form :inline="true" :model="queryParams" class="custom-query-form custom-query-form-row"
+          label-position="left">
           <el-form-item label="">
-            <el-input :prefix-icon="Search" width="200" v-model="queryParams.keyword" placeholder="搜索方案编号或方案名称" class="custom-input w220" />
+            <el-input :prefix-icon="Search" width="200" v-model="queryParams.keyword" placeholder="搜索方案编号或方案名称"
+              class="custom-input w220" clearable />
           </el-form-item>
           <el-form-item label="">
-            <el-input v-model="queryParams.targetCategory" placeholder="目标品种" class="custom-input" />
+            <el-select v-model="queryParams.targetCategory" placeholder="产品分类" class="custom-select" clearable>
+              <el-option v-for="dict in productCategoryOptions" :key="dict.value" :label="dict.label" :value="dict.value" />
+            </el-select>
           </el-form-item>
           <el-form-item label="">
             <el-select v-model="queryParams.status" placeholder="全部状态" class="custom-select" clearable>
@@ -47,15 +51,8 @@
             </el-select>
           </el-form-item>
           <el-form-item label="">
-            <el-date-picker
-              style="width: 240px!important;"
-              v-model="queryParams.time"
-              type="daterange"
-              range-separator="至"
-              start-placeholder="开始时间"
-              end-placeholder="结束时间"
-              value-format="YYYY-MM-DD"
-            />
+            <el-date-picker style="width: 240px!important;" v-model="queryParams.time" type="daterange"
+              range-separator="至" start-placeholder="开始时间" end-placeholder="结束时间" value-format="YYYY-MM-DD" clearable />
           </el-form-item>
           <div class="query-btns">
             <el-button @click="handleReset" class="reset-btn">重置</el-button>
@@ -72,15 +69,20 @@
               <Plus />
             </el-icon>
             <span>创建方案</span>
-        </el-button>
-        <el-button type="danger" plain @click="handleBatchDelete" :disabled="selectedIds.length === 0" class="batch-delete-btn">
-          <el-icon><Delete /></el-icon>
-          <span>批量删除</span>
-        </el-button>
+          </el-button>
+          <el-button type="danger" plain @click="handleBatchDelete" :disabled="selectedIds.length === 0"
+            class="batch-delete-btn">
+            <el-icon>
+              <Delete />
+            </el-icon>
+            <span>批量删除</span>
+          </el-button>
         </div>
         <div class="action-right">
           <el-button @click="handleExport" :loading="exportLoading" class="export-btn">
-            <el-icon><Download /></el-icon>
+            <el-icon>
+              <Download />
+            </el-icon>
             <span>导出</span>
           </el-button>
         </div>
@@ -88,7 +90,8 @@
 
       <!-- 数据表格 -->
       <div class="table-wrapper">
-        <el-table :data="tableList" :border="false" v-loading="loading" @selection-change="handleSelectionChange" height="100%">
+        <el-table :data="tableList" :border="false" v-loading="loading" @selection-change="handleSelectionChange"
+          height="100%">
           <el-table-column type="selection" width="55" align="center" />
           <el-table-column label="序号" type="index" width="60" align="center" />
           <el-table-column label="方案编号" prop="planCode" width="160" />
@@ -106,7 +109,8 @@
           <el-table-column label="任务方案完成率" width="150" align="center">
             <template #default="scope">
               <span v-if="scope.row.completionRate != null">
-                {{ scope.row.completionRate }}% ({{ scope.row.taskCompletedCount || 0 }}/{{ scope.row.taskTotalCount || 0 }})
+                {{ scope.row.completionRate }}% ({{ scope.row.taskCompletedCount || 0 }}/{{ scope.row.taskTotalCount ||
+                  0 }})
               </span>
               <span v-else>-</span>
             </template>
@@ -123,7 +127,8 @@
             <template #default="scope">
               <div class="table-operate-action-btns">
                 <span class="table-edit-operate" @click="handleEdit(scope.row)" v-if="scope.row.status < 2">编辑</span>
-                <span class="table-delete-operate" v-if="scope.row.status == 0" @click="handleDelete(scope.row)">删除</span>
+                <span class="table-delete-operate" v-if="scope.row.status == 0"
+                  @click="handleDelete(scope.row)">删除</span>
                 <span class="table-view-operate" @click="handleView(scope.row)">查看</span>
               </div>
             </template>
@@ -133,9 +138,9 @@
 
       <!-- 分页区域 -->
       <div class="pagination-wrapper">
-        <div class="page-info">显示第{{ pageParams.pageNo }}页，共{{ totalPage }}页</div>
         <el-pagination v-model:current-page="pageParams.pageNo" v-model:page-size="pageParams.pageSize" :total="total"
-          background layout="prev, pager, next" class="custom-pagination" />
+          background layout="total, sizes, prev, pager, next, jumper" class="custom-pagination"
+          @size-change="getList" @current-change="getList" />
       </div>
     </div>
   </div>
@@ -181,7 +186,6 @@ const pageParams = reactive({
 });
 
 const total = ref(0);
-const totalPage = computed(() => Math.ceil(total.value / pageParams.pageSize) || 1);
 
 // 状态映射
 const statusMap = {
@@ -193,7 +197,7 @@ const statusMap = {
 };
 
 // 使用字典
-const { getLabel: getProductCategoryLabel } = useDict(DICT_TYPE.AGRI_PRODUCT_CATEGORY, 'str')
+const { options: productCategoryOptions, getLabel: getProductCategoryLabel } = useDict(DICT_TYPE.AGRI_PRODUCT_CATEGORY, 'str')
 
 // 表格数据
 const tableList = ref([]);
@@ -252,10 +256,7 @@ const handleReset = () => {
   getList()
 };
 
-// 监听分页变化
-watch(() => pageParams.pageNo, () => {
-  getList()
-});
+// 移除 watch，改用组件上的 @size-change 和 @current-change 事件
 
 // 创建方案
 const handleAdd = () => {
@@ -429,7 +430,8 @@ onMounted(() => {
   margin-top: 18px;
   padding: 8px 0;
   overflow-x: auto;
-  &::-webkit-scrollbar{
+
+  &::-webkit-scrollbar {
     width: 0;
   }
 
@@ -445,7 +447,8 @@ onMounted(() => {
     gap: 12px;
     flex-shrink: 0;
   }
-  .step-wrapper-active{
+
+  .step-wrapper-active {
 
     .step-title {
       font-size: 14px;
@@ -453,7 +456,8 @@ onMounted(() => {
       white-space: nowrap;
       font-weight: 600;
     }
-    .step-icon{
+
+    .step-icon {
       opacity: 1;
     }
   }
@@ -550,7 +554,7 @@ onMounted(() => {
   justify-content: space-between;
   gap: 12px;
 
-  .table-actions-left{
+  .table-actions-left {
     display: flex;
     gap: 12px;
   }
@@ -623,14 +627,9 @@ onMounted(() => {
 /* 分页适配 */
 .pagination-wrapper {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
   padding: 10px 0;
-
-  .page-info {
-    font-size: 14px;
-    color: #666;
-  }
 }
 
 /* 响应式 */

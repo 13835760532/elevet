@@ -15,7 +15,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import echarts from '@/plugins/echarts';
 import { Echart } from '@/components/Echart';
 import BigPanelCard from './BigPanelCard.vue';
@@ -26,6 +26,7 @@ import {
   type PesticideRiskTopRespVO,
   type ProduceRiskTopRespVO
 } from '@/api/agri/dashboard';
+import { getBigScreenQueryParams, subscribeBigScreenRefresh } from './config';
 
 const categoryTab = ref<'检测量' | '阳性率'>('检测量');
 const riskTab = ref<'检测量' | '阳性率'>('检测量');
@@ -242,6 +243,7 @@ const currentPesticideTopOption = computed(() =>
 const loadProduceRiskTop10 = async () => {
   try {
     const data = await getProduceRiskTop10({
+      ...getBigScreenQueryParams(),
       statType: riskTab.value === '阳性率' ? '2' : '1'
     });
     produceRiskList.value = Array.isArray(data) ? data : [];
@@ -254,6 +256,7 @@ const loadProduceRiskTop10 = async () => {
 const loadPesticideRiskTop10 = async () => {
   try {
     const data = await getPesticideRiskTop10({
+      ...getBigScreenQueryParams(),
       statType: pesticideTab.value === '阳性率' ? '2' : '1'
     });
     pesticideRiskList.value = Array.isArray(data) ? data : [];
@@ -280,6 +283,15 @@ watch(
 onMounted(() => {
   loadProduceRiskTop10();
   loadPesticideRiskTop10();
+});
+
+const disposeRefresh = subscribeBigScreenRefresh(() => {
+  loadProduceRiskTop10();
+  loadPesticideRiskTop10();
+});
+
+onUnmounted(() => {
+  disposeRefresh();
 });
 </script>
 

@@ -73,7 +73,7 @@
                 </div>
 
                 <!-- 营业执照 -->
-                <div class="detail-row">
+                <div class="detail-row" v-if="subjectInfo.type === 1">
                     <div class="label">*营业执照：</div>
                     <div class="value">
                         <div class="img-preview-group">
@@ -90,15 +90,23 @@
                 </div>
 
                 <!-- 信用代码 -->
-                <div class="detail-row">
+                <div class="detail-row" v-if="subjectInfo.type === 1">
                     <div class="label">*信用代码：</div>
                     <div class="value">
-                        <span>{{ isRevealed ? (sensitiveInfo.socialCreditCode || sensitiveInfo.idCard) : maskCode(subjectInfo.socialCreditCode || subjectInfo.idCard) }}</span>
+                        <span>{{ isRevealed ? sensitiveInfo.socialCreditCode : maskCode(subjectInfo.socialCreditCode) }}</span>
+                    </div>
+                </div>
+
+                <!-- 身份证号 (仅个人) -->
+                <div class="detail-row" v-if="subjectInfo.type === 2">
+                    <div class="label">*身份证号：</div>
+                    <div class="value">
+                        <span>{{ isRevealed ? sensitiveInfo.idCard : maskCode(subjectInfo.idCard) }}</span>
                     </div>
                 </div>
 
                 <!-- 身份证 -->
-                <div class="detail-row">
+                <div class="detail-row" v-if="subjectInfo.type === 2">
                     <div class="label">身份证：</div>
                     <div class="value">
                         <div class="img-preview-group">
@@ -121,7 +129,7 @@
                 </div>
 
                 <!-- 企业资质 -->
-                <div class="detail-row">
+                <div class="detail-row" v-if="subjectInfo.type === 1">
                     <div class="label">企业资质：</div>
                     <div class="value">
                         <div class="img-preview-group">
@@ -138,7 +146,7 @@
                 </div>
 
                 <!-- 企业介绍 -->
-                <div class="detail-row no-border">
+                <div class="detail-row no-border" v-if="subjectInfo.type === 1">
                     <div class="label">企业介绍：</div>
                     <div class="value" v-if="subjectInfo.introduction" v-html="subjectInfo.introduction"></div>
                     <div class="value" v-else>--</div>

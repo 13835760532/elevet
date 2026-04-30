@@ -384,6 +384,12 @@ const remainingRouter: AppRouteRecordRaw[] = [
         meta: { title: '检测录入', activeMenu: '/rapidDetection/self' }
       },
       {
+        path: 'taskDetectionCreate',
+        component: () => import('@/views/rapidDetection/rapidDetectionCreate.vue'),
+        name: 'RapidTaskDetectionCreate',
+        meta: { title: '检测录入', activeMenu: '/rapidDetection/task' }
+      },
+      {
         path: 'batchImportData',
         component: () => import('@/views/rapidDetection/batchImportData.vue'),
         name: 'RapidBatchImportData',

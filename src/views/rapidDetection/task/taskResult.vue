@@ -326,7 +326,7 @@ const handleBack = () => {
 };
 
 const handleContinueTest = () => {
-    router.push('/rapidDetection/create');
+    router.push('/rapidDetection/taskDetectionCreate');
 };
 
 const handlePreviewReport = () => {

@@ -386,14 +386,14 @@ const handleBatchImport = () => {
 
 const handleSingleInput = () => {
     router.push({
-        path: '/rapidDetection/create',
+        path: '/rapidDetection/taskDetectionCreate',
         query: { taskId: route.query.id || route.params.id || undefined },
     });
 };
 
 const handleTest = (row) => {
     router.push({
-        path: '/rapidDetection/create',
+        path: '/rapidDetection/taskDetectionCreate',
         query: { id: row.id, action: 'detect' }
     });
 };
@@ -411,7 +411,7 @@ const handleView = (row) => {
 
 const handleRetest = (row) => {
     router.push({
-        path: '/rapidDetection/create',
+        path: '/rapidDetection/taskDetectionCreate',
         query: { id: row.id, action: 'recheck' }
     });
 };

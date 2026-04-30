@@ -11,6 +11,18 @@
 
     <BigPanelCard title="风险集中区域 TOP 10" :tabs="['产地', '检测地']" v-model:active-tab="rankTab" :bg-image="rankBg">
       <div class="rank-table-wrap">
+        <div class="rank-level-tabs">
+          <button
+            v-for="tab in areaLevelTabs"
+            :key="tab"
+            type="button"
+            class="rank-level-tab"
+            :class="{ active: tab === rankAreaLevelTab }"
+            @click="rankAreaLevelTab = tab"
+          >
+            {{ tab }}
+          </button>
+        </div>
         <table class="rank-table">
           <thead>
             <tr>
@@ -35,7 +47,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import echarts from '@/plugins/echarts';
 import { Echart } from '@/components/Echart';
 import BigPanelCard from './BigPanelCard.vue';
@@ -48,6 +60,7 @@ import {
   type ProductPesticideTopRespVO,
   type RiskAreaTopRespVO
 } from '@/api/agri/dashboard';
+import { getBigScreenQueryParams, subscribeBigScreenRefresh } from './config';
 
 const announcements = [
   { time: '2025-10-01 17:56', text: 'xx农产品(生产经营主体:xx)，发现xxx项目不合格。(检测机构:xx)' },
@@ -56,9 +69,11 @@ const announcements = [
 ];
 
 const rankTab = ref('产地');
+const rankAreaLevelTab = ref('城市');
 const projectRiskTab = ref('检测量');
 const rankList = ref<RiskAreaTopRespVO[]>([]);
 const projectRiskList = ref<ProductPesticideTopRespVO[]>([]);
+const areaLevelTabs = ['城市', '区县'];
 
 const createProjectRiskOption = (
   labels: string[],
@@ -167,8 +182,9 @@ const currentProjectRiskOption = computed(() =>
 const loadRiskAreaTop10 = async () => {
   try {
     const data = await getRiskAreaTop10({
+      ...getBigScreenQueryParams(),
       areaType: rankTab.value === '产地' ? '1' : '2',
-      areaLevel: '1'
+      areaLevel: rankAreaLevelTab.value === '区县' ? '2' : '1'
     });
     rankList.value = Array.isArray(data) ? data : [];
   } catch (error) {
@@ -180,6 +196,7 @@ const loadRiskAreaTop10 = async () => {
 const loadProductPesticideTop10 = async () => {
   try {
     const data = await getProductPesticideTop10({
+      ...getBigScreenQueryParams(),
       statType: projectRiskTab.value === '阳性率' ? '2' : '1'
     });
     projectRiskList.value = Array.isArray(data) ? data : [];
@@ -197,6 +214,13 @@ watch(
 );
 
 watch(
+  () => rankAreaLevelTab.value,
+  () => {
+    loadRiskAreaTop10();
+  }
+);
+
+watch(
   () => projectRiskTab.value,
   () => {
     loadProductPesticideTop10();
@@ -206,6 +230,15 @@ watch(
 onMounted(() => {
   loadRiskAreaTop10();
   loadProductPesticideTop10();
+});
+
+const disposeRefresh = subscribeBigScreenRefresh(() => {
+  loadRiskAreaTop10();
+  loadProductPesticideTop10();
+});
+
+onUnmounted(() => {
+  disposeRefresh();
 });
 </script>
 
@@ -249,6 +282,31 @@ onMounted(() => {
     color: #9eb8d3;
     font-size: 16px;
     line-height: 1.45;
+  }
+}
+
+.rank-level-tabs {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.rank-level-tab {
+  min-width: 60px;
+  height: 28px;
+  border: 1px solid rgba(61, 167, 255, 0.42);
+  background: rgba(7, 27, 66, 0.72);
+  color: #9ec9ef;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &.active {
+    color: #ffffff;
+    border-color: rgba(77, 234, 255, 0.8);
+    background: linear-gradient(180deg, rgba(27, 109, 198, 0.86) 0%, rgba(8, 39, 98, 0.92) 100%);
+    box-shadow: 0 0 12px rgba(77, 234, 255, 0.16);
   }
 }
 

@@ -14,8 +14,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { getCategoryRisk, type CategoryRiskRespVO } from '@/api/agri/dashboard';
+import { getBigScreenQueryParams, subscribeBigScreenRefresh } from './config';
 
 const props = withDefaults(
   defineProps<{
@@ -56,6 +57,7 @@ const suffix = computed(() => (props.mode === '阳性率' ? '%' : ''));
 const loadCategoryRiskData = async () => {
   try {
     const data = await getCategoryRisk({
+      ...getBigScreenQueryParams(),
       statType: props.mode === '阳性率' ? '2' : '1'
     });
     categoryRiskList.value = Array.isArray(data) ? data : [];
@@ -74,6 +76,14 @@ watch(
 
 onMounted(() => {
   loadCategoryRiskData();
+});
+
+const disposeRefresh = subscribeBigScreenRefresh(() => {
+  loadCategoryRiskData();
+});
+
+onUnmounted(() => {
+  disposeRefresh();
 });
 </script>
 

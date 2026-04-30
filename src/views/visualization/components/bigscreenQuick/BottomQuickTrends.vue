@@ -1,6 +1,6 @@
 <template>
   <section class="bottom-quick-trends">
-    <BigPanelCard class="big-panel-center" title="快检量态势" :tabs="['阳性率量', '阳性率']" v-model:active-tab="leftTrendTab" :bg-image="bottomBg">
+    <BigPanelCard class="big-panel-center" title="快检量态势" :tabs="['快检量', '阳性率']" v-model:active-tab="leftTrendTab" :bg-image="bottomBg">
       <Echart :options="currentLeftTrendOption" :height="200" />
     </BigPanelCard>
 
@@ -11,7 +11,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import echarts from '@/plugins/echarts';
 import { Echart } from '@/components/Echart';
 import BigPanelCard from '../bigscreen/BigPanelCard.vue';
@@ -22,14 +22,21 @@ import {
   type FastPositiveRateTrendRespVO,
   type FastSelfSampleTrendRespVO
 } from '@/api/agri/dashboard/fast';
+import { getBigScreenQueryParams, subscribeBigScreenRefresh } from '../bigscreen/config';
 
 const months = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
-const leftTrendTab = ref('阳性率量');
+const leftTrendTab = ref('快检量');
 const rightTrendTab = ref('自主检测样本量');
 const positiveRateTrend = ref<FastPositiveRateTrendRespVO>({});
 const selfSampleTrend = ref<FastSelfSampleTrendRespVO>({});
 
-const getAxisData = (axis?: string[]) => (axis?.length ? axis : months);
+const formatMonthLabel = (value?: string) => {
+  if (!value) return '';
+  const matched = value.match(/(\d{1,2})$/);
+  return matched ? `${matched[1]}月` : value;
+};
+const getAxisData = (axis?: string[]) =>
+  axis?.length ? axis.map((item) => formatMonthLabel(item) || item) : months;
 const normalizeSeries = <T extends number>(list: T[] | undefined, length: number) =>
   Array.from({ length }, (_, index) => Number(list?.[index] || 0));
 const calcMax = (data: number[], fallback: number) => {
@@ -92,15 +99,20 @@ const currentLeftTrendOption = computed(() =>
         '{value}%'
       )
     : createTrendOption(
-        months,
-        [1000, 3200, 2500, 3500, 3900, 4400, 2500, 3200, 3150, 3500, 2650, 2520],
-        6000
+        selfSampleXAxis.value,
+        selfSampleData.value,
+        calcMax(selfSampleData.value, 60000)
       )
 );
 
 const currentRightTrendOption = computed(() =>
   rightTrendTab.value === '阳性率'
-    ? createTrendOption(months, [10, 28, 24, 33, 38, 42, 24, 29, 31, 34, 27, 25], 60, '{value}%')
+    ? createTrendOption(
+        positiveRateXAxis.value,
+        positiveRateData.value,
+        Math.min(calcMax(positiveRateData.value, 60), 100),
+        '{value}%'
+      )
     : createTrendOption(
         selfSampleXAxis.value,
         selfSampleData.value,
@@ -111,8 +123,8 @@ const currentRightTrendOption = computed(() =>
 const loadTrendData = async () => {
   try {
     const [positiveRateRes, selfSampleRes] = await Promise.all([
-      getFastPositiveRateTrend(),
-      getFastSelfSampleTrend()
+      getFastPositiveRateTrend(getBigScreenQueryParams()),
+      getFastSelfSampleTrend(getBigScreenQueryParams())
     ]);
     positiveRateTrend.value = positiveRateRes || {};
     selfSampleTrend.value = selfSampleRes || {};
@@ -125,6 +137,14 @@ const loadTrendData = async () => {
 
 onMounted(() => {
   loadTrendData();
+});
+
+const disposeRefresh = subscribeBigScreenRefresh(() => {
+  loadTrendData();
+});
+
+onUnmounted(() => {
+  disposeRefresh();
 });
 </script>
 

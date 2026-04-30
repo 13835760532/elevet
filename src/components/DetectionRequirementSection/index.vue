@@ -3,7 +3,7 @@
         <h4 class="step-title">{{ title }}</h4>
         <div class="summary-info">
             <span class="summary-text">已选任务分配量：</span>
-            <span class="summary-value">{{ selectedQuantity }}</span>
+            <span class="summary-value" :class="{ 'error-text': isExceedLimit }">{{ selectedQuantity }}</span>
             <span class="divider">|</span>
             <span class="summary-text">方案检测总量：</span>
             <span class="summary-value">{{ sampleCount }}</span>
@@ -44,7 +44,8 @@
                 <el-table-column label="检测数量" prop="quantity" width="140" align="center">
                     <template #default="scope">
                         <el-input-number v-if="!scope.row.isAdd" v-model="scope.row.quantity" :min="0" :precision="0"
-                            :disabled="quantityReadonly" controls-position="right" size="small" class="cell-number" />
+                            :disabled="quantityReadonly" controls-position="right" size="small" class="cell-number"
+                            @change="handleRowQuantityChange" />
                     </template>
                 </el-table-column>
                 <el-table-column label="执行时间" prop="executionTime" width="280" align="center">
@@ -131,6 +132,10 @@ const displayTaskList = computed(() => {
 
 const selectedQuantity = computed(() => {
     return taskList.value.reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
+});
+
+const isExceedLimit = computed(() => {
+    return Number(selectedQuantity.value) > Number(props.sampleCount);
 });
 
 const quantityReadonly = computed(() => props.distributionType === 'average');
@@ -266,6 +271,11 @@ const handleDeleteTask = (index) => {
     const newList = [...taskList.value];
     newList.splice(index, 1);
     taskList.value = newList;
+};
+
+const handleRowQuantityChange = () => {
+    // 强制触发父组件的 v-model 更新
+    emit('update:modelValue', [...taskList.value]);
 };
 
 const handleHighRiskQuery = () => {
@@ -555,5 +565,9 @@ const headerCellStyle = {
     .cell-date {
         width: 100%;
     }
+}
+
+.error-text {
+    color: #F56C6C !important;
 }
 </style>

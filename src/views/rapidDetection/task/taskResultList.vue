@@ -283,7 +283,7 @@ const handleExport = async () => {
 
 const handleSingleInput = () => {
     router.push({
-        path: '/rapidDetection/create',
+        path: '/rapidDetection/taskDetectionCreate',
         query: {
             taskId: route.query.taskId,
             action: 'add'
@@ -304,7 +304,7 @@ const handleDelete = async (row: any) => {
 
 const handleDetect = (row: any) => {
     router.push({
-        path: '/rapidDetection/create',
+        path: '/rapidDetection/taskDetectionCreate',
         query: { id: row.id, action: 'detect' }
     });
 };
@@ -315,7 +315,7 @@ const handleView = (row: any) => {
 
 const handleRetest = (row: any) => {
     router.push({
-        path: '/rapidDetection/create',
+        path: '/rapidDetection/taskDetectionCreate',
         query: { id: row.id, action: 'recheck' }
     });
 };

@@ -18,7 +18,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import echarts from '@/plugins/echarts';
 import { Echart } from '@/components/Echart';
 import BigPanelCard from '../bigscreen/BigPanelCard.vue';
@@ -31,6 +31,7 @@ import {
   type FastCategoryPesticideTopRespVO,
   type FastPesticideTopRespVO
 } from '@/api/agri/dashboard/fast';
+import { getBigScreenQueryParams, subscribeBigScreenRefresh } from '../bigscreen/config';
 
 const topTab = ref('检测量');
 const categoryTop10 = ref<FastCategoryTopRespVO[]>([]);
@@ -177,6 +178,7 @@ const currentTopColumnOption = computed(() =>
 const loadCategoryTop10 = async () => {
   try {
     const data = await getFastCategoryTop10({
+      ...getBigScreenQueryParams(),
       statType: topTab.value === '阳性率' ? '2' : '1'
     });
     categoryTop10.value = Array.isArray(data) ? data : [];
@@ -188,7 +190,7 @@ const loadCategoryTop10 = async () => {
 
 const loadPesticideTop10 = async () => {
   try {
-    const data = await getFastPesticideTop10();
+    const data = await getFastPesticideTop10(getBigScreenQueryParams());
     pesticideTop10.value = Array.isArray(data) ? data : [];
   } catch (error) {
     console.error('加载检测项 TOP10 失败', error);
@@ -198,7 +200,7 @@ const loadPesticideTop10 = async () => {
 
 const loadCategoryPesticideTop10 = async () => {
   try {
-    const data = await getFastCategoryPesticideTop10();
+    const data = await getFastCategoryPesticideTop10(getBigScreenQueryParams());
     categoryPesticideTop10.value = Array.isArray(data) ? data : [];
   } catch (error) {
     console.error('加载产品品类-检测项 TOP10 失败', error);
@@ -210,6 +212,16 @@ onMounted(() => {
   loadCategoryTop10();
   loadCategoryPesticideTop10();
   loadPesticideTop10();
+});
+
+const disposeRefresh = subscribeBigScreenRefresh(() => {
+  loadCategoryTop10();
+  loadCategoryPesticideTop10();
+  loadPesticideTop10();
+});
+
+onUnmounted(() => {
+  disposeRefresh();
 });
 
 watch(topTab, () => {

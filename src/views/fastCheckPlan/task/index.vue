@@ -101,13 +101,19 @@
                         </template>
                     </el-table-column>
                     <el-table-column label="操作" width="180" align="center" fixed="right">
+                        <!-- PENDING(0, "待接收"),
+                            ACCEPTED(1, "已接收"),
+                            IN_PROGRESS(2, "进行中"),
+                            COMPLETED(3, "已完成"),
+                            WITHDRAWN(4, "已撤回") -->
                         <template #default="scope">
                             <div class="table-operate-action-btns">
                                 <el-button link type="primary" @click="handleReceive(scope.row)"
-                                    v-if="scope.row.status === 1">接收任务</el-button>
+                                    v-if="scope.row.status === 0">接收</el-button>
                                 <el-button link type="primary" @click="handleUrge(scope.row)"
-                                    v-if="scope.row.status === 2">项目催办</el-button>
-                                <el-button link type="primary" @click="handleView(scope.row)">查看详情</el-button>
+                                    v-if="[1, 2].includes(+scope.row.status)">催办</el-button>
+                                <el-button link type="primary" v-if="scope.row.status === 1">转派</el-button>
+                                <el-button link type="primary" @click="handleView(scope.row)">查看</el-button>
                             </div>
                         </template>
                     </el-table-column>

@@ -186,7 +186,7 @@
                     <div class="pagination-wrapper">
                         <div class="total-text">共 {{ total }} 条记录</div>
                         <el-pagination v-model:current-page="pageNum" v-model:page-size="pageSize" :total="total"
-                            background layout="prev, pager, next" class="custom-pagination"
+                            background layout="total, sizes, prev, pager, next, jumper" class="custom-pagination"
                             @current-change="handleCurrentChange" />
                     </div>
                 </div>

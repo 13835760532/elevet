@@ -10,7 +10,7 @@
         <!-- 抽样检测查询 -->
         <div class="query-card">
             <div class="card-header">
-                <h2 class="card-title">抽样检测查询</h2>
+                <h2 class="card-title">快速检测查询</h2>
             </div>
             <div class="query-form-wrapper">
                 <el-form :model="queryParams" ref="queryRef" :inline="true"
@@ -72,14 +72,14 @@
             <!-- 数据表格区域 -->
             <div class="content-card">
                 <div class="table-wrapper">
-                    <el-table v-loading="loading" :data="tableData" border="false">
+                    <el-table ref="tableRef" v-loading="loading" :data="tableData" border="false" :height="tableHeight">
                         <el-table-column label="序号" type="index" width="60" align="center" />
                         <el-table-column label="任务编号" prop="taskNo" align="center" width="120" />
                         <el-table-column label="任务名称" prop="taskName" align="center" min-width="200"
                             show-overflow-tooltip />
                         <el-table-column label="监测区域" prop="area" align="center" width="100" />
                         <el-table-column label="任务分发单位" prop="dept" align="center" min-width="150" />
-                        <el-table-column label="所属方案" prop="scheme" align="center" min-width="180"
+                        <el-table-column label="所属方案" prop="planName" align="center" min-width="180"
                             show-overflow-tooltip />
                         <el-table-column label="已检数/总任务数" align="center" width="150">
                             <template #default="{ row }">
@@ -100,7 +100,7 @@
                         <el-table-column label="操作" align="center" width="180" fixed="right">
                             <template #default="{ row }">
                                 <div class="table-operate-action-btns">
-                                    <span class="table-edit-operate" @click="handleCheck(row)">抽样检测</span>
+                                    <span class="table-edit-operate" @click="handleCheck(row)">快速检测</span>
                                     <span class="table-view-operate" @click="handleDetail(row)">查看结果</span>
                                 </div>
                             </template>
@@ -129,6 +129,7 @@ import AreaCascader from '@/components/AreaCascader/index.vue'
 import * as DetectionTaskApi from '@/api/agri/detectionTask/index'
 import * as DeptApi from '@/api/system/dept'
 import { useDict } from '@/hooks/web/useDict'
+import { useTableHeight } from '@/hooks/web/useTableHeight'
 
 const router = useRouter()
 const { options: taskStatusOptions } = useDict('agri_task_status', 'int')
@@ -153,6 +154,7 @@ const realFetchApi = async (params) => {
         pageSize: params.pageSize || 10,
         taskName: params.taskName,
         status: params.status,
+        excludeStatuses: '1',
         detectionArea: params.area ? (Array.isArray(params.area) ? params.area.join('-') : params.area) : undefined,
         isAuto: false // 控制为方案相关的抽检任务
     }
@@ -177,6 +179,7 @@ const realFetchApi = async (params) => {
             area: item.detectionArea || '--',
             dept: item.assignDeptName || deptMap.value[item.assignDeptId] || item.assignDeptId || '--',
             scheme: item.planName || '--',
+            planName: item.planName || (item.planInfo && item.planInfo.planName) || '--',
             checkedNum: item.sampleCompletedCount || 0,
             totalNum: item.sampleCount || 0,
             isReport: item.publicFlag || false,
@@ -250,19 +253,45 @@ function handleDetail(row) {
         }
     })
 }
+
+// 表格高度动态计算
+const tableRef = ref(null);
+const { tableHeight } = useTableHeight(tableRef, 85);
 </script>
 
 <style lang="scss" scoped>
 /* 容器样式继承自全局 .table-container */
+.table-container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden !important;
+}
+
+.query-card {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    margin-bottom: 0;
+    min-height: 0;
+}
 
 .content-card {
     background: #fff;
     border-radius: 10px;
     flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-height: 0;
 }
 
 .table-wrapper {
     margin-top: 0;
+    flex: 1;
+    overflow: hidden;
+    min-height: 0;
 
     :deep(.el-table) {
         .el-button--link {

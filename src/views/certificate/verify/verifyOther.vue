@@ -1,7 +1,7 @@
 <template>
     <div class="verify-detail-page">
         <!-- 1. 统一查验头部 -->
-        <pageHeader title="合格证收证"  desc="上传合格证照片进行收证"/>
+        <pageHeader title="合格证收证" desc="上传合格证照片进行收证" />
 
         <!-- 2. 统一内容大卡片 -->
         <div class="page-content-card">
@@ -16,16 +16,12 @@
             <div class="main-body">
                 <div class="upload-section">
                     <div class="premium-uploader-wrap">
-                        <el-upload
-                            class="premium-uploader"
-                            drag
-                            action="#"
-                            :auto-upload="false"
-                            :show-file-list="false"
-                            @change="onFileChange"
-                        >
+                        <el-upload class="premium-uploader" drag action="#" :auto-upload="false" :show-file-list="false"
+                            @change="onFileChange">
                             <div class="uploader-content">
-                                <el-icon class="plus-icon"><Plus /></el-icon>
+                                <el-icon class="plus-icon">
+                                    <Plus />
+                                </el-icon>
                                 <div class="upload-text">
                                     <span class="main-title">点击或拖拽上传合格证照片（进行识别）</span>
                                     <p class="sub-tips">支持 JPG、PNG、webp 格式，单个文件不超过 5MB</p>
@@ -46,7 +42,7 @@
                             <el-form-item label="产品名称">
                                 <el-input v-model="formData.productName" placeholder="白菜" />
                             </el-form-item>
-                            
+
                             <el-form-item label="产品产地">
                                 <el-input v-model="formData.productionArea" placeholder="山东-济南" />
                             </el-form-item>
@@ -69,13 +65,8 @@
                             </el-row>
 
                             <el-form-item label="建档日期">
-                                <el-date-picker 
-                                    v-model="formData.issueDate" 
-                                    type="date" 
-                                    placeholder="2025-12-19" 
-                                    class="w-full"
-                                    value-format="YYYY-MM-DD"
-                                />
+                                <el-date-picker v-model="formData.issueDate" type="date" placeholder="2025-12-19"
+                                    class="w-full" value-format="YYYY-MM-DD" />
                             </el-form-item>
 
                             <el-form-item label="联系人">
@@ -87,7 +78,7 @@
                             </el-form-item>
 
                             <el-form-item label="生产经营企业（主体名称）">
-                                <el-input v-model="formData.subjectName" placeholder="北京朝阳本来生活大悦城分店" />
+                                <el-input v-model="formData.subjectName" placeholder="输入生产经营企业（主体名称）" />
                             </el-form-item>
                         </el-form>
                     </div>
@@ -98,7 +89,7 @@
                             <div class="preview-card-wrap">
                                 <div class="preview-header">合格证预览</div>
                                 <div class="certificate-mock">
-                                    <div class="cert-code">合格证编号—{{formData.certificateCode || 'HGZ9191991111'}}</div>
+                                    <div class="cert-code">合格证编号—{{ formData.certificateCode || 'HGZ9191991111' }}</div>
                                     <h4 class="cert-title">承诺达标合格证</h4>
                                     <div class="cert-body">
                                         <p class="promise">我承诺生产销售的食用农产品</p>
@@ -119,12 +110,30 @@
                                             </div>
                                         </div>
                                         <div class="info-table">
-                                            <div class="tr"><div class="td-label">产品名称</div><div class="td-value">{{formData.productName || '--'}}</div></div>
-                                            <div class="tr"><div class="td-label">产品数量</div><div class="td-value">{{formData.quantity}}{{formData.unit}}</div></div>
-                                            <div class="tr"><div class="td-label">产品产地</div><div class="td-value">{{formData.productionArea || '--'}}</div></div>
-                                            <div class="tr"><div class="td-label">承诺主体</div><div class="td-value">{{formData.subjectName || '--'}}</div></div>
-                                            <div class="tr"><div class="td-label">联系方式</div><div class="td-value">{{formData.contactPhone || '--'}}</div></div>
-                                            <div class="tr"><div class="td-label">开具时间</div><div class="td-value">{{formData.issueDate || '--'}}</div></div>
+                                            <div class="tr">
+                                                <div class="td-label">产品名称</div>
+                                                <div class="td-value">{{ formData.productName || '--' }}</div>
+                                            </div>
+                                            <div class="tr">
+                                                <div class="td-label">产品数量</div>
+                                                <div class="td-value">{{ formData.quantity }}{{ formData.unit }}</div>
+                                            </div>
+                                            <div class="tr">
+                                                <div class="td-label">产品产地</div>
+                                                <div class="td-value">{{ formData.productionArea || '--' }}</div>
+                                            </div>
+                                            <div class="tr">
+                                                <div class="td-label">承诺主体</div>
+                                                <div class="td-value">{{ formData.subjectName || '--' }}</div>
+                                            </div>
+                                            <div class="tr">
+                                                <div class="td-label">联系方式</div>
+                                                <div class="td-value">{{ formData.contactPhone || '--' }}</div>
+                                            </div>
+                                            <div class="tr">
+                                                <div class="td-label">开具时间</div>
+                                                <div class="td-value">{{ formData.issueDate || '--' }}</div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -136,21 +145,24 @@
                                 <div class="preview-header">上游合格证预览</div>
                                 <div class="external-preview-content">
                                     <div class="info-list-side">
-                                        <div class="s-item"><span class="s-label">合格证编号</span><span class="s-val">{{formData.certificateCode || '--'}}</span></div>
-                                        <div class="s-item"><span class="s-label">出证类型</span><span class="s-val">--</span></div>
-                                        <div class="s-item"><span class="s-label">产品档案编号</span><span class="s-val">--</span></div>
-                                        <div class="s-item required"><span class="s-label">产品名称</span><span class="s-val">{{formData.productName}}</span></div>
-                                        <div class="s-item required"><span class="s-label">重量/数量</span><span class="s-val">{{formData.quantity}} {{formData.unit}}</span></div>
-                                        <div class="s-item required"><span class="s-label">产品产地</span><span class="s-val">{{formData.productionArea}}</span></div>
-                                        <div class="s-item required"><span class="s-label">生产经营主体</span><span class="s-val">{{formData.subjectName}}</span></div>
+                                        <div class="s-item"><span class="s-label">合格证编号</span><span
+                                                class="s-val">{{ formData.certificateCode || '--' }}</span></div>
+                                        <div class="s-item"><span class="s-label">出证类型</span><span
+                                                class="s-val">--</span></div>
+                                        <div class="s-item"><span class="s-label">产品档案编号</span><span
+                                                class="s-val">--</span></div>
+                                        <div class="s-item required"><span class="s-label">产品名称</span><span
+                                                class="s-val">{{ formData.productName }}</span></div>
+                                        <div class="s-item required"><span class="s-label">重量/数量</span><span
+                                                class="s-val">{{ formData.quantity }} {{ formData.unit }}</span></div>
+                                        <div class="s-item required"><span class="s-label">产品产地</span><span
+                                                class="s-val">{{ formData.productionArea }}</span></div>
+                                        <div class="s-item required"><span class="s-label">生产经营主体</span><span
+                                                class="s-val">{{ formData.subjectName }}</span></div>
                                     </div>
                                     <div class="image-preview-side">
-                                        <el-image 
-                                            v-if="formData.certificateImageUrl" 
-                                            :src="formData.certificateImageUrl" 
-                                            fit="contain" 
-                                            class="original-img"
-                                        />
+                                        <el-image v-if="formData.certificateImageUrl"
+                                            :src="formData.certificateImageUrl" fit="contain" class="original-img" />
                                         <div v-else class="img-empty">
                                             <Icon icon="ep:picture" />
                                             <span>原始照片预览</span>
@@ -206,7 +218,7 @@ const onFileChange = async (uploadFile) => {
         text: '正在智能识别合格证...',
         background: 'rgba(255, 255, 255, 0.7)'
     });
-    
+
     try {
         const sourceHint = activeTab.value === 'internal' ? 1 : 2;
         const data = await parseImage({
@@ -286,7 +298,7 @@ const handleSubmit = async () => {
         ElMessage.warning('请先上传并识别合格证照片');
         return;
     }
-    
+
     // 使用全量合并，保留详情接口返回的所有原始字段，并覆盖修改后的值
     const submitData = {
         ...formData,
@@ -340,7 +352,7 @@ const handleSubmit = async () => {
         padding: 16px;
         margin-top: 16px;
         border-radius: 12px;
-        box-shadow: 0 4px 16px rgba(0,0,0,0.05);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
 
         &::-webkit-scrollbar {
             display: none;
@@ -350,13 +362,22 @@ const handleSubmit = async () => {
 
     .content-tabs-wrapper {
         padding: 0 16px 16px;
+
         .custom-nav-tabs {
-            :deep(.el-tabs__header) { margin-bottom: 0; border-bottom: none; }
+            :deep(.el-tabs__header) {
+                margin-bottom: 0;
+                border-bottom: none;
+            }
+
             :deep(.el-tabs__item) {
                 font-size: 15px;
                 color: #64748b;
                 height: 50px;
-                &.is-active { font-weight: 600; color: var(--el-color-primary); }
+
+                &.is-active {
+                    font-weight: 600;
+                    color: var(--el-color-primary);
+                }
             }
         }
     }
@@ -367,12 +388,13 @@ const handleSubmit = async () => {
 
     .upload-section {
         margin-bottom: 24px;
-        
+
         .premium-uploader-wrap {
             width: 100%;
-            
+
             :deep(.el-upload) {
                 width: 100%;
+
                 .el-upload-dragger {
                     width: 100%;
                     height: 180px;
@@ -383,7 +405,7 @@ const handleSubmit = async () => {
                     align-items: center;
                     justify-content: center;
                     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                    
+
                     &:hover {
                         border-color: #00B3ED;
                         background-color: #f0f9ff;
@@ -391,7 +413,9 @@ const handleSubmit = async () => {
                         box-shadow: 0 4px 12px rgba(0, 179, 237, 0.08);
 
                         .uploader-content {
-                            .plus-icon { color: #00B3ED; }
+                            .plus-icon {
+                                color: #00B3ED;
+                            }
                         }
                     }
                 }
@@ -413,6 +437,7 @@ const handleSubmit = async () => {
 
                 .upload-text {
                     text-align: center;
+
                     .main-title {
                         font-size: 16px;
                         font-weight: 600;
@@ -420,6 +445,7 @@ const handleSubmit = async () => {
                         display: block;
                         margin-bottom: 8px;
                     }
+
                     .sub-tips {
                         font-size: 13px;
                         color: #94a3b8;
@@ -433,56 +459,156 @@ const handleSubmit = async () => {
     .divider-dashed {
         height: 1px;
         background-image: linear-gradient(to right, #e2e8f0 40%, rgba(255, 255, 255, 0) 0%);
-        background-position: bottom; background-size: 8px 1px; background-repeat: repeat-x;
+        background-position: bottom;
+        background-size: 8px 1px;
+        background-repeat: repeat-x;
         margin: 32px 0;
     }
 
     .detail-grid {
-        display: grid; grid-template-columns: 360px 1fr; gap: 60px;
+        display: grid;
+        grid-template-columns: 360px 1fr;
+        gap: 60px;
+
         .form-container {
-            .group-title { font-size: 16px; font-weight: 600; margin-bottom: 24px; color: #1e293b; }
-            .standard-form { :deep(.el-form-item) { margin-bottom: 20px; } }
+            .group-title {
+                font-size: 16px;
+                font-weight: 600;
+                margin-bottom: 24px;
+                color: #1e293b;
+            }
+
+            .standard-form {
+                :deep(.el-form-item) {
+                    margin-bottom: 20px;
+                }
+            }
         }
     }
 
     .preview-container {
         .preview-card-wrap {
-            border: 1px solid #f1f5f9; border-radius: 8px; overflow: hidden;
-            .preview-header { background: #f1f5f9; padding: 12px; text-align: center; font-weight: 600; }
+            border: 1px solid #f1f5f9;
+            border-radius: 8px;
+            overflow: hidden;
+
+            .preview-header {
+                background: #f1f5f9;
+                padding: 12px;
+                text-align: center;
+                font-weight: 600;
+            }
         }
     }
 
     .certificate-mock {
         padding: 24px;
-        .cert-code { font-size: 13px; color: #64748b; margin-bottom: 16px; }
-        .cert-title { font-size: 18px; font-weight: 700; text-align: center; margin-bottom: 12px; }
+
+        .cert-code {
+            font-size: 13px;
+            color: #64748b;
+            margin-bottom: 16px;
+        }
+
+        .cert-title {
+            font-size: 18px;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 12px;
+        }
+
         .cert-body {
-            .promise { font-weight: 600; font-size: 15px; }
-            .cert-main { display: flex; justify-content: space-between; margin: 20px 0; }
-            .info-table { .tr { display: flex; border-bottom: 1px solid #f8fafc; .td-label { width: 90px; background: #f8fafc; padding: 10px; } .td-value { flex: 1; padding: 10px; } } }
+            .promise {
+                font-weight: 600;
+                font-size: 15px;
+            }
+
+            .cert-main {
+                display: flex;
+                justify-content: space-between;
+                margin: 20px 0;
+            }
+
+            .info-table {
+                .tr {
+                    display: flex;
+                    border-bottom: 1px solid #f8fafc;
+
+                    .td-label {
+                        width: 90px;
+                        background: #f8fafc;
+                        padding: 10px;
+                    }
+
+                    .td-value {
+                        flex: 1;
+                        padding: 10px;
+                    }
+                }
+            }
         }
     }
 
     .external-preview-content {
-        display: flex; padding: 20px; gap: 20px;
+        display: flex;
+        padding: 20px;
+        gap: 20px;
+
         .info-list-side {
             flex: 1;
+
             .s-item {
-                display: flex; margin-bottom: 12px; font-size: 13px;
-                .s-label { width: 100px; color: #64748b; }
-                &.required .s-label::before { content: '*'; color: #ef4444; margin-right: 4px; }
+                display: flex;
+                margin-bottom: 12px;
+                font-size: 13px;
+
+                .s-label {
+                    width: 100px;
+                    color: #64748b;
+                }
+
+                &.required .s-label::before {
+                    content: '*';
+                    color: #ef4444;
+                    margin-right: 4px;
+                }
             }
         }
+
         .image-preview-side {
-            width: 240px; height: 320px; border: 1px dashed #e2e8f0; display: flex; align-items: center; justify-content: center;
-            .original-img { width: 100%; height: 100%; }
-            .img-empty { color: #94a3b8; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+            width: 240px;
+            height: 320px;
+            border: 1px dashed #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            .original-img {
+                width: 100%;
+                height: 100%;
+            }
+
+            .img-empty {
+                color: #94a3b8;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 8px;
+            }
         }
     }
 
     .bottom-actions {
-        margin-top: 32px; padding: 20px 0; border-top: 1px solid #f1f5f9; display: flex; justify-content: flex-end; gap: 12px;
-        .btn-save { padding: 0 40px; }
+        margin-top: 32px;
+        padding: 20px 0;
+        border-top: 1px solid #f1f5f9;
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+
+        .btn-save {
+            padding: 0 40px;
+        }
     }
 }
 </style>

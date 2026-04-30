@@ -4,143 +4,159 @@
         <PageHeader title="产品档案" desc="填写农产品档案，上传产品宣传照片，并关联所属生产经营主体。" />
 
         <div class="page-scrollable">
-        <!-- 内容卡片 -->
-        <div class="content-card">
-            <div class="card-header">
-                <div class="header-main">
-                    <span class="header-title">产品基本信息</span>
-                    <el-button type="primary" plain class="btn-copy-prev" :loading="copyLoading"
-                        @click="handleCopyPrevious">复制上一条</el-button>
+            <!-- 内容卡片 -->
+            <div class="content-card">
+                <div class="card-header">
+                    <div class="header-main">
+                        <span class="header-title">产品基本信息</span>
+                        <el-button type="primary" plain class="btn-copy-prev" :loading="copyLoading"
+                            @click="handleCopyPrevious">复制上一条</el-button>
+                    </div>
+                    <div class="dashed-line"></div>
                 </div>
-                <div class="dashed-line"></div>
-            </div>
 
-            <el-form ref="formRef" :model="formData" :rules="formRules" label-width="130px"
-                class="product-archive-form">
-                
-                <!-- 产品名称 -->
-                <el-form-item label="产品名称" prop="productName">
-                    <el-input v-model="formData.productName" placeholder="请填写或选择产品名称" />
-                </el-form-item>
+                <el-form ref="formRef" :model="formData" :rules="formRules" label-width="130px"
+                    class="product-archive-form">
 
-                <!-- 建档时间 -->
-                <el-form-item label="建档时间" prop="archiveDate">
-                    <el-date-picker v-model="formData.archiveDate" type="date" placeholder="请选择建档时间" value-format="YYYY-MM-DD" class="full-width" />
-                </el-form-item>
+                    <!-- 产品名称 -->
+                    <el-form-item label="产品名称" prop="productName">
+                        <el-autocomplete v-model="formData.productName" :fetch-suggestions="queryProduce"
+                            placeholder="请填写或选择产品名称" @select="handleProduceSelect" @blur="handleProduceBlur"
+                            value-key="name" class="full-width" />
+                    </el-form-item>
 
-                <!-- 产品类别 -->
-                <el-form-item label="产品类别" prop="category">
-                    <el-select v-model="formData.category" placeholder="请选择产品类别" class="full-width">
-                        <el-option v-for="dict in productCategoryOptions" :key="dict.value" :label="dict.label" :value="dict.value" />
-                    </el-select>
-                </el-form-item>
+                    <!-- 建档时间 -->
+                    <el-form-item label="建档时间" prop="archiveDate">
+                        <el-date-picker v-model="formData.archiveDate" type="date" placeholder="请选择建档时间"
+                            value-format="YYYY-MM-DD" class="full-width" />
+                    </el-form-item>
 
-                <!-- 产品产地 -->
-                <el-form-item label="产品产地" prop="productionArea">
-                    <AreaCascader 
-                        v-model="areaPath" 
-                        placeholder="请选择所属地区" 
-                        @select="(val) => {
+                    <!-- 产品类别 -->
+                    <el-form-item label="产品类别" prop="category">
+                        <el-select v-model="formData.category" placeholder="请选择产品类别" class="full-width">
+                            <el-option v-for="dict in productCategoryOptions" :key="dict.value" :label="dict.label"
+                                :value="dict.value" />
+                        </el-select>
+                    </el-form-item>
+
+                    <!-- 产品产地 -->
+                    <el-form-item label="产品产地" prop="productionArea">
+                        <AreaCascader v-model="areaPath" placeholder="请选择所属地区" @select="(val) => {
                             formData.provinceCode = val.province;
                             formData.cityCode = val.city;
                             formData.districtCode = val.district;
                             formData.productionArea = `${val.province}${val.city}${val.district}`;
-                        }"
-                    />
-                </el-form-item>
+                        }" />
+                    </el-form-item>
 
-                <!-- 产品规格 -->
-                <el-form-item label="产品规格" prop="productSpec">
-                    <div class="compound-input">
-                        <el-input v-model="formData.productSpec" placeholder="请填写数量" style="flex: 1;" />
-                        <el-select class="prefix-select" v-model="formData.productUnit" placeholder="请选择单位" style="width: 100px;">
-                            <el-option label="kg" value="kg" />
-                            <el-option label="吨" value="吨" />
-                            <el-option label="箱" value="箱" />
-                            <el-option label="亩" value="亩" />
-                        </el-select>
-                    </div>
-                </el-form-item>
-
-                <!-- 产品宣传照片 -->
-                <el-form-item label="产品宣传照片" prop="productImageUrl" class="upload-item">
-                    <UploadImg v-model="formData.productImageUrl" :limit="1" />
-                </el-form-item>
-
-                <!-- 分割线 -->
-                <div class="dashed-line mt32 mb32"></div>
-
-                <!-- 所属主体 -->
-                <div class="card-header mt24">
-                    <span class="header-title" style="font-size: 16px;">所属主体（生产经营企业）</span>
-                </div>
-
-                <el-form-item label="生产经营主体" prop="subjectId">
-                    <div class="subject-selector-wrapper">
-                        <el-select v-model="formData.subjectId" filterable remote
-                            placeholder="请搜索或选择所属主体" class="subject-select"
-                            :remote-method="searchSubject" @change="handleSubjectChange">
-                            <template #prefix>
-                                <el-icon><Search /></el-icon>
-                            </template>
-                            <el-option v-for="item in subjectOptions" :key="item.id" :label="item.name" :value="item.id" />
-                        </el-select>
-                        <el-button type="primary" class="btn-new-subject" @click="showSubjectDrawer = true">
-                            <el-icon class="mr4"><Plus /></el-icon>新增主体
-                        </el-button>
-                    </div>
-                </el-form-item>
-
-                <!-- 红色 Tips -->
-                <div class="subject-form-tips">*从主体，如果未找到，请先创建主体建档</div>
-
-                <!-- 主体卡片详情 -->
-                <transition name="el-fade-in">
-                    <div class="subject-card" v-if="currentSubject">
-                        <div class="card-title">
-                            <el-icon><OfficeBuilding /></el-icon>
-                            主体详细信息
+                    <!-- 产品规格 -->
+                    <el-form-item label="产品规格" prop="productSpec">
+                        <div class="compound-input">
+                            <el-input v-model="formData.productSpec" placeholder="请填写数量" style="flex: 1;" />
+                            <el-select class="prefix-select" v-model="formData.productUnit" placeholder="请选择单位"
+                                style="width: 100px;">
+                                <el-option label="kg" value="kg" />
+                                <el-option label="吨" value="吨" />
+                                <el-option label="箱" value="箱" />
+                                <el-option label="亩" value="亩" />
+                            </el-select>
                         </div>
-                        <div class="info-grid">
-                            <div class="info-item">
-                                <span class="label">主体名称</span>
-                                <span class="value semibold">{{ currentSubject.name || '--' }}</span>
+                    </el-form-item>
+
+                    <!-- 产品宣传照片 -->
+                    <el-form-item label="产品宣传照片" prop="productImageUrl" class="upload-item">
+                        <UploadImg v-model="formData.productImageUrl" :limit="1" />
+                    </el-form-item>
+
+                    <!-- 分割线 -->
+                    <div class="dashed-line mt32 mb32"></div>
+
+                    <!-- 所属主体 -->
+                    <div class="card-header mt24">
+                        <span class="header-title" style="font-size: 16px;">所属主体（生产经营企业）</span>
+                    </div>
+
+                    <el-form-item label="生产经营主体" prop="subjectId">
+                        <div class="subject-selector-wrapper">
+                            <el-select v-model="formData.subjectId" filterable remote placeholder="请搜索或选择所属主体"
+                                class="subject-select" :remote-method="searchSubject" @change="handleSubjectChange">
+                                <template #prefix>
+                                    <el-icon>
+                                        <Search />
+                                    </el-icon>
+                                </template>
+                                <el-option v-for="item in subjectOptions" :key="item.id" :label="item.name"
+                                    :value="item.id" />
+                            </el-select>
+                            <el-button type="primary" class="btn-new-subject" @click="showSubjectDrawer = true">
+                                <el-icon class="mr4">
+                                    <Plus />
+                                </el-icon>新增主体
+                            </el-button>
+                        </div>
+                    </el-form-item>
+
+                    <!-- 红色 Tips -->
+                    <div class="subject-form-tips">*从主体，如果未找到，请先创建主体建档</div>
+
+                    <!-- 主体卡片详情 -->
+                    <transition name="el-fade-in">
+                        <div class="subject-card" v-if="currentSubject">
+                            <div class="card-title">
+                                <el-icon>
+                                    <OfficeBuilding />
+                                </el-icon>
+                                主体详细信息
                             </div>
-                            <div class="info-item">
-                                <span class="label">信用代码</span>
-                                <span class="value">{{ currentSubject.socialCreditCode || currentSubject.idCard || '--' }}</span>
-                            </div>
-                            <div class="info-item">
-                                <span class="label">主体类型</span>
-                                <span class="value"><el-tag size="small" effect="plain" v-if="currentSubject.category">{{ getCategoryLabel(currentSubject.category) }}</el-tag><span v-else>--</span></span>
-                            </div>
-                            <div class="info-item">
-                                <span class="label">备案类型</span>
-                                <span class="value">{{ currentSubject.type ? getFilingTypeLabel(currentSubject.type) : '--' }}</span>
-                            </div>
-                            <div class="info-item">
-                                <span class="label">联系人</span>
-                                <span class="value">{{ currentSubject.contactName || '--' }}</span>
-                            </div>
-                            <div class="info-item">
-                                <span class="label">联系电话</span>
-                                <span class="value">{{ currentSubject.contactPhone || '--' }}</span>
-                            </div>
-                            <div class="info-item span-2">
-                                <span class="label">所属地区及详细地址</span>
-                                <span class="value">{{ currentSubject.provinceCode ? `${currentSubject.provinceCode}${currentSubject.cityCode || ''}${currentSubject.districtCode || ''}` : '' }} {{ currentSubject.address || '--' }}</span>
+                            <div class="info-grid">
+                                <div class="info-item">
+                                    <span class="label">主体名称</span>
+                                    <span class="value semibold">{{ currentSubject.name || '--' }}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="label">信用代码</span>
+                                    <span class="value">{{ currentSubject.socialCreditCode || currentSubject.idCard ||
+                                        '--' }}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="label">主体类型</span>
+                                    <span class="value"><el-tag size="small" effect="plain"
+                                            v-if="currentSubject.category">{{
+                                            getCategoryLabel(currentSubject.category) }}</el-tag><span
+                                            v-else>--</span></span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="label">备案类型</span>
+                                    <span class="value">{{ currentSubject.type ? getFilingTypeLabel(currentSubject.type)
+                                        : '--' }}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="label">联系人</span>
+                                    <span class="value">{{ currentSubject.contactName || '--' }}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="label">联系电话</span>
+                                    <span class="value">{{ currentSubject.contactPhone || '--' }}</span>
+                                </div>
+                                <div class="info-item span-2">
+                                    <span class="label">所属地区及详细地址</span>
+                                    <span class="value">{{ currentSubject.provinceCode ?
+                                        `${currentSubject.provinceCode}${currentSubject.cityCode ||
+                                        ''}${currentSubject.districtCode || ''}`
+                                        : '' }} {{ currentSubject.address || '--' }}</span>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </transition>
+                    </transition>
 
-                <!-- 底部操作按钮 -->
-                <div class="form-footer">
-                    <el-button type="primary" :loading="submitLoading" class="btn-submit" @click="handleSave">保存建档</el-button>
-                    <el-button class="btn-cancel" @click="handleCancel">取消</el-button>
-                </div>
-            </el-form>
-        </div>
+                    <!-- 底部操作按钮 -->
+                    <div class="form-footer">
+                        <el-button type="primary" :loading="submitLoading" class="btn-submit"
+                            @click="handleSave">保存建档</el-button>
+                        <el-button class="btn-cancel" @click="handleCancel">取消</el-button>
+                    </div>
+                </el-form>
+            </div>
         </div>
 
         <!-- 主体建档侧滑 -->
@@ -157,6 +173,7 @@ import { UploadImg } from '@/components/UploadFile';
 import AreaCascader from '@/components/AreaCascader/index.vue';
 import * as ProductApi from '@/api/agri/product/index';
 import * as SubjectApi from '@/api/agri/subject/index';
+import * as ProduceApi from '@/api/agri/produce/index';
 import { useMessage } from '@/hooks/web/useMessage';
 import { useDict } from '@/hooks/web/useDict';
 import { formatDate } from '@/utils/formatTime';
@@ -200,6 +217,54 @@ const formRules = {
 
 const subjectOptions = ref([]);
 const currentSubject = ref(null);
+
+// 农产品自动补全与类别回显逻辑
+const queryProduce = async (queryString, cb) => {
+    if (!queryString) {
+        cb([]);
+        return;
+    }
+    try {
+        const res = await ProduceApi.getProducePage({ name: queryString, pageNo: 1, pageSize: 50, });
+        cb(res.list || []);
+    } catch (e) {
+        cb([]);
+    }
+};
+
+const matchCategoryFromFullCategory = (fullCategory) => {
+    if (!fullCategory) return null;
+    const firstLevel = fullCategory.split('/')[0];
+    const matchedOption = productCategoryOptions.value.find(opt =>
+        firstLevel.includes(opt.label) || opt.label.includes(firstLevel.replace('类', ''))
+    );
+    return matchedOption ? matchedOption.value : null;
+};
+
+const handleProduceSelect = (item) => {
+    formData.productName = item.name;
+    const category = matchCategoryFromFullCategory(item.fullCategory);
+    if (category) {
+        formData.category = category;
+    }
+};
+
+const handleProduceBlur = async () => {
+    if (!formData.productName || formData.category) return; // 已有类别则不覆盖
+    try {
+        const res = await ProduceApi.getProducePage({ name: formData.productName, pageNo: 1, pageSize: 1, type: '2' });
+        if (res.list && res.list.length > 0) {
+            const item = res.list[0];
+            // 只要匹配名称就回显
+            if (item.name === formData.productName) {
+                const category = matchCategoryFromFullCategory(item.fullCategory);
+                if (category) {
+                    formData.category = category;
+                }
+            }
+        }
+    } catch (e) { }
+};
 
 const searchSubject = async (query) => {
     if (query !== '') {
@@ -251,14 +316,14 @@ const loadDetail = async () => {
         currentSubject.value = null;
         return;
     };
-    
+
     if (loadingDetail.value) return;
     loadingDetail.value = true;
-    
+
     try {
         const data = await ProductApi.getProduct(detailId);
         Object.assign(formData, data);
-        
+
         // 产品产地回显优化：
         if (data.provinceCode || data.cityCode || data.districtCode) {
             // 优先使用代码路径
@@ -406,8 +471,13 @@ $border-color: #E2E8F0;
     margin-bottom: 24px;
 }
 
-.mr4 { margin-right: 4px; }
-.mt24 { margin-top: 24px; }
+.mr4 {
+    margin-right: 4px;
+}
+
+.mt24 {
+    margin-top: 24px;
+}
 
 /* 内容卡片 */
 .content-card {
@@ -451,8 +521,13 @@ $border-color: #E2E8F0;
     background-repeat: repeat-x;
 }
 
-.mb32 { margin-bottom: 32px; }
-.mt32 { margin-top: 32px; }
+.mb32 {
+    margin-bottom: 32px;
+}
+
+.mt32 {
+    margin-top: 32px;
+}
 
 .product-archive-form {
     max-width: 650px;
@@ -485,7 +560,7 @@ $border-color: #E2E8F0;
     :deep(.el-select__wrapper) {
         height: 40px;
         box-shadow: 0 0 0 1px #CBD5E1 inset;
-        
+
         &.is-focus {
             box-shadow: 0 0 0 1px $theme-color inset !important;
         }
@@ -504,6 +579,7 @@ $border-color: #E2E8F0;
     :deep(.el-input) {
         flex: 1;
     }
+
     .prefix-select {
         width: 100px !important;
         flex-shrink: 0;
@@ -565,7 +641,10 @@ $border-color: #E2E8F0;
         display: flex;
         align-items: center;
         gap: 8px;
-        .el-icon { color: $theme-color; }
+
+        .el-icon {
+            color: $theme-color;
+        }
     }
 
     .info-grid {
@@ -579,7 +658,9 @@ $border-color: #E2E8F0;
         flex-direction: column;
         gap: 6px;
 
-        &.span-2 { grid-column: span 2; }
+        &.span-2 {
+            grid-column: span 2;
+        }
 
         .label {
             font-size: 12px;
@@ -589,7 +670,11 @@ $border-color: #E2E8F0;
         .value {
             font-size: 14px;
             color: #334155;
-            &.semibold { font-weight: 600; color: $text-dark; }
+
+            &.semibold {
+                font-weight: 600;
+                color: $text-dark;
+            }
         }
     }
 
@@ -606,7 +691,10 @@ $border-color: #E2E8F0;
         display: flex;
         align-items: center;
         gap: 4px;
-        &:hover { text-decoration: underline; }
+
+        &:hover {
+            text-decoration: underline;
+        }
     }
 }
 

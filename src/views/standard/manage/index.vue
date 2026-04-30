@@ -79,7 +79,7 @@
             <!-- 分页区域 -->
             <div class="pagination-wrapper">
                 <el-pagination v-model:current-page="pageParams.pageNum" v-model:page-size="pageParams.pageSize"
-                    :total="total" background layout="prev, pager, next, jumper" class="custom-pagination" />
+                    :total="total" background layout="total, sizes, prev, pager, next, jumper" class="custom-pagination" />
             </div>
         </div>
     </div>

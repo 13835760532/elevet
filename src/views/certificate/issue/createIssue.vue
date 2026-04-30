@@ -1,6 +1,6 @@
 <template>
     <div class="page-container">
-        <pageHeader v-if="currentStep== 2" title="合格证开具" desc="填写农产品合格证的详细信息，包括产品批次、检测结果、生产者信息等" />
+        <pageHeader v-if="currentStep == 2" title="合格证开具" desc="填写农产品合格证的详细信息，包括产品批次、检测结果、生产者信息等" />
         <pageHeader v-else-if="currentStep == 3" title="合格证开具" desc="填写农产品合格证的详细信息，包括产品批次、检测结果、生产者信息等" />
         <pageHeader v-else title="合格证开具（生产者/收购者）" desc="填写农产品档案，关联上游合格证，关联检测信息开具合格证" />
         <div class="content-card">
@@ -106,12 +106,18 @@
                             <!-- 第一行：产品编号 + 产品名称 -->
                             <div class="form-row two-cols">
                                 <el-form-item label="产品编号" required class="form-col">
-                                    <el-input v-model="formData.productNo" placeholder="DP20251238000001"
+                                    <el-input v-model="formData.productNo"
+                                        :placeholder="formData.linkProfile === 'yes' ? '关联后自动带出' : '输入产品编号'"
                                         :disabled="formData.linkProfile === 'yes'" />
                                 </el-form-item>
                                 <el-form-item label="产品名称" required class="form-col">
-                                    <el-input v-model="formData.productName" placeholder="输入产品名称"
-                                        :disabled="formData.linkProfile === 'yes'" />
+                                    <el-autocomplete v-model="formData.productName" placeholder="输入产品名称"
+                                        :disabled="formData.linkProfile === 'yes'"
+                                        :fetch-suggestions="queryProduce"
+                                        @select="handleProduceSelect"
+                                        @blur="handleProduceBlur"
+                                        value-key="name"
+                                        class="full-width" />
                                 </el-form-item>
                             </div>
 
@@ -120,7 +126,8 @@
                                 <el-form-item label="产品类别" required class="form-col">
                                     <el-select v-model="formData.category" placeholder="选择产品类别" class="full-width"
                                         :disabled="formData.linkProfile === 'yes'">
-                                        <el-option v-for="dict in productCategoryOptions" :key="dict.value" :label="dict.label" :value="dict.value" />
+                                        <el-option v-for="dict in productCategoryOptions" :key="dict.value"
+                                            :label="dict.label" :value="dict.value" />
                                     </el-select>
                                 </el-form-item>
                                 <el-form-item label="产品产地" required class="form-col">
@@ -137,21 +144,23 @@
                                             :disabled="formData.linkProfile === 'yes'" />
                                         <el-select v-model="formData.unit" placeholder="单位" style="width: 100px;"
                                             :disabled="formData.linkProfile === 'yes'">
-                                            <el-option v-for="unit in AGRI_UNITS" :key="unit.value" :label="unit.label" :value="unit.value" />
+                                            <el-option v-for="unit in AGRI_UNITS" :key="unit.value" :label="unit.label"
+                                                :value="unit.value" />
                                         </el-select>
                                     </div>
                                 </el-form-item>
                                 <el-form-item label="建档日期" required class="form-col">
                                     <el-date-picker v-model="formData.createDate" type="date" placeholder="选择建档日期时间"
-                                        class="full-width" :disabled="formData.linkProfile === 'yes'" value-format="YYYY-MM-DD" />
+                                        class="full-width" :disabled="formData.linkProfile === 'yes'"
+                                        value-format="YYYY-MM-DD" />
                                 </el-form-item>
                             </div>
 
                             <div class="form-row two-cols">
                                 <el-form-item label="产品图片" class="form-col">
                                     <div class="image-upload-wrapper">
-                                        <UploadImg v-model="formData.productImageUrl" :limit="1" height="150px" width="150px"
-                                            :disabled="formData.linkProfile === 'yes'" />
+                                        <UploadImg v-model="formData.productImageUrl" :limit="1" height="150px"
+                                            width="150px" :disabled="formData.linkProfile === 'yes'" />
                                     </div>
                                 </el-form-item>
                             </div>
@@ -220,20 +229,16 @@
                                         </el-icon>
                                     </template>
                                 </el-input>
-                                <el-button type="primary" class="theme-primary-btn mini-btn" :loading="upstreamLoading" @click="handleSearchUpstream">
+                                <el-button type="primary" class="theme-primary-btn mini-btn" :loading="upstreamLoading"
+                                    @click="handleSearchUpstream">
                                     查询
                                 </el-button>
                             </div>
 
                             <div v-else class="other-platform-area">
                                 <div class="upload-trigger-wrap">
-                                    <el-upload
-                                        class="upstream-uploader"
-                                        action="#"
-                                        :auto-upload="false"
-                                        :show-file-list="false"
-                                        @change="onUpstreamFileChange"
-                                    >
+                                    <el-upload class="upstream-uploader" action="#" :auto-upload="false"
+                                        :show-file-list="false" @change="onUpstreamFileChange">
                                         <el-button type="primary" class="upload-btn">上传合格证照片</el-button>
                                     </el-upload>
                                 </div>
@@ -243,15 +248,14 @@
                                     <div class="preview-body">
                                         <!-- 仅保留并放大图片展示 -->
                                         <div class="image-box-side only-img">
-                                            <el-image 
-                                                v-if="formData.upstreamCertificateImageUrl"
-                                                :src="formData.upstreamCertificateImageUrl"
-                                                fit="contain"
+                                            <el-image v-if="formData.upstreamCertificateImageUrl"
+                                                :src="formData.upstreamCertificateImageUrl" fit="contain"
                                                 class="preview-img"
-                                                :preview-src-list="[formData.upstreamCertificateImageUrl]"
-                                            />
+                                                :preview-src-list="[formData.upstreamCertificateImageUrl]" />
                                             <div v-else class="img-empty">
-                                                <el-icon :size="48"><Picture /></el-icon>
+                                                <el-icon :size="48">
+                                                    <Picture />
+                                                </el-icon>
                                                 <span>未上传上游合格证照片</span>
                                             </div>
                                         </div>
@@ -269,7 +273,9 @@
                             <h2 class="cert-main-title">承诺达标合格</h2>
                             <div class="cert-sub-title">承诺事项：</div>
                             <div class="cert-declaration-list mini">
-                                <p style="text-align: left;" v-for="(line, idx) in computedCommitment" :key="idx" class="declaration-line">• {{ line }}</p>
+                                <p style="text-align: left;" v-for="(line, idx) in computedCommitment" :key="idx"
+                                    class="declaration-line">•
+                                    {{ line }}</p>
                             </div>
                             <div class="cert-promises">
                                 <div class="cert-title">承诺依据</div>
@@ -278,7 +284,8 @@
                                 <el-checkbox v-model="formData.p3" disabled>委托检测合格</el-checkbox>
                             </div>
                             <div class="qr-placeholder">
-                                <Qrcode v-if="formData.qrCode" :text="formData.qrCode"  :options="{ errorCorrectionLevel: 'L' }" :width="80" />
+                                <Qrcode v-if="formData.qrCode" :text="formData.qrCode"
+                                    :options="{ errorCorrectionLevel: 'L' }" :width="80" />
                             </div>
                         </div>
                     </div>
@@ -305,7 +312,9 @@
                             <div class="info-row"><span class="label">承诺主体</span><span class="value">{{ formData.entity
                                 || '--' }}</span>
                             </div>
-                            <div class="info-row"><span class="label">联系方式</span><span class="value">{{ formData.contactPhone || '--' }}</span></div>
+                            <div class="info-row"><span class="label">联系方式</span><span class="value">{{
+                                formData.contactPhone || '--'
+                                    }}</span></div>
                             <div class="info-row"><span class="label">开具时间</span><span class="value">{{
                                 formatDate(formData.createDate) || '--'
                                     }}</span></div>
@@ -317,7 +326,8 @@
                     <!-- 底部按钮 -->
                     <div class="form-footer">
                         <el-button class="theme-default-btn" @click="handleCancel">取消</el-button>
-                        <el-button type="primary" :loading="submitLoading" class="theme-primary-btn" @click="goNextToStep2">下一步</el-button>
+                        <el-button type="primary" :loading="submitLoading" class="theme-primary-btn"
+                            @click="goNextToStep2">下一步</el-button>
                     </div>
                 </el-form>
             </div>
@@ -335,12 +345,14 @@
                     <el-form-item label="数量 (重量)">
                         <div class="quantity-input">
                             <div class="stepper">
-                                <button type="button" :class="['step-btn', { yellow: formData.quantity > 0 }]" @click="handleSub">-</button>
+                                <button type="button" :class="['step-btn', { yellow: formData.quantity > 0 }]"
+                                    @click="handleSub">-</button>
                                 <input type="number" class="step-val" v-model.number="formData.quantity" min="0" />
                                 <button type="button" class="step-btn yellow" @click="handleAdd">+</button>
                             </div>
                             <el-select v-model="formData.unit" class="unit-select">
-                                <el-option v-for="unit in AGRI_UNITS" :key="unit.value" :label="unit.label" :value="unit.value" />
+                                <el-option v-for="unit in AGRI_UNITS" :key="unit.value" :label="unit.label"
+                                    :value="unit.value" />
                             </el-select>
                         </div>
                     </el-form-item>
@@ -356,7 +368,8 @@
                     <div class="association-grid">
                         <!-- 左侧：第三方结果 -->
                         <div class="assoc-col">
-                            <h3 class="col-title">关联样品检测结果 {{ formData.thirdPartyType === 'third' ? '第三方' : '平台' }}</h3>
+                            <h3 class="col-title">关联样品检测结果{{ formData.thirdPartyType === 'third' ? '第三方' : '本平台' }}
+                            </h3>
                             <div class="col-content-box">
                                 <el-select v-model="formData.thirdPartyType" placeholder="第三方检测结果" class="full-width">
                                     <el-option label="第三方检测结果" value="third" />
@@ -365,43 +378,42 @@
                                 <template v-if="formData.thirdPartyType === 'third'">
                                     <div class="upload-wrapper-box" @click="handleTriggerUpload">
                                         <div class="upload-trigger-inner">
-                                            <UploadImgs 
-                                                ref="uploadImgsRef"
-                                                v-model="formData.thirdPartyReportUrls" 
-                                                :limit="3" 
-                                                draggable 
-                                                class="hidden-upload" 
-                                                width="100%" 
-                                                height="100%"
-                                            />
-                                            <div class="trigger-content" v-if="!formData.thirdPartyReportUrls || formData.thirdPartyReportUrls.length === 0">
-                                                <el-icon class="upload-big-icon"><Plus /></el-icon>
+                                            <UploadImgs ref="uploadImgsRef" v-model="formData.thirdPartyReportUrls"
+                                                :limit="3" draggable class="hidden-upload" width="100%" height="100%" />
+                                            <div class="trigger-content"
+                                                v-if="!formData.thirdPartyReportUrls || formData.thirdPartyReportUrls.length === 0">
+                                                <el-icon class="upload-big-icon">
+                                                    <Plus />
+                                                </el-icon>
                                                 <div class="upload-tip-text">点击或拖拽上传检测报告（最多3张）</div>
                                                 <div class="upload-sub-tip">支持 JPG、PNG、PDF 格式，每张不超过 5MB</div>
                                             </div>
                                             <div class="trigger-content active" v-else>
-                                                <el-icon class="upload-big-icon primary"><CircleCheck /></el-icon>
-                                                <div class="upload-tip-text">继续上传或更改图片 ({{ formData.thirdPartyReportUrls.length }}/3)</div>
+                                                <el-icon class="upload-big-icon primary">
+                                                    <CircleCheck />
+                                                </el-icon>
+                                                <div class="upload-tip-text">继续上传或更改图片 ({{
+                                                    formData.thirdPartyReportUrls.length }}/3)</div>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div class="results-preview-list" v-if="formData.thirdPartyReportUrls && formData.thirdPartyReportUrls.length > 0">
+                                    <div class="results-preview-list"
+                                        v-if="formData.thirdPartyReportUrls && formData.thirdPartyReportUrls.length > 0">
                                         <h4 class="preview-title">上传结果预览：</h4>
                                         <div class="image-preview-grid">
-                                            <div v-for="(url, idx) in formData.thirdPartyReportUrls" :key="idx" class="preview-box" :title="isPdf(url) ? '点击预览 PDF' : ''">
-                                                <div v-if="isPdf(url)" class="pdf-file-preview" @click="handlePreviewPdf(url)">
-                                                    <el-icon><Document /></el-icon>
+                                            <div v-for="(url, idx) in formData.thirdPartyReportUrls" :key="idx"
+                                                class="preview-box" :title="isPdf(url) ? '点击预览 PDF' : ''">
+                                                <div v-if="isPdf(url)" class="pdf-file-preview"
+                                                    @click="handlePreviewPdf(url)">
+                                                    <el-icon>
+                                                        <Document />
+                                                    </el-icon>
                                                     <span class="file-label">PDF 报告</span>
                                                 </div>
-                                                <el-image 
-                                                    v-else
-                                                    :src="url" 
-                                                    class="preview-img" 
+                                                <el-image v-else :src="url" class="preview-img"
                                                     :preview-src-list="formData.thirdPartyReportUrls"
-                                                    :initial-index="idx"
-                                                    fit="contain"
-                                                />
+                                                    :initial-index="idx" fit="contain" />
                                             </div>
                                         </div>
                                     </div>
@@ -410,7 +422,9 @@
                                         <div class="image-preview-grid">
                                             <div v-for="n in 3" :key="n" class="preview-box empty">
                                                 <div class="preview-placeholder">
-                                                    <el-icon><Picture /></el-icon>
+                                                    <el-icon>
+                                                        <Picture />
+                                                    </el-icon>
                                                 </div>
                                             </div>
                                         </div>
@@ -418,12 +432,10 @@
                                 </template>
 
                                 <template v-else>
-                                    <PlatformDetectionSelector
-                                        v-model="formData.platformRecordIds"
+                                    <PlatformDetectionSelector v-model="formData.platformRecordIds"
                                         v-model:linked-records="linkedPlatformRecords"
                                         :search-method="searchPlatformRecords"
-                                        @update:active-record="handlePlatformActiveRecordChange"
-                                    />
+                                        @update:active-record="handlePlatformActiveRecordChange" />
                                 </template>
 
 
@@ -433,7 +445,8 @@
 
                     <div class="page-footer">
                         <el-button class="theme-default-btn" @click="goToStep(1)">上一步</el-button>
-                        <el-button type="primary" :loading="submitLoading" class="theme-primary-btn" @click="handleGenerate">生成合格证</el-button>
+                        <el-button type="primary" :loading="submitLoading" class="theme-primary-btn"
+                            @click="handleGenerate">生成合格证</el-button>
                     </div>
                 </el-form>
             </div>
@@ -449,7 +462,8 @@
                         <h1 class="cert-title">承诺达标合格证</h1>
                         <h2 class="cert-subtitle">承诺事项：</h2>
                         <div class="cert-declaration-list">
-                            <p v-for="(line, idx) in computedCommitment" :key="idx" class="declaration-line">• {{ line }}</p>
+                            <p v-for="(line, idx) in computedCommitment" :key="idx" class="declaration-line">• {{ line
+                            }}</p>
                         </div>
 
                         <div class="cert-middle-section">
@@ -466,7 +480,9 @@
                                 </div>
                             </div>
                             <div class="qr-code-wrapper">
-                                <Qrcode v-if="displayCertNo" :text="`https://yishizhijian.jikeyun.net/certificate/trace?qrcode=${displayCertNo}`"  :options="{ errorCorrectionLevel: 'L' }" :width="132" />
+                                <Qrcode v-if="displayCertNo"
+                                    :text="`https://yishizhijian.jikeyun.net/certificate/trace?qrcode=${displayCertNo}`"
+                                    :options="{ errorCorrectionLevel: 'L' }" :width="132" />
                             </div>
                         </div>
 
@@ -480,8 +496,10 @@
                                     <div class="value">{{ formData.productName }}</div>
                                 </div>
                                 <div class="info-row">
-                                <div class="label">数量/重量</div>
-                                <div class="value">{{ (formData.quantity ?? formData.batchSize ?? '--') }} {{ formData.unit || '' }}</div>
+                                    <div class="label">数量/重量</div>
+                                    <div class="value">{{ (formData.quantity ?? formData.batchSize ?? '--') }} {{
+                                        formData.unit ||
+                                        '' }}</div>
                                 </div>
                                 <div class="info-row">
                                     <div class="label">产品产地</div>
@@ -507,7 +525,8 @@
                         <div class="image-section no-print">
                             <h3 class="info-title">产品图片</h3>
                             <div class="image-preview-box">
-                                <img v-if="formData.productImageUrl" :src="formData.productImageUrl" class="cert-product-img" alt="产品图片" />
+                                <img v-if="formData.productImageUrl" :src="formData.productImageUrl"
+                                    class="cert-product-img" alt="产品图片" />
                                 <el-icon v-else class="placeholder-icon">
                                     <Picture />
                                 </el-icon>
@@ -518,27 +537,17 @@
 
                 <div class="action-footer">
                     <el-button class="theme-default-btn" @click="goToStep(2)">上一步</el-button>
-                    <el-button
-                        type="primary"
-                        class="theme-primary-btn"
-                        :loading="captureLoading"
-                        @click="handlePreview"
-                    >
+                    <el-button type="primary" class="theme-primary-btn" :loading="captureLoading"
+                        @click="handlePreview">
                         打印
                     </el-button>
                     <el-button type="info" class="theme-default-btn" @click="handleDownload">下载</el-button>
-                  
+
                 </div>
             </div>
         </div>
 
-        <el-dialog
-            v-model="previewVisible"
-            title="打印预览"
-            width="840px"
-            append-to-body
-            class="print-preview-dialog"
-        >
+        <el-dialog v-model="previewVisible" title="打印预览" width="840px" append-to-body class="print-preview-dialog">
             <div class="preview-section-title">热敏打印效果预览</div>
             <div class="preview-wrapper print-effect-wrapper" v-loading="printEffectLoading">
                 <img v-if="printEffectPreviewSrc" :src="printEffectPreviewSrc" class="preview-img print-effect-img" />
@@ -546,28 +555,19 @@
             </div>
             <template #footer>
                 <el-button class="theme-default-btn" @click="previewVisible = false">关闭</el-button>
-                <el-button
-                    plain
-                    class="theme-default-btn bluetooth-btn"
-                    :loading="bluetoothConnecting"
-                    @click="connectBluetoothPrinter"
-                >
+                <el-button plain class="theme-default-btn bluetooth-btn" :loading="bluetoothConnecting"
+                    @click="connectBluetoothPrinter">
                     {{ bluetoothReady ? `已连接：${printerName}` : '连接蓝牙打印机' }}
                 </el-button>
-                <el-button type="primary" class="theme-primary-btn" :loading="bluetoothPrinting" :disabled="!preparedPrintBytes || !bluetoothReady" @click="handlePrint(previewSrc)">
+                <el-button type="primary" class="theme-primary-btn" :loading="bluetoothPrinting"
+                    :disabled="!preparedPrintBytes || !bluetoothReady" @click="handlePrint(previewSrc)">
                     蓝牙打印
                 </el-button>
             </template>
         </el-dialog>
 
         <!-- PDF 预览弹窗 -->
-        <el-dialog
-            v-model="pdfVisible"
-            title="PDF 报告预览"
-            width="80%"
-            destroy-on-close
-            class="pdf-view-dialog"
-        >
+        <el-dialog v-model="pdfVisible" title="PDF 报告预览" width="80%" destroy-on-close class="pdf-view-dialog">
             <iframe :src="pdfUrl" width="100%" height="700px" frameborder="0"></iframe>
         </el-dialog>
     </div>
@@ -583,6 +583,7 @@ import * as CertificateApi from '@/api/agri/certificate';
 import * as ProductApi from '@/api/agri/product';
 import * as SubjectApi from '@/api/agri/subject';
 import * as DetectionReportApi from '@/api/agri/detectionReport';
+import * as ProduceApi from '@/api/agri/produce/index';
 
 const isPdf = (url) => {
     if (!url) return false;
@@ -634,18 +635,19 @@ const isUpdate = !!id;
 const currentStep = computed(() => certStore.currentStep);
 
 const isSubmitted = ref(false);
+const submissionFailed = ref(false);
 
 // 点返回清空数据
 onBeforeRouteLeave(async (to) => {
-    // 如果在第二步切换页面且未提交成功，则自动保存草稿
-    if (currentStep.value === 2 && !isSubmitted.value) {
+    // 如果在第二步切换页面且未提交成功且未发生过提交错误，则自动保存草稿
+    if (currentStep.value === 2 && !isSubmitted.value && !submissionFailed.value) {
         try {
             await handleSaveDraft(true); // 静默保存
         } catch (e) {
             console.error('自动保存草稿失败', e);
         }
     }
-    
+
     if (to.path === '/certificate/issue') {
         certStore.resetAll();
     }
@@ -654,6 +656,53 @@ onBeforeRouteLeave(async (to) => {
 // 字典数据
 const certificateTypeOptions = getIntDictOptions(DICT_TYPE.AGRI_CERTIFICATE_TYPE);
 const productCategoryOptions = getDictOptions(DICT_TYPE.AGRI_PRODUCT_CATEGORY);
+
+// 农产品自动补全与类别回显逻辑
+const queryProduce = async (queryString, cb) => {
+    if (!queryString) {
+        cb([]);
+        return;
+    }
+    try {
+        const res = await ProduceApi.getProducePage({ name: queryString, pageNo: 1, pageSize: 50 });
+        cb(res.list || []);
+    } catch (e) {
+        cb([]);
+    }
+};
+
+const matchCategoryFromFullCategory = (fullCategory) => {
+    if (!fullCategory) return null;
+    const firstLevel = fullCategory.split('/')[0];
+    const matchedOption = productCategoryOptions.find(opt => 
+        firstLevel.includes(opt.label) || opt.label.includes(firstLevel.replace('类', ''))
+    );
+    return matchedOption ? matchedOption.value : null;
+};
+
+const handleProduceSelect = (item) => {
+    formData.productName = item.name;
+    const category = matchCategoryFromFullCategory(item.fullCategory);
+    if (category) {
+        formData.category = category;
+    }
+};
+
+const handleProduceBlur = async () => {
+    if (!formData.productName || formData.category) return; // 已有类别则不覆盖
+    try {
+        const res = await ProduceApi.getProducePage({ name: formData.productName, pageNo: 1, pageSize: 1 });
+        if (res.list && res.list.length > 0) {
+            const item = res.list[0];
+            if (item.name === formData.productName) {
+                const category = matchCategoryFromFullCategory(item.fullCategory);
+                if (category) {
+                    formData.category = category;
+                }
+            }
+        }
+    } catch (e) {}
+};
 
 const formRef2 = ref(null);
 
@@ -819,11 +868,11 @@ const searchPlatformRecords = async (query) => {
             pageNo: 1,
             pageSize: 50
         });
-        
+
         const data = unwrapApiData(response);
         // 如果返回的是分页结果对象，提取 list 数组
         const sourceList = data?.list || (Array.isArray(data) ? data : []);
-        
+
         return sourceList.map(mapReportOption).filter(item => item.linkId);
     } catch (error) {
         console.error('查询平台检测记录失败', error);
@@ -881,7 +930,7 @@ const onUpstreamFileChange = async (fileObj) => {
         text: '正在智能识别上游合格证...',
         background: 'rgba(255, 255, 255, 0.7)'
     });
-    
+
     try {
         if (formData.upstreamCertificateSource === 1) {
             // 本平台识别（虽然本平台通常通过编号搜索，但保留该逻辑以备二维码识别）
@@ -913,7 +962,7 @@ const handleEntityChange = (val) => {
         formData.subjectId = selected.id;
         formData.legalPerson = selected.legalPerson || '';
         // 暂时回显城市代码，实际项目中可能需要通过 Code 转换
-        formData.registeredCity = selected.cityCode || '青岛市'; 
+        formData.registeredCity = selected.cityCode || '青岛市';
     }
 };
 
@@ -923,7 +972,7 @@ const loadDetails = async () => {
     try {
         const data = await CertificateApi.getCertificate(id);
         const loadedDetectionRecordIds = normalizeDetectionRecordIds(data.detectionRecordId);
-        
+
         // 解析承诺依据
         let basisArr = [];
         if (data.commitmentBasis) {
@@ -1096,7 +1145,7 @@ const handleProductSelect = async (id) => {
 };
 
 onMounted(async () => {
-console.log(certificateTypeOptions)
+    console.log(certificateTypeOptions)
     certStore.setStep(1);
     if (id) {
         loadDetails();
@@ -1212,7 +1261,7 @@ const handleSaveDraft = async (isSilent = false) => {
         autoCreateSubject: formData.linkProfile === 'no',
         autoCreateProduct: formData.linkProfile === 'no',
         certificateType: formData.issueType,
-        productionDate: formData.createDate,
+        productionDate: formData.createDate ? new Date(formData.createDate).toISOString().split('T')[0] : '',
         batchNo: formData.batchSize, // 同 handleGenerate 逻辑，批次规模存 batchNo
         quantity: formData.quantity,
         unit: formData.unit,
@@ -1223,7 +1272,7 @@ const handleSaveDraft = async (isSilent = false) => {
             name: formData.entity,
             contactPhone: formData.contactPhone,
             legalPerson: formData.legalPerson,
-            address: formData.origin 
+            address: formData.origin
         },
         productDraft: {
             productCode: formData.productNo, // 产品编号存此处
@@ -1251,6 +1300,7 @@ const handleSaveDraft = async (isSilent = false) => {
 };
 
 const handleGenerate = async () => {
+    submissionFailed.value = false;
     if (submitLoading.value) return;
 
     if (formRef2.value) {
@@ -1312,7 +1362,7 @@ const handleGenerate = async () => {
             detectionRecordId: formData.thirdPartyType === 'platform' ? linkedPlatformRecordIds : undefined
         };
 
-   
+
         await CertificateApi.createCertificate(submitData);
         message.success('创建成功');
 
@@ -1321,6 +1371,7 @@ const handleGenerate = async () => {
         isSubmitted.value = true;
         goToStep(3);
     } catch (error) {
+        submissionFailed.value = true;
         console.error('保存失败', error);
     } finally {
         submitLoading.value = false;
@@ -1499,7 +1550,7 @@ const captureAreaToImg = async () => {
     try {
         // 关键步骤：添加特定类名以强制大字号和窄布局
         area.classList.add('printing-active');
-        
+
         const canvas = await html2canvas(area, {
             scale: 1.5, // 回退到2，避免超大像素反而导致不兼容
             useCORS: true,
@@ -1526,7 +1577,7 @@ const handlePreview = async () => {
     previewSrc.value = null;
     printEffectPreviewSrc.value = null;
     preparedPrintBytes.value = null;
-    
+
     // 让弹窗及 loading UI 先呈现出来再进行阻断式渲染
     await nextTick();
     // 延迟少许给浏览器足够时间渲染弹窗动画
@@ -1773,7 +1824,8 @@ const handlePrint = async (prepared) => {
 .form-section {
     margin-bottom: 20px;
 
-    .preview-title,.section-title {
+    .preview-title,
+    .section-title {
         font-size: 16px;
         font-weight: 700;
         color: #333;
@@ -1941,6 +1993,7 @@ const handlePrint = async (prepared) => {
 /* 基本信息预览 */
 .basic-info-preview {
     margin: 12px 0;
+
     .preview-title {
         font-size: 16px;
         font-weight: 700;
@@ -2047,6 +2100,7 @@ const handlePrint = async (prepared) => {
 
     .unit-select {
         width: 140px;
+
         :deep(.el-input__wrapper) {
             height: 48px;
             font-size: 15px;
@@ -2096,6 +2150,7 @@ const handlePrint = async (prepared) => {
         outline: none;
         box-sizing: border-box;
         -moz-appearance: textfield;
+
         &::-webkit-outer-spin-button,
         &::-webkit-inner-spin-button {
             -webkit-appearance: none;
@@ -2135,7 +2190,7 @@ const handlePrint = async (prepared) => {
     border: 1px solid #E5E7EB;
     padding: 20px;
     border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
 
     .preview-title {
         font-size: 15px;
@@ -2160,7 +2215,7 @@ const handlePrint = async (prepared) => {
     display: flex;
     align-items: center;
     justify-content: center;
-    
+
     &:hover {
         border-color: #00B3ED;
         background: #F0F9FF;
@@ -2186,7 +2241,7 @@ const handlePrint = async (prepared) => {
         z-index: 10;
         cursor: pointer;
         pointer-events: auto;
-        
+
         :deep(.el-upload) {
             width: 100%;
             height: 100%;
@@ -2206,6 +2261,7 @@ const handlePrint = async (prepared) => {
             align-items: center;
             justify-content: center;
         }
+
         :deep(.el-upload-list) {
             display: none !important;
         }
@@ -2213,24 +2269,25 @@ const handlePrint = async (prepared) => {
 
     .trigger-content {
         pointer-events: none;
+
         .upload-big-icon {
             font-size: 48px;
             color: #94A3B8;
             margin-bottom: 12px;
             transition: all 0.3s;
-            
+
             &.primary {
                 color: #00B3ED;
             }
         }
-        
+
         .upload-tip-text {
             font-size: 15px;
             font-weight: 600;
             color: #475569;
             margin-bottom: 6px;
         }
-        
+
         .upload-sub-tip {
             font-size: 12px;
             color: #94A3B8;
@@ -2245,7 +2302,7 @@ const handlePrint = async (prepared) => {
 
 .results-preview-list {
     margin-top: 24px;
-    
+
     .preview-title {
         font-size: 15px;
         font-weight: 700;
@@ -2270,8 +2327,8 @@ const handlePrint = async (prepared) => {
         align-items: center;
         justify-content: center;
         position: relative;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-        
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+
         &.empty {
             background: #F8FAFC;
             border-style: dashed;
@@ -2318,8 +2375,14 @@ const handlePrint = async (prepared) => {
 
             &:hover {
                 background: #F0F9FF;
-                .el-icon { color: #00B3ED; }
-                .file-label { color: #00B3ED; }
+
+                .el-icon {
+                    color: #00B3ED;
+                }
+
+                .file-label {
+                    color: #00B3ED;
+                }
             }
         }
     }
@@ -2338,7 +2401,7 @@ const handlePrint = async (prepared) => {
     &.printing-active {
         width: 520px !important; // 与 PRINT_TARGET_WIDTH 保持一致，避免左右偏移
         padding: 6px 7px 10px 17px !important; // 底部留白减半
-        margin: 0px !important;  // 彻底无外边距
+        margin: 0px !important; // 彻底无外边距
         border: none !important;
         box-shadow: none !important;
         background: transparent !important; // 让外部没有背景
@@ -2348,6 +2411,7 @@ const handlePrint = async (prepared) => {
             margin-top: 0 !important;
             margin-bottom: 12px !important; // 编号与标题间距缩小一半
             overflow: visible !important;
+
             .cert-no-tag {
                 font-size: 31px !important; // 放大 1.3 倍
                 font-weight: 800 !important; // 加粗
@@ -2366,9 +2430,10 @@ const handlePrint = async (prepared) => {
             font-size: 20px !important; // 与承诺依据模板统一
         }
 
-        .cert-declaration-list{
+        .cert-declaration-list {
             text-align: left !important;
             margin: 8px 0 !important;
+
             .declaration-line {
                 font-size: 21px !important; // 放大 1.3 倍
                 margin: 4px 0 !important;
@@ -2391,6 +2456,7 @@ const handlePrint = async (prepared) => {
             margin-top: 12px !important;
             padding-top: 8px !important;
             border-top: 1px dashed #000 !important; // 重新加回黑色虚线分割
+
             .info-title {
                 font-size: 23px !important; // 18 * 1.3
                 margin-bottom: 6px !important;
@@ -2402,23 +2468,28 @@ const handlePrint = async (prepared) => {
             margin-top: 12px !important;
             padding-top: 8px !important;
             border-top: 1px dashed #000 !important; // 重新加回黑色虚线分割
+
             .info-title {
                 margin-bottom: 6px !important;
             }
         }
 
         .info-table {
-            border: none !important; 
+            border: none !important;
+
             .info-row {
                 border: none !important;
                 display: flex !important; // 使用 flex 替代 table-row 行为，彻底杜绝边框重叠
-                .label, .value {
+
+                .label,
+                .value {
                     font-size: 23px !important; // 放大 1.3 倍
                     padding: 4px 0 !important;
-                    background: none !important; 
+                    background: none !important;
                     border: none !important; // 彻底移除所有边框（包括竖线）
                     box-shadow: none !important;
                 }
+
                 .label {
                     width: 130px !important;
                 }
@@ -2435,7 +2506,7 @@ const handlePrint = async (prepared) => {
             display: flex !important; // 恢复 Flex 布局，左右排列
             justify-content: space-between !important;
             align-items: flex-start !important; // 改为顶部对齐，方便通过 margin 细调高度
-            
+
             .basis-title {
                 font-size: 20px !important; // 与副标题配套
             }
@@ -2446,12 +2517,13 @@ const handlePrint = async (prepared) => {
             width: 132px !important; // 二维码放大一点
             height: 132px !important;
         }
-        
+
         .custom-basis-group {
             .basis-item {
                 display: flex !important;
                 align-items: center !important;
                 margin-bottom: 8px !important;
+
                 .basis-box {
                     width: 32px !important;
                     height: 32px !important;
@@ -2461,9 +2533,11 @@ const handlePrint = async (prepared) => {
                     line-height: 26px !important;
                     text-align: center !important;
                 }
+
                 .basis-label {
                     font-size: 23px !important; // 放大 1.3 倍
                     color: #000 !important;
+
                     .basis-index {
                         display: none !important;
                     }
@@ -2477,6 +2551,7 @@ const handlePrint = async (prepared) => {
             display: flex;
             align-items: center;
             margin-bottom: 12px;
+
             .basis-box {
                 width: 18px;
                 height: 18px;
@@ -2488,15 +2563,18 @@ const handlePrint = async (prepared) => {
                 line-height: 16px;
                 font-size: 14px;
                 background: #F5F7FA;
+
                 &.checked {
                     background: #fff;
                     border-color: #00B3ED;
                     color: #00B3ED;
                 }
             }
+
             .basis-label {
                 font-size: 14px;
                 color: #606266;
+
                 .basis-index {
                     margin-right: 4px;
                     color: inherit;
@@ -2666,7 +2744,7 @@ const handlePrint = async (prepared) => {
     background: #F0F9FF !important;
     border-radius: 6px !important;
     height: 40px !important;
-    
+
     &.is-plain:hover {
         background: #E0F2FE !important;
     }
@@ -2875,7 +2953,7 @@ const handlePrint = async (prepared) => {
 
 .other-platform-area {
     margin-top: 16px;
-    
+
     .upload-trigger-wrap {
         margin-bottom: 16px;
     }
@@ -2905,13 +2983,13 @@ const handlePrint = async (prepared) => {
             flex: 1;
             display: flex;
             flex-direction: column;
-            
+
             .info-row {
                 display: flex;
                 border-bottom: 1px solid #F1F5F9;
                 font-size: 13px;
                 line-height: 1.5;
-                
+
                 &:last-child {
                     border-bottom: none;
                 }

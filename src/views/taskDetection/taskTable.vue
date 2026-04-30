@@ -106,9 +106,8 @@
 
             <!-- 分页区域 -->
             <div class="pagination-wrapper">
-                <div class="page-info">显示第{{ pageParams.pageNum }}页，共{{ totalPage }}页</div>
                 <el-pagination v-model:current-page="pageParams.pageNum" v-model:page-size="pageParams.pageSize"
-                    :total="total" background layout="prev, pager, next" class="custom-pagination" />
+                    :total="total" background layout="total, sizes, prev, pager, next, jumper" class="custom-pagination" />
             </div>
         </div>
     </div>
@@ -144,7 +143,6 @@ const pageParams = reactive({
 });
 
 const total = ref(28);
-const totalPage = ref(6);
 
 const statusMap = {
     0: { text: '未开始', class: 'status-not-started' },
@@ -396,14 +394,9 @@ const handleView = (row) => {
 /* 分页适配 */
 .pagination-wrapper {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-end;
     align-items: center;
     padding: 10px 0;
-
-    .page-info {
-        font-size: 14px;
-        color: #666;
-    }
 }
 
 :deep(.custom-pagination) {

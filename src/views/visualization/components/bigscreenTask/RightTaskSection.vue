@@ -38,10 +38,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import BigPanelCard from '../bigscreen/BigPanelCard.vue';
 import rightBg from '@/assets/imgs/echarts/检测任务/rwjcfx_bg.png';
 import { getTaskAnalysisPage, type TaskAnalysisRespVO } from '@/api/agri/dashboard/task';
+import { getBigScreenQueryParams, subscribeBigScreenRefresh } from '../bigscreen/config';
 
 const analysisList = ref<TaskAnalysisRespVO[]>([]);
 
@@ -61,6 +62,7 @@ const tableData = computed(() =>
 const loadAnalysisPage = async () => {
   try {
     const data = await getTaskAnalysisPage({
+      ...getBigScreenQueryParams(),
       pageNo: 1,
       pageSize: 10
     });
@@ -73,6 +75,14 @@ const loadAnalysisPage = async () => {
 
 onMounted(() => {
   loadAnalysisPage();
+});
+
+const disposeRefresh = subscribeBigScreenRefresh(() => {
+  loadAnalysisPage();
+});
+
+onUnmounted(() => {
+  disposeRefresh();
 });
 </script>
 

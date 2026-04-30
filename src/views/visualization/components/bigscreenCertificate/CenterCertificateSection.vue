@@ -14,7 +14,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import echarts from '@/plugins/echarts';
 import { Echart } from '@/components/Echart';
 
@@ -26,6 +26,7 @@ import {
   getCertificateServiceTrend,
   type CertificateServiceTrendRespVO
 } from '@/api/agri/dashboard/certificate';
+import { getBigScreenQueryParams, subscribeBigScreenRefresh } from '../bigscreen/config';
 
 const mapTab = ref('开具');
 const trendData = ref<CertificateServiceTrendRespVO>({});
@@ -123,7 +124,7 @@ const trendHead = computed(() => {
 
 const loadTrendData = async () => {
   try {
-    const data = await getCertificateServiceTrend();
+    const data = await getCertificateServiceTrend(getBigScreenQueryParams());
     trendData.value = data || {};
   } catch (error) {
     console.error('加载合格证服务趋势失败', error);
@@ -133,6 +134,14 @@ const loadTrendData = async () => {
 
 onMounted(() => {
   loadTrendData();
+});
+
+const disposeRefresh = subscribeBigScreenRefresh(() => {
+  loadTrendData();
+});
+
+onUnmounted(() => {
+  disposeRefresh();
 });
 </script>
 

@@ -1,6 +1,6 @@
 <template>
   <section class="left-section">
-    <BigScreenSelector />
+    <BigScreenSelector label="年度快速检测总览" />
 
     <BigPanelCard title="快速检测概况" :bg-image="leftBg">
       <div class="subject-grid">
@@ -44,7 +44,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, onUnmounted, reactive, ref } from 'vue';
 import { Echart } from '@/components/Echart';
 import BigPanelCard from '../bigscreen/BigPanelCard.vue';
 import BigScreenSelector from '../bigscreen/BigScreenSelector.vue';
@@ -57,6 +57,7 @@ import {
   type DashboardFastOverviewRespVO,
   type FastCategoryDistributionRespVO
 } from '@/api/agri/dashboard/fast';
+import { getBigScreenQueryParams, subscribeBigScreenRefresh } from '../bigscreen/config';
 
 const overview = ref<DashboardFastOverviewRespVO>({});
 const categoryDistribution = ref<FastCategoryDistributionRespVO[]>([]);
@@ -79,7 +80,7 @@ const subjectData = computed(() => [
 
 const loadOverview = async () => {
   try {
-    const data = await getFastOverview();
+    const data = await getFastOverview(getBigScreenQueryParams());
     overview.value = data || {};
   } catch (error) {
     console.error('加载快速检测概览失败', error);
@@ -149,7 +150,7 @@ const updateCategoryChart = (list: FastCategoryDistributionRespVO[] = []) => {
 
 const loadCategoryDistribution = async () => {
   try {
-    const data = await getFastCategoryDistribution();
+    const data = await getFastCategoryDistribution(getBigScreenQueryParams());
     categoryDistribution.value = Array.isArray(data) ? data : [];
   } catch (error) {
     console.error('加载快速检测品类分布失败', error);
@@ -161,6 +162,15 @@ const loadCategoryDistribution = async () => {
 onMounted(() => {
   loadOverview();
   loadCategoryDistribution();
+});
+
+const disposeRefresh = subscribeBigScreenRefresh(() => {
+  loadOverview();
+  loadCategoryDistribution();
+});
+
+onUnmounted(() => {
+  disposeRefresh();
 });
 </script>
 

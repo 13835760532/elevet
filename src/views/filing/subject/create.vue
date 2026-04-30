@@ -36,7 +36,18 @@
 
                 <!-- 主营产品 -->
                 <el-form-item label="主营产品" prop="mainProducts" required>
-                    <el-input v-model="formData.mainProducts" placeholder="请填写主营产品" />
+                    <div style="display: flex; align-items: center; width: 100%;">
+                        <el-input v-model="formData.mainProducts" placeholder="请填写主营产品" />
+                        <el-tooltip placement="right" effect="light">
+                            <template #content>
+                                <div style="line-height: 1.5;">
+                                    主要用于记录企业/个人的主营产品，协助品牌宣传。<br/>
+                                    注：行政主管部门、检测机构等可填写无
+                                </div>
+                            </template>
+                            <el-icon class="tooltip-icon"><WarningFilled /></el-icon>
+                        </el-tooltip>
+                    </div>
                 </el-form-item>
 
                 <!-- 所属地区 -->
@@ -79,21 +90,33 @@
                     </div>
                 </el-form-item>
 
-                <template v-if="formData.type === 1">
-                    <el-form-item label="营业执照" prop="businessLicenseUrl">
-                        <div class="ocr-upload-wrapper">
-                            <UploadImg 
-                                v-model="formData.businessLicenseUrl" 
-                                :limit="1" 
-                                @change="(val) => !val && (formData.socialCreditCode = '')"
-                                :http-request="(options) => handleOcrUpload(options, 1)"
-                            />
-                            <div class="ocr-tip">上传营业执照，系统可自动识别营业执照编号，保障主体唯一性，支持企业宣传展示。</div>
+                <template v-if="formData.type === 1 || formData.type === 3">
+                    <el-form-item label="营业执照" prop="businessLicenseUrl" required>
+                        <div style="display: flex; align-items: center; width: 100%;">
+                            <div class="ocr-upload-wrapper">
+                                <UploadImg 
+                                    v-model="formData.businessLicenseUrl" 
+                                    :limit="1" 
+                                    @change="(val) => !val && (formData.socialCreditCode = '')"
+                                    :http-request="(options) => handleOcrUpload(options, 1)"
+                                />
+                                <div class="ocr-tip">上传营业执照，系统可自动识别营业执照编号，保障主体唯一性，支持企业宣传展示。</div>
+                            </div>
+                            <el-tooltip placement="right" effect="light">
+                                <template #content>
+                                    <div style="line-height: 1.5;">
+                                        营业执照备案仅用于支持企业开展“合格证开具”的诚信证明<br/>
+                                        存档，营业执照信息将加密存储，且仅本企业用户可见（不向<br/>
+                                        消费者公开）
+                                    </div>
+                                </template>
+                                <el-icon class="tooltip-icon"><WarningFilled /></el-icon>
+                            </el-tooltip>
                         </div>
                     </el-form-item>
 
                     <!-- 信用代码 -->
-                    <el-form-item label="信用代码" prop="socialCreditCode">
+                    <el-form-item label="信用代码" prop="socialCreditCode" required>
                         <el-input v-model="formData.socialCreditCode" placeholder="请填写信用代码" />
                     </el-form-item>
 
@@ -108,7 +131,7 @@
                     </el-form-item>
                 </template>
 
-                <el-form-item v-if="formData.type === 2" label="身份证" prop="idCardFrontUrl">
+                <el-form-item v-if="formData.type === 2" label="身份证" prop="idCardFrontUrl" required>
                     <div style="display: flex; gap: 20px;">
                         <div class="ocr-upload-wrapper">
                             <UploadImg 
@@ -130,6 +153,22 @@
                     </div>
                 </el-form-item>
 
+                <!-- 身份证代码 -->
+                <el-form-item v-if="formData.type === 2" label="身份证代码" prop="idCard" required>
+                    <div style="display: flex; align-items: center; width: 100%;">
+                        <el-input v-model="formData.idCard" placeholder="请填写身份证代码" />
+                        <el-tooltip placement="right" effect="light">
+                            <template #content>
+                                <div style="line-height: 1.5;">
+                                    身份证备案仅用于支持个人开展“合格证开具”的诚信证明<br/>
+                                    存档，身份信息将加密存储，且仅本人可见（不向消费者公开）
+                                </div>
+                            </template>
+                            <el-icon class="tooltip-icon"><WarningFilled /></el-icon>
+                        </el-tooltip>
+                    </div>
+                </el-form-item>
+
                 <!-- 底部按钮 -->
                 <div class="form-footer">
                     <el-button type="primary" :loading="loading" class="btn-submit" @click="handleSubmit">保存建档</el-button>
@@ -144,7 +183,7 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { Picture, UploadFilled } from '@element-plus/icons-vue';
+import { Picture, UploadFilled, WarningFilled } from '@element-plus/icons-vue';
 import PageHeader from '@/components/PageHeader/index.vue';
 import { UploadImg, UploadImgs } from '@/components/UploadFile';
 import AreaCascader from '@/components/AreaCascader/index.vue';
@@ -193,13 +232,13 @@ const formData = reactive({
  * 处理备案类型变化
  */
 const handleTypeChange = (val) => {
-    if (val === 1) {
-        // 切换为企业，清空个人相关字段
+    if (val === 1 || val === 3) {
+        // 切换为企业/机构，清空个人相关字段
         formData.idCard = '';
         formData.idCardFrontUrl = '';
         formData.idCardBackUrl = '';
     } else if (val === 2) {
-        // 切换为个人，清空企业相关字段
+        // 切换为个人，清空企业/机构相关字段
         formData.businessLicenseUrl = '';
         formData.socialCreditCode = '';
     }
@@ -552,6 +591,19 @@ const handleOcrUpload = async (options, imageType) => {
     .ocr-tip {
         font-size: 12px;
         color: #999;
+    }
+}
+
+.tooltip-icon {
+    margin-left: 10px;
+    color: #999;
+    cursor: pointer;
+    font-size: 18px;
+    outline: none;
+    flex-shrink: 0;
+
+    &:hover {
+        color: #666;
     }
 }
 </style>

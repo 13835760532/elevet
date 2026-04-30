@@ -58,7 +58,7 @@
       <div class="pager-wrap" v-if="!readonly && filteredRows.length > pageSize">
         <el-pagination
           small
-          layout="prev, pager, next"
+          layout="total, sizes, prev, pager, next, jumper"
           :total="filteredRows.length"
           :page-size="pageSize"
           v-model:current-page="pageNo"
@@ -70,7 +70,13 @@
           <span>已关联项 ({{ linkedRows.length }})</span>
         </div>
 
-        <el-tabs v-model="activeTab" class="refined-tabs" @tab-change="handleTabChange">
+        <el-tabs
+          v-model="activeTab"
+          class="refined-tabs"
+          @tab-change="handleTabChange"
+          @tab-remove="handleTabRemove"
+          :closable="!readonly"
+        >
           <el-tab-pane
             v-for="(row, idx) in linkedRows"
             :key="row.linkId"
@@ -436,6 +442,26 @@ const handleLink = () => {
 
 const handleTabChange = (name) => {
   activeTab.value = String(name);
+};
+
+const handleTabRemove = (targetName) => {
+  const idToRemove = Number(targetName);
+  
+  // 1. 从关联行中移除
+  linkedRows.value = linkedRows.value.filter(row => Number(row.linkId) !== idToRemove);
+  
+  // 2. 从勾选列表中移除（同步搜索界面的勾选框）
+  pickedIdList.value = pickedIdList.value.filter(id => id !== idToRemove);
+  
+  // 3. 触发更新给父组件
+  const ids = linkedRows.value.map((item) => Number(item.linkId)).filter(Boolean);
+  emit('update:modelValue', ids);
+  emit('update:linkedRecords', linkedRows.value);
+  
+  // 4. 处理 activeTab 切换
+  if (activeTab.value === targetName) {
+    activeTab.value = linkedRows.value.length ? String(linkedRows.value[0].linkId) : '';
+  }
 };
 </script>
 

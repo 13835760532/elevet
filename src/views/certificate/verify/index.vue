@@ -68,7 +68,11 @@
                         </template>
                     </el-table-column>
                     <el-table-column label="产品名称" prop="productName" width="110" align="center" />
-                    <el-table-column label="产品类别" prop="productCategory" width="110" align="center" />
+                    <el-table-column label="产品类别" prop="productCategory" width="110" align="center">
+                        <template #default="{ row }">
+                            {{ getProductCategoryLabel(row.productCategory) }}
+                        </template>
+                    </el-table-column>
                     <el-table-column label="产地" prop="productionArea" min-width="150" show-overflow-tooltip />
                     <el-table-column label="生产经营主体" prop="subjectName" min-width="200" show-overflow-tooltip />
                     <el-table-column label="收证时间" prop="verificationTime" width="160" align="center" :formatter="dateFormatter" />
@@ -90,7 +94,7 @@
                     v-model:current-page="pageNum" 
                     v-model:page-size="pageSize" 
                     :total="total" 
-                    layout="prev, pager, next" 
+                    layout="total, sizes, prev, pager, next, jumper" 
                     background 
                     class="custom-pagination"
                     @current-change="handleCurrentChange"
@@ -110,10 +114,13 @@ import download from '@/utils/download';
 import { dateFormatter } from '@/utils/formatTime';
 import * as CertificateApi from '@/api/agri/certificate';
 import { useTableHeight } from '@/hooks/web/useTableHeight';
+import { useDict } from '@/hooks/web/useDict';
 
 defineOptions({
     name: 'CertificateVerify'
 });
+
+const { getLabel: getProductCategoryLabel } = useDict('agri_product_category', 'str');
 
 const router = useRouter();
 const message = useMessage();

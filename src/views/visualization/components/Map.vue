@@ -8,7 +8,7 @@ import * as maptalks from 'maptalks'
 import { E3Layer } from 'maptalks.e3'
 import 'maptalks/dist/maptalks.css'
 import fillImg from '@/assets/imgs/echarts/topographic_fill.png'
-import chinaUltraLiteGeo from '@/assets/data/map/geo/china-ultra-lite.json'
+import chinaLiteSafeGeo from '@/assets/data/map/geo/china-lite-safe.json'
 import {
   getCertificateMap,
   type CertificateMapItemVO,
@@ -17,6 +17,7 @@ import {
 import { getFastMap, type FastMapDataRespVO } from '@/api/agri/dashboard/fast'
 import { getDashboardMapData, type MapDataRespVO } from '@/api/agri/dashboard'
 import { getTaskMap, type TaskMapDataRespVO } from '@/api/agri/dashboard/task'
+import { getBigScreenQueryParams, subscribeBigScreenRefresh } from './bigscreen/config'
 
 defineOptions({ name: 'VisualizationMap' })
 
@@ -343,7 +344,7 @@ const initECharts = () => {
 
 const loadRemoteGeoJson = async () => {
   if (remoteGeoCache) return remoteGeoCache
-  const geoJson = structuredClone(chinaUltraLiteGeo)
+  const geoJson = structuredClone(chinaLiteSafeGeo)
   if (geoJson?.features?.length && !geoJson.__decoded) {
     geoJson.features.forEach((f: any) => decodeFeature(f))
     geoJson.__decoded = true
@@ -404,6 +405,7 @@ const loadCertificateMapData = async () => {
   if (!isCertificateMode.value) return
   try {
     const data = await getCertificateMap({
+      ...getBigScreenQueryParams(),
       provinceName: currentRegionParams.provinceName,
       cityName: currentRegionParams.cityName,
       areaLevel:
@@ -422,6 +424,7 @@ const loadFastMapData = async () => {
   if (!isFastMapMode.value) return
   try {
     const data = await getFastMap({
+      ...getBigScreenQueryParams(),
       provinceName: currentRegionParams.provinceName,
       cityName: currentRegionParams.cityName,
       areaLevel:
@@ -440,6 +443,7 @@ const loadDashboardMapData = async () => {
   if (!isDashboardMode.value) return
   try {
     const data = await getDashboardMapData({
+      ...getBigScreenQueryParams(),
       provinceName: currentRegionParams.provinceName,
       cityName: currentRegionParams.cityName,
       areaLevel: currentDrillLevel.value === 2 ? '2' : '1'
@@ -457,6 +461,7 @@ const loadTaskMapData = async () => {
   if (!isTaskMapMode.value) return
   try {
     const data = await getTaskMap({
+      ...getBigScreenQueryParams(),
       provinceName: currentRegionParams.provinceName,
       cityName: currentRegionParams.cityName,
       areaLevel:
@@ -850,7 +855,23 @@ onMounted(async () => {
   loading.value = false
 })
 
+const disposeRefresh = subscribeBigScreenRefresh(() => {
+  if (isCertificateMode.value) {
+    void loadCertificateMapData()
+  }
+  if (isFastMapMode.value) {
+    void loadFastMapData()
+  }
+  if (isDashboardMode.value) {
+    void loadDashboardMapData()
+  }
+  if (isTaskMapMode.value) {
+    void loadTaskMapData()
+  }
+})
+
 onUnmounted(() => {
+  disposeRefresh()
   hideTooltip()
   if (state.map) {
     state.detailLayer?.clear?.()

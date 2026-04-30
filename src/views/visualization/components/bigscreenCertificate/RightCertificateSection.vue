@@ -60,7 +60,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { Echart } from '@/components/Echart';
 import BigPanelCard from '../bigscreen/BigPanelCard.vue';
 import rightBg from '@/assets/imgs/echarts/合格证/Frame 60_bg.png';
@@ -72,6 +72,7 @@ import {
   type CertificateTypeDistributionRespVO,
   type CertificateVerificationTopRespVO
 } from '@/api/agri/dashboard/certificate';
+import { getBigScreenQueryParams, subscribeBigScreenRefresh } from '../bigscreen/config';
 
 interface RankItem {
   name: string
@@ -160,9 +161,9 @@ const formatIssueRankList = (list: CertificateIssueTopRespVO[] = []) =>
 const loadDashboardData = async () => {
   try {
     const [typeDistribution, issueTop10, verificationTop10] = await Promise.all([
-      getCertificateTypeDistribution(),
-      getCertificateIssueTop10(),
-      getCertificateVerificationTop10()
+      getCertificateTypeDistribution(getBigScreenQueryParams()),
+      getCertificateIssueTop10(getBigScreenQueryParams()),
+      getCertificateVerificationTop10(getBigScreenQueryParams())
     ]);
     distributionData.value = Array.isArray(typeDistribution) ? typeDistribution : [];
     issueRank.value = formatIssueRankList(Array.isArray(issueTop10) ? issueTop10 : []);
@@ -177,6 +178,14 @@ const loadDashboardData = async () => {
 
 onMounted(() => {
   loadDashboardData();
+});
+
+const disposeRefresh = subscribeBigScreenRefresh(() => {
+  loadDashboardData();
+});
+
+onUnmounted(() => {
+  disposeRefresh();
 });
 </script>
 

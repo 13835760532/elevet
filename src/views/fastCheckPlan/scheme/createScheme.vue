@@ -21,7 +21,7 @@
                     </el-col>
                     <el-col :span="12">
                         <el-form-item label="方案编号" prop="planCode">
-                            <el-input v-model="formData.planCode" placeholder="系统自动生成" disabled />
+                            <el-input v-model="formData.planCode" placeholder="系统自动生成" :disabled="isEdit" />
                         </el-form-item>
                     </el-col>
 
@@ -30,7 +30,7 @@
                         <el-form-item label="主管单位" prop="issuerDeptId">
                             <el-tree-select v-model="formData.issuerDeptId" :data="deptTreeOptions"
                                 :props="defaultProps" placeholder="请选择主管单位" class="full-width" filterable check-strictly
-                                clearable />
+                                clearable @change="handleDeptChange" />
                         </el-form-item>
                     </el-col>
                     <el-col :span="12">
@@ -202,21 +202,21 @@
                             <span class="label">目标区域：</span>
                             <span class="value">{{ formData.targetArea || '--' }}</span>
                         </div>
-                        <div class="info-item">
+                        <!-- <div class="info-item">
                             <span class="dot d6"></span>
                             <span class="label">目标品种：</span>
-                            <span class="value">{{ formData.targetCategory || '--' }}</span>
-                        </div>
+                            <span class="value">{{ getProductCategoryLabel(formData.targetCategory) }}</span>
+                        </div> -->
                         <div class="info-item">
                             <span class="dot d7"></span>
                             <span class="label">计划样品数量：</span>
                             <span class="value">{{ formData.sampleCount || '0' }} 份</span>
                         </div>
-                        <div class="info-item">
+                        <!-- <div class="info-item">
                             <span class="dot d8"></span>
                             <span class="label">检测项目：</span>
                             <span class="value">{{ formData.detectionItems || '--' }}</span>
-                        </div>
+                        </div> -->
                     </div>
                 </div>
 
@@ -257,7 +257,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue';
+import { ref, reactive, computed, onMounted, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { Plus, UploadFilled, Document, Close } from '@element-plus/icons-vue';
 import { ElMessage } from 'element-plus';
@@ -266,17 +266,20 @@ import * as DeptApi from '@/api/system/dept'
 import { handleTree } from '@/utils/tree'
 import { useFileUpload } from '@/hooks/web/useFileUpload'
 import { useDict, DICT_TYPE } from '@/hooks/web/useDict'
+import { useUserStore } from '@/store/modules/user'
 
 const router = useRouter();
 const route = useRoute();
+const userStore = useUserStore();
 const formRef = ref(null);
 const previewVisible = ref(false);
 const formLoading = ref(false); // 表单加载状态
 const submitLoading = ref(false); // 提交按钮加载状态
+const issuerDeptName = ref(''); // 缓存当前选中的部门名称，用于回显
 
 // 使用字典 hook 获取方案类型和分类
 const { options: planTypeOptions, getLabel: getPlanTypeLabel } = useDict(DICT_TYPE.AGRI_PLAN_TYPE, 'int')
-const { options: productCategoryOptions } = useDict(DICT_TYPE.AGRI_PRODUCT_CATEGORY, 'str')
+const { options: productCategoryOptions, getLabel: getProductCategoryLabel } = useDict(DICT_TYPE.AGRI_PRODUCT_CATEGORY, 'str')
 
 // 分类去重，防止字典项重复渲染
 const uniqueCategoryOptions = computed(() => {
@@ -347,6 +350,23 @@ const loadDeptList = async () => {
         console.error('加载部门列表失败:', error);
     }
 };
+
+// 自动生成方案编号逻辑
+const generatePlanCode = () => {
+    if (isEdit.value) return;
+    const category = (formData.targetCategory || 'GENERAL').toUpperCase();
+    const now = new Date();
+    const yearMonth = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}`;
+    const random = Math.floor(100000 + Math.random() * 900000);
+    formData.planCode = `FA-${category}-${yearMonth}-${random}`;
+};
+
+// 监听行业分类变化，自动生成编号
+watch(() => formData.targetCategory, (val) => {
+    if (val && !isEdit.value && !formData.planCode) {
+        generatePlanCode();
+    }
+});
 
 // 表单校验规则
 const formRules = {
@@ -445,6 +465,13 @@ const loadPlanDetail = async (id) => {
         if (data.planAttachments) {
             setAttachments(data.planAttachments)
         }
+        // 异步获取部门名称用于回显
+        if (data.issuerDeptId) {
+            console.log('data.issuerDeptId', data.issuerDeptId)
+            DeptApi.getDept(data.issuerDeptId).then(res => {
+                issuerDeptName.value = res.name
+            })
+        }
     } catch (error) {
         console.error('获取检测方案详情失败：', error)
         ElMessage.error('获取方案详情失败')
@@ -468,8 +495,24 @@ const findDeptName = (id, list) => {
 const getDeptLabel = (value) => {
     if (!value) return '--';
     const found = findDeptName(value, deptTreeOptions.value);
-    return found || '--';
+    if (found) {
+        issuerDeptName.value = found
+        return found
+    }
+    return issuerDeptName.value || '--';
 };
+
+/** 手动选择部门时同步更新名称缓存 */
+const handleDeptChange = (val) => {
+    if (!val) {
+        issuerDeptName.value = ''
+        return
+    }
+    const found = findDeptName(val, deptTreeOptions.value)
+    if (found) {
+        issuerDeptName.value = found
+    }
+}
 
 
 
@@ -497,6 +540,16 @@ onMounted(() => {
     if (id) {
         // 编辑模式：加载方案详情
         loadPlanDetail(Number(id))
+    } else {
+        // 新建模式：回显当前登录人所属部门
+        const userDeptId = userStore.getUser.deptId
+        if (userDeptId) {
+            formData.issuerDeptId = userDeptId
+            // 异步获取部门名称用于预览回显
+            DeptApi.getDept(userDeptId).then(res => {
+                issuerDeptName.value = res.name
+            }).catch(() => { })
+        }
     }
 })
 </script>

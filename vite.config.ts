@@ -105,10 +105,10 @@ export default ({command, mode}: ConfigEnv): UserConfig => {
                     manualChunks(id) {
                         if (id.includes('node_modules')) {
                             if (id.includes('element-plus')) return 'element-plus';
-                            if (id.includes('echarts')) return 'echarts';
+                            if (id.includes('echarts') || id.includes('zrender')) return 'echarts';
                             if (id.includes('@form-create')) return 'form-create';
                             if (id.includes('wangeditor')) return 'wangeditor';
-                            if (id.includes('video.js')) return 'videojs';
+                            if (id.includes('@videojs-player/vue') || id.includes('video.js')) return 'videojs';
                             if (id.includes('maptalks')) return 'maptalks';
                             if (id.includes('lodash-es')) return 'lodash';
                             return 'vendor';

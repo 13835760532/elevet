@@ -1,6 +1,6 @@
 <template>
   <section class="left-section">
-    <BigScreenSelector />
+    <BigScreenSelector label="年度检测任务总览" />
 
     <BigPanelCard title="任务下发概况" :bg-image="leftBg">
       <div class="summary-flex">
@@ -43,7 +43,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, onUnmounted, reactive, ref } from 'vue';
 import { Echart } from '@/components/Echart';
 import BigPanelCard from '../bigscreen/BigPanelCard.vue';
 import BigScreenSelector from '../bigscreen/BigScreenSelector.vue';
@@ -56,6 +56,7 @@ import {
   type DashboardTaskOverviewRespVO,
   type TaskCategoryDistributionRespVO
 } from '@/api/agri/dashboard/task';
+import { getBigScreenQueryParams, subscribeBigScreenRefresh } from '../bigscreen/config';
 
 const overview = ref<DashboardTaskOverviewRespVO>({});
 const categoryDistribution = ref<TaskCategoryDistributionRespVO[]>([]);
@@ -76,7 +77,7 @@ const coverData = computed(() => [
 
 const loadOverviewData = async () => {
   try {
-    const data = await getTaskOverview();
+    const data = await getTaskOverview(getBigScreenQueryParams());
     overview.value = data || {};
   } catch (error) {
     console.error('加载检测任务概览失败', error);
@@ -143,7 +144,7 @@ const updateCategoryChart = (list: TaskCategoryDistributionRespVO[] = []) => {
 
 const loadCategoryDistribution = async () => {
   try {
-    const data = await getTaskCategoryDistribution();
+    const data = await getTaskCategoryDistribution(getBigScreenQueryParams());
     categoryDistribution.value = Array.isArray(data) ? data : [];
   } catch (error) {
     console.error('加载检测任务品类分布失败', error);
@@ -155,6 +156,15 @@ const loadCategoryDistribution = async () => {
 onMounted(() => {
   loadOverviewData();
   loadCategoryDistribution();
+});
+
+const disposeRefresh = subscribeBigScreenRefresh(() => {
+  loadOverviewData();
+  loadCategoryDistribution();
+});
+
+onUnmounted(() => {
+  disposeRefresh();
 });
 </script>
 

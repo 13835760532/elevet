@@ -108,9 +108,12 @@
                     <div class="allocation-config">
                         <div class="config-row">
                             <span class="config-label">任务检测量：</span>
-                            <el-input v-model="taskForm.quantity" placeholder="1000" type="number"
-                                class="quantity-input" />
-                            <span class="warning-text">取值规则方案检测总量-已分发量</span>
+                            <el-input v-model="taskForm.quantity" placeholder="任务检测量" type="number"
+                                :disabled="taskForm.distributionType === 'manual'" class="quantity-input"
+                                :class="{ 'error-input': isExceedLimit }" />
+                            <span class="warning-text" :class="{ 'error-text': isExceedLimit }">
+                                {{ isExceedLimit ? `超出可用总量（剩余可用：${schemeInfo.sampleCount}）` : '取值规则方案检测总量-已分发量' }}
+                            </span>
                         </div>
                         <div class="config-row">
                             <span class="config-label">分发方式：</span>
@@ -132,13 +135,9 @@
                     </div>
                 </div>
 
-                <DetectionRequirementSection
-                    v-model="taskList"
-                    :sample-count="schemeInfo.sampleCount"
-                    :distribution-type="taskForm.distributionType"
-                    :org-options="selectedOrgOptions"
-                    :default-time-range="[taskForm.startDate, taskForm.endDate]"
-                />
+                <DetectionRequirementSection v-model="taskList" :sample-count="schemeInfo.sampleCount"
+                    :distribution-type="taskForm.distributionType" :org-options="selectedOrgOptions"
+                    :default-time-range="[taskForm.startDate, taskForm.endDate]" />
 
                 <!-- 底部按钮 -->
                 <div class="footer-actions">
@@ -163,7 +162,6 @@ import AreaCascader from '@/components/AreaCascader/index.vue';
 import * as DetectionPlanApi from '@/api/agri/detectionPlan/index';
 import * as DeptApi from '@/api/system/dept/index';
 import { useDict, DICT_TYPE } from '@/hooks/web/useDict';
-import { onMounted } from 'vue';
 
 const router = useRouter();
 const route = useRoute();
@@ -211,10 +209,14 @@ const taskForm = reactive({
     province: '',
     city: '',
     district: '',
-    quantity: '',
+    quantity: 0,
     distributionType: 'average',
     startDate: '',
     endDate: ''
+});
+
+const isExceedLimit = computed(() => {
+    return Number(taskForm.quantity) > Number(schemeInfo.sampleCount);
 });
 
 const areaPath = ref([]);
@@ -292,7 +294,7 @@ const buildDefaultExecutionTime = () => {
         const s = typeof taskForm.startDate === 'string' ? taskForm.startDate.slice(0, 10) : new Date(taskForm.startDate).toISOString().slice(0, 10);
         const e = typeof taskForm.endDate === 'string' ? taskForm.endDate.slice(0, 10) : new Date(taskForm.endDate).toISOString().slice(0, 10);
         return `${s}～${e}`;
-    } catch(e) {
+    } catch (e) {
         return `${taskForm.startDate}～${taskForm.endDate}`;
     }
 };
@@ -365,6 +367,62 @@ watch(
 
 const taskList = ref([]);
 
+// 核心修复：监听选中机构变化，实时同步任务列表行
+watch(
+    () => selectedOrgs.value,
+    (newIds) => {
+        const currentList = [...taskList.value];
+        // 移除不再选中的机构
+        const filteredList = currentList.filter(item => newIds.includes(item.deptId));
+        
+        // 添加新选中的机构
+        newIds.forEach(id => {
+            if (!filteredList.find(item => item.deptId === id)) {
+                const org = orgMapById.value.get(id);
+                filteredList.push({
+                    deptId: id,
+                    subjectId: id,
+                    dept: org?.name || `机构${id}`,
+                    region: buildDefaultDetectionArea() || '待设置',
+                    quantity: 0,
+                    executionTime: buildDefaultExecutionTime(),
+                    varieties: '待设置',
+                    items: '待设置'
+                });
+            }
+        });
+        taskList.value = filteredList;
+    },
+    { deep: true }
+);
+
+// 监听任务列表变化，手动分配时同步汇总检测总量
+watch(
+    taskList,
+    (newVal) => {
+        if (taskForm.distributionType === 'manual') {
+            const total = (newVal || []).reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
+            taskForm.quantity = total > 0 ? total : 0;
+        }
+    },
+    { deep: true, immediate: true }
+);
+
+// 切换分配方式时的处理
+watch(
+    () => taskForm.distributionType,
+    (val) => {
+        if (val === 'manual') {
+            // 切换到手动时，根据当前列表重新计算总量
+            const total = taskList.value.reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
+            taskForm.quantity = total;
+        } else {
+            // 切换回平均分配时，通常恢复为原始可用总量
+            taskForm.quantity = schemeInfo.sampleCount || 0;
+        }
+    }
+);
+
 const handleCancel = () => {
     router.back();
 };
@@ -380,6 +438,11 @@ const handleSubmit = useDebounceFn(async () => {
 
     if (!rows.length) {
         ElMessage.warning('请先在第3步配置任务拆分');
+        return;
+    }
+
+    if (isExceedLimit.value) {
+        ElMessage.error(`任务检测总量 (${taskForm.quantity}) 不能超过总任务量 (${schemeInfo.sampleCount})`);
         return;
     }
 
@@ -637,5 +700,20 @@ onMounted(() => {
         background: #00B3ED;
         border-color: #00B3ED;
     }
+}
+
+.error-input {
+    :deep(.el-input__wrapper) {
+        box-shadow: 0 0 0 1px #f56c6c inset !important;
+
+        &.is-disabled {
+            box-shadow: 0 0 0 1px #f56c6c inset !important;
+            background-color: #fffbfa !important;
+        }
+    }
+}
+
+.error-text {
+    color: #f56c6c !important;
 }
 </style>
