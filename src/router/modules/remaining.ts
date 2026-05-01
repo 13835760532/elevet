@@ -526,6 +526,36 @@ const remainingRouter: AppRouteRecordRaw[] = [
     }
   },
   {
+    path: '/statistics',
+    component: Layout,
+    redirect: '/statistics/index',
+    name: 'Statistics',
+    meta: { hidden: true },
+    children: [
+      {
+        path: 'index',
+        component: () => import('@/views/statistics/index.vue'),
+        name: 'QuickStatistics',
+        meta: { title: '快捷统计', activeMenu: '/statistics/index' }
+      }
+    ]
+  },
+  {
+    path: '/workBench',
+    component: Layout,
+    redirect: '/workBench/index',
+    name: 'WorkBench',
+    meta: { hidden: true },
+    children: [
+      {
+        path: 'index',
+        component: () => import('@/workBench.vue'),
+        name: 'WorkBenchIndex',
+        meta: { title: '我的工作台', activeMenu: '/workBench/index' }
+      }
+    ]
+  },
+  {
     path: '/:pathMatch(.*)*',
     component: () => import('@/views/Error/404.vue'),
     name: '',
