@@ -57,6 +57,7 @@ import {
   type TaskCategoryDistributionRespVO
 } from '@/api/agri/dashboard/task';
 import { getBigScreenQueryParams, subscribeBigScreenRefresh } from '../bigscreen/config';
+import { createBigScreenLineOption } from '../bigscreen/chartOption';
 
 const overview = ref<DashboardTaskOverviewRespVO>({});
 const categoryDistribution = ref<TaskCategoryDistributionRespVO[]>([]);
@@ -85,62 +86,18 @@ const loadOverviewData = async () => {
   }
 };
 
-const pieColors = ['#3b82f6', '#f59e0b', '#06b6d4', '#cbd5e1', '#22d3ee', '#34d399', '#f97316'];
-
-const categoryPieOption = reactive({
-  tooltip: { trigger: 'item' },
-  legend: {
-    orient: 'vertical',
-    right: 30,
-    top: 10,
-    itemWidth: 12,
-    itemHeight: 12,
-    textStyle: { color: '#8fb6da', fontSize: 13 },
-    data: []
-  },
-  series: [
-    {
-      type: 'pie',
-      radius: ['50%', '75%'],
-      center: ['35%', '55%'],
-      avoidLabelOverlap: true,
-      label: {
-        show: true,
-        position: 'outside',
-        formatter: '{b}\n{c|{c}}',
-        padding: [0, -20],
-        rich: {
-          c: {
-            color: '#4ce9ff',
-            fontSize: 14,
-            fontWeight: 'bold',
-            padding: [4, 0]
-          }
-        },
-        color: '#bbdbfa',
-        fontSize: 13
-      },
-      labelLine: {
-        show: true,
-        length: 12,
-        length2: 20,
-        lineStyle: { color: 'rgba(187, 219, 250, 0.4)' }
-      },
-      itemStyle: { borderColor: '#05112a', borderWidth: 2 },
-      data: [],
-      color: pieColors
-    }
-  ]
-});
-
-const updateCategoryChart = (list: TaskCategoryDistributionRespVO[] = []) => {
-  const chartData = list.map((item) => ({
-    value: Number(item.sampleCount || 0),
-    name: item.category || '--'
-  }));
-  categoryPieOption.legend.data = chartData.map((item) => item.name);
-  categoryPieOption.series[0].data = chartData;
-};
+const categoryPieOption = computed(() =>
+  createBigScreenLineOption({
+    labels: categoryDistribution.value.length
+      ? categoryDistribution.value.map((item) => item.category || '--')
+      : ['蔬菜', '水果', '茶叶', '粮油'],
+    values: categoryDistribution.value.length
+      ? categoryDistribution.value.map((item) => Number(item.sampleCount || 0))
+      : [120, 88, 56, 40],
+    rotate: 18,
+    grid: { left: 36, right: 16, top: 18, bottom: 44 }
+  })
+);
 
 const loadCategoryDistribution = async () => {
   try {
@@ -150,7 +107,6 @@ const loadCategoryDistribution = async () => {
     console.error('加载检测任务品类分布失败', error);
     categoryDistribution.value = [];
   }
-  updateCategoryChart(categoryDistribution.value);
 };
 
 onMounted(() => {

@@ -16,7 +16,6 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
-import echarts from '@/plugins/echarts';
 import { Echart } from '@/components/Echart';
 import BigPanelCard from './BigPanelCard.vue';
 import CategoryGauges from './CategoryGauges.vue';
@@ -27,6 +26,7 @@ import {
   type ProduceRiskTopRespVO
 } from '@/api/agri/dashboard';
 import { getBigScreenQueryParams, subscribeBigScreenRefresh } from './config';
+import { createBigScreenLineOption } from './chartOption';
 
 const categoryTab = ref<'检测量' | '阳性率'>('检测量');
 const riskTab = ref<'检测量' | '阳性率'>('检测量');
@@ -59,103 +59,6 @@ const riskMax = computed(() => {
   if (maxValue <= 0) return 100;
   return Math.ceil(maxValue * 1.1);
 });
-const riskRankData = computed(() => riskNames.value.map((name, index) => ({
-  value: name,
-  rank: index + 1
-})));
-const createRiskTopOption = (values: number[], max: number, formatter: (val: number) => string) => ({
-  grid: { left: 120, right: 70, top: 10, bottom: 20 },
-  xAxis: {
-    type: 'value',
-    min: 0,
-    max,
-    interval: max <= 1 ? 0.2 : 100,
-    splitLine: { lineStyle: { color: 'rgba(45, 106, 184, 0.35)', type: 'dashed' } },
-    axisLine: { lineStyle: { color: '#2d67ac' } },
-    axisLabel: { color: '#80abd3', formatter }
-  },
-  yAxis: [
-    {
-      type: 'category',
-      inverse: true,
-      data: riskRankData.value,
-      axisLabel: {
-        color: '#d4ebff',
-        fontSize: 14,
-        align: 'right',
-        margin: 16,
-        formatter: (_value: string, index: number) => {
-          const rank = index + 1;
-          const rankText = rank < 10 ? `NO.${rank}` : `NO.${rank}`;
-          const colorKey = rank <= 3 ? `top${rank}` : 'normal';
-          return `{${colorKey}|${rankText}} {name|${riskNames.value[index]}}`;
-        },
-        rich: {
-          top1: {
-            color: '#00ffb4',
-            fontWeight: 700,
-            fontStyle: 'italic',
-            fontSize: 16
-          },
-          top2: {
-            color: '#2ee9ff',
-            fontWeight: 700,
-            fontStyle: 'italic',
-            fontSize: 16
-          },
-          top3: {
-            color: '#ffbf30',
-            fontWeight: 700,
-            fontStyle: 'italic',
-            fontSize: 16
-          },
-          normal: {
-            color: '#e4f1ff',
-            fontWeight: 700,
-            fontStyle: 'italic',
-            fontSize: 16
-          },
-          name: {
-            color: '#d4ebff',
-            fontSize: 16,
-            fontWeight: 600
-          }
-        }
-      },
-      axisTick: { show: false },
-      axisLine: { show: false }
-    },
-    {
-      type: 'category',
-      inverse: true,
-      position: 'right',
-      data: values,
-      axisLabel: {
-        color: '#48e7ff',
-        fontSize: 16,
-        fontWeight: 700,
-        formatter
-      },
-      axisTick: { show: false },
-      axisLine: { show: false }
-    }
-  ],
-  series: [
-    {
-      type: 'bar',
-      barWidth: 14,
-      itemStyle: {
-        barBorderRadius: [0, 8, 8, 0],
-        color: new echarts.graphic.LinearGradient(1, 0, 0, 0, [
-          { offset: 0, color: '#49e8ff' },
-          { offset: 1, color: '#1d56d9' }
-        ])
-      },
-      data: values
-    }
-  ]
-});
-
 const fallbackPesticideNames = ['甲氨基', '氟虫胺', '毒死蜱', '毒死蜱', '氟虫', '阿维菌素', '腈虫胺', '溴氰菊酯', '咪鲜胺'];
 const fallbackPesticideRateValues = [0.82, 0.72, 0.61, 0.55, 0.46, 0.4, 0.36, 0.28, 0.21];
 const fallbackPesticideCountValues = [400, 350, 300, 270, 230, 200, 180, 150, 100];
@@ -181,63 +84,44 @@ const pesticideMax = computed(() => {
   return Math.ceil(maxValue * 1.1);
 });
 
-const createPesticideTopOption = (
-  labels: string[],
-  values: number[],
-  max: number,
-  formatter?: (value: number) => string
-) => ({
-  grid: { left: 46, right: 10, top: 24, bottom: 40 },
-  xAxis: {
-    type: 'category',
-    data: labels,
-    axisLabel: { color: '#80abd3', fontSize: 12, interval: 0, rotate: 22 },
-    axisLine: { lineStyle: { color: '#2d67ac' } }
-  },
-  yAxis: {
-    type: 'value',
-    min: 0,
-    max,
-    interval: max <= 1 ? 0.2 : 100,
-    axisLabel: { color: '#80abd3', formatter },
-    splitLine: { lineStyle: { color: 'rgba(45, 106, 184, 0.35)', type: 'dashed' } },
-    axisLine: { show: false }
-  },
-  series: [
-    {
-      type: 'bar',
-      barWidth: 12,
-      data: values,
-      itemStyle: {
-        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-          { offset: 0, color: '#4be9ff' },
-          { offset: 1, color: 'rgba(72, 231, 255, 0.15)' }
-        ])
-      }
-    }
-  ]
-});
-
 const currentRiskTopOption = computed(() =>
   riskTab.value === '阳性率'
-    ? createRiskTopOption(riskValues.value, riskMax.value, (val: number) => `${Number(val).toFixed(2)}%`)
-    : createRiskTopOption(riskValues.value, riskMax.value, (val: number) => String(Math.round(val)))
+    ? createBigScreenLineOption({
+        labels: riskNames.value,
+        values: riskValues.value,
+        max: riskMax.value,
+        formatter: (val: number) => `${Number(val).toFixed(2)}%`,
+        rotate: 24,
+        grid: { left: 40, right: 16, top: 18, bottom: 56 }
+      })
+    : createBigScreenLineOption({
+        labels: riskNames.value,
+        values: riskValues.value,
+        max: riskMax.value,
+        formatter: '{value}',
+        rotate: 24,
+        grid: { left: 40, right: 16, top: 18, bottom: 56 }
+      })
 );
 
 const currentPesticideTopOption = computed(() =>
   pesticideTab.value === '阳性率'
-    ? createPesticideTopOption(
-        pesticideLabels.value,
-        pesticideValues.value,
-        pesticideMax.value,
-        (val: number) => `${Number(val).toFixed(2)}%`
-      )
-    : createPesticideTopOption(
-        pesticideLabels.value,
-        pesticideValues.value,
-        pesticideMax.value,
-        (val: number) => String(Math.round(val))
-      )
+    ? createBigScreenLineOption({
+        labels: pesticideLabels.value,
+        values: pesticideValues.value,
+        max: pesticideMax.value,
+        formatter: (val: number) => `${Number(val).toFixed(2)}%`,
+        rotate: 22,
+        grid: { left: 40, right: 16, top: 18, bottom: 54 }
+      })
+    : createBigScreenLineOption({
+        labels: pesticideLabels.value,
+        values: pesticideValues.value,
+        max: pesticideMax.value,
+        formatter: '{value}',
+        rotate: 22,
+        grid: { left: 40, right: 16, top: 18, bottom: 54 }
+      })
 );
 
 const loadProduceRiskTop10 = async () => {

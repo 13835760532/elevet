@@ -44,7 +44,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, reactive, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { Echart } from '@/components/Echart';
 import BigPanelCard from '../bigscreen/BigPanelCard.vue';
 import BigScreenSelector from '../bigscreen/BigScreenSelector.vue';
@@ -58,6 +58,7 @@ import {
   type FastCategoryDistributionRespVO
 } from '@/api/agri/dashboard/fast';
 import { getBigScreenQueryParams, subscribeBigScreenRefresh } from '../bigscreen/config';
+import { createBigScreenLineOption } from '../bigscreen/chartOption';
 
 const overview = ref<DashboardFastOverviewRespVO>({});
 const categoryDistribution = ref<FastCategoryDistributionRespVO[]>([]);
@@ -88,65 +89,18 @@ const loadOverview = async () => {
   }
 };
 
-const pieColors = ['#3b82f6', '#f59e0b', '#06b6d4', '#cbd5e1', '#22d3ee', '#34d399', '#f97316'];
-
-const categoryPieOption = reactive({
-  tooltip: { trigger: 'item' },
-  legend: {
-    orient: 'vertical',
-    right: 20,
-    top: 'center',
-    itemWidth: 12,
-    itemHeight: 12,
-    textStyle: { color: '#8eb6db', fontSize: 14 },
-    data: []
-  },
-  series: [
-    {
-      type: 'pie',
-      radius: ['50%', '75%'],
-      center: ['35%', '50%'],
-      avoidLabelOverlap: true,
-      label: {
-        show: true,
-        position: 'outside',
-        formatter: '{b}\n{c|{c}}',
-        padding: [0, -20],
-        rich: {
-          c: {
-            color: '#4ce9ff',
-            fontSize: 14,
-            fontWeight: 'bold',
-            padding: [4, 0]
-          }
-        },
-        color: '#bbdbfa',
-        fontSize: 14
-      },
-      labelLine: {
-        show: true,
-        length: 15,
-        length2: 25,
-        lineStyle: { color: 'rgba(187, 219, 250, 0.5)' }
-      },
-      itemStyle: {
-        borderWidth: 2,
-        borderColor: '#020617'
-      },
-      data: [],
-      color: pieColors
-    }
-  ]
-});
-
-const updateCategoryChart = (list: FastCategoryDistributionRespVO[] = []) => {
-  const chartData = list.map((item) => ({
-    value: Number(item.sampleCount || 0),
-    name: item.category || '--'
-  }));
-  categoryPieOption.legend.data = chartData.map((item) => item.name);
-  categoryPieOption.series[0].data = chartData;
-};
+const categoryPieOption = computed(() =>
+  createBigScreenLineOption({
+    labels: categoryDistribution.value.length
+      ? categoryDistribution.value.map((item) => item.category || '--')
+      : ['蔬菜', '水果', '禽畜', '水产'],
+    values: categoryDistribution.value.length
+      ? categoryDistribution.value.map((item) => Number(item.sampleCount || 0))
+      : [160, 130, 78, 55],
+    rotate: 18,
+    grid: { left: 36, right: 16, top: 18, bottom: 44 }
+  })
+);
 
 const loadCategoryDistribution = async () => {
   try {
@@ -156,7 +110,6 @@ const loadCategoryDistribution = async () => {
     console.error('加载快速检测品类分布失败', error);
     categoryDistribution.value = [];
   }
-  updateCategoryChart(categoryDistribution.value);
 };
 
 onMounted(() => {

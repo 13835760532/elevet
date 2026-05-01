@@ -73,6 +73,7 @@ import {
   type CertificateVerificationTopRespVO
 } from '@/api/agri/dashboard/certificate';
 import { getBigScreenQueryParams, subscribeBigScreenRefresh } from '../bigscreen/config';
+import { createBigScreenLineOption } from '../bigscreen/chartOption';
 
 interface RankItem {
   name: string
@@ -99,52 +100,19 @@ const normalizeDistribution = (list: CertificateTypeDistributionRespVO[] = []) =
     const meta = PIE_TYPE_META[type];
     return {
       value: Number(current?.count || 0),
-      name: current?.typeName || meta.name,
-      itemStyle: { color: meta.color },
-      label: { color: meta.color }
+      name: current?.typeName || meta.name
     };
   });
 };
 
-const analysisOption = computed(() => ({
-  legend: {
-    right: 20,
-    top: 'center',
-    orient: 'vertical',
-    itemWidth: 12,
-    itemHeight: 12,
-    textStyle: { color: '#9ec2e5', fontSize: 13 }
-  },
-  series: [
-    {
-      type: 'pie',
-      radius: ['52%', '72%'],
-      center: ['35%', '50%'],
-      avoidLabelOverlap: true,
-      label: {
-        show: true,
-        position: 'outside',
-        formatter: '{b}\n{c|{c}}',
-        padding: [0, -10],
-        rich: {
-          c: {
-            fontSize: 14,
-            fontWeight: 'bold',
-            padding: [4, 0]
-          }
-        },
-        fontSize: 13
-      },
-      labelLine: {
-        show: true,
-        length: 12,
-        length2: 18,
-        lineStyle: { color: 'rgba(158, 194, 229, 0.5)' }
-      },
-      data: normalizeDistribution(distributionData.value)
-    }
-  ]
-}));
+const analysisOption = computed(() =>
+  createBigScreenLineOption({
+    labels: normalizeDistribution(distributionData.value).map((item) => item.name),
+    values: normalizeDistribution(distributionData.value).map((item) => item.value),
+    rotate: 0,
+    grid: { left: 36, right: 16, top: 18, bottom: 36 }
+  })
+);
 
 const formatRankList = (list: CertificateVerificationTopRespVO[] = []) =>
   list.map((item) => ({

@@ -48,7 +48,6 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
-import echarts from '@/plugins/echarts';
 import { Echart } from '@/components/Echart';
 import BigPanelCard from './BigPanelCard.vue';
 import noticeBg from '@/assets/imgs/echarts/首页/bg_fxgg.png';
@@ -61,6 +60,7 @@ import {
   type RiskAreaTopRespVO
 } from '@/api/agri/dashboard';
 import { getBigScreenQueryParams, subscribeBigScreenRefresh } from './config';
+import { createBigScreenLineOption } from './chartOption';
 
 const announcements = [
   { time: '2025-10-01 17:56', text: 'xx农产品(生产经营主体:xx)，发现xxx项目不合格。(检测机构:xx)' },
@@ -74,62 +74,6 @@ const projectRiskTab = ref('检测量');
 const rankList = ref<RiskAreaTopRespVO[]>([]);
 const projectRiskList = ref<ProductPesticideTopRespVO[]>([]);
 const areaLevelTabs = ['城市', '区县'];
-
-const createProjectRiskOption = (
-  labels: string[],
-  values: number[],
-  max: number,
-  formatter: (val: number) => string
-) => ({
-  grid: { left: 96, right: 52, top: 8, bottom: 20 },
-  xAxis: {
-    type: 'value',
-    min: 0,
-    max,
-    interval: max <= 1 ? 0.2 : 100,
-    splitLine: { lineStyle: { color: 'rgba(45, 106, 184, 0.35)', type: 'dashed' } },
-    axisLine: { lineStyle: { color: '#2d67ac' } },
-    axisLabel: { color: '#80abd3', formatter }
-  },
-  yAxis: [
-    {
-      type: 'category',
-      inverse: true,
-      axisLine: { show: false },
-      axisTick: { show: false },
-      axisLabel: { color: '#d4ebff', fontSize: 12 },
-      data: labels
-    },
-    {
-      type: 'category',
-      inverse: true,
-      position: 'right',
-      axisLine: { show: false },
-      axisTick: { show: false },
-      axisLabel: {
-        color: '#4deaff',
-        fontSize: 16,
-        fontWeight: 700,
-        formatter
-      },
-      data: values
-    }
-  ],
-  series: [
-    {
-      type: 'bar',
-      barWidth: 12,
-      data: values,
-      itemStyle: {
-        barBorderRadius: [0, 8, 8, 0],
-        color: new echarts.graphic.LinearGradient(1, 0, 0, 0, [
-          { offset: 0, color: '#4be9ff' },
-          { offset: 1, color: '#1a53cf' }
-        ])
-      }
-    }
-  ]
-});
 
 const currentRankData = computed(() => rankList.value.map((item) => item.areaName || '--'));
 const projectLabels = computed(() =>
@@ -165,18 +109,22 @@ const projectMax = computed(() => {
 });
 const currentProjectRiskOption = computed(() =>
   projectRiskTab.value === '阳性率'
-    ? createProjectRiskOption(
-        projectLabels.value,
-        projectValues.value,
-        projectMax.value,
-        (val: number) => `${Number(val).toFixed(2)}%`
-      )
-    : createProjectRiskOption(
-        projectLabels.value,
-        projectValues.value,
-        projectMax.value,
-        (val: number) => String(Math.round(val))
-      )
+    ? createBigScreenLineOption({
+        labels: projectLabels.value,
+        values: projectValues.value,
+        max: projectMax.value,
+        formatter: (val: number) => `${Number(val).toFixed(2)}%`,
+        rotate: 28,
+        grid: { left: 40, right: 16, top: 18, bottom: 62 }
+      })
+    : createBigScreenLineOption({
+        labels: projectLabels.value,
+        values: projectValues.value,
+        max: projectMax.value,
+        formatter: '{value}',
+        rotate: 28,
+        grid: { left: 40, right: 16, top: 18, bottom: 62 }
+      })
 );
 
 const loadRiskAreaTop10 = async () => {

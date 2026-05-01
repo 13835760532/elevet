@@ -19,7 +19,6 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
-import echarts from '@/plugins/echarts';
 import { Echart } from '@/components/Echart';
 import BigPanelCard from '../bigscreen/BigPanelCard.vue';
 import rightBg from '@/assets/imgs/echarts/检测任务/rwjcfx_bg.png';
@@ -32,48 +31,12 @@ import {
   type FastPesticideTopRespVO
 } from '@/api/agri/dashboard/fast';
 import { getBigScreenQueryParams, subscribeBigScreenRefresh } from '../bigscreen/config';
+import { createBigScreenLineOption } from '../bigscreen/chartOption';
 
 const topTab = ref('检测量');
 const categoryTop10 = ref<FastCategoryTopRespVO[]>([]);
 const categoryPesticideTop10 = ref<FastCategoryPesticideTopRespVO[]>([]);
 const pesticideTop10 = ref<FastPesticideTopRespVO[]>([]);
-
-const createTopColumnOption = (
-  names: string[],
-  values: number[],
-  max: number,
-  formatter?: (value: number) => string
-) => ({
-  grid: { left: 34, right: 14, top: 18, bottom: 30 },
-  xAxis: {
-    type: 'category',
-    data: names,
-    axisLabel: { color: '#86abd0', fontSize: 9, interval: 0, rotate: 0 },
-    axisLine: { lineStyle: { color: '#2d67ac' } }
-  },
-  yAxis: {
-    type: 'value',
-    min: 0,
-    max,
-    interval: max <= 1 ? 0.2 : 100,
-    axisLabel: { color: '#86abd0', formatter },
-    splitLine: { lineStyle: { color: 'rgba(45, 106, 184, 0.32)', type: 'dashed' } }
-  },
-  series: [
-    {
-      type: 'bar',
-      barWidth: 9,
-      barCategoryGap: '36%',
-      data: values,
-      itemStyle: {
-        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-          { offset: 0, color: '#4be9ff' },
-          { offset: 1, color: 'rgba(72, 231, 255, 0.15)' }
-        ])
-      }
-    }
-  ]
-});
 
 const productNames = computed(() =>
   categoryPesticideTop10.value.length
@@ -106,73 +69,44 @@ const itemValues = computed(() =>
     : productValues.value
 );
 
-const makeHorizontalOption = (names: string[], values: number[]) => ({
-  grid: { left: 96, right: 24, top: 12, bottom: 20 },
-  xAxis: {
-    type: 'value',
-    min: 0,
-    max: Math.min(Math.max(...values, 10) * 1.2, 100),
-    interval: undefined,
-    axisLabel: { color: '#80abd3', formatter: '{value}%' },
-    splitLine: { lineStyle: { color: 'rgba(45, 106, 184, 0.35)', type: 'dashed' } },
-    axisLine: { lineStyle: { color: '#2d67ac' } }
-  },
-  yAxis: [
-    {
-      type: 'category',
-      inverse: true,
-      data: names,
-      axisLine: { show: false },
-      axisTick: { show: false },
-      axisLabel: { color: '#d4ebff', fontSize: 12 }
-    },
-    {
-      type: 'category',
-      inverse: true,
-      position: 'right',
-      data: values,
-      axisLine: { show: false },
-      axisTick: { show: false },
-      axisLabel: {
-        color: '#48e7ff',
-        fontSize: 12,
-        fontWeight: 700,
-        formatter: (val: number) => `${Number(val).toFixed(2)}%`
-      }
-    }
-  ],
-  series: [
-    {
-      type: 'bar',
-      barWidth: 10,
-      data: values,
-      itemStyle: {
-        borderRadius: [0, 7, 7, 0],
-        color: new echarts.graphic.LinearGradient(1, 0, 0, 0, [
-          { offset: 0, color: '#49e8ff' },
-          { offset: 1, color: '#1d56d9' }
-        ])
-      },
-      barGap: '32%'
-    }
-  ]
-});
-
-const middleBarOption = computed(() => makeHorizontalOption(productNames.value, productValues.value));
-const bottomBarOption = computed(() => makeHorizontalOption(itemNames.value, itemValues.value));
+const middleBarOption = computed(() =>
+  createBigScreenLineOption({
+    labels: productNames.value,
+    values: productValues.value,
+    formatter: '{value}%',
+    rotate: 28,
+    max: 100,
+    grid: { left: 36, right: 16, top: 18, bottom: 58 }
+  })
+);
+const bottomBarOption = computed(() =>
+  createBigScreenLineOption({
+    labels: itemNames.value,
+    values: itemValues.value,
+    formatter: '{value}%',
+    rotate: 22,
+    max: 100,
+    grid: { left: 36, right: 16, top: 18, bottom: 52 }
+  })
+);
 const currentTopColumnOption = computed(() =>
   topTab.value === '阳性率'
-    ? createTopColumnOption(
-        categoryNames.value,
-        categoryValues.value,
-        Math.min(Math.max(...categoryValues.value, 1) * 1.2, 100),
-        (val: number) => `${Number(val).toFixed(2)}%`
-      )
-    : createTopColumnOption(
-        categoryNames.value,
-        categoryValues.value,
-        Math.max(...categoryValues.value, 500)
-      )
+    ? createBigScreenLineOption({
+        labels: categoryNames.value,
+        values: categoryValues.value,
+        max: Math.min(Math.max(...categoryValues.value, 1) * 1.2, 100),
+        formatter: '{value}%',
+        rotate: 18,
+        grid: { left: 34, right: 16, top: 18, bottom: 40 }
+      })
+    : createBigScreenLineOption({
+        labels: categoryNames.value,
+        values: categoryValues.value,
+        max: Math.max(...categoryValues.value, 500),
+        formatter: '{value}',
+        rotate: 18,
+        grid: { left: 34, right: 16, top: 18, bottom: 40 }
+      })
 );
 
 const loadCategoryTop10 = async () => {
