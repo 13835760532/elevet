@@ -1,172 +1,293 @@
 <template>
-    <div class="page-container">
-        <!-- 顶部标题区 -->
-        <div class="guide-card" style="margin-bottom: 12px;">
-            <div class="card-header">
-                <h2 class="card-title">国标限量</h2>
-            </div>
-            <div class="header-desc" style="color: #666; font-size: 14px;">
-                根据产品名称查询对应的国标限量数据（GB2763-2021）
-            </div>
-        </div>
+  <div class="page-container" v-loading="loading">
+    <!-- 统一头部区域 (指南 + 搜索) -->
+    <div class="header-section">
+      <div class="header-top">
+        <h2 class="page-title">国标限量</h2>
+        <p class="page-desc">根据产品名称查询对应的国标限量数据（GB2763-2021）</p>
+      </div>
 
-        <!-- 搜索区域 -->
-        <div class="query-card">
-            <div class="query-form-wrapper">
-                <el-form :inline="true" class="custom-query-form custom-query-form-row">
-                    <el-form-item label="" style="margin-bottom: 0!important;">
-                        <el-input :prefix-icon="Search" v-model="searchQuery" placeholder="搜索农药化学名称、食物名称、用途查询国标限量信息"
-                            class="custom-input" style="width: 480px" clearable @keyup.enter="handleSearch" />
-                    </el-form-item>
-                    <div class="query-btns" style="margin-bottom: 0!important;">
-                        <el-button type="primary" class="search-btn" @click="handleSearch">搜索</el-button>
-                    </div>
-                </el-form>
-            </div>
-        </div>
-
-        <!-- 数据网格区域 -->
-        <div class="data-grid">
-            <div v-for="(item, index) in limitData" :key="index" class="data-card">
-                <div class="card-header">
-                    <div class="info-row">
-                        <span class="label">农药名称：</span>
-                        <span class="value">{{ item.pesticideName }}</span>
-                    </div>
-                    <div class="info-row">
-                        <span class="label">用途：</span>
-                        <span class="value">{{ item.usage }}</span>
-                    </div>
-                    <div class="info-row">
-                        <span class="label">产品范围：</span>
-                        <span class="value">{{ item.usage }}</span>
-                    </div>
-                </div>
-
-                <div class="card-content">
-                    <el-table :data="item.products" style="width: 100%" border>
-                        <el-table-column prop="category1" label="食物类别一" align="center" />
-                        <el-table-column prop="category2" label="食物类别二" align="center" />
-                        <el-table-column prop="foodName" label="食物名称" align="center" />
-                        <el-table-column prop="mrl" label="最大残留限量 MRL (mg/kg)" align="center" width="160" />
-                    </el-table>
-                </div>
-            </div>
-        </div>
+      <div class="search-bar">
+        <el-form :inline="true" @submit.prevent>
+          <el-form-item class="!mb-0" style="margin-right: 0;">
+            <el-input :prefix-icon="Search" v-model="queryParams.keyword" placeholder="搜索农药化学名称、食物名称、用途查询国标限量信息"
+              class="custom-search-input" clearable @keyup.enter="handleSearch" />
+          </el-form-item>
+          <el-button type="primary" class="search-btn" @click="handleSearch">
+            <Icon icon="ep:search" class="mr-5px" /> 搜索
+          </el-button>
+        </el-form>
+      </div>
     </div>
+
+    <!-- 数据网格区域 -->
+    <div class="grid-container">
+      <div v-if="list.length > 0" class="data-grid">
+        <div v-for="(item, index) in list" :key="index" class="data-card">
+          <div class="card-info">
+            <div class="info-row">
+              <span class="label">目标物名称：</span>
+              <span class="value name-highlight">{{ item.targetName }}</span>
+            </div>
+            <div class="info-row">
+              <span class="label">主要用途：</span>
+              <span class="value">{{ item.mainPurpose || '--' }}</span>
+            </div>
+          </div>
+
+          <div class="card-table">
+            <el-table :data="item.produceRanges" style="width: 100%" border size="small">
+              <el-table-column prop="foodCategory" label="食品类别" align="center" width="130" show-overflow-tooltip />
+              <el-table-column prop="foodName" label="食品名称" align="center" min-width="100" />
+              <el-table-column label="最大残留限量 (MRL)" align="center" width="160">
+                <template #default="scope">
+                  <div class="limit-value">
+                    <span class="num">{{ scope.row.maxResidueLimit }}</span>
+                    <span class="unit">{{ scope.row.unit }}</span>
+                  </div>
+                </template>
+              </el-table-column>
+            </el-table>
+          </div>
+        </div>
+      </div>
+
+      <!-- 无数据状态 -->
+      <el-empty v-else-if="!loading" description="暂无相关限量标准信息" />
+    </div>
+
+    <!-- 底部吸附分页栏 -->
+    <div class="footer-pagination" v-if="total > 0">
+      <el-pagination v-model:current-page="queryParams.pageNo" v-model:page-size="queryParams.pageSize" :total="total"
+        background layout="total, prev, pager, next" @current-change="handleCurrentChange" />
+    </div>
+  </div>
 </template>
 
-<script setup>
-import { ref } from 'vue';
-import { Search } from '@element-plus/icons-vue';
+<script setup lang="ts">
+import { ref, reactive, onMounted } from 'vue'
+import { Search } from '@element-plus/icons-vue'
+import * as ProduceTargetLimitApi from '@/api/agri/produceTargetLimit'
 
-const searchQuery = ref('');
+defineOptions({ name: 'StandardLimit' })
 
-const limitData = ref([
-    {
-        pesticideName: '2.4-滴丁酸',
-        usage: '除草剂',
-        products: [
-            { category1: '调味料', category2: '叶类调味料', foodName: '薄荷', mrl: '0.2' },
-            { category1: '调味料', category2: '调味料', foodName: '留兰香', mrl: '0.2' },
-            { category1: '调味料', category2: '种子调味料', foodName: '胡椒', mrl: '0.2' }
-        ]
-    },
-    {
-        pesticideName: '2.4-滴丁酸',
-        usage: '除草剂',
-        products: [
-            { category1: '调味料', category2: '叶类调味料', foodName: '薄荷', mrl: '0.2' },
-            { category1: '调味料', category2: '调味料', foodName: '留兰香', mrl: '0.2' },
-            { category1: '调味料', category2: '种子调味料', foodName: '胡椒', mrl: '0.2' }
-        ]
-    },
-    {
-        pesticideName: '2.4-滴丁酸',
-        usage: '除草剂',
-        products: [
-            { category1: '调味料', category2: '叶类调味料', foodName: '薄荷', mrl: '0.2' },
-            { category1: '调味料', category2: '调味料', foodName: '留兰香', mrl: '0.2' },
-            { category1: '调味料', category2: '种子调味料', foodName: '胡椒', mrl: '0.2' }
-        ]
-    },
-    {
-        pesticideName: '2.4-滴丁酸',
-        usage: '除草剂',
-        products: [
-            { category1: '调味料', category2: '叶类调味料', foodName: '薄荷', mrl: '0.2' },
-            { category1: '调味料', category2: '调味料', foodName: '留兰香', mrl: '0.2' },
-            { category1: '调味料', category2: '种子调味料', foodName: '胡椒', mrl: '0.2' }
-        ]
-    }
-]);
+const loading = ref(false)
+const list = ref<ProduceTargetLimitApi.ProduceTargetLimitGroupRespVO[]>([])
+const total = ref(0)
 
+const queryParams = reactive({
+  pageNo: 1,
+  pageSize: 10,
+  keyword: ''
+})
+
+/** 获取数据列表 */
+const getList = async () => {
+  loading.value = true
+  try {
+    const data = await ProduceTargetLimitApi.searchProduceTargetLimitByKeyword(queryParams)
+    list.value = data.list
+    total.value = data.total
+  } catch (error) {
+    console.error('Fetch limit data failed:', error)
+  } finally {
+    loading.value = false
+  }
+}
+
+/** 搜索操作 */
 const handleSearch = () => {
-    console.log('Searching for:', searchQuery.value);
-};
+  queryParams.pageNo = 1
+  getList()
+}
+
+/** 页码切换 */
+const handleCurrentChange = (val: number) => {
+  queryParams.pageNo = val
+  getList()
+}
+
+onMounted(() => {
+  getList()
+})
 </script>
 
 <style lang="scss" scoped>
 .page-container {
-    height: 100%;
-    overflow-y: auto;
-    border-radius: 10px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background-color: #fff;
+  overflow: hidden;
 }
 
-/* 数据网格区域 */
+/* 头部区域样式 */
+.header-section {
+  background: #fff;
+  padding: 16px 20px;
+  border-bottom: 1px solid #ebeef5;
+  flex-shrink: 0;
+
+  .header-top {
+    margin-bottom: 16px;
+
+    .page-title {
+      font-size: 20px;
+      font-weight: 600;
+      color: #303133;
+      margin: 0 0 4px 0;
+    }
+
+    .page-desc {
+      font-size: 13px;
+      color: #909399;
+      margin: 0;
+    }
+  }
+
+  .search-bar {
+    .custom-search-input {
+      width: 520px;
+      display: flex;
+      justify-content: flex-start;
+
+      :deep(.el-input__wrapper) {
+        background-color: #f4f6f8;
+        box-shadow: none;
+        border: 1px solid transparent;
+        transition: all 0.3s;
+
+        &:hover,
+        &.is-focus {
+          border-color: #00B3ED;
+          background-color: #fff;
+        }
+      }
+    }
+
+    .search-btn {
+      background-color: #00B3ED;
+      border-color: #00B3ED;
+      padding: 0 24px;
+      height: 32px;
+      margin-left: 12px;
+    }
+  }
+}
+
+/* 网格容器 */
+.grid-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px;
+}
+
 .data-grid {
-    margin-top: 12px;
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  padding-bottom: 20px;
 }
 
 .data-card {
-    background: #fff;
-    backdrop-filter: blur(10px);
-    border-radius: 10px;
-    padding: 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
+  background: #fff;
+  border-radius: 8px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s, box-shadow 0.2s;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
 }
 
-.card-header {
+.card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  .info-row {
     display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    row-gap: 10px;
-    margin-bottom: 0;
+    font-size: 14px;
+    align-items: center;
 
-    .info-row {
-        display: flex;
-        align-items: center;
-        font-size: 14px;
-        line-height: 18px;
-        color: #333;
-
-        .label {
-            width: 80px;
-            text-align: right;
-        }
-
-        .value {
-            margin-left: 4px;
-        }
+    .label {
+      color: #606266;
+      width: 90px;
+      text-align: right;
+      flex-shrink: 0;
     }
 
-    .product-range-label {
-        font-size: 20px;
-        font-weight: 400;
-        margin-top: 12px;
-        color: #333;
+    .value {
+      color: #303133;
+
+      &.name-highlight {
+        color: #00B3ED;
+        font-weight: 600;
+        cursor: pointer;
+
+        &:hover {
+          text-decoration: underline;
+        }
+      }
     }
+  }
 }
 
-/* 响应式调整 */
-@media (max-width: 1200px) {
-    .data-grid {
-        grid-template-columns: 1fr;
-    }
+/* 限量数值样式 */
+.limit-value {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 4px;
+
+  .num {
+    color: #ff8d31;
+    font-weight: 700;
+    font-size: 14px;
+  }
+
+  .unit {
+    color: #909399;
+    font-size: 12px;
+  }
+}
+
+/* 表格定制 */
+:deep(.el-table) {
+  --el-table-header-bg-color: #f8fafc;
+  border-radius: 4px;
+
+  th.el-table__cell {
+    font-weight: 600;
+    color: #606266;
+  }
+}
+
+/* 底部工具栏 */
+.footer-pagination {
+  background: #fff;
+  padding: 12px 24px;
+  border-top: 1px solid #ebeef5;
+  display: flex;
+  justify-content: flex-end;
+  flex-shrink: 0;
+}
+
+/* 响应式 */
+@media (max-width: 1400px) {
+  .header-section .search-bar .custom-search-input {
+    width: 400px;
+  }
+}
+
+@media (max-width: 1100px) {
+  .data-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

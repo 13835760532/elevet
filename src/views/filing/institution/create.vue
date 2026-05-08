@@ -1,7 +1,7 @@
 <template>
     <div class="page-container yy-detail-container">
         <!-- 顶部标题区 -->
-        <PageHeader title="主体建档" desc="快速建立产品主体档案，完善资质及背景信息，提升品牌公信力。" />
+        <PageHeader title="机构备案" desc="快速建立产品主体档案，完善资质及背景信息，提升品牌公信力。" />
 
         <div class="page-scrollable">
             <!-- 内容卡片 -->
@@ -9,16 +9,14 @@
                 <div class="card-header">
                     <div class="header-main">
                         <span class="header-title">主体基本信息</span>
-                        <el-button type="primary" plain class="btn-copy-prev" :loading="copyLoading"
-                            @click="handleCopyPrevious">复制上一条</el-button>
                     </div>
                     <div class="dashed-line"></div>
                 </div>
 
                 <el-form ref="formRef" :model="formData" :rules="formRules" label-width="120px" class="product-form">
-                    <!-- 备案类型 -->
-                    <el-form-item label="备案类型" prop="type" required>
-                        <el-select v-model="formData.type" placeholder="请选择备案类型" class="full-width"
+                    <!-- 主体类型 -->
+                    <el-form-item label="主体类型" prop="type" required>
+                        <el-select v-model="formData.type" placeholder="企业档案/个人档案" class="full-width"
                             @change="handleTypeChange">
                             <el-option v-for="dict in filingTypeOptions" :key="dict.value" :label="dict.label"
                                 :value="dict.value" />
@@ -27,12 +25,12 @@
 
                     <!-- 主体名称 -->
                     <el-form-item label="主体名称" prop="name" required>
-                        <el-input v-model="formData.name" placeholder="请填写主体名称" />
+                        <el-input v-model="formData.name" placeholder="企业名称/个人姓名" />
                     </el-form-item>
 
-                    <!-- 主体类型 -->
-                    <el-form-item label="主体类型" prop="category">
-                        <el-select v-model="formData.category" placeholder="请选择主体类型" class="full-width">
+                    <!-- 主体类别 -->
+                    <el-form-item label="主体类别" prop="category">
+                        <el-select v-model="formData.category" placeholder="生产" class="full-width">
                             <el-option v-for="dict in subjectCategoryOptions" :key="dict.value" :label="dict.label"
                                 :value="dict.value" />
                         </el-select>
@@ -41,7 +39,7 @@
                     <!-- 主营产品 -->
                     <el-form-item label="主营产品" prop="mainProducts">
                         <div style="display: flex; align-items: center; width: 100%;">
-                            <el-input v-model="formData.mainProducts" placeholder="请填写主营产品" />
+                            <el-input v-model="formData.mainProducts" placeholder="黄瓜、西红柿、茄子、丝瓜（手工输入）" />
                             <el-tooltip placement="right" effect="light">
                                 <template #content>
                                     <div style="line-height: 1.5;">
@@ -58,32 +56,29 @@
 
                     <!-- 所属地区 -->
                     <el-form-item label="所属地区" prop="provinceCode">
-                        <AreaCascader style="width: 500px;" v-model="areaPath" placeholder="请选择所属地区" @select="(val) => {
-                            formData.provinceCode = val.province;
-                            formData.cityCode = val.city;
-                            formData.districtCode = val.district;
-                        }" />
+                        <AreaCascader style="width: 500px;" v-model="areaPath" :check-strictly="true"
+                            placeholder="北京市-北京市-朝阳区（下拉选择输入）" @select="handleAreaSelect" />
                     </el-form-item>
 
                     <!-- 详细地址 -->
                     <el-form-item label="详细地址" prop="address">
-                        <el-input v-model="formData.address" placeholder="请填写详细地址" />
+                        <el-input v-model="formData.address" placeholder="建国路29号建外soho" />
                     </el-form-item>
 
                     <!-- 联系人 -->
                     <el-form-item label="联系人" prop="contactName" required>
-                        <el-input v-model="formData.contactName" placeholder="请填写联系人" />
+                        <el-input v-model="formData.contactName" placeholder="秦艳萍" />
                     </el-form-item>
 
                     <!-- 联系电话 -->
                     <el-form-item label="联系电话" prop="contactPhone" required>
-                        <el-input v-model="formData.contactPhone" placeholder="请填写联系电话" />
+                        <el-input v-model="formData.contactPhone" placeholder="65776500" />
                     </el-form-item>
 
                     <!-- 生产规模 -->
                     <el-form-item label="生产规模" prop="productionScale">
                         <div class="scale-row">
-                            <el-input v-model="formData.productionScale" placeholder="请填写生产规模" />
+                            <el-input v-model="formData.productionScale" placeholder="10" />
                             <el-select v-model="formData.productionScaleUnit" placeholder="亩" style="width: 100px">
                                 <el-option label="亩" value="亩" />
                                 <el-option label="公顷" value="公顷" />
@@ -167,9 +162,9 @@
 
                     <!-- 底部按钮 -->
                     <div class="form-footer">
-                        <el-button type="primary" :loading="loading" class="btn-submit"
-                            @click="handleSubmit">保存建档</el-button>
                         <el-button class="btn-cancel" @click="handleCancel">取消</el-button>
+                        <el-button type="primary" :loading="loading" class="btn-submit"
+                            @click="handleSubmit">提交备案</el-button>
                     </div>
                 </el-form>
             </div>
@@ -185,8 +180,9 @@ import PageHeader from '@/components/PageHeader/index.vue';
 import { UploadImg, UploadImgs } from '@/components/UploadFile';
 import AreaCascader from '@/components/AreaCascader/index.vue';
 import * as SubjectApi from '@/api/agri/subject/index';
+import * as OrganizationApi from '@/api/agri/organization/index';
 import { useMessage } from '@/hooks/web/useMessage';
-import { buildSubjectSubmitPayload, getLastSubmittedSubject, saveLastSubmittedSubject } from './lastSubmitCache';
+import { buildSubjectSubmitPayload, getLastSubmittedSubject, saveLastSubmittedSubject } from '../subject/lastSubmitCache';
 
 import { useDict } from '@/hooks/web/useDict';
 
@@ -242,10 +238,16 @@ const handleTypeChange = (val) => {
 };
 
 const formRules = {
-    type: [{ required: true, message: '请选择备案类型', trigger: 'change' }],
+    type: [{ required: true, message: '请选择主体类型', trigger: 'change' }],
     name: [{ required: true, message: '请输入主体名称', trigger: 'blur' }],
     contactName: [{ required: true, message: '请输入联系人', trigger: 'blur' }],
     contactPhone: [{ required: true, message: '请输入联系电话', trigger: 'blur' }]
+};
+
+const handleAreaSelect = (val) => {
+    formData.provinceCode = val.provinceCode;
+    formData.cityCode = val.cityCode;
+    formData.districtCode = val.districtCode;
 };
 
 const loadDetail = async () => {
@@ -276,17 +278,14 @@ const handleSubmit = async () => {
                 const normalizedPayload = buildSubjectSubmitPayload(formData);
                 const submitData = {
                     ...normalizedPayload,
+                    subjectType: formData.type, // Map type to subjectType
+                    socialCreditCode: formData.type === 2 ? formData.idCard : formData.socialCreditCode,
                     qualificationUrls: normalizedPayload.qualificationUrls.join(',')
                 };
 
                 let result;
-                if (id) {
-                    await SubjectApi.updateSubject({ ...submitData, id });
-                    message.success('更新成功');
-                } else {
-                    result = await SubjectApi.createSubject(submitData);
-                    message.success('创建成功');
-                }
+                result = await OrganizationApi.filingOrganization(submitData);
+                message.success('备案成功');
 
                 saveLastSubmittedSubject(normalizedPayload);
 

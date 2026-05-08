@@ -15,7 +15,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
 import * as AreaApi from '@/api/system/area'
 
 const cascaderRef = ref(null)
@@ -32,6 +32,14 @@ const props = defineProps({
   disabled: {
     type: Boolean,
     default: false
+  },
+  checkStrictly: {
+    type: Boolean,
+    default: false
+  },
+  emitPath: {
+    type: Boolean,
+    default: true
   }
 })
 
@@ -40,14 +48,14 @@ const emit = defineEmits(['update:modelValue', 'change', 'select'])
 const cascaderValue = ref(props.modelValue)
 const areaTree = ref<any[]>([])
 
-const cascaderProps = {
+const cascaderProps = computed(() => ({
   value: 'id',
   label: 'name',
   children: 'children',
-  checkStrictly: true, // 允许选中任意一级，解决三级点不动的问题
-  emitPath: true,
+  checkStrictly: props.checkStrictly,
+  emitPath: props.emitPath,
   expandTrigger: 'hover'
-}
+}))
 
 const getAreaTree = async () => {
   try {
@@ -70,6 +78,19 @@ const formatAreaTree = (tree: any[]) => {
     }
     return node
   })
+}
+
+// 递归通过 ID 查找完整路径
+const findPathById = (id: any, tree: any[]): any[] | undefined => {
+  if (!id || !tree || tree.length === 0) return undefined
+  for (const node of tree) {
+    if (String(node.id) === String(id)) return [node.id]
+    if (node.children && node.children.length > 0) {
+      const path = findPathById(id, node.children)
+      if (path) return [node.id, ...path]
+    }
+  }
+  return undefined
 }
 
 // 递归通过名称查找 ID 路径
@@ -98,9 +119,22 @@ onMounted(async () => {
      if (typeof initialValue[0] === 'string' && /[\u4e00-\u9fa5]/.test(initialValue[0])) {
          const resolved = resolveNamesToIds(initialValue as string[], areaTree.value);
          if (resolved) {
-            cascaderValue.value = resolved;
+            cascaderValue.value = props.emitPath ? resolved : resolved[resolved.length - 1];
          }
+     } else {
+        // 如果是 ID 数组，尝试从最后一个 ID 寻找完整路径以确保回显文字
+        const lastId = initialValue[initialValue.length - 1];
+        const resolved = findPathById(lastId, areaTree.value);
+        if (resolved) {
+          cascaderValue.value = props.emitPath ? resolved : resolved[resolved.length - 1];
+        }
      }
+  } else if (initialValue) {
+    // 如果是单个 ID，寻找完整路径
+    const resolved = findPathById(initialValue, areaTree.value);
+    if (resolved) {
+      cascaderValue.value = props.emitPath ? resolved : resolved[resolved.length - 1];
+    }
   }
 })
 
@@ -110,18 +144,34 @@ watch(
     let processVal = val;
     // 如果是名称字符串，尝试分割并匹配
     if (typeof processVal === 'string' && /[\u4e00-\u9fa5]/.test(processVal)) {
-       processVal = processVal.includes('-') ? processVal.split('-') : [processVal];
+      processVal = processVal.includes('-') ? processVal.split('-') : [processVal];
     }
+
     if (processVal && Array.isArray(processVal) && processVal.length > 0) {
       if (typeof processVal[0] === 'string' && /[\u4e00-\u9fa5]/.test(processVal[0])) {
-           const resolved = resolveNamesToIds(processVal as string[], areaTree.value);
-           if (resolved) {
-              cascaderValue.value = resolved;
-              return;
-           }
+        const resolved = resolveNamesToIds(processVal as string[], areaTree.value);
+        if (resolved) {
+          cascaderValue.value = props.emitPath ? resolved : resolved[resolved.length - 1];
+          return;
+        }
+      } else {
+        // ID 数组处理：根据最后一个 ID 找完整路径
+        const lastId = processVal[processVal.length - 1];
+        const resolved = findPathById(lastId, areaTree.value);
+        if (resolved) {
+          cascaderValue.value = props.emitPath ? resolved : resolved[resolved.length - 1];
+          return;
+        }
+      }
+    } else if (val) {
+      // 单个 ID 处理
+      const resolved = findPathById(val, areaTree.value);
+      if (resolved) {
+        cascaderValue.value = props.emitPath ? resolved : resolved[resolved.length - 1];
+        return;
       }
     }
-    cascaderValue.value = val
+    cascaderValue.value = val;
   }
 )
 
@@ -135,10 +185,14 @@ const handleChange = (val) => {
     if (checkedNodes && checkedNodes.length > 0) {
       const node = checkedNodes[0];
       const pathLabels = node.pathLabels || [];
+      const pathValues = node.pathValues || [];
       emit('select', {
         province: pathLabels[0] || '',
         city: pathLabels[1] || '',
-        district: pathLabels[2] || ''
+        district: pathLabels[2] || '',
+        provinceCode: pathValues[0] || '',
+        cityCode: pathValues[1] || '',
+        districtCode: pathValues[2] || ''
       });
     }
   }
@@ -171,7 +225,7 @@ const handleChange = (val) => {
 
 <style scoped lang="scss">
 .area-cascader {
-  width: 100% !important;
+  width: 100%;
 }
 :deep(.el-input) {
   width: 100%;

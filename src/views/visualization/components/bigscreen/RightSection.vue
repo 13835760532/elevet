@@ -2,9 +2,9 @@
   <section class="right-section">
     <BigPanelCard title="风险公告" :bg-image="noticeBg">
       <div class="announcement-list">
-        <div class="announcement-item" v-for="(item, index) in announcements" :key="index">
-          <p class="time">{{ item.time }}</p>
-          <p class="desc">{{ item.text }}</p>
+        <div class="announcement-item" v-for="(item, index) in noticeList" :key="index">
+          <p class="time">{{ formatDate(item.createTime, 'YYYY-MM-DD HH:mm') }}</p>
+          <p class="desc">{{ item.title }}</p>
         </div>
       </div>
     </BigPanelCard>
@@ -59,15 +59,12 @@ import {
   type ProductPesticideTopRespVO,
   type RiskAreaTopRespVO
 } from '@/api/agri/dashboard';
+import { getNoticePage, type NoticeVO } from '@/api/system/notice';
 import { getBigScreenQueryParams, subscribeBigScreenRefresh } from './config';
 import { createBigScreenLineOption } from './chartOption';
+import { formatDate } from '@/utils/formatTime';
 
-const announcements = [
-  { time: '2025-10-01 17:56', text: 'xx农产品(生产经营主体:xx)，发现xxx项目不合格。(检测机构:xx)' },
-  { time: '2025-10-01 17:56', text: 'xx农产品(生产经营主体:xx)，发现xxx项目不合格。(检测机构:xx)' },
-  { time: '2025-10-01 17:56', text: 'xx农产品(生产经营主体:xx)，发现xxx项目不合格。(检测机构:xx)' }
-];
-
+const noticeList = ref<NoticeVO[]>([]);
 const rankTab = ref('产地');
 const rankAreaLevelTab = ref('城市');
 const projectRiskTab = ref('检测量');
@@ -149,8 +146,22 @@ const loadProductPesticideTop10 = async () => {
     });
     projectRiskList.value = Array.isArray(data) ? data : [];
   } catch (error) {
-    console.error('加载产品检测项风险 TOP10 失败', error);
+    console.error('加载产品检测项风险 TOP 10 失败', error);
     projectRiskList.value = [];
+  }
+};
+
+const loadNoticeList = async () => {
+  try {
+    const data = await getNoticePage({
+      pageNo: 1,
+      pageSize: 10,
+      status: 0 // 开启状态
+    });
+    noticeList.value = data?.list || [];
+  } catch (error) {
+    console.error('加载风险公告失败', error);
+    noticeList.value = [];
   }
 };
 
@@ -178,11 +189,13 @@ watch(
 onMounted(() => {
   loadRiskAreaTop10();
   loadProductPesticideTop10();
+  loadNoticeList();
 });
 
 const disposeRefresh = subscribeBigScreenRefresh(() => {
   loadRiskAreaTop10();
   loadProductPesticideTop10();
+  loadNoticeList();
 });
 
 onUnmounted(() => {

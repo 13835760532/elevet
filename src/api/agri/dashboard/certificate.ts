@@ -1,4 +1,15 @@
 import request from '@/config/axios'
+import {
+  getMockCertificateCategoryDistribution,
+  getMockCertificateIssueTop10,
+  getMockCertificateMap,
+  getMockCertificateOverview,
+  getMockCertificateServiceTrend,
+  getMockCertificateTypeDistribution,
+  getMockCertificateVerificationTop10,
+  resolveDashboardMock,
+  shouldUseDashboardMock
+} from './mock'
 
 export interface CertificateDashboardQueryParams {
   startDate?: string
@@ -62,6 +73,9 @@ export interface CertificateCategoryDistributionRespVO {
 
 // 合格证大屏 - 概览
 export const getCertificateOverview = (params?: CertificateDashboardQueryParams) => {
+  if (shouldUseDashboardMock()) {
+    return resolveDashboardMock(() => getMockCertificateOverview(params))
+  }
   return request.get<DashboardCertificateOverviewRespVO>({
     url: '/agri/dashboard/certificate/overview',
     params
@@ -70,6 +84,9 @@ export const getCertificateOverview = (params?: CertificateDashboardQueryParams)
 
 // 合格证大屏 - 服务趋势
 export const getCertificateServiceTrend = (params?: CertificateDashboardQueryParams) => {
+  if (shouldUseDashboardMock()) {
+    return resolveDashboardMock(() => getMockCertificateServiceTrend(params))
+  }
   return request.get<CertificateServiceTrendRespVO>({
     url: '/agri/dashboard/certificate/service-trend',
     params
@@ -78,6 +95,9 @@ export const getCertificateServiceTrend = (params?: CertificateDashboardQueryPar
 
 // 合格证大屏 - 开具主体 TOP10
 export const getCertificateIssueTop10 = (params?: CertificateDashboardQueryParams) => {
+  if (shouldUseDashboardMock()) {
+    return resolveDashboardMock(() => getMockCertificateIssueTop10(params))
+  }
   return request.get<CertificateIssueTopRespVO[]>({
     url: '/agri/dashboard/certificate/issue-top10',
     params
@@ -88,6 +108,9 @@ export const getCertificateIssueTop10 = (params?: CertificateDashboardQueryParam
 export const getCertificateMap = (
   params?: CertificateDashboardQueryParams & { areaLevel?: string }
 ) => {
+  if (shouldUseDashboardMock()) {
+    return resolveDashboardMock(() => getMockCertificateMap((params?.areaLevel as '1' | '2') || '1', params))
+  }
   return request.get<DashboardCertificateMapRespVO>({
     url: '/agri/dashboard/certificate/map',
     params
@@ -96,6 +119,9 @@ export const getCertificateMap = (
 
 // 合格证大屏 - 品类开具分布
 export const getCertificateCategoryDistribution = (params?: CertificateDashboardQueryParams) => {
+  if (shouldUseDashboardMock()) {
+    return resolveDashboardMock(() => getMockCertificateCategoryDistribution(params))
+  }
   return request.get<CertificateCategoryDistributionRespVO[]>({
     url: '/agri/dashboard/certificate/category-distribution',
     params
@@ -104,6 +130,9 @@ export const getCertificateCategoryDistribution = (params?: CertificateDashboard
 
 // 合格证大屏 - 存证主体 TOP10
 export const getCertificateVerificationTop10 = (params?: CertificateDashboardQueryParams) => {
+  if (shouldUseDashboardMock()) {
+    return resolveDashboardMock(() => getMockCertificateVerificationTop10(params))
+  }
   return request.get<CertificateVerificationTopRespVO[]>({
     url: '/agri/dashboard/certificate/verification-top10',
     params
@@ -112,6 +141,9 @@ export const getCertificateVerificationTop10 = (params?: CertificateDashboardQue
 
 // 合格证大屏 - 出具类型分布
 export const getCertificateTypeDistribution = (params?: CertificateDashboardQueryParams) => {
+  if (shouldUseDashboardMock()) {
+    return resolveDashboardMock(() => getMockCertificateTypeDistribution(params))
+  }
   return request.get<CertificateTypeDistributionRespVO[]>({
     url: '/agri/dashboard/certificate/type-distribution',
     params

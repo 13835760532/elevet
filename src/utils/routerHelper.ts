@@ -115,10 +115,22 @@ export const generateRoute = (routes: AppCustomRouteRecordRaw[]): AppRouteRecord
         redirect: route.redirect,
         meta: meta
       }
-      const index = route?.component
-        ? modulesRoutesKeys.findIndex((ev) => ev.includes(route.component))
-        : modulesRoutesKeys.findIndex((ev) => ev.includes(route.path))
-      childrenData.component = modules[modulesRoutesKeys[index]]
+      const componentStr = route?.component || route?.path
+      let index = modulesRoutesKeys.findIndex(
+        (ev) => 
+          ev === `../views/${componentStr}.vue` || 
+          ev === `../views/${componentStr}/index.vue` || 
+          ev === `../views/${componentStr}.tsx` || 
+          ev === `../views/${componentStr}/index.tsx`
+      )
+      if (index === -1) {
+        index = modulesRoutesKeys.findIndex((ev) => ev.toLowerCase().includes(componentStr.toLowerCase()))
+      }
+      if (index !== -1) {
+        childrenData.component = modules[modulesRoutesKeys[index]]
+      } else {
+        console.error(`[RouterHelper] Cannot find component for route: ${route.name}, path: ${route.path}, componentStr: ${componentStr}`)
+      }
       data.children = [childrenData]
     } else {
       // 目录
@@ -138,10 +150,22 @@ export const generateRoute = (routes: AppCustomRouteRecordRaw[]): AppRouteRecord
         // 菜单
       } else {
         // 对后端传component组件路径和不传做兼容（如果后端传component组件路径，那么path可以随便写，如果不传，component组件路径会根path保持一致）
-        const index = route?.component
-          ? modulesRoutesKeys.findIndex((ev) => ev.includes(route.component))
-          : modulesRoutesKeys.findIndex((ev) => ev.includes(route.path))
-        data.component = modules[modulesRoutesKeys[index]]
+        const componentStr = route?.component || route?.path
+        let index = modulesRoutesKeys.findIndex(
+          (ev) => 
+            ev === `../views/${componentStr}.vue` || 
+            ev === `../views/${componentStr}/index.vue` || 
+            ev === `../views/${componentStr}.tsx` || 
+            ev === `../views/${componentStr}/index.tsx`
+        )
+        if (index === -1) {
+          index = modulesRoutesKeys.findIndex((ev) => ev.toLowerCase().includes(componentStr.toLowerCase()))
+        }
+        if (index !== -1) {
+          data.component = modules[modulesRoutesKeys[index]]
+        } else {
+          console.error(`[RouterHelper] Cannot find component for menu: ${route.name}, path: ${route.path}, componentStr: ${componentStr}`)
+        }
       }
       if (route.children) {
         data.children = generateRoute(route.children)

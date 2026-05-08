@@ -221,9 +221,10 @@ import { useRouter, useRoute } from 'vue-router'
 import DetectionProgress from '@/components/DetectionProgress/index.vue'
 import ProgressHistory from '@/components/ProgressHistory/index.vue'
 import * as DetectionTaskApi from '@/api/agri/detectionTask/index'
-import { DICT_TYPE } from '@/utils/dict'
+import { useDict, DICT_TYPE } from '@/hooks/web/useDict'
 import * as DeptApi from '@/api/system/dept'
 import * as DetectionRecordApi from '@/api/agri/detectionRecord'
+
 
 const router = useRouter()
 const route = useRoute()
@@ -245,6 +246,8 @@ const getDeptLabel = (value) => {
     return deptMap.value[value] || value || '--'
 }
 
+
+const { getLabel: getProductCategoryLabel, options: productCategoryOptions } = useDict(DICT_TYPE.AGRI_PRODUCT_CATEGORY);
 const tabs = [
     { label: '子任务列表', key: 'subtask' },
     { label: '检测结果', key: 'result' },
@@ -447,9 +450,10 @@ const loadDetectionResults = async (params = {}) => {
 
         const data = await DetectionRecordApi.getDetectionRecordPage(queryParams);
         progressList.value = (data.list || []).map(item => ({
+            id: item.id,
             sampleNo: item.sampleCode || '--',
             sampleName: item.productName || '--',
-            category: item.productCategory || '--',
+            category: item.productCategory ? getProductCategoryLabel(item.productCategory) : '--',
             origin: item.sampleArea || '--',
             subject: item.subjectName || '--',
             region: item.detectionArea || '--',

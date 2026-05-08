@@ -1,83 +1,62 @@
 <template>
   <div class="home-container">
-    <div class="home-content">
-      <!-- 欢迎语区域 -->
-      <div class="welcome-section">
-        <div class="welcome-header">
-          <h2 class="welcome-title">欢迎您，{{ userNickname || '管理员' }}！</h2>
-          <div class="welcome-line"></div>
-          <p class="welcome-subtitle">完成账号备案后，可使用更多核心业务功能......</p>
-        </div>
-      </div>
-
-      <!-- 核心业务卡片区域 -->
-      <div class="business-grid">
-        <div class="business-card">
-          <div class="card-icon">
-            <Icon icon="ep:edit" color="#00B3ED" size="28" />
-          </div>
-          <div class="card-info">
-            <h3 class="card-title">快速检测</h3>
-            <p class="card-desc">样品录入 | AI判读 | 检测结果 | 检测报告</p>
+    <div class="home-content-wrapper" :class="{ 'is-workbench': hasFiling }">
+      <WorkBench v-if="hasFiling" />
+      <div v-else class="home-content">
+        <!-- 欢迎语区域 -->
+        <div class="welcome-section">
+          <div class="welcome-header">
+            <h2 class="welcome-title">欢迎您，{{ userNickname || '管理员' }}！</h2>
+            <div class="welcome-line"></div>
+            <p class="welcome-subtitle">完成账号备案后，可使用更多核心业务功能......</p>
           </div>
         </div>
 
-        <div class="business-card">
-          <div class="card-icon">
-            <Icon icon="ep:document" color="#00B3ED" size="28" />
+        <!-- 核心业务卡片区域 -->
+        <div class="business-grid">
+          <div class="business-card">
+            <div class="card-icon">
+              <Icon icon="ep:edit" color="#00B3ED" size="28" />
+            </div>
+            <div class="card-info">
+              <h3 class="card-title">快速检测</h3>
+              <p class="card-desc">样品录入 | AI判读 | 检测结果 | 检测报告</p>
+            </div>
           </div>
-          <div class="card-info">
-            <h3 class="card-title">合格证管理</h3>
-            <p class="card-desc">合格证开具 | 查验 | 存证</p>
+
+          <div class="business-card">
+            <div class="card-icon">
+              <Icon icon="ep:document" color="#00B3ED" size="28" />
+            </div>
+            <div class="card-info">
+              <h3 class="card-title">合格证管理</h3>
+              <p class="card-desc">合格证开具 | 查验 | 存证</p>
+            </div>
+          </div>
+
+          <div class="business-card">
+            <div class="card-icon">
+              <Icon icon="ep:guide" color="#00B3ED" size="28" />
+            </div>
+            <div class="card-info">
+              <h3 class="card-title">农产品溯源</h3>
+              <p class="card-desc">农产品质量溯源查询</p>
+            </div>
           </div>
         </div>
 
-        <div class="business-card">
-          <div class="card-icon">
-            <Icon icon="ep:guide" color="#00B3ED" size="28" />
-          </div>
-          <div class="card-info">
-            <h3 class="card-title">农产品溯源</h3>
-            <p class="card-desc">农产品质量溯源查询</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- 备案按钮区域 -->
-      <div class="action-section">
-        <el-button type="primary" :disabled="hasFiling" class="beian-submit-btn" :class="{ 'disabled': hasFiling }"
-          @click="handleBeian">
-          立即账号备案
-        </el-button>
-        <div class="beian-tips">
-          <p>本企业已备案，<span class="link-text" @click="handleLinkFiling">去关联备案信息</span></p>
-          <p><span class="link-text" @click="handleBeian">*在线自助备案（立即账号备案）</span>，或线下联系运营方工作人员完成备案</p>
-        </div>
-      </div>
-
-      <!-- 便携式打印机区域 -->
-      <!-- <div class="printer-section">
-        <div class="printer-header">
-          <h3 class="printer-title">便携式打印机</h3>
-          <p class="printer-subtitle">蓝牙连接后，一键打印测试小票</p>
-        </div>
-        <div class="printer-status">
-          <el-tag :type="isPrinterReady ? 'success' : 'info'">
-            {{ isPrinterReady ? `已连接：${printerName}` : '未连接设备' }}
-          </el-tag>
-          <el-tag v-if="!isBluetoothSupported" type="warning">
-            当前浏览器不支持 Web Bluetooth
-          </el-tag>
-        </div>
-        <div class="printer-actions">
-          <el-button type="primary" plain :disabled="!isBluetoothSupported || connecting" @click="handleConnectPrinter">
-            {{ connecting ? '连接中...' : '连接蓝牙打印机' }}
+        <!-- 备案按钮区域 -->
+        <div class="action-section">
+          <el-button type="primary" :disabled="hasFiling" class="beian-submit-btn" :class="{ 'disabled': hasFiling }"
+            @click="handleBeian">
+            立即账号备案
           </el-button>
-          <el-button type="success" :disabled="!isPrinterReady || printing" @click="handleOneClickPrint">
-            {{ printing ? '打印中...' : '蓝牙一键打印' }}
-          </el-button>
+          <div class="beian-tips">
+            <p>本企业已备案，<span class="link-text" @click="handleLinkFiling">去关联备案信息</span></p>
+            <p><span class="link-text" @click="handleBeian">*在线自助备案（立即账号备案）</span>，或线下联系运营方工作人员完成备案</p>
+          </div>
         </div>
-      </div> -->
+      </div>
     </div>
   </div>
 </template>
@@ -89,6 +68,8 @@ import { ElMessage } from 'element-plus';
 import { useUserStore } from '@/store/modules/user';
 import { BluetoothPrinter, buildEscPosTestTicket } from '@/utils';
 import * as SubjectApi from '@/api/agri/subject/index';
+import * as OrganizationApi from '@/api/agri/organization/index';
+import WorkBench from '@/workBench.vue';
 
 const userStore = useUserStore();
 const router = useRouter();
@@ -125,7 +106,7 @@ const hasFiling = ref(false);
  */
 const checkSubjectStatus = async () => {
   try {
-    const data = await SubjectApi.hasDeptSubject();
+    const data = await OrganizationApi.hasFiled();
     hasFiling.value = !!data;
   } catch (error) {
     console.error('获取备案状态失败', error);
@@ -141,7 +122,7 @@ onMounted(() => {
  */
 const handleBeian = () => {
   // 根据新配置路由跳转至备案表单
-  router.push('/filing/subjectCreate');
+  router.push('/filing/institutionCreate');
 };
 
 /**
@@ -191,14 +172,24 @@ const handleOneClickPrint = async () => {
 
 <style lang="scss" scoped>
 .home-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
   width: 100%;
   min-height: calc(100vh - var(--top-tool-height) - var(--tags-view-height));
   background: #fff;
   border-radius: 8px;
   font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+.home-content-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  min-height: inherit;
+
+  &.is-workbench {
+    display: block;
+    padding: 20px;
+  }
 }
 
 .home-content {

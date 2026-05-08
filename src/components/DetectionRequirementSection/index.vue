@@ -41,7 +41,7 @@
                             size="small" />
                     </template>
                 </el-table-column>
-                <el-table-column label="检测数量" prop="quantity" width="140" align="center">
+                <el-table-column label="检测数量" prop="quantity" width="80" align="center">
                     <template #default="scope">
                         <el-input-number v-if="!scope.row.isAdd" v-model="scope.row.quantity" :min="0" :precision="0"
                             :disabled="quantityReadonly" controls-position="right" size="small" class="cell-number"
@@ -52,7 +52,7 @@
                     <template #default="scope">
                         <el-date-picker v-if="!scope.row.isAdd" v-model="scope.row.timeRange" type="daterange"
                             range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期" format="YYYY-MM-DD"
-                            value-format="YYYY-MM-DD" size="small" class="cell-date"
+                            value-format="YYYY-MM-DD" size="small" class="cell-date" style="width: 230px!important;"
                             @change="handleTimeRangeChange(scope.row)" />
                     </template>
                 </el-table-column>
@@ -284,9 +284,9 @@ const handleHighRiskQuery = () => {
 
 const handleHighRiskConfirm = (selectedItems) => {
     if (!selectedItems || selectedItems.length === 0) return;
-    
+
     const newList = [...taskList.value];
-    
+
     // 默认时间范围
     let defaultTimeRange = [];
     let defaultExecutionTime = '待设置';
@@ -296,7 +296,7 @@ const handleHighRiskConfirm = (selectedItems) => {
             const e = typeof props.defaultTimeRange[1] === 'string' ? props.defaultTimeRange[1].slice(0, 10) : new Date(props.defaultTimeRange[1]).toISOString().slice(0, 10);
             defaultTimeRange = [s, e];
             defaultExecutionTime = `${s}～${e}`;
-        } catch(e) {}
+        } catch (e) { }
     }
 
     selectedItems.forEach(item => {
@@ -312,7 +312,7 @@ const handleHighRiskConfirm = (selectedItems) => {
             items: item.unqualifiedItem || ''
         });
     });
-    
+
     taskList.value = newList;
     ElMessage.success(`已添加 ${selectedItems.length} 条高风险检测要求`);
 };

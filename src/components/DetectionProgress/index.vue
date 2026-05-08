@@ -194,8 +194,8 @@ const handleBatchImport = () => {
 const handleViewDetail = (row) => {
     // emit('view-detail', row);
     router.push({
-        path: '/taskDetection/taskDetail',
-        query: { id: row.sampleNo }
+        path: '/rapidDetection/taskResult',
+        query: { id: row.id }
     });
 };
 

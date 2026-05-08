@@ -146,6 +146,7 @@ import AreaCascader from '@/components/AreaCascader/index.vue';
 import * as DetectionPlanApi from '@/api/agri/detectionPlan/index';
 import * as DeptApi from '@/api/system/dept/index';
 import * as DetectionTaskApi from '@/api/agri/detectionTask/index';
+import * as DistributionApi from '@/api/agri/distribution/index';
 import { useDict, DICT_TYPE } from '@/hooks/web/useDict';
 import { onMounted } from 'vue';
 
@@ -206,7 +207,7 @@ const loadSchemeDetail = async () => {
 
 const taskForm = reactive({
     systemType: 1,
-    deptType: 1,
+    deptType: '',
     province: '',
     city: '',
     district: '',
@@ -241,12 +242,11 @@ const isExceedLimit = computed(() => {
 
 const getAreaFilter = () => {
     const path = Array.isArray(areaPath.value) ? areaPath.value : [];
-    if (!path.length) return {};
-    const levelMap = [1, 2, 3];
-    const areaLevel = levelMap[Math.min(path.length, 3) - 1];
-    const areaCode = String(path[path.length - 1] || '');
-    if (!areaCode) return {};
-    return { areaCode, areaLevel };
+    return {
+        provinceCode: path[0] || undefined,
+        cityCode: path[1] || undefined,
+        districtCode: path[2] || undefined
+    };
 };
 
 const reconcileSelectionState = () => {
@@ -265,10 +265,10 @@ const loadOrgOptions = async () => {
             keyword: searchKeyword.value?.trim() || undefined,
             ...getAreaFilter()
         };
-        const list = await DeptApi.searchDeptList(params);
+        const list = await DistributionApi.getAssignableTargets(params);
         orgOptions.value = (list || []).map((item) => ({
-            id: item.id,
-            name: item.name
+            id: item.targetId,
+            name: item.targetName
         }));
         reconcileSelectionState();
     } catch (error) {
@@ -387,7 +387,7 @@ watch(
         const currentList = [...taskList.value];
         // 移除不再选中的机构
         const filteredList = currentList.filter(item => newIds.includes(item.deptId));
-        
+
         // 添加新选中的机构
         newIds.forEach(id => {
             if (!filteredList.find(item => item.deptId === id)) {
@@ -492,6 +492,11 @@ const handleSubmit = async () => {
         ElMessage.error('任务下发失败');
     }
 };
+// 监听区域变化
+watch(areaPath, () => {
+    loadOrgOptions();
+}, { deep: true });
+
 // 页面初始化
 onMounted(() => {
     loadOrgOptions()
@@ -614,6 +619,8 @@ onMounted(() => {
         max-width: 500px;
 
         :deep(.el-input__wrapper) {
+            border-width: 0px !important;
+            height: 36px !important;
             background: #fff;
             box-shadow: 0 0 0 1px #dcdfe6 inset !important;
 
@@ -743,7 +750,8 @@ onMounted(() => {
 
         &.is-disabled {
             box-shadow: 0 0 0 1px #f56c6c inset !important;
-            background-color: #fffbfa !important; /* 超额时即使禁用也显示淡红色背景 */
+            background-color: #fffbfa !important;
+            /* 超额时即使禁用也显示淡红色背景 */
         }
     }
 }

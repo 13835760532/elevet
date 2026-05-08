@@ -22,7 +22,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import TabAll from './components/TabAll.vue'
 import TabTask from './components/TabTask.vue'
 import TabQuick from './components/TabQuick.vue'
@@ -30,7 +31,9 @@ import TabIssue from './components/TabIssue.vue'
 import TabVerify from './components/TabVerify.vue'
 import TabFiling from './components/TabFiling.vue'
 
+const route = useRoute()
 const currentTab = ref('all')
+
 const tabs = [
   { label: '全部', value: 'all', icon: 'ep:user' },
   { label: '检测任务', value: 'task', icon: 'ep:message' },
@@ -39,6 +42,22 @@ const tabs = [
   { label: '合格证收证', value: 'verify', icon: 'ep:document-checked' },
   { label: '建档备案', value: 'filing', icon: 'ep:folder' }
 ]
+
+const initTab = () => {
+  if (route.query.tab) {
+    currentTab.value = route.query.tab as string
+  } else if (route.path.includes('quick') || route.path.includes('rapid')) {
+    currentTab.value = 'quick'
+  }
+}
+
+onMounted(() => {
+  initTab()
+})
+
+watch(() => route.path, () => {
+  initTab()
+})
 </script>
 
 <style lang="scss" scoped>

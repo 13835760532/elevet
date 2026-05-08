@@ -79,6 +79,18 @@ const remainingRouter: AppRouteRecordRaw[] = [
     },
     children: [
       {
+        path: 'distribution/relation',
+        component: () => import('@/views/distribution/relation/index.vue'),
+        name: 'DistributionRelation',
+        meta: { title: '分发关系管理', activeMenu: '/user/distribution/relation' }
+      },
+      {
+        path: 'distribution/relation-create',
+        component: () => import('@/views/distribution/relation/create.vue'),
+        name: 'DistributionRelationCreate',
+        meta: { title: '新建分发关系', activeMenu: '/user/distribution/relation' }
+      },
+      {
         path: 'profile',
         component: () => import('@/views/Profile/Index.vue'),
         name: 'Profile',
@@ -309,6 +321,12 @@ const remainingRouter: AppRouteRecordRaw[] = [
         meta: { title: '主体建档', activeMenu: '/filing/subject' }
       },
       {
+        path: 'institutionCreate',
+        component: () => import('@/views/filing/institution/create.vue'),
+        name: 'FilingInstitutionCreate',
+        meta: { title: '机构备案', activeMenu: '/index' }
+      },
+      {
         path: 'subjectDetail',
         component: () => import('@/views/filing/subject/productDetail.vue'),
         name: 'FilingSubjectDetail',
@@ -338,6 +356,20 @@ const remainingRouter: AppRouteRecordRaw[] = [
         name: 'FilingProductDetail',
         meta: { title: '产品详情', activeMenu: '/filing/product' }
       },
+    ]
+  },
+  {
+    path: '/system',
+    component: Layout,
+    name: 'SystemDeptExtra',
+    meta: { hidden: true },
+    children: [
+      {
+        path: 'dept/create',
+        component: () => import('@/views/system/dept/create.vue'),
+        name: 'SystemDeptCreate',
+        meta: { title: '新建机构', activeMenu: '/system/dept' }
+      }
     ]
   },
   // 快速检测
@@ -537,6 +569,12 @@ const remainingRouter: AppRouteRecordRaw[] = [
         component: () => import('@/views/statistics/index.vue'),
         name: 'QuickStatistics',
         meta: { title: '快捷统计', activeMenu: '/statistics/index' }
+      },
+      {
+        path: 'quick',
+        component: () => import('@/views/statistics/index.vue'),
+        name: 'RapidStatistics',
+        meta: { title: '快检统计', activeMenu: '/statistics/quick' }
       }
     ]
   },

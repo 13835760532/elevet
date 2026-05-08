@@ -1,124 +1,128 @@
 <template>
-  <!-- 搜索工作栏 -->
-  <ContentWrap>
-    <el-form
-      class="-mb-15px"
-      :model="queryParams"
-      ref="queryFormRef"
-      :inline="true"
-      label-width="68px"
-    >
-      <el-form-item label="部门名称" prop="name">
-        <el-input
-          v-model="queryParams.name"
-          placeholder="请输入部门名称"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
-      </el-form-item>
-      <el-form-item label="部门状态" prop="status">
-        <el-select
-          v-model="queryParams.status"
-          placeholder="请选择部门状态"
-          clearable
-          class="!w-240px"
-        >
-          <el-option
-            v-for="dict in getIntDictOptions(DICT_TYPE.COMMON_STATUS)"
-            :key="dict.value"
-            :label="dict.label"
-            :value="dict.value"
-          />
-        </el-select>
-      </el-form-item>
-      <el-form-item>
-        <el-button @click="handleQuery"><Icon icon="ep:search" class="mr-5px" /> 搜索</el-button>
-        <el-button @click="resetQuery"><Icon icon="ep:refresh" class="mr-5px" /> 重置</el-button>
-        <el-button
-          type="primary"
-          plain
-          @click="openForm('create')"
-          v-hasPermi="['system:dept:create']"
-        >
-          <Icon icon="ep:plus" class="mr-5px" /> 新增
-        </el-button>
-        <el-button type="danger" plain @click="toggleExpandAll">
-          <Icon icon="ep:sort" class="mr-5px" /> 展开/折叠
-        </el-button>
-        <el-button
-          type="danger"
-          plain
-          :disabled="checkedIds.length === 0"
-          @click="handleDeleteBatch"
-          v-hasPermi="['system:dept:delete']"
-        >
-          <Icon icon="ep:delete" class="mr-5px" /> 批量删除
-        </el-button>
-      </el-form-item>
-    </el-form>
-  </ContentWrap>
+  <div class="table-container" v-loading="loading">
+    <!-- 机构查询卡片 -->
+    <div class="query-card">
+      <div class="card-header">
+        <h2 class="card-title">机构查询</h2>
+      </div>
 
-  <!-- 列表 -->
-  <ContentWrap>
-    <el-table
-      v-loading="loading"
-      :data="list"
-      row-key="id"
-      :default-expand-all="isExpandAll"
-      v-if="refreshTable"
-      @selection-change="handleRowCheckboxChange"
-    >
-      <el-table-column type="selection" width="55" />
-      <el-table-column prop="name" label="部门名称" />
-      <el-table-column prop="leader" label="负责人">
-        <template #default="scope">
-          {{ userList.find((user) => user.id === scope.row.leaderUserId)?.nickname }}
-        </template>
-      </el-table-column>
-      <el-table-column prop="sort" label="排序" />
-      <el-table-column prop="status" label="状态">
-        <template #default="scope">
-          <dict-tag :type="DICT_TYPE.COMMON_STATUS" :value="scope.row.status" />
-        </template>
-      </el-table-column>
-      <el-table-column
-        label="创建时间"
-        align="center"
-        prop="createTime"
-        width="180"
-        :formatter="dateFormatter"
-      />
-      <el-table-column label="操作" align="center">
-        <template #default="scope">
-          <el-button
-            link
-            type="primary"
-            @click="openForm('update', scope.row.id)"
-            v-hasPermi="['system:dept:update']"
-          >
-            修改
-          </el-button>
-          <el-button
-            link
-            type="danger"
-            @click="handleDelete(scope.row.id)"
-            v-hasPermi="['system:dept:delete']"
-          >
-            删除
-          </el-button>
-        </template>
-      </el-table-column>
-    </el-table>
-  </ContentWrap>
+      <!-- 查询表单区域 -->
+      <div class="query-form-wrapper">
+        <el-form :model="queryParams" ref="queryFormRef" :inline="true" label-width="0"
+          class="custom-query-form  custom-query-form-row flex flex-wrap justify-between items-center">
+          <div class="flex flex-wrap gap-10px items-center">
+            <el-form-item prop="name" class="!mb-0" style="margin-right: 0px!important;">
+              <el-input v-model="queryParams.name" placeholder="搜索机构名称" clearable @keyup.enter="handleQuery"
+                class="custom-input w240">
+                <template #prefix>
+                  <Icon icon="ep:search" />
+                </template>
+              </el-input>
+            </el-form-item>
+            <el-form-item prop="industry" class="!mb-0" style="margin-right: 0px!important;">
+              <el-select v-model="queryParams.industry" placeholder="所属行业" clearable class="custom-select"
+                style="width: 160px">
+                <el-option label="种植业" value="agriculture" />
+                <el-option label="水产业" value="industry" />
+                <el-option label="综合行业" value="other" />
+              </el-select>
+            </el-form-item>
+            <el-form-item prop="status" class="!mb-0" style="margin-right: 0px!important;">
+              <el-select v-model="queryParams.status" placeholder="全部状态" clearable class="custom-select"
+                style="width: 140px">
+                <el-option v-for="dict in getIntDictOptions(DICT_TYPE.COMMON_STATUS)" :key="dict.value"
+                  :label="dict.label" :value="dict.value" />
+              </el-select>
+            </el-form-item>
+            <el-form-item prop="createTime" class="!mb-0">
+              <el-date-picker v-model="queryParams.createTime" type="daterange" range-separator="至"
+                start-placeholder="开始时间" end-placeholder="结束时间" value-format="YYYY-MM-DD"
+                style="width: 240px!important" />
+            </el-form-item>
+          </div>
+          <div class="query-btns">
+            <el-button @click="resetQuery" class="reset-btn">重置</el-button>
+            <el-button type="primary" @click="handleQuery" class="search-btn">查询</el-button>
+          </div>
+        </el-form>
+      </div>
 
-  <!-- 表单弹窗：添加/修改 -->
-  <DeptForm ref="formRef" @success="getList" />
+      <!-- 操作按钮行 -->
+      <div class="table-actions">
+        <div class="actions-left flex gap-12px">
+          <el-button type="primary" @click="openForm('create')" v-hasPermi="['system:dept:create']"
+            class="!bg-[#00B3ED] !border-[#00B3ED] !px-20px">
+            <Icon icon="ep:plus" class="mr-5px" /> 创建机构
+          </el-button>
+        </div>
+        <div class="actions-right">
+          <el-button @click="handleExport" v-hasPermi="['system:dept:export']">
+            <Icon icon="ep:download" class="mr-5px" /> 导出
+          </el-button>
+        </div>
+      </div>
+
+      <div class="table-wrapper">
+        <el-table v-loading="loading" :data="list" row-key="id" v-if="refreshTable" height="100%">
+          <el-table-column label="机构ID" prop="id" width="80" align="center" />
+          <el-table-column prop="name" label="机构名称" min-width="180" />
+          <el-table-column prop="industry" label="所属行业" width="100" align="center">
+            <template #default="scope">
+              {{ scope.row.industry === 'agriculture' ? '种植业' : scope.row.industry === 'industry' ? '水产业' : '综合行业' }}
+            </template>
+          </el-table-column>
+          <el-table-column prop="deptType" label="机构类型" width="120" align="center">
+            <template #default="scope">
+              {{ scope.row.deptType === 1 ? '监管机构' : scope.row.deptType === 2 ? '检测机构' : scope.row.deptType === 3 ?
+                '生产经营主体' : '系统部门' }}
+            </template>
+          </el-table-column>
+          <el-table-column prop="areaLevel" label="机构行政级别" width="120" align="center">
+            <template #default="scope">
+              {{ scope.row.areaLevel === 1 ? '省级' : scope.row.areaLevel === 2 ? '市级' : scope.row.areaLevel === 3 ? '区级'
+                : ''
+              }}
+            </template>
+          </el-table-column>
+          <el-table-column label="机构行政管辖范围" min-width="180">
+            <template #default="scope">
+              {{ scope.row.address || '--' }}
+            </template>
+          </el-table-column>
+          <el-table-column prop="contactName" label="联系人" width="100" align="center" />
+          <el-table-column prop="contactPhone" label="手机号" width="120" align="center" />
+          <el-table-column prop="socialCreditCode" label="组织机构代码" width="180" align="center" />
+          <el-table-column label="操作" align="center" fixed="right" width="140">
+            <template #default="scope">
+              <el-button link type="primary" @click="openForm('update', scope.row.id)"
+                v-hasPermi="['system:dept:update']">
+                编辑
+              </el-button>
+              <span class="mx-5px text-gray-300">|</span>
+              <el-button link type="danger" @click="handleDelete(scope.row.id)" v-hasPermi="['system:dept:delete']">
+                删除
+              </el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
+
+      <!-- 分页区域 -->
+      <div class="pagination-wrapper" v-if="total > 0">
+        <el-pagination v-model:current-page="queryParams.pageNo" v-model:page-size="queryParams.pageSize" :total="total"
+          background layout="total, sizes, prev, pager, next, jumper" @size-change="handleSizeChange"
+          @current-change="handleCurrentChange" />
+      </div>
+    </div>
+
+    <!-- 表单弹窗：添加/修改 -->
+    <DeptForm ref="formRef" @success="getList" />
+  </div>
 </template>
-<script lang="ts" setup>
+
+<script setup lang="ts">
 import { DICT_TYPE, getIntDictOptions } from '@/utils/dict'
 import { dateFormatter } from '@/utils/formatTime'
-import { handleTree } from '@/utils/tree'
 import * as DeptApi from '@/api/system/dept'
 import DeptForm from './DeptForm.vue'
 import * as UserApi from '@/api/system/user'
@@ -127,42 +131,39 @@ defineOptions({ name: 'SystemDept' })
 
 const message = useMessage() // 消息弹窗
 const { t } = useI18n() // 国际化
+const router = useRouter()
 
 const loading = ref(true) // 列表的加载中
-const list = ref() // 列表的数据
+const list = ref([]) // 列表的数据
+const total = ref(0) // 列表的总页数
+const userList = ref<UserApi.UserVO[]>([]) // 用户列表
+const refreshTable = ref(true) // 重新渲染表格状态
+
 const queryParams = reactive({
   pageNo: 1,
-  pageSize: 100,
+  pageSize: 10,
   name: undefined,
-  status: undefined
+  industry: undefined,
+  status: undefined,
+  createTime: undefined
 })
 const queryFormRef = ref() // 搜索的表单
-const isExpandAll = ref(true) // 是否展开，默认全部展开
-const refreshTable = ref(true) // 重新渲染表格状态
-const userList = ref<UserApi.UserVO[]>([]) // 用户列表
 
 /** 查询部门列表 */
 const getList = async () => {
   loading.value = true
   try {
-    const data = await DeptApi.getDeptList(queryParams)
-    list.value = handleTree(data)
+    const data = await DeptApi.getDeptPage(queryParams)
+    list.value = data.list
+    total.value = data.total
   } finally {
     loading.value = false
   }
 }
 
-/** 展开/折叠操作 */
-const toggleExpandAll = () => {
-  refreshTable.value = false
-  isExpandAll.value = !isExpandAll.value
-  nextTick(() => {
-    refreshTable.value = true
-  })
-}
-
 /** 搜索按钮操作 */
 const handleQuery = () => {
+  queryParams.pageNo = 1
   getList()
 }
 
@@ -176,7 +177,13 @@ const resetQuery = () => {
 /** 添加/修改操作 */
 const formRef = ref()
 const openForm = (type: string, id?: number) => {
-  formRef.value.open(type, id)
+  if (type === 'create') {
+    router.push('/system/dept/create')
+  } else if (type === 'update') {
+    router.push(`/system/dept/create?id=${id}`)
+  } else {
+    formRef.value.open(type, id)
+  }
 }
 
 /** 删除按钮操作 */
@@ -189,26 +196,25 @@ const handleDelete = async (id: number) => {
     message.success(t('common.delSuccess'))
     // 刷新列表
     await getList()
-  } catch {}
+  } catch { }
 }
 
-/** 批量删除按钮操作 */
-const checkedIds = ref<number[]>([])
-const handleRowCheckboxChange = (rows: DeptApi.DeptVO[]) => {
-  checkedIds.value = rows.map((row) => row.id)
+/** 批量导出操作 */
+const handleExport = () => {
+  // TODO: 实现导出逻辑
+  message.info('导出功能待实现')
 }
 
-const handleDeleteBatch = async () => {
-  try {
-    // 删除的二次确认
-    await message.delConfirm()
-    // 发起批量删除
-    await DeptApi.deleteDeptList(checkedIds.value)
-    checkedIds.value = []
-    message.success(t('common.delSuccess'))
-    // 刷新列表
-    await getList()
-  } catch {}
+/** 分页大小修改 */
+const handleSizeChange = (val: number) => {
+  queryParams.pageSize = val
+  handleQuery()
+}
+
+/** 页码修改 */
+const handleCurrentChange = (val: number) => {
+  queryParams.pageNo = val
+  getList()
 }
 
 /** 初始化 **/
@@ -218,3 +224,114 @@ onMounted(async () => {
   userList.value = await UserApi.getSimpleUserList()
 })
 </script>
+
+<style lang="scss" scoped>
+.table-container {
+  height: calc(100vh - 86px);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.query-card {
+  background: #fff;
+  border-radius: 10px;
+  padding: 16px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  width: 100%;
+}
+
+.card-header {
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  .card-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+    margin: 0;
+  }
+}
+
+.query-form-wrapper {
+  margin-bottom: 20px;
+}
+
+/* 搜索表单布局 */
+.custom-query-form-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.query-btns {
+  display: flex;
+  gap: 12px;
+
+  .reset-btn {
+    padding: 0 25px;
+  }
+
+  .search-btn {
+    padding: 0 25px;
+    background-color: #00B3ED;
+    border-color: #00B3ED;
+  }
+}
+
+/* 输入框定制 */
+:deep(.el-input__wrapper),
+:deep(.el-select__wrapper) {
+  background: #FFFFFF;
+  border: 1px solid #D1D5DB;
+  border-radius: 6px;
+  box-shadow: none !important;
+
+  &:hover {
+    border-color: #00B3ED;
+  }
+
+  &.is-focus {
+    border-color: #00B3ED;
+  }
+}
+
+/* 操作按钮行 */
+.table-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.export-btn {
+  background: #fff;
+  border: 1px solid #D1D5DB;
+}
+
+/* 表格定制 */
+.table-wrapper {
+  flex: 1;
+  height: 0;
+  margin-bottom: 12px;
+}
+
+:deep(.el-table) {
+  --el-table-header-bg-color: #F8FAFC;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.pagination-wrapper {
+  display: flex;
+  justify-content: flex-end;
+  padding: 10px 0;
+}
+</style>

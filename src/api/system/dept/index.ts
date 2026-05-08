@@ -10,6 +10,20 @@ export interface DeptVO {
   phone: string
   email: string
   createTime: Date
+  deptType?: number
+  areaCode?: string
+  areaLevel?: number
+  industry?: string
+  provinceCode?: string
+  cityCode?: string
+  districtCode?: string
+  address?: string
+  contactName?: string
+  contactPhone?: string
+  productionScale?: string
+  legalPerson?: string
+  socialCreditCode?: string
+  certImageUrls?: string
 }
 
 export interface DeptSearchReqVO {
@@ -24,6 +38,11 @@ export const getSimpleDeptList = (): Promise<DeptVO[]> => {
   return request.get({ url: '/system/dept/list-all-simple' })
 }
 
+// 获取部门精简信息列表（按 OpenAPI）
+export const getDeptSimpleList = () => {
+  return request.get({ url: '/system/dept/simple-list' })
+}
+
 // 搜索部门列表（按部门类型、区域、关键词）
 export const searchDeptList = (params: DeptSearchReqVO) => {
   return request.get({ url: '/system/dept/search', params })
@@ -35,8 +54,8 @@ export const getDeptList = (params: any) => {
 }
 
 // 查询部门分页
-export const getDeptPage = async (params: PageParam) => {
-  return await request.get({ url: '/system/dept/list', params })
+export const getDeptPage = async (params: any) => {
+  return await request.get({ url: '/system/dept/page', params })
 }
 
 // 查询部门详情

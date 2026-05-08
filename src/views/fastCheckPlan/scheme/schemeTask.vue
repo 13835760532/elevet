@@ -185,7 +185,7 @@
                                     <div class="completion-rate-cell">
                                         <span class="rate-pct">{{ scope.row.percentage }}%</span>
                                         <span class="rate-counts">({{ scope.row.completed }}/{{ scope.row.total
-                                            }})</span>
+                                        }})</span>
                                     </div>
                                 </template>
                             </el-table-column>
@@ -210,8 +210,9 @@
                         <!-- 分页 -->
                         <div class="pagination-wrapper" style="margin-top: 20px;">
                             <el-pagination :current-page="pageParams.pageNum" :page-size="pageParams.pageSize"
-                                :total="total" background layout="total, sizes, prev, pager, next, jumper" class="custom-pagination"
-                                @current-change="handleTaskPageChange" @size-change="handleTaskSizeChange" />
+                                :total="total" background layout="total, sizes, prev, pager, next, jumper"
+                                class="custom-pagination" @current-change="handleTaskPageChange"
+                                @size-change="handleTaskSizeChange" />
                         </div>
                     </div>
                 </div>
@@ -591,6 +592,7 @@ const loadDetectionResults = async (params = {}) => {
 
         const data = await DetectionRecordApi.getDetectionRecordPage(queryParams);
         progressList.value = (data.list || []).map(item => ({
+            id: item.id,
             sampleNo: item.sampleCode || '--',
             sampleName: item.productName || '--',
             category: item.productCategory || '--',

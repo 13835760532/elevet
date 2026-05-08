@@ -161,6 +161,7 @@ import DetectionRequirementSection from '@/components/DetectionRequirementSectio
 import AreaCascader from '@/components/AreaCascader/index.vue';
 import * as DetectionPlanApi from '@/api/agri/detectionPlan/index';
 import * as DeptApi from '@/api/system/dept/index';
+import * as DistributionApi from '@/api/agri/distribution/index';
 import { useDict, DICT_TYPE } from '@/hooks/web/useDict';
 
 const router = useRouter();
@@ -205,7 +206,7 @@ const loadSchemeDetail = async () => {
 
 const taskForm = reactive({
     systemType: 1,
-    deptType: 1,
+    deptType: '',
     province: '',
     city: '',
     district: '',
@@ -239,12 +240,11 @@ const selectedOrgOptions = computed(() => {
 
 const getAreaFilter = () => {
     const path = Array.isArray(areaPath.value) ? areaPath.value : [];
-    if (!path.length) return {};
-    const levelMap = [1, 2, 3];
-    const areaLevel = levelMap[Math.min(path.length, 3) - 1];
-    const areaCode = String(path[path.length - 1] || '');
-    if (!areaCode) return {};
-    return { areaCode, areaLevel };
+    return {
+        provinceCode: path[0] || undefined,
+        cityCode: path[1] || undefined,
+        districtCode: path[2] || undefined
+    };
 };
 
 const reconcileSelectionState = () => {
@@ -259,14 +259,14 @@ const loadOrgOptions = async () => {
     orgLoading.value = true;
     try {
         const params = {
-            deptType: taskForm.deptType,
+            deptType: taskForm.deptType || undefined,
             keyword: searchKeyword.value?.trim() || undefined,
             ...getAreaFilter()
         };
-        const list = await DeptApi.searchDeptList(params);
+        const list = await DistributionApi.getAssignableTargets(params);
         orgOptions.value = (list || []).map((item) => ({
-            id: item.id,
-            name: item.name
+            id: item.targetId,
+            name: item.targetName
         }));
         reconcileSelectionState();
     } catch (error) {
@@ -495,6 +495,12 @@ const handleSubmit = useDebounceFn(async () => {
         ElMessage.error('任务下发失败');
     }
 }, 300);
+
+// 监听区域变化
+watch(areaPath, () => {
+    loadOrgOptions();
+}, { deep: true });
+
 // 页面初始化
 onMounted(() => {
     loadSchemeDetail()
