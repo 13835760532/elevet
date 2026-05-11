@@ -34,12 +34,29 @@
           </el-form-item>
 
           <!-- 机构类型 -->
-          <el-form-item label="机构类型" prop="type">
-            <el-select v-model="formData.type" placeholder="选择机构类型" class="full-width">
+          <el-form-item label="机构类型" prop="deptType">
+            <el-select v-model="formData.deptType" placeholder="选择机构类型" class="full-width">
               <el-option label="监管机构" :value="1" />
               <el-option label="检测机构" :value="2" />
               <el-option label="企业" :value="3" />
               <el-option label="系统部门" :value="4" />
+            </el-select>
+          </el-form-item>
+
+          <!-- 备案主体类型 -->
+          <el-form-item label="备案主体类型" prop="subjectType">
+            <el-select
+              v-model="formData.subjectType"
+              placeholder="选择备案主体类型"
+              class="full-width"
+              @change="handleSubjectTypeChange"
+            >
+              <el-option
+                v-for="dict in filingSubjectTypeOptions"
+                :key="dict.value"
+                :label="dict.label"
+                :value="dict.value"
+              />
             </el-select>
           </el-form-item>
 
@@ -74,18 +91,38 @@
           </el-form-item>
 
           <!-- 信用代码 -->
-          <el-form-item label="信用代码" prop="creditCode">
+          <el-form-item v-if="isNonPersonalSubjectType" label="信用代码" prop="creditCode">
             <el-input v-model="formData.creditCode" placeholder="输入信用代码" style="width: 400px;" />
           </el-form-item>
 
-          <!-- 营业执照上传（OCR 识别） -->
-          <el-form-item label="营业执照" prop="certImageUrl">
+          <!-- 营业执照 / 机构资质上传（OCR 识别） -->
+          <el-form-item v-if="isNonPersonalSubjectType" label="营业执照 / 机构资质" prop="businessLicenseUrl">
             <div class="ocr-upload-wrapper">
-              <UploadImg v-model="formData.certImageUrl" :limit="1"
+              <UploadImg v-model="formData.businessLicenseUrl" :limit="1"
                 @change="(val) => !val && (formData.creditCode = '')"
-                :http-request="(options) => handleOcrUpload(options)" />
-              <div class="ocr-tip">上传营业执照，系统可自动识别信用代码</div>
+                :http-request="(options) => handleOcrUpload(options, 1)" />
+              <div class="ocr-tip">上传营业执照或机构资质，系统可自动识别信用代码</div>
             </div>
+          </el-form-item>
+
+          <el-form-item v-if="isPersonalSubjectType" label="身份证" prop="idCardFrontUrl">
+            <div class="id-card-upload-row">
+              <div class="ocr-upload-wrapper">
+                <UploadImg v-model="formData.idCardFrontUrl" :limit="1"
+                  @change="(val) => !val && (formData.creditCode = '')"
+                  :http-request="(options) => handleOcrUpload(options, 2)" />
+                <div class="ocr-tip">身份证正面</div>
+              </div>
+              <div class="ocr-upload-wrapper">
+                <UploadImg v-model="formData.idCardBackUrl" :limit="1"
+                  :http-request="(options) => handleOcrUpload(options, 3)" />
+                <div class="ocr-tip">身份证反面</div>
+              </div>
+            </div>
+          </el-form-item>
+
+          <el-form-item v-if="isPersonalSubjectType" label="身份证代码" prop="creditCode">
+            <el-input v-model="formData.creditCode" placeholder="输入身份证代码" style="width: 400px;" />
           </el-form-item>
 
           <!-- 底部按钮 -->
@@ -100,44 +137,80 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import PageHeader from '@/components/PageHeader/index.vue'
 import { UploadImg } from '@/components/UploadFile'
 import * as DeptApi from '@/api/system/dept'
 import * as SubjectApi from '@/api/agri/subject/index'
+import * as OrganizationApi from '@/api/agri/organization/index'
 import AreaCascader from '@/components/AreaCascader/index.vue'
 import { useMessage } from '@/hooks/web/useMessage'
+import { useDict } from '@/hooks/web/useDict'
 import { handleTree } from '@/utils/tree'
 
 const router = useRouter()
 const route = useRoute()
 const message = useMessage()
 const formRef = ref()
+const { options: filingSubjectTypeOptions } = useDict('agri_filing_subject_type', 'int')
 
 const id = route.query.id ? Number(route.query.id) : undefined
 const isEdit = !!id
+const PERSONAL_SUBJECT_TYPE = 2
 
 const formData = reactive({
   name: '',
-  // parentId: undefined as number | undefined,
+  parentId: undefined as number | undefined,
   industry: '',
-  type: undefined as number | undefined,
+  deptType: undefined as number | undefined,
+  subjectType: undefined as number | undefined,
   adminLevel: undefined as number | undefined,
   region: '',
   contact: '',
   phone: '',
   creditCode: '',
-  certImageUrl: ''
+  businessLicenseUrl: '',
+  idCardFrontUrl: '',
+  idCardBackUrl: ''
 })
 
 const formRules = {
   name: [{ required: true, message: '请输入机构名称', trigger: 'blur' }],
+  deptType: [{ required: true, message: '请选择机构类型', trigger: 'change' }],
+  subjectType: [{ required: true, message: '请选择备案主体类型', trigger: 'change' }],
+  contact: [{ required: true, message: '请输入机构联系人信息', trigger: 'blur' }],
+  phone: [{ required: true, message: '请输入机构联系人电话', trigger: 'blur' }],
+  creditCode: [{ required: true, message: '请输入信用代码或身份证代码', trigger: 'blur' }],
+  businessLicenseUrl: [{ required: true, message: '请上传营业执照或机构资质', trigger: 'change' }],
+  idCardFrontUrl: [{ required: true, message: '请上传身份证正面', trigger: 'change' }],
+  idCardBackUrl: [{ required: true, message: '请上传身份证反面', trigger: 'change' }]
 }
 
 const selectedRowId = ref<number | string | undefined>()
 const areaInfo = ref<any>({})
 const deptTree = ref<any[]>([])
+const isPersonalSubjectType = computed(() => Number(formData.subjectType) === PERSONAL_SUBJECT_TYPE)
+const isNonPersonalSubjectType = computed(() => formData.subjectType !== undefined && !isPersonalSubjectType.value)
+
+const clearPersonalCertificateFields = () => {
+  formData.idCardFrontUrl = ''
+  formData.idCardBackUrl = ''
+}
+
+const clearNonPersonalCertificateFields = () => {
+  formData.businessLicenseUrl = ''
+}
+
+const handleSubjectTypeChange = (val: number | string) => {
+  formData.creditCode = ''
+  if (Number(val) === PERSONAL_SUBJECT_TYPE) {
+    clearNonPersonalCertificateFields()
+  } else {
+    clearPersonalCertificateFields()
+  }
+  formRef.value?.clearValidate?.(['creditCode', 'businessLicenseUrl', 'idCardFrontUrl', 'idCardBackUrl'])
+}
 
 /**
  * 处理地区选择事件
@@ -196,13 +269,16 @@ onMounted(async () => {
       formData.name = data.name || ''
       // formData.parentId = data.parentId === 0 ? undefined : data.parentId
       formData.industry = data.industry || ''
-      formData.type = data.deptType
+      formData.deptType = data.deptType
+      formData.subjectType = data.subjectType || data.deptType
       formData.adminLevel = data.areaLevel
       formData.region = data.address || ''
       formData.contact = data.contactName || ''
       formData.phone = data.contactPhone || ''
       formData.creditCode = data.socialCreditCode || ''
-      formData.certImageUrl = data.certImageUrls || ''
+      formData.businessLicenseUrl = data.businessLicenseUrl || data.certImageUrls || ''
+      formData.idCardFrontUrl = data.idCardFrontUrl || ''
+      formData.idCardBackUrl = data.idCardBackUrl || ''
 
       // 初始化行政区域选择
       selectedRowId.value = data.areaCode
@@ -234,7 +310,8 @@ const handleSubmit = async () => {
       parentId: formData.parentId || 0,
       sort: 0,
       status: 0,
-      deptType: formData.type,
+      deptType: formData.deptType,
+      subjectType: formData.subjectType,
       industry: formData.industry,
       areaLevel: formData.adminLevel,
       areaCode: String(selectedRowId.value),
@@ -245,7 +322,9 @@ const handleSubmit = async () => {
       contactName: formData.contact,
       contactPhone: formData.phone,
       socialCreditCode: formData.creditCode,
-      certImageUrls: formData.certImageUrl
+      businessLicenseUrl: formData.businessLicenseUrl,
+      idCardFrontUrl: formData.idCardFrontUrl,
+      idCardBackUrl: formData.idCardBackUrl
     } as any
 
     if (id) {
@@ -253,7 +332,7 @@ const handleSubmit = async () => {
       await DeptApi.updateDept(data)
       message.success('更新机构成功')
     } else {
-      await DeptApi.createDept(data)
+      await OrganizationApi.createDeptWithFiling(data)
       message.success('新建机构成功')
     }
     router.back()
@@ -267,19 +346,34 @@ const handleCancel = () => {
 }
 
 /**
- * OCR 识别上传营业执照
+ * OCR 识别上传
  */
-const handleOcrUpload = async (options: any) => {
+const handleOcrUpload = async (options: any, imageType: number) => {
   try {
     const data = await SubjectApi.ocrUpload({
       file: options.file,
-      imageType: 1 // 1 = 营业执照
+      imageType
     })
 
-    formData.certImageUrl = data.imageUrl
-    if (data.socialCreditCode) {
-      formData.creditCode = data.socialCreditCode
-      message.success('已自动识别信用代码')
+    if (imageType === 1) {
+      formData.businessLicenseUrl = data.imageUrl
+      formRef.value?.validateField?.('businessLicenseUrl')
+      if (data.socialCreditCode) {
+        formData.creditCode = data.socialCreditCode
+        formRef.value?.validateField?.('creditCode')
+        message.success('已自动识别信用代码')
+      }
+    } else if (imageType === 2) {
+      formData.idCardFrontUrl = data.imageUrl
+      formRef.value?.validateField?.('idCardFrontUrl')
+      if (data.idCard) {
+        formData.creditCode = data.idCard
+        formRef.value?.validateField?.('creditCode')
+        message.success('已自动识别身份证号')
+      }
+    } else if (imageType === 3) {
+      formData.idCardBackUrl = data.imageUrl
+      formRef.value?.validateField?.('idCardBackUrl')
     }
 
     // 返回符合 UploadImg 组件期望的数据结构
@@ -371,6 +465,11 @@ const handleOcrUpload = async (options: any) => {
     font-size: 12px;
     color: #999;
   }
+}
+
+.id-card-upload-row {
+  display: flex;
+  gap: 20px;
 }
 
 .form-footer {

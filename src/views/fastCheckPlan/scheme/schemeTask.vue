@@ -112,9 +112,9 @@
                         <div class="query-section" v-if="taskList.length">
                             <el-form :model="queryParams" :inline="true"
                                 class="custom-query-form custom-query-form-row">
-                                <el-form-item label="">
-                                    <el-input v-model="queryParams.task" placeholder="输入任务编号/任务名称" class="w200"
-                                        clearable />
+                                <el-form-item label="" style="width: 200px!important">
+                                    <el-input v-model="queryParams.task" placeholder="输入任务编号/任务名称"
+                                        style="width: 200px!important" clearable />
                                 </el-form-item>
                                 <el-form-item label="">
                                     <el-select v-model="queryParams.unit" placeholder="检测机构" style="width: 150px;"
@@ -185,7 +185,7 @@
                                     <div class="completion-rate-cell">
                                         <span class="rate-pct">{{ scope.row.percentage }}%</span>
                                         <span class="rate-counts">({{ scope.row.completed }}/{{ scope.row.total
-                                        }})</span>
+                                            }})</span>
                                     </div>
                                 </template>
                             </el-table-column>

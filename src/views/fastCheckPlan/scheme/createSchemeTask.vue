@@ -56,9 +56,8 @@
 
                             <el-col :span="8">
                                 <el-form-item label="单位类型" style="margin-bottom: 0; align-items: center;">
-                                    <el-select v-model="taskForm.deptType" placeholder="请选择单位类型" class="full-width">
-                                        <el-option label="监管机构" :value="1" />
-                                        <el-option label="检测机构" :value="2" />
+                                    <el-select v-model="taskForm.deptType" placeholder="请选择单位类型" class="full-width"
+                                        disabled>
                                         <el-option label="企业" :value="3" />
                                     </el-select>
                                 </el-form-item>
@@ -66,11 +65,21 @@
 
                             <el-col :span="8">
                                 <el-form-item label="所属区域" style="margin-bottom: 0; align-items: center;">
-                                    <AreaCascader class="full-width" v-model="areaPath" placeholder="请选择所属地区" @select="(val) => {
-                                        taskForm.province = val.province;
-                                        taskForm.city = val.city;
-                                        taskForm.district = val.district;
-                                    }" />
+                                    <AreaCascader 
+                                        class="full-width" 
+                                        v-model="areaPath" 
+                                        placeholder="请选择所属地区" 
+                                        checkStrictly
+                                        @select="(val) => {
+                                            taskForm.province = val.province;
+                                            taskForm.city = val.city;
+                                            taskForm.district = val.district;
+                                            taskForm.provinceCode = val.provinceCode;
+                                            taskForm.cityCode = val.cityCode;
+                                            taskForm.districtCode = val.districtCode;
+                                            loadOrgOptions();
+                                        }" 
+                                    />
                                 </el-form-item>
                             </el-col>
                         </el-row>
@@ -160,8 +169,8 @@ import { ElMessage } from 'element-plus';
 import DetectionRequirementSection from '@/components/DetectionRequirementSection/index.vue';
 import AreaCascader from '@/components/AreaCascader/index.vue';
 import * as DetectionPlanApi from '@/api/agri/detectionPlan/index';
-import * as DeptApi from '@/api/system/dept/index';
-import * as DistributionApi from '@/api/agri/distribution/index';
+import * as OrganizationApi from '@/api/agri/organization/index';
+import * as DistRelationApi from '@/api/agri/dist-relation/index';
 import { useDict, DICT_TYPE } from '@/hooks/web/useDict';
 
 const router = useRouter();
@@ -206,10 +215,13 @@ const loadSchemeDetail = async () => {
 
 const taskForm = reactive({
     systemType: 1,
-    deptType: '',
+    deptType: 3,
     province: '',
     city: '',
     district: '',
+    provinceCode: '',
+    cityCode: '',
+    districtCode: '',
     quantity: 0,
     distributionType: 'average',
     startDate: '',
@@ -238,15 +250,6 @@ const selectedOrgOptions = computed(() => {
     return selectedOrgs.value.map(id => orgMapById.value.get(id)).filter(Boolean);
 });
 
-const getAreaFilter = () => {
-    const path = Array.isArray(areaPath.value) ? areaPath.value : [];
-    return {
-        provinceCode: path[0] || undefined,
-        cityCode: path[1] || undefined,
-        districtCode: path[2] || undefined
-    };
-};
-
 const reconcileSelectionState = () => {
     const currentIds = new Set(orgOptions.value.map((item) => item.id));
     selectedOrgs.value = selectedOrgs.value.filter((id) => currentIds.has(id));
@@ -259,22 +262,34 @@ const loadOrgOptions = async () => {
     orgLoading.value = true;
     try {
         const params = {
-            deptType: taskForm.deptType || undefined,
-            keyword: searchKeyword.value?.trim() || undefined,
-            ...getAreaFilter()
+            name: searchKeyword.value?.trim(),
+            deptType: taskForm.deptType,
+            provinceCode: taskForm.provinceCode,
+            cityCode: taskForm.cityCode,
+            districtCode: taskForm.districtCode,
+            pageNo: 1,
+            pageSize: 1000
         };
-        const list = await DistributionApi.getAssignableTargets(params);
-        orgOptions.value = (list || []).map((item) => ({
-            id: item.targetId,
-            name: item.targetName
+        const response = await DistRelationApi.getAssignableDepts(params);
+        orgOptions.value = (response.list || []).map((item) => ({
+            id: item.deptId,
+            name: item.name,
+            socialCreditCode: item.socialCreditCode,
+            contactName: item.contactName,
+            contactPhone: item.contactPhone,
+            address: item.address
         }));
         reconcileSelectionState();
     } catch (error) {
-        console.error('加载检测机构失败:', error);
-        ElMessage.error('加载检测机构失败');
+        console.error('加载可分配机构失败:', error);
+        ElMessage.error('加载可分配机构失败');
     } finally {
         orgLoading.value = false;
     }
+};
+
+const applyOrgFilter = () => {
+    loadOrgOptions();
 };
 
 const handleCheckAllChange = (val) => {
@@ -345,22 +360,23 @@ watch(
     () => {
         if (searchTimer) clearTimeout(searchTimer);
         searchTimer = setTimeout(() => {
-            loadOrgOptions();
+            applyOrgFilter();
         }, 300);
     }
 );
 
 watch(
-    () => taskForm.deptType,
-    () => {
-        loadOrgOptions();
-    }
-);
-
-watch(
     () => areaPath.value,
-    () => {
-        loadOrgOptions();
+    (val) => {
+        if (!val || val.length === 0) {
+            taskForm.provinceCode = '';
+            taskForm.cityCode = '';
+            taskForm.districtCode = '';
+            taskForm.province = '';
+            taskForm.city = '';
+            taskForm.district = '';
+            loadOrgOptions();
+        }
     },
     { deep: true }
 );
@@ -495,11 +511,6 @@ const handleSubmit = useDebounceFn(async () => {
         ElMessage.error('任务下发失败');
     }
 }, 300);
-
-// 监听区域变化
-watch(areaPath, () => {
-    loadOrgOptions();
-}, { deep: true });
 
 // 页面初始化
 onMounted(() => {

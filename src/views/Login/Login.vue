@@ -51,18 +51,12 @@
 
       <!-- Footer Links -->
       <div class="footer-links">
-        <span class="link" @click="handleRegister">注册</span>
+        <span class="link" v-if="loginType === 'business'" @click="handleRegister">注册</span>
         <router-link to="/forgotPassword" class="link">忘记密码</router-link>
       </div>
 
-      <Verify
-        v-if="captchaEnabled"
-        ref="verify"
-        :captchaType="captchaType"
-        :imgSize="{ width: '400px', height: '200px' }"
-        mode="pop"
-        @success="handleLogin"
-      />
+      <Verify v-if="captchaEnabled" ref="verify" :captchaType="captchaType"
+        :imgSize="{ width: '400px', height: '200px' }" mode="pop" @success="handleLogin" />
     </div>
   </div>
 </template>
@@ -172,6 +166,7 @@ const handleLogin = async (params) => {
     await getTenantId()
     const loginDataForm = { ...loginForm.value }
     loginDataForm.captchaVerification = params.captchaVerification
+    loginDataForm.organizationType = loginType.value === 'checking' ? 1 : 2
     const res = await LoginApi.login(loginDataForm)
     if (!res) {
       return
@@ -181,14 +176,14 @@ const handleLogin = async (params) => {
       text: '正在加载系统中...',
       background: 'rgba(0, 0, 0, 0.7)'
     })
-    
+
     if (loginDataForm.rememberMe) {
       authUtil.setLoginForm(loginDataForm)
     } else {
       authUtil.removeLoginForm()
     }
     authUtil.setToken(res)
-    
+
     if (!redirect.value) {
       redirect.value = '/'
     }
@@ -430,7 +425,8 @@ onMounted(() => {
   font-size: 14px;
   border: none;
   transition: all 0.3s;
-    color: #fff;
+  color: #fff;
+
   &:active {
     transform: translateY(0);
   }

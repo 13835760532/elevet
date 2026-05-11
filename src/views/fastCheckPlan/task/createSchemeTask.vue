@@ -51,11 +51,21 @@
                         <el-row :gutter="16" style="margin-bottom: 20px;">
                             <el-col :span="16">
                                 <el-form-item label="所属区域" style="margin-bottom: 0; align-items: center;">
-                                    <AreaCascader class="full-width" v-model="areaPath" placeholder="请选择所属地区" @select="(val) => {
-                                        taskForm.province = val.province;
-                                        taskForm.city = val.city;
-                                        taskForm.district = val.district;
-                                    }" />
+                                    <AreaCascader 
+                                        class="full-width" 
+                                        v-model="areaPath" 
+                                        placeholder="请选择所属地区" 
+                                        checkStrictly
+                                        @select="(val) => {
+                                            taskForm.province = val.province;
+                                            taskForm.city = val.city;
+                                            taskForm.district = val.district;
+                                            taskForm.provinceCode = val.provinceCode;
+                                            taskForm.cityCode = val.cityCode;
+                                            taskForm.districtCode = val.districtCode;
+                                            loadOrgOptions();
+                                        }" 
+                                    />
                                 </el-form-item>
                             </el-col>
                         </el-row>
@@ -143,10 +153,9 @@ import { Search } from '@element-plus/icons-vue';
 import { ElMessage } from 'element-plus';
 import DetectionRequirementSection from '@/components/DetectionRequirementSection/index.vue';
 import AreaCascader from '@/components/AreaCascader/index.vue';
-import * as DetectionPlanApi from '@/api/agri/detectionPlan/index';
-import * as DeptApi from '@/api/system/dept/index';
 import * as DetectionTaskApi from '@/api/agri/detectionTask/index';
-import * as DistributionApi from '@/api/agri/distribution/index';
+import * as OrganizationApi from '@/api/agri/organization/index';
+import * as DistRelationApi from '@/api/agri/dist-relation/index';
 import { useDict, DICT_TYPE } from '@/hooks/web/useDict';
 import { onMounted } from 'vue';
 
@@ -211,6 +220,9 @@ const taskForm = reactive({
     province: '',
     city: '',
     district: '',
+    provinceCode: '',
+    cityCode: '',
+    districtCode: '',
     quantity: 0,
     distributionType: 'average',
     startDate: '',
@@ -240,15 +252,6 @@ const isExceedLimit = computed(() => {
     return Number(taskForm.quantity) > Number(schemeInfo.sampleCount);
 });
 
-const getAreaFilter = () => {
-    const path = Array.isArray(areaPath.value) ? areaPath.value : [];
-    return {
-        provinceCode: path[0] || undefined,
-        cityCode: path[1] || undefined,
-        districtCode: path[2] || undefined
-    };
-};
-
 const reconcileSelectionState = () => {
     const currentIds = new Set(orgOptions.value.map((item) => item.id));
     selectedOrgs.value = selectedOrgs.value.filter((id) => currentIds.has(id));
@@ -261,22 +264,34 @@ const loadOrgOptions = async () => {
     orgLoading.value = true;
     try {
         const params = {
-            deptType: taskForm.deptType,
-            keyword: searchKeyword.value?.trim() || undefined,
-            ...getAreaFilter()
+            name: searchKeyword.value?.trim(),
+            provinceCode: taskForm.provinceCode,
+            cityCode: taskForm.cityCode,
+            districtCode: taskForm.districtCode,
+            pageNo: 1,
+            pageSize: 1000 // 加载较大量以支持当前页全选，模拟原有体验
         };
-        const list = await DistributionApi.getAssignableTargets(params);
-        orgOptions.value = (list || []).map((item) => ({
-            id: item.targetId,
-            name: item.targetName
+        const response = await DistRelationApi.getAssignableDepts(params);
+        orgOptions.value = (response.list || []).map((item) => ({
+            id: item.deptId,
+            name: item.name,
+            socialCreditCode: item.socialCreditCode,
+            contactName: item.contactName,
+            contactPhone: item.contactPhone,
+            address: item.address
         }));
         reconcileSelectionState();
     } catch (error) {
-        console.error('加载检测机构失败:', error);
-        ElMessage.error('加载检测机构失败');
+        console.error('加载可分配机构失败:', error);
+        ElMessage.error('加载可分配机构失败');
     } finally {
         orgLoading.value = false;
     }
+};
+
+const applyOrgFilter = () => {
+    // 逻辑已整合到 loadOrgOptions 后端请求中
+    loadOrgOptions();
 };
 
 const handleCheckAllChange = (val) => {
@@ -347,22 +362,23 @@ watch(
     () => {
         if (searchTimer) clearTimeout(searchTimer);
         searchTimer = setTimeout(() => {
-            loadOrgOptions();
+            applyOrgFilter();
         }, 300);
     }
 );
 
 watch(
-    () => taskForm.deptType,
-    () => {
-        loadOrgOptions();
-    }
-);
-
-watch(
     () => areaPath.value,
-    () => {
-        loadOrgOptions();
+    (val) => {
+        if (!val || val.length === 0) {
+            taskForm.provinceCode = '';
+            taskForm.cityCode = '';
+            taskForm.districtCode = '';
+            taskForm.province = '';
+            taskForm.city = '';
+            taskForm.district = '';
+            loadOrgOptions();
+        }
     },
     { deep: true }
 );
@@ -492,10 +508,6 @@ const handleSubmit = async () => {
         ElMessage.error('任务下发失败');
     }
 };
-// 监听区域变化
-watch(areaPath, () => {
-    loadOrgOptions();
-}, { deep: true });
 
 // 页面初始化
 onMounted(() => {

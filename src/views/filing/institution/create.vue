@@ -86,14 +86,14 @@
                         </div>
                     </el-form-item>
 
-                    <template v-if="formData.type === 1 || formData.type === 3">
-                        <el-form-item label="营业执照" prop="businessLicenseUrl">
+                    <template v-if="isNonPersonalSubjectType">
+                        <el-form-item label="营业执照 / 机构资质" prop="businessLicenseUrl">
                             <div style="display: flex; align-items: center; width: 100%;">
                                 <div class="ocr-upload-wrapper">
                                     <UploadImg v-model="formData.businessLicenseUrl" :limit="1"
                                         @change="(val) => !val && (formData.socialCreditCode = '')"
                                         :http-request="(options) => handleOcrUpload(options, 1)" />
-                                    <div class="ocr-tip">上传营业执照，系统可自动识别营业执照编号，保障主体唯一性，支持企业宣传展示。</div>
+                                    <div class="ocr-tip">上传营业执照或机构资质，系统可自动识别信用代码，保障主体唯一性。</div>
                                 </div>
                                 <el-tooltip placement="right" effect="light">
                                     <template #content>
@@ -126,7 +126,7 @@
                         </el-form-item>
                     </template>
 
-                    <el-form-item v-if="formData.type === 2" label="身份证" prop="idCardFrontUrl">
+                    <el-form-item v-if="isPersonalSubjectType" label="身份证" prop="idCardFrontUrl">
                         <div style="display: flex; gap: 20px;">
                             <div class="ocr-upload-wrapper">
                                 <UploadImg v-model="formData.idCardFrontUrl" :limit="1"
@@ -143,7 +143,7 @@
                     </el-form-item>
 
                     <!-- 身份证代码 -->
-                    <el-form-item v-if="formData.type === 2" label="身份证代码" prop="idCard">
+                    <el-form-item v-if="isPersonalSubjectType" label="身份证代码" prop="idCard">
                         <div style="display: flex; align-items: center; width: 100%;">
                             <el-input v-model="formData.idCard" placeholder="请填写身份证代码" />
                             <el-tooltip placement="right" effect="light">
@@ -173,7 +173,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive, onMounted, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { Picture, UploadFilled, WarningFilled } from '@element-plus/icons-vue';
 import PageHeader from '@/components/PageHeader/index.vue';
@@ -198,6 +198,7 @@ const copyLoading = ref(false);
 const areaPath = ref([]);
 
 const id = route.query.id;
+const PERSONAL_SUBJECT_TYPE = 2;
 
 const formData = reactive({
     type: undefined,
@@ -221,27 +222,48 @@ const formData = reactive({
     introduction: ''
 });
 
+const hasSelectedSubjectType = computed(() => formData.type !== undefined && formData.type !== null && formData.type !== '');
+const isPersonalSubjectType = computed(() => Number(formData.type) === PERSONAL_SUBJECT_TYPE);
+const isNonPersonalSubjectType = computed(() => hasSelectedSubjectType.value && !isPersonalSubjectType.value);
+
+const clearPersonalCertificateFields = () => {
+    formData.idCard = '';
+    formData.idCardFrontUrl = '';
+    formData.idCardBackUrl = '';
+};
+
+const clearNonPersonalCertificateFields = () => {
+    formData.businessLicenseUrl = '';
+    formData.socialCreditCode = '';
+};
+
 /**
  * 处理备案类型变化
  */
 const handleTypeChange = (val) => {
-    if (val === 1 || val === 3) {
-        // 切换为企业/机构，清空个人相关字段
-        formData.idCard = '';
-        formData.idCardFrontUrl = '';
-        formData.idCardBackUrl = '';
-    } else if (val === 2) {
+    if (val === undefined || val === null || val === '') {
+        clearPersonalCertificateFields();
+        clearNonPersonalCertificateFields();
+        return;
+    }
+
+    if (Number(val) === PERSONAL_SUBJECT_TYPE) {
         // 切换为个人，清空企业/机构相关字段
-        formData.businessLicenseUrl = '';
-        formData.socialCreditCode = '';
+        clearNonPersonalCertificateFields();
+    } else {
+        // 切换为非个人，清空个人相关字段
+        clearPersonalCertificateFields();
     }
 };
 
 const formRules = {
     type: [{ required: true, message: '请选择主体类型', trigger: 'change' }],
     name: [{ required: true, message: '请输入主体名称', trigger: 'blur' }],
+    provinceCode: [{ required: true, message: '请选择所属地区', trigger: 'change' }],
     contactName: [{ required: true, message: '请输入联系人', trigger: 'blur' }],
-    contactPhone: [{ required: true, message: '请输入联系电话', trigger: 'blur' }]
+    contactPhone: [{ required: true, message: '请输入联系电话', trigger: 'blur' }],
+    socialCreditCode: [{ required: true, message: '请填写信用代码', trigger: 'blur' }],
+    idCard: [{ required: true, message: '请填写身份证代码', trigger: 'blur' }]
 };
 
 const handleAreaSelect = (val) => {
@@ -277,14 +299,28 @@ const handleSubmit = async () => {
             try {
                 const normalizedPayload = buildSubjectSubmitPayload(formData);
                 const submitData = {
-                    ...normalizedPayload,
-                    subjectType: formData.type, // Map type to subjectType
-                    socialCreditCode: formData.type === 2 ? formData.idCard : formData.socialCreditCode,
-                    qualificationUrls: normalizedPayload.qualificationUrls.join(',')
+                    subjectType: Number(formData.type),
+                    name: normalizedPayload.name,
+                    category: normalizedPayload.category,
+                    mainProducts: normalizedPayload.mainProducts,
+                    provinceCode: normalizedPayload.provinceCode,
+                    cityCode: normalizedPayload.cityCode,
+                    districtCode: normalizedPayload.districtCode,
+                    address: normalizedPayload.address,
+                    contactName: normalizedPayload.contactName,
+                    contactPhone: normalizedPayload.contactPhone,
+                    productionScale: normalizedPayload.productionScale,
+                    productionScaleUnit: normalizedPayload.productionScaleUnit,
+                    businessLicenseUrl: isPersonalSubjectType.value ? '' : normalizedPayload.businessLicenseUrl,
+                    socialCreditCode: isPersonalSubjectType.value ? normalizedPayload.idCard : normalizedPayload.socialCreditCode,
+                    idCardFrontUrl: normalizedPayload.idCardFrontUrl,
+                    idCardBackUrl: normalizedPayload.idCardBackUrl,
+                    qualificationUrls: normalizedPayload.qualificationUrls.join(','),
+                    introduction: normalizedPayload.introduction
                 };
 
                 let result;
-                result = await OrganizationApi.filingOrganization(submitData);
+                result = await OrganizationApi.createWithFiling(submitData);
                 message.success('备案成功');
 
                 saveLastSubmittedSubject(normalizedPayload);
@@ -296,7 +332,7 @@ const handleSubmit = async () => {
                         path: redirect,
                         query: {
                             ...route.query,
-                            newSubjectId: result || id,
+                            newSubjectId: result?.subjectId || id,
                             redirect: undefined // 清除 redirect 标记
                         }
                     });

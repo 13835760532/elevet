@@ -52,7 +52,7 @@
             立即账号备案
           </el-button>
           <div class="beian-tips">
-            <p>本企业已备案，<span class="link-text" @click="handleLinkFiling">去关联备案信息</span></p>
+            <p>本企业已备案，<span class="link-text" @click="handleBeian">去关联备案信息</span></p>
             <p><span class="link-text" @click="handleBeian">*在线自助备案（立即账号备案）</span>，或线下联系运营方工作人员完成备案</p>
           </div>
         </div>

@@ -112,7 +112,8 @@
                                     v-if="scope.row.status === 0">接收</el-button>
                                 <!-- <el-button link type="primary" @click="handleUrge(scope.row)"
                                     v-if="[1, 2].includes(+scope.row.status)">催办</el-button> -->
-                                <el-button link type="primary" v-if="scope.row.status === 1">转派</el-button>
+                                <el-button link type="primary" v-if="scope.row.status === 1"
+                                    @click="handleCreateTask(scope.row)">转派</el-button>
                                 <el-button link type="primary" @click="handleView(scope.row)">查看</el-button>
                             </div>
                         </template>
@@ -279,6 +280,17 @@ const handleCurrentChange = (val) => {
     getList();
 };
 
+function handleCreateTask(row) {
+    DetectionTaskApi.getDetectionTask(row.id).then((res) => {
+        console.log(res)
+        router.push({
+            path: '/fastCheckPlan/task/createSchemeTask',
+            query: { id: row.id }
+        })
+
+        window.sessionStorage.setItem('planInfo', JSON.stringify(res))
+    })
+}
 onMounted(() => {
     getList();
 });

@@ -91,7 +91,7 @@
                         </div>
                     </el-form-item>
 
-                    <template v-if="formData.type === 1 || formData.type === 3">
+                    <template v-if="isNonPersonalFilingType">
                         <el-form-item label="营业执照" prop="businessLicenseUrl">
                             <div style="display: flex; align-items: center; width: 100%;">
                                 <div class="ocr-upload-wrapper">
@@ -131,7 +131,7 @@
                         </el-form-item>
                     </template>
 
-                    <el-form-item v-if="formData.type === 2" label="身份证" prop="idCardFrontUrl">
+                    <el-form-item v-if="isPersonalFilingType" label="身份证" prop="idCardFrontUrl">
                         <div style="display: flex; gap: 20px;">
                             <div class="ocr-upload-wrapper">
                                 <UploadImg v-model="formData.idCardFrontUrl" :limit="1"
@@ -148,7 +148,7 @@
                     </el-form-item>
 
                     <!-- 身份证代码 -->
-                    <el-form-item v-if="formData.type === 2" label="身份证代码" prop="idCard">
+                    <el-form-item v-if="isPersonalFilingType" label="身份证代码" prop="idCard">
                         <div style="display: flex; align-items: center; width: 100%;">
                             <el-input v-model="formData.idCard" placeholder="请填写身份证代码" />
                             <el-tooltip placement="right" effect="light">
@@ -178,7 +178,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive, onMounted, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { Picture, UploadFilled, WarningFilled } from '@element-plus/icons-vue';
 import PageHeader from '@/components/PageHeader/index.vue';
@@ -225,19 +225,31 @@ const formData = reactive({
     introduction: ''
 });
 
+const PERSONAL_FILING_TYPE = 2;
+const isPersonalFilingType = computed(() => Number(formData.type) === PERSONAL_FILING_TYPE);
+const isNonPersonalFilingType = computed(() => formData.type !== undefined && !isPersonalFilingType.value);
+
+const clearPersonalCertificateFields = () => {
+    formData.idCard = '';
+    formData.idCardFrontUrl = '';
+    formData.idCardBackUrl = '';
+};
+
+const clearNonPersonalCertificateFields = () => {
+    formData.businessLicenseUrl = '';
+    formData.socialCreditCode = '';
+};
+
 /**
  * 处理备案类型变化
  */
 const handleTypeChange = (val) => {
-    if (val === 1 || val === 3) {
-        // 切换为企业/机构，清空个人相关字段
-        formData.idCard = '';
-        formData.idCardFrontUrl = '';
-        formData.idCardBackUrl = '';
-    } else if (val === 2) {
+    if (Number(val) === PERSONAL_FILING_TYPE) {
         // 切换为个人，清空企业/机构相关字段
-        formData.businessLicenseUrl = '';
-        formData.socialCreditCode = '';
+        clearNonPersonalCertificateFields();
+    } else {
+        // 切换为非个人，清空个人相关字段
+        clearPersonalCertificateFields();
     }
 };
 

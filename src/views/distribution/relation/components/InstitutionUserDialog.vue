@@ -72,7 +72,7 @@
     </div>
     <template #footer>
       <el-button @click="dialogVisible = false">取 消</el-button>
-      <el-button type="primary" @click="handleConfirm">确 定</el-button>
+      <el-button type="primary" :loading="confirmLoading" @click="handleConfirm">确 定</el-button>
     </template>
   </Dialog>
 </template>
@@ -80,6 +80,7 @@
 <script setup lang="ts">
 import { ref, reactive, nextTick } from 'vue'
 import { getDeptPage } from '@/api/system/dept'
+import * as OrganizationApi from '@/api/agri/organization'
 import { useMessage } from '@/hooks/web/useMessage'
 import { formatDate } from '@/utils/formatTime'
 import type { ElTable } from 'element-plus'
@@ -90,6 +91,7 @@ const dialogVisible = ref(false)
 const tableRef = ref<InstanceType<typeof ElTable>>()
 const levelName = ref('')
 const loading = ref(false)
+const confirmLoading = ref(false)
 const list = ref<any[]>([])
 const total = ref(0)
 const selectedRows = ref<any[]>([])
@@ -193,13 +195,28 @@ const handleSelectionChange = (val: any[]) => {
 
 const emit = defineEmits(['confirm'])
 
-const handleConfirm = () => {
+const handleConfirm = async () => {
   if (selectedRows.value.length === 0) {
-    message.warning('请至少选择一个机构')
+    message.warning('请选择一个机构')
     return
   }
-  emit('confirm', selectedRows.value)
-  dialogVisible.value = false
+  if (selectedRows.value.length > 1) {
+    message.warning('当前仅支持绑定一个机构，请保留一个选择')
+    return
+  }
+
+  confirmLoading.value = true
+  try {
+    const selectedDept = selectedRows.value[0]
+    await OrganizationApi.bindDept(selectedDept.id)
+    message.success('机构绑定成功')
+    emit('confirm', selectedRows.value)
+    dialogVisible.value = false
+  } catch (error) {
+    console.error('绑定机构失败:', error)
+  } finally {
+    confirmLoading.value = false
+  }
 }
 
 const open = (name: string, params: any = {}) => {
