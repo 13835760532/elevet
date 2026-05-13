@@ -40,7 +40,7 @@
                             </div>
                             <div class="info-row">
                                 <div class="label">产品数量</div>
-                                <div class="value">{{ certStore.issueInfo.quantity }} {{ certStore.issueInfo.unit }}
+                                <div class="value">{{ certStore.issueInfo.quantity }} {{ getAgriUnitLabel(certStore.issueInfo.unit) }}
                                 </div>
                             </div>
                             <div class="info-row">
@@ -93,6 +93,7 @@ import { computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { Picture } from '@element-plus/icons-vue';
 import { useCertificateStore } from '@/store/modules/certificate';
+import { getAgriUnitLabel } from '@/utils/agriUnit';
 
 const router = useRouter();
 const certStore = useCertificateStore();

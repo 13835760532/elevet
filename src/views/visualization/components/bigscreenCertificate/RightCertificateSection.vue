@@ -3,7 +3,18 @@
     <BigPanelCard title="合格证分析" :bg-image="rightBg">
       <div class="analysis-wrap">
         <p class="analysis-title">合格证出具类型</p>
-        <Echart :options="analysisOption" :height="200" style="margin-top: 10px;" />
+        <div class="analysis-layout">
+          <div class="analysis-pie">
+            <Echart :options="analysisOption" height="180px" width="100%" />
+          </div>
+          <div class="analysis-legend">
+            <div class="legend-row" v-for="item in analysisItems" :key="item.name">
+              <span class="dot" :style="{ background: item.color }"></span>
+              <span class="name">{{ item.name }}</span>
+              <span class="value">{{ item.value }}</span>
+            </div>
+          </div>
+        </div>
       </div>
     </BigPanelCard>
 
@@ -61,6 +72,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue';
+import echarts from '@/plugins/echarts';
 import { Echart } from '@/components/Echart';
 import BigPanelCard from '../bigscreen/BigPanelCard.vue';
 import rightBg from '@/assets/imgs/echarts/合格证/Frame 60_bg.png';
@@ -73,7 +85,6 @@ import {
   type CertificateVerificationTopRespVO
 } from '@/api/agri/dashboard/certificate';
 import { getBigScreenQueryParams, subscribeBigScreenRefresh } from '../bigscreen/config';
-import { createBigScreenLineOption } from '../bigscreen/chartOption';
 
 interface RankItem {
   name: string
@@ -94,25 +105,74 @@ const distributionData = ref<CertificateTypeDistributionRespVO[]>([]);
 const storeRank = ref<RankItem[]>([]);
 
 const normalizeDistribution = (list: CertificateTypeDistributionRespVO[] = []) => {
-  const map = new Map(list.map((item) => [item.certificateType, item]));
-  return [1, 2, 3].map((type) => {
-    const current = map.get(type);
-    const meta = PIE_TYPE_META[type];
-    return {
-      value: Number(current?.count || 0),
-      name: current?.typeName || meta.name
-    };
-  });
+  const distributionMap = new Map(list.map((item) => [item.certificateType, item]));
+  return [1, 2, 3]
+    .map((type) => {
+      const current = distributionMap.get(type);
+      const meta = PIE_TYPE_META[type];
+      return {
+        value: Number(current?.count || 0),
+        name: current?.typeName || meta.name,
+        color: meta.color
+      };
+    })
+    .sort((a, b) => b.value - a.value);
 };
 
-const analysisOption = computed(() =>
-  createBigScreenLineOption({
-    labels: normalizeDistribution(distributionData.value).map((item) => item.name),
-    values: normalizeDistribution(distributionData.value).map((item) => item.value),
-    rotate: 0,
-    grid: { left: 36, right: 16, top: 18, bottom: 36 }
-  })
-);
+const analysisItems = computed(() => normalizeDistribution(distributionData.value));
+const analysisPieItems = computed(() => analysisItems.value.filter((item) => item.value > 0));
+
+const analysisOption = computed(() => ({
+  tooltip: {
+    trigger: 'item',
+    backgroundColor: 'rgba(6, 18, 42, 0.92)',
+    borderColor: 'rgba(87, 226, 255, 0.35)',
+    textStyle: { color: '#dff7ff' },
+    formatter: ({ name, value }: { name: string; value: number }) => `${name}<br/>${value}`
+  },
+  series: [
+    {
+      type: 'pie',
+      radius: ['44%', '64%'],
+      center: ['42%', '50%'],
+      minAngle: 8,
+      avoidLabelOverlap: true,
+      label: {
+        show: true,
+        color: '#d6eefe',
+        fontSize: 11,
+        formatter: (params: { name: string; value: number }) =>
+          params.value > 0 ? `{name|${params.name}}\n{value|${params.value}}` : '',
+        rich: {
+          name: { color: '#d6eefe', fontSize: 11, lineHeight: 15 },
+          value: { color: '#57e2ff', fontSize: 11, lineHeight: 15, fontWeight: 700 }
+        }
+      },
+      labelLine: {
+        show: true,
+        length: 10,
+        length2: 14,
+        lineStyle: { color: 'rgba(255,255,255,0.85)', width: 1.1 }
+      },
+      itemStyle: {
+        borderColor: 'rgba(7, 16, 38, 0.96)',
+        borderWidth: 4,
+        shadowBlur: 8,
+        shadowColor: 'rgba(0, 0, 0, 0.2)'
+      },
+      data: analysisPieItems.value.map((item) => ({
+        name: item.name,
+        value: item.value,
+        itemStyle: {
+          color: new echarts.graphic.LinearGradient(0, 0, 1, 1, [
+            { offset: 0, color: item.color },
+            { offset: 1, color: 'rgba(15, 52, 95, 0.9)' }
+          ])
+        }
+      }))
+    }
+  ]
+}));
 
 const formatRankList = (list: CertificateVerificationTopRespVO[] = []) =>
   list.map((item) => ({
@@ -166,12 +226,70 @@ onUnmounted(() => {
 }
 
 .analysis-wrap {
+  height: 100%;
+
   .analysis-title {
     margin: 4px 10px 0px 10px;
     color: #a9caea;
     font-size: 16px;
     font-weight: 700;
   }
+}
+
+.analysis-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 150px;
+  align-items: center;
+  gap: 10px;
+  height: calc(100% - 28px);
+  min-height: 0;
+  padding-top: 6px;
+}
+
+.analysis-pie {
+  min-width: 0;
+  height: 180px;
+}
+
+.analysis-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.legend-row {
+  display: grid;
+  grid-template-columns: 12px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  min-height: 42px;
+  padding: 0 12px;
+  border: 1px solid rgba(52, 116, 195, 0.55);
+  background: linear-gradient(90deg, rgba(23, 51, 92, 0.78), rgba(10, 24, 56, 0.52));
+  box-shadow: inset 0 0 16px rgba(66, 159, 255, 0.1);
+}
+
+.dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  box-shadow: 0 0 8px rgba(87, 226, 255, 0.28);
+}
+
+.name {
+  min-width: 0;
+  color: #d6eefe;
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.value {
+  color: #57e2ff;
+  font-family: 'DIN Alternate', 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
 }
 
 .rank-container {

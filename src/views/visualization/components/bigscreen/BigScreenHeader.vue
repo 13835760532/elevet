@@ -12,7 +12,7 @@
 
       <div class="nav-btn" v-for="item in leftMenus" :key="item.key" :class="{ active: activeMenu === item.key }"
         :style="{ backgroundImage: `url(${activeMenu === item.key ? item.activeBg : item.bg})` }"
-        @click="$emit('update:activeMenu', item.key)">
+        @click="handleMenuClick(item.key)">
         <span class="btn-label"></span>
       </div>
       <!-- 数据配置弹窗 -->
@@ -29,37 +29,18 @@
           <div class="form-item">
             <div class="item-label">数据时间范围</div>
             <div class="field-shell">
-              <el-date-picker
-                v-model="configForm.timeRange"
-                type="daterange"
-                value-format="YYYY-MM-DD"
-                range-separator="至"
-                start-placeholder="开始日期"
-                end-placeholder="结束日期"
-                size="large"
-                :teleported="false"
-                class="custom-date-picker"
-                popper-class="big-screen-date-popper"
-              />
+              <el-date-picker v-model="configForm.timeRange" type="daterange" value-format="YYYY-MM-DD"
+                range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期" size="large" :teleported="false"
+                class="custom-date-picker" popper-class="big-screen-date-popper" />
             </div>
           </div>
 
           <div class="form-item">
             <div class="item-label">数据地区设置</div>
             <div class="field-shell">
-              <el-cascader
-                v-model="configForm.regionPath"
-                :options="areaOptions"
-                :props="areaCascaderProps"
-                :show-all-levels="false"
-                :teleported="false"
-                separator="-"
-                filterable
-                clearable
-                size="large"
-                class="custom-cascader"
-                popper-class="big-screen-area-popper"
-              />
+              <el-cascader v-model="configForm.regionPath" :options="areaOptions" :props="areaCascaderProps"
+                :show-all-levels="false" :teleported="false" separator="-" filterable clearable size="large"
+                class="custom-cascader" popper-class="big-screen-area-popper" />
             </div>
           </div>
 
@@ -86,7 +67,7 @@
     <div class="header-side right">
       <div class="nav-btn" v-for="item in rightMenus" :key="item.key" :class="{ active: activeMenu === item.key }"
         :style="{ backgroundImage: `url(${activeMenu === item.key ? item.activeBg : item.bg})` }"
-        @click="$emit('update:activeMenu', item.key)">
+        @click="handleMenuClick(item.key)">
         <span class="btn-label"></span>
       </div>
       <div class="assistant-badge">
@@ -101,12 +82,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, reactive, ref, toRefs } from 'vue';
+import { onMounted, onUnmounted, reactive, ref, toRefs } from 'vue';
+import { useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
 import { List, Aim, Checked, Bell } from '@element-plus/icons-vue';
 import { getAreaTree } from '@/api/system/area';
 import botImg from '@/assets/imgs/echarts/bot.png';
-import dataConfigBg from '@/assets/imgs/echarts/首页/sjpz_bg.png';
 import taskBg from '@/assets/imgs/echarts/首页/jcrw_nor.png';
 import taskBgActive from '@/assets/imgs/echarts/首页/jcrw_pr.png';
 import inspectBg from '@/assets/imgs/echarts/首页/jiance_nor.png';
@@ -135,6 +116,7 @@ const props = withDefaults(
 );
 const { showDataConfig, activeMenu } = toRefs(props);
 const emit = defineEmits(['update:activeMenu', 'toggleConfig']);
+const router = useRouter();
 
 interface AreaNodeRespVO {
   id: number
@@ -144,6 +126,8 @@ interface AreaNodeRespVO {
 
 const showConfig = ref(false);
 const areaOptions = ref<AreaNodeRespVO[]>([]);
+const areaOptionsLoaded = ref(false);
+const areaOptionsLoading = ref(false);
 let refreshTimer: number | null = null;
 const configForm = reactive({
   timeRange: getDefaultBigScreenConfig().timeRange as [string, string],
@@ -159,8 +143,30 @@ const areaCascaderProps = {
   emitPath: true
 };
 
+const ensureAreaOptionsLoaded = async () => {
+  if (areaOptionsLoaded.value || areaOptionsLoading.value) return;
+  areaOptionsLoading.value = true;
+  try {
+    const data = await getAreaTree();
+    areaOptions.value = formatAreaTree((data || []) as AreaNodeRespVO[]);
+    const cachedConfig = getBigScreenConfig();
+    if (cachedConfig.regionPath.length) {
+      configForm.regionPath = [...cachedConfig.regionPath];
+    }
+    areaOptionsLoaded.value = true;
+  } catch (error) {
+    console.error('加载地区树失败', error);
+    areaOptions.value = [];
+  } finally {
+    areaOptionsLoading.value = false;
+  }
+};
+
 const toggleConfig = () => {
   showConfig.value = !showConfig.value;
+  if (showConfig.value) {
+    void ensureAreaOptionsLoaded();
+  }
 };
 
 const syncConfigForm = (config: BigScreenDataConfig) => {
@@ -179,24 +185,6 @@ const formatAreaTree = (tree: AreaNodeRespVO[] = []): AreaNodeRespVO[] =>
     }
     return node;
   });
-
-const resolveDefaultRegionPath = (tree: AreaNodeRespVO[]): number[] => {
-  const province = tree.find((item) => item.name.includes('山东') || item.name.includes('山东省')) || tree[0];
-  const city = province?.children?.find((item) => item.name.includes('济南')) || province?.children?.[0];
-  return [province?.id, city?.id].filter((item): item is number => typeof item === 'number');
-};
-
-const selectedRegionLabel = computed(() => {
-  const labels: string[] = [];
-  let currentTree = areaOptions.value;
-  for (const id of configForm.regionPath) {
-    const current = currentTree.find((item) => item.id === id);
-    if (!current) break;
-    labels.push(current.name);
-    currentTree = current.children || [];
-  }
-  return labels.join('-');
-});
 
 const resolveRegionMetaByPath = (path: number[]) => {
   const labels: string[] = [];
@@ -230,22 +218,6 @@ const startRefreshTimer = (frequency: number) => {
   }, intervalMinutes * 60 * 1000);
 };
 
-const loadAreaOptions = async () => {
-  try {
-    const data = await getAreaTree();
-    areaOptions.value = formatAreaTree((data || []) as AreaNodeRespVO[]);
-    const cachedConfig = getBigScreenConfig();
-    if (cachedConfig.regionPath.length) {
-      configForm.regionPath = [...cachedConfig.regionPath];
-    } else if (!configForm.regionPath.length && areaOptions.value.length) {
-      configForm.regionPath = resolveDefaultRegionPath(areaOptions.value);
-    }
-  } catch (error) {
-    console.error('加载地区树失败', error);
-    areaOptions.value = [];
-  }
-};
-
 const saveConfig = () => {
   const regionMeta = resolveRegionMetaByPath(configForm.regionPath);
   const nextConfig: BigScreenDataConfig = {
@@ -275,9 +247,16 @@ const rightMenus = [
   { key: 'warn', label: '小壹预警', bg: warnBg, activeBg: warnBgActive, icon: Bell }
 ];
 
+const handleMenuClick = (key: '' | 'task' | 'inspect' | 'cert' | 'warn') => {
+  if (key === 'warn') {
+    router.push('/ai-assistant');
+    return;
+  }
+  emit('update:activeMenu', key);
+};
+
 onMounted(() => {
   syncConfigForm(getBigScreenConfig());
-  loadAreaOptions();
   startRefreshTimer(getBigScreenConfig().frequency);
 });
 
@@ -291,7 +270,7 @@ onUnmounted(() => {
   height: 98px;
   width: 100%;
   display: grid;
-  grid-template-columns: 1fr 640px 1fr;
+  grid-template-columns: 1fr 680px 1fr;
   align-items: center;
   background: url('@/assets/imgs/echarts/首页/tiile_bg.png') no-repeat center center;
   background-size: 100% 100%;

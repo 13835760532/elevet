@@ -22,9 +22,12 @@
             <el-form-item prop="industry" class="!mb-0" style="margin-right: 0px!important;">
               <el-select v-model="queryParams.industry" placeholder="所属行业" clearable class="custom-select"
                 style="width: 160px">
-                <el-option label="种植业" value="agriculture" />
-                <el-option label="水产业" value="industry" />
-                <el-option label="综合行业" value="other" />
+                <el-option
+                  v-for="dict in industryOptions"
+                  :key="dict.value"
+                  :label="dict.label"
+                  :value="dict.value"
+                />
               </el-select>
             </el-form-item>
             <el-form-item prop="status" class="!mb-0" style="margin-right: 0px!important;">
@@ -68,7 +71,7 @@
           <el-table-column prop="name" label="机构名称" min-width="180" />
           <el-table-column prop="industry" label="所属行业" width="100" align="center">
             <template #default="scope">
-              {{ scope.row.industry === 'agriculture' ? '种植业' : scope.row.industry === 'industry' ? '水产业' : '综合行业' }}
+              {{ getIndustryLabel(scope.row.industry) }}
             </template>
           </el-table-column>
           <el-table-column prop="deptType" label="机构类型" width="120" align="center">
@@ -126,12 +129,14 @@ import { dateFormatter } from '@/utils/formatTime'
 import * as DeptApi from '@/api/system/dept'
 import DeptForm from './DeptForm.vue'
 import * as UserApi from '@/api/system/user'
+import { useDict } from '@/hooks/web/useDict'
 
 defineOptions({ name: 'SystemDept' })
 
 const message = useMessage() // 消息弹窗
 const { t } = useI18n() // 国际化
 const router = useRouter()
+const { options: industryOptions, getLabel: getIndustryLabel } = useDict('agri_industry', 'str')
 
 const loading = ref(true) // 列表的加载中
 const list = ref([]) // 列表的数据

@@ -1,27 +1,17 @@
 <template>
   <div class="stat-content">
     <!-- 数据范围筛选 -->
-    <div class="filter-section filter-task">
-      <div class="filter-left">
-        <div class="filter-label">数据范围</div>
-        <el-radio-group v-model="dateRangeType" class="date-radio">
-          <el-radio-button label="近一周" />
-          <el-radio-button label="近一月" />
-          <el-radio-button label="今年" />
-        </el-radio-group>
-        <el-date-picker v-model="dateRange" type="daterange" range-separator="至" start-placeholder="开始日期"
-          end-placeholder="结束日期" format="YYYY-MM-DD" value-format="YYYY-MM-DD" class="date-picker-custom" />
-        <el-select v-model="unit" placeholder="承担单位" class="unit-select" clearable>
-          <el-option label="海淀区农检站" value="haidian" />
-          <el-option label="昌平区农检站" value="changping" />
-        </el-select>
-        <el-input v-model="keyword" placeholder="任务名称/任务编号" class="keyword-input" clearable />
-      </div>
-      <div class="filter-right">
-        <el-button class="reset-btn">重置</el-button>
-        <el-button type="primary" class="search-btn">查询</el-button>
-      </div>
-    </div>
+    <StatisticsRangeFilter
+      v-model:range-type="dateRangeType"
+      v-model:date-range="dateRange"
+      description="检测任务统计周期"
+      @search="handleSearch"
+      @reset="handleReset"
+    >
+      <template #extra>
+        <el-input v-model="keyword" placeholder="任务名称/任务编号" clearable />
+      </template>
+    </StatisticsRangeFilter>
 
     <!-- 整体业务概况 -->
     <div class="card-section">
@@ -31,21 +21,21 @@
           <div class="card-bg-icon">¥</div>
           <div class="card-info">
             <div class="card-title">任务下发（检测项）</div>
-            <div class="card-value">10,273 <span class="unit">项次</span></div>
+            <div class="card-value">{{ formatNumber(overview.taskIssuedCount) }} <span class="unit">项次</span></div>
           </div>
         </div>
         <div class="stat-card blue-card-light">
           <div class="card-bg-icon">¥</div>
           <div class="card-info">
             <div class="card-title">任务完成（检测项）</div>
-            <div class="card-value">10,273 <span class="unit">项次</span></div>
+            <div class="card-value">{{ formatNumber(overview.taskCompletedCount) }} <span class="unit">项次</span></div>
           </div>
         </div>
         <div class="stat-card blue-card-light">
           <div class="card-bg-icon">¥</div>
           <div class="card-info">
             <div class="card-title">任务完成率</div>
-            <div class="card-value">80%</div>
+            <div class="card-value">{{ formatPercent(overview.taskCompletionRate) }}</div>
           </div>
         </div>
       </div>
@@ -61,7 +51,7 @@
           </div>
           <div class="coverage-info">
             <div class="coverage-title">检测机构</div>
-            <div class="coverage-value">27, 030</div>
+            <div class="coverage-value">{{ formatNumber(overview.detectionOrgCount) }}</div>
           </div>
         </div>
         <div class="coverage-divider"></div>
@@ -71,7 +61,7 @@
           </div>
           <div class="coverage-info">
             <div class="coverage-title">生产经营主体</div>
-            <div class="coverage-value">1, 452, 856</div>
+            <div class="coverage-value">{{ formatNumber(overview.enterpriseCount) }}</div>
           </div>
         </div>
       </div>
@@ -85,10 +75,10 @@
           <span class="t-divider">|</span>
           <span class="t-tab">检测结果</span>
         </div>
-        <el-button type="primary" class="export-btn">导出</el-button>
+        <el-button type="primary" class="export-btn" @click="handleExport">导出</el-button>
       </div>
       <div class="table-container">
-        <el-table :data="tableData" style="width: 100%">
+        <el-table v-loading="loading" :data="filteredTableData" style="width: 100%" empty-text="暂无任务检测分析数据">
           <el-table-column type="index" label="序号" width="80" align="center" />
           <el-table-column prop="taskNo" label="任务编号" align="center" />
           <el-table-column prop="taskName" label="任务名称" align="center" show-overflow-tooltip />
@@ -97,26 +87,121 @@
           <el-table-column prop="completed" label="任务完成" align="center" />
           <el-table-column prop="rate" label="当前完成率" align="center" />
         </el-table>
+        <div class="pagination-container">
+          <div class="total-text">合计：{{ total }}条</div>
+          <el-pagination
+            v-model:current-page="pageNo"
+            v-model:page-size="pageSize"
+            background
+            layout="prev, pager, next"
+            :total="total"
+            @current-change="loadTaskPage"
+          />
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
+import StatisticsRangeFilter from './StatisticsRangeFilter.vue'
+import {
+  getTaskAnalysisPage,
+  getTaskOverview,
+  type DashboardTaskOverviewRespVO,
+  type TaskAnalysisRespVO
+} from '@/api/agri/dashboard/task'
+import { buildRangeParams, formatNumber, formatPercent, normalizePagedResult } from './statisticsData'
+import { ElMessage } from 'element-plus'
 
 const dateRangeType = ref('近一周')
-const dateRange = ref([])
-const unit = ref('')
+const dateRange = ref<string[]>([])
 const keyword = ref('')
+const overview = ref<DashboardTaskOverviewRespVO>({})
+const tableData = ref<TaskAnalysisRespVO[]>([])
+const total = ref(0)
+const pageNo = ref(1)
+const pageSize = ref(10)
+const loading = ref(false)
 
-const tableData = ref([
-  { taskNo: 'XXX', taskName: '2025北京蔬菜专项检测任务', unit: '海淀区农检站', issued: 100, completed: 85, rate: '30%' },
-  { taskNo: 'XXX', taskName: '2025北京蔬菜专项检测任务', unit: '昌平区农检站', issued: 100, completed: 85, rate: '15%' },
-  { taskNo: 'XXX', taskName: '2026北京蔬菜专项检测任务', unit: '海淀区农检站', issued: 100, completed: 85, rate: '20%' },
-  { taskNo: 'XXX', taskName: '2025北京蔬菜专项检测任务', unit: '海淀区农检站', issued: 100, completed: 85, rate: '30%' },
-  { taskNo: 'XXX', taskName: '2026北京蔬菜专项检测任务', unit: '昌平区农检站', issued: 100, completed: 85, rate: '15%' },
-])
+const currentQueryParams = computed(() => buildRangeParams(dateRangeType.value, dateRange.value))
+
+const filteredTableData = computed(() => {
+  const keywordValue = keyword.value.trim()
+  const source = tableData.value.map((item) => ({
+    taskNo: item.taskId ? String(item.taskId) : '--',
+    taskName: item.taskName || '--',
+    unit: item.undertakeDeptName || '--',
+    issued: formatNumber(item.sampleCount),
+    completed: formatNumber(item.sampleCompletedCount),
+    rate: formatPercent(item.completionRate)
+  }))
+  if (!keywordValue) return source
+  return source.filter(
+    (item) => item.taskNo.includes(keywordValue) || item.taskName.includes(keywordValue)
+  )
+})
+
+const loadOverview = async () => {
+  try {
+    overview.value = (await getTaskOverview(currentQueryParams.value)) || {}
+  } catch (error) {
+    console.error('[StatisticsTask] load overview failed:', error)
+    overview.value = {}
+  }
+}
+
+const loadTaskPage = async () => {
+  loading.value = true
+  try {
+    const data = await getTaskAnalysisPage({
+      ...currentQueryParams.value,
+      pageNo: pageNo.value,
+      pageSize: pageSize.value
+    })
+    const normalized = normalizePagedResult<TaskAnalysisRespVO>(data)
+    tableData.value = normalized.list
+    total.value = normalized.total
+  } catch (error) {
+    console.error('[StatisticsTask] load task page failed:', error)
+    tableData.value = []
+    total.value = 0
+  } finally {
+    loading.value = false
+  }
+}
+
+const loadData = () => {
+  loadOverview()
+  loadTaskPage()
+}
+
+const handleSearch = () => {
+  pageNo.value = 1
+  loadData()
+}
+
+const handleReset = () => {
+  dateRangeType.value = '近一周'
+  dateRange.value = []
+  keyword.value = ''
+  pageNo.value = 1
+  loadData()
+}
+
+const handleExport = () => {
+  ElMessage.info('当前统计页暂未提供导出接口')
+}
+
+watch([dateRangeType, dateRange], () => {
+  pageNo.value = 1
+  loadData()
+})
+
+onMounted(() => {
+  loadData()
+})
 
 </script>
 
@@ -126,51 +211,6 @@ const tableData = ref([
   display: flex;
   flex-direction: column;
   gap: 20px;
-}
-
-/* 筛选区域 */
-.filter-section {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background-color: #fff;
-  padding: 16px 24px;
-  border-radius: 4px;
-
-  .filter-left {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-  }
-  
-  .filter-right {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-
-  .filter-label {
-    font-size: 14px;
-    font-weight: bold;
-    color: #333;
-  }
-
-  .date-picker-custom {
-    width: 260px;
-  }
-  
-  .unit-select {
-    width: 180px;
-  }
-  
-  .keyword-input {
-    width: 220px;
-  }
-
-  .search-btn {
-    background-color: #00B3ED;
-    border-color: #00B3ED;
-  }
 }
 
 /* 卡片通用 */
@@ -344,6 +384,19 @@ const tableData = ref([
   
   ::v-deep(.el-table__header-wrapper th) {
     background-color: #f8fbff;
+    color: #333;
+    font-weight: bold;
+  }
+}
+
+.pagination-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 20px;
+
+  .total-text {
+    font-size: 14px;
     color: #333;
     font-weight: bold;
   }

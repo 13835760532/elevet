@@ -47,7 +47,7 @@
                         <table class="proto-table">
                             <tr><td class="label">出证类型</td><td class="value">{{ getCertTypeLabel(traceData.certificate?.certificateType) }}</td></tr>
                             <tr><td class="label">样品名称</td><td class="value">{{ traceData.certificate?.productName }}</td></tr>
-                            <tr><td class="label">重量/数量</td><td class="value">{{ traceData.certificate?.quantity }} ({{ traceData.certificate?.unit }})</td></tr>
+                            <tr><td class="label">重量/数量</td><td class="value">{{ traceData.certificate?.quantity }} ({{ getAgriUnitLabel(traceData.certificate?.unit) }})</td></tr>
                             <tr><td class="label">产品产地</td><td class="value">{{ traceData.certificate?.productionArea }}</td></tr>
                             <tr><td class="label">生产经营主体</td><td class="value">{{ traceData.certificate?.subjectName }}</td></tr>
                             <tr><td class="label">联系人</td><td class="value">{{ traceData.certificate?.contactName }}</td></tr>
@@ -78,7 +78,7 @@
                                 <div class="hg-fields-grid">
                                     <div class="f-row">品名：{{ traceData.certificate?.productName }}</div>
                                     <div class="f-row">日期：{{ traceData.certificate?.issueDate }}</div>
-                                    <div class="f-row">数量：{{ traceData.certificate?.quantity }}{{ traceData.certificate?.unit }}</div>
+                                    <div class="f-row">数量：{{ traceData.certificate?.quantity }}{{ getAgriUnitLabel(traceData.certificate?.unit) }}</div>
                                     <div class="f-row">产地：{{ traceData.certificate?.productionArea }}</div>
                                 </div>
                             </div>
@@ -205,7 +205,7 @@
                     <div class="table-title">基本信息</div>
                     <div class="mini-table">
                         <div class="m-row"><div class="m-label">产品名称</div><div class="m-val">{{ activeCertData.productName }}</div></div>
-                        <div class="m-row"><div class="m-label">重量/数量</div><div class="m-val">{{ activeCertData.quantity }}{{ activeCertData.unit }}</div></div>
+                        <div class="m-row"><div class="m-label">重量/数量</div><div class="m-val">{{ activeCertData.quantity }}{{ getAgriUnitLabel(activeCertData.unit) }}</div></div>
                         <div class="m-row"><div class="m-label">产品产地</div><div class="m-val">{{ activeCertData.productionArea }}</div></div>
                         <div class="m-row"><div class="m-label">承诺主体</div><div class="m-val">{{ activeCertData.subjectName }}</div></div>
                         <div class="m-row"><div class="m-label">联系方式</div><div class="m-val">{{ activeCertData.contactPhone }}</div></div>
@@ -293,7 +293,7 @@
                             </div>
                             <div class="info-row">
                             <div class="label">数量/重量</div>
-                            <div class="value">{{ activePrintCertData.quantity ?? '--' }} {{ activePrintCertData.unit || '' }}</div>
+                            <div class="value">{{ activePrintCertData.quantity ?? '--' }} {{ getAgriUnitLabel(activePrintCertData.unit) }}</div>
                             </div>
                             <div class="info-row">
                                 <div class="label">产品产地</div>
@@ -341,6 +341,7 @@ import RapidDetectionReport from '../rapidDetection/components/RapidDetectionRep
 import { Qrcode } from '@/components/Qrcode';
 import html2canvas from 'html2canvas';
 import { BluetoothPrinter } from '@/utils';
+import { getAgriUnitLabel } from '@/utils/agriUnit';
 
 defineOptions({
     name: 'ProductTraceability'
@@ -519,7 +520,7 @@ const traceRecords = computed(() => {
             details: [
                 { label: '出证类型', value: getCertTypeLabel(traceData.value.certificate.certificateType) },
                 { label: '样品名称', value: traceData.value.certificate.productName },
-                { label: '重量/数量', value: `${traceData.value.certificate.quantity} (${traceData.value.certificate.unit})` },
+                { label: '重量/数量', value: `${traceData.value.certificate.quantity} (${getAgriUnitLabel(traceData.value.certificate.unit)})` },
                 { label: '产品产地', value: traceData.value.certificate.productionArea },
                 { label: '开具主体', value: traceData.value.certificate.subjectName }
             ]
@@ -572,7 +573,7 @@ const handleViewReport = (data: any) => {
 
 const connectBluetoothPrinter = async () => {
     if (!bluetoothPrinter.isSupported()) {
-        ElMessage.error('当前浏览器不支持 Web Bluetooth，请使用 Chrome/Edge');
+        ElMessage.error(bluetoothPrinter.getUnsupportedReason());
         return;
     }
     bluetoothConnecting.value = true;

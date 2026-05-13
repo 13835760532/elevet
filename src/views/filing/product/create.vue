@@ -33,7 +33,8 @@
 
                     <!-- 产品类别 -->
                     <el-form-item label="产品类别" prop="category">
-                        <el-select v-model="formData.category" placeholder="请选择产品类别" class="full-width">
+                        <el-select v-model="formData.category" placeholder="请选择产品类别" class="full-width" filterable
+                            allow-create clearable>
                             <el-option v-for="dict in productCategoryOptions" :key="dict.value" :label="dict.label"
                                 :value="dict.value" />
                         </el-select>
@@ -55,10 +56,8 @@
                             <el-input v-model="formData.productSpec" placeholder="请填写数量" style="flex: 1;" />
                             <el-select class="prefix-select" v-model="formData.productUnit" placeholder="请选择单位"
                                 style="width: 100px;">
-                                <el-option label="kg" value="kg" />
-                                <el-option label="吨" value="吨" />
-                                <el-option label="箱" value="箱" />
-                                <el-option label="亩" value="亩" />
+                                <el-option v-for="unit in productUnitOptions" :key="unit.value" :label="unit.label"
+                                    :value="unit.value" />
                             </el-select>
                         </div>
                     </el-form-item>
@@ -179,6 +178,7 @@ import { useDict } from '@/hooks/web/useDict';
 import { formatDate } from '@/utils/formatTime';
 import SubjectFormDrawer from '@/views/filing/subject/components/SubjectFormDrawer.vue';
 import { buildProductCreatePayload, getLastSubmittedProduct, saveLastSubmittedProduct } from './lastSubmitCache';
+import { DEFAULT_AGRI_MEASUREMENT_UNIT, usePreferredAgriMeasurementUnitOptions } from '@/utils/agriUnit';
 
 const { getLabel: getCategoryLabel } = useDict('agri_subject_category', 'str');
 const { getLabel: getFilingTypeLabel } = useDict('agri_filing_type', 'int');
@@ -203,11 +203,24 @@ const formData = reactive({
     cityCode: '',
     districtCode: '',
     productSpec: '',
-    productUnit: 'kg',
+    productUnit: DEFAULT_AGRI_MEASUREMENT_UNIT,
     productImageUrl: '',
     archiveDate: formatDate(new Date(), 'YYYY-MM-DD'),
     subjectId: undefined
 });
+
+const productUnitRef = computed({
+    get: () => formData.productUnit,
+    set: (value) => {
+        formData.productUnit = value || DEFAULT_AGRI_MEASUREMENT_UNIT;
+    }
+});
+const productUnitOptions = usePreferredAgriMeasurementUnitOptions(
+    productUnitRef,
+    ['千克', 'kg'],
+    DEFAULT_AGRI_MEASUREMENT_UNIT,
+    computed(() => !route.query.id)
+);
 
 const formRules = {
     productName: [{ required: true, message: '请输入产品名称', trigger: 'blur' }],
@@ -243,9 +256,14 @@ const matchCategoryFromFullCategory = (fullCategory) => {
 
 const handleProduceSelect = (item) => {
     formData.productName = item.name;
-    const category = matchCategoryFromFullCategory(item.fullCategory);
-    if (category) {
-        formData.category = category;
+    // 优先使用接口返回的 fullCategory，如果没有则尝试从字典匹配
+    if (item.fullCategory) {
+        formData.category = item.fullCategory;
+    } else {
+        const category = matchCategoryFromFullCategory(item.fullCategory);
+        if (category) {
+            formData.category = category;
+        }
     }
 };
 
@@ -257,9 +275,14 @@ const handleProduceBlur = async () => {
             const item = res.list[0];
             // 只要匹配名称就回显
             if (item.name === formData.productName) {
-                const category = matchCategoryFromFullCategory(item.fullCategory);
-                if (category) {
-                    formData.category = category;
+                // 优先使用 fullCategory，如果没有则尝试从字典匹配
+                if (item.fullCategory) {
+                    formData.category = item.fullCategory;
+                } else {
+                    const category = matchCategoryFromFullCategory(item.fullCategory);
+                    if (category) {
+                        formData.category = category;
+                    }
                 }
             }
         }
@@ -308,7 +331,7 @@ const loadDetail = async () => {
             cityCode: '',
             districtCode: '',
             productSpec: '',
-            productUnit: 'kg',
+            productUnit: DEFAULT_AGRI_MEASUREMENT_UNIT,
             productImageUrl: '',
             archiveDate: formatDate(new Date(), 'YYYY-MM-DD'),
             subjectId: undefined
@@ -407,7 +430,7 @@ const handleCopyPrevious = async () => {
             cityCode: cachedPayload.cityCode || '',
             districtCode: cachedPayload.districtCode || '',
             productSpec: cachedPayload.productSpec || '',
-            productUnit: cachedPayload.productUnit || 'kg',
+            productUnit: cachedPayload.productUnit || DEFAULT_AGRI_MEASUREMENT_UNIT,
             productImageUrl: cachedPayload.productImageUrl || '',
             archiveDate: cachedPayload.archiveDate || formatDate(new Date(), 'YYYY-MM-DD'),
             subjectId: cachedPayload.subjectId || undefined

@@ -30,6 +30,14 @@ interface PreparedPrintImagePayload {
   bytes: Uint8Array;
 }
 
+interface BluetoothSupportState {
+  supported: boolean;
+  reason: string;
+  isSecureContext: boolean;
+  hasBluetoothApi: boolean;
+  isChromiumBrowser: boolean;
+}
+
 interface ResolvedBluetoothPrinterOptions extends BluetoothPrinterOptions {
   packetSize: number;
   writeDelayMs: number;
@@ -96,8 +104,76 @@ export class BluetoothPrinter {
     };
   }
 
+  getSupportState(): BluetoothSupportState {
+    const hasNavigator = typeof navigator !== 'undefined';
+    const hasWindow = typeof window !== 'undefined';
+    const userAgent = hasNavigator ? navigator.userAgent : '';
+    const isChromiumBrowser =
+      /\b(Chrome|Chromium|Edg)\//.test(userAgent) &&
+      !/\b(OPR|Opera|CriOS|EdgiOS|SamsungBrowser)\//.test(userAgent);
+    const isSecureContext = hasWindow ? window.isSecureContext : false;
+    const hasBluetoothApi = hasNavigator && !!navigator.bluetooth;
+    const protocol = hasWindow ? window.location.protocol : '';
+    const host = hasWindow ? window.location.host : '';
+
+    if (!hasNavigator || !hasWindow) {
+      return {
+        supported: false,
+        reason: '当前运行环境不支持 Web Bluetooth，请在浏览器页面中打开',
+        isSecureContext,
+        hasBluetoothApi,
+        isChromiumBrowser
+      };
+    }
+
+    if (!isSecureContext) {
+      const isHttpPage = protocol === 'http:';
+      return {
+        supported: false,
+        reason: isHttpPage
+          ? `当前页面通过 ${protocol}//${host} 访问，不是安全上下文。Web Bluetooth 只支持 HTTPS 或 localhost，请改用 HTTPS 域名访问后再连接蓝牙打印机`
+          : '当前页面不是安全上下文。Web Bluetooth 只支持 HTTPS 或 localhost，请改用 HTTPS 域名访问后再连接蓝牙打印机',
+        isSecureContext,
+        hasBluetoothApi,
+        isChromiumBrowser
+      };
+    }
+
+    if (!isChromiumBrowser) {
+      return {
+        supported: false,
+        reason: '当前浏览器不支持 Web Bluetooth，请使用桌面版 Chrome 或 Edge',
+        isSecureContext,
+        hasBluetoothApi,
+        isChromiumBrowser
+      };
+    }
+
+    if (!hasBluetoothApi) {
+      return {
+        supported: false,
+        reason: '当前 Chrome/Edge 未开放 Web Bluetooth。请确认没有被企业策略禁用，并检查 chrome://flags/#enable-web-bluetooth 是否开启',
+        isSecureContext,
+        hasBluetoothApi,
+        isChromiumBrowser
+      };
+    }
+
+    return {
+      supported: true,
+      reason: '',
+      isSecureContext,
+      hasBluetoothApi,
+      isChromiumBrowser
+    };
+  }
+
+  getUnsupportedReason() {
+    return this.getSupportState().reason;
+  }
+
   isSupported() {
-    return typeof navigator !== 'undefined' && !!navigator.bluetooth;
+    return this.getSupportState().supported;
   }
 
   isReady() {
@@ -110,7 +186,7 @@ export class BluetoothPrinter {
 
   async connect() {
     if (!this.isSupported()) {
-      throw new Error('当前浏览器不支持 Web Bluetooth，请使用 Chrome/Edge');
+      throw new Error(this.getUnsupportedReason());
     }
 
     if (this.device) {

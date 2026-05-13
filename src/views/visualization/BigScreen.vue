@@ -1,61 +1,157 @@
 <template>
   <div id="big-screen-shell" class="big-screen-shell">
     <BigScreenHeader v-model:active-menu="activeMenu" />
+    <BigScreenLoadingOverlay :visible="entranceLoading" />
 
     <main class="screen-main" :class="activeMenu">
       <template v-if="activeMenu === 'cert'">
-        <LeftCertificateSection />
-        <CenterCertificateSection />
-        <RightCertificateSection />
+        <div class="cert-left-panel">
+          <LeftCertificateSection v-if="panelVisibility.left" />
+        </div>
+        <div class="cert-center-panel">
+          <CenterCertificateSection v-if="panelVisibility.center" />
+        </div>
+        <div class="cert-right-panel">
+          <RightCertificateSection v-if="panelVisibility.right" />
+        </div>
       </template>
       <template v-else-if="activeMenu === 'task'">
         <div class="task-top-layout">
-          <LeftTaskSection />
-          <CenterTaskSection />
-          <RightTaskSection />
+          <div class="task-left-panel">
+            <LeftTaskSection v-if="panelVisibility.left" />
+          </div>
+          <div class="task-center-panel">
+            <CenterTaskSection v-if="panelVisibility.center" />
+          </div>
+          <div class="task-right-panel">
+            <RightTaskSection v-if="panelVisibility.right" />
+          </div>
         </div>
-        <BottomTaskSection class="task-bottom-panel" />
+        <div class="task-bottom-panel">
+          <BottomTaskSection v-if="panelVisibility.bottom" />
+        </div>
       </template>
       <template v-else-if="activeMenu === 'inspect'">
-        <LeftQuickSection class="quick-left-panel" />
-        <CenterQuickSection class="quick-center-panel" />
-        <BottomQuickTrends class="quick-bottom-panel" />
-        <RightQuickSection class="quick-right-panel" />
+        <div class="quick-left-panel">
+          <LeftQuickSection v-if="panelVisibility.left" />
+        </div>
+        <div class="quick-center-panel">
+          <CenterQuickSection v-if="panelVisibility.center" />
+        </div>
+        <div class="quick-bottom-panel">
+          <BottomQuickTrends v-if="panelVisibility.bottom" />
+        </div>
+        <div class="quick-right-panel">
+          <RightQuickSection v-if="panelVisibility.right" />
+        </div>
       </template>
       <template v-else>
-        <LeftSection />
-        <CenterSection />
-        <RightSection />
+        <div class="default-left-panel">
+          <LeftSection v-if="panelVisibility.left" />
+        </div>
+        <div class="default-center-panel">
+          <CenterSection v-if="panelVisibility.center" />
+        </div>
+        <div class="default-right-panel">
+          <RightSection v-if="panelVisibility.right" />
+        </div>
       </template>
     </main>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { defineAsyncComponent, onMounted, onUnmounted, ref, watch } from 'vue';
 import BigScreenHeader from './components/bigscreen/BigScreenHeader.vue';
-// 首页组件
-import LeftSection from './components/bigscreen/LeftSection.vue';
-import CenterSection from './components/bigscreen/CenterSection.vue';
-import RightSection from './components/bigscreen/RightSection.vue';
-// 任务视角
-import LeftTaskSection from './components/bigscreenTask/LeftTaskSection.vue';
-import CenterTaskSection from './components/bigscreenTask/CenterTaskSection.vue';
-import RightTaskSection from './components/bigscreenTask/RightTaskSection.vue';
-import BottomTaskSection from './components/bigscreenTask/BottomTaskSection.vue';
-// 快检视角
-import LeftQuickSection from './components/bigscreenQuick/LeftQuickSection.vue';
-import CenterQuickSection from './components/bigscreenQuick/CenterQuickSection.vue';
-import RightQuickSection from './components/bigscreenQuick/RightQuickSection.vue';
-import BottomQuickTrends from './components/bigscreenQuick/BottomQuickTrends.vue';
-// 合格证视角
-import LeftCertificateSection from './components/bigscreenCertificate/LeftCertificateSection.vue';
-import CenterCertificateSection from './components/bigscreenCertificate/CenterCertificateSection.vue';
-import RightCertificateSection from './components/bigscreenCertificate/RightCertificateSection.vue';
+import BigScreenLoadingOverlay from './components/bigscreen/BigScreenLoadingOverlay.vue';
+import { useDeferredPanelMount, type DeferredPanelPlan } from './useDeferredPanelMount';
+
+const LeftSection = defineAsyncComponent(() => import('./components/bigscreen/LeftSection.vue'));
+const CenterSection = defineAsyncComponent(() => import('./components/bigscreen/CenterSection.vue'));
+const RightSection = defineAsyncComponent(() => import('./components/bigscreen/RightSection.vue'));
+
+const LeftTaskSection = defineAsyncComponent(
+  () => import('./components/bigscreenTask/LeftTaskSection.vue')
+);
+const CenterTaskSection = defineAsyncComponent(
+  () => import('./components/bigscreenTask/CenterTaskSection.vue')
+);
+const RightTaskSection = defineAsyncComponent(
+  () => import('./components/bigscreenTask/RightTaskSection.vue')
+);
+const BottomTaskSection = defineAsyncComponent(
+  () => import('./components/bigscreenTask/BottomTaskSection.vue')
+);
+
+const LeftQuickSection = defineAsyncComponent(
+  () => import('./components/bigscreenQuick/LeftQuickSection.vue')
+);
+const CenterQuickSection = defineAsyncComponent(
+  () => import('./components/bigscreenQuick/CenterQuickSection.vue')
+);
+const RightQuickSection = defineAsyncComponent(
+  () => import('./components/bigscreenQuick/RightQuickSection.vue')
+);
+const BottomQuickTrends = defineAsyncComponent(
+  () => import('./components/bigscreenQuick/BottomQuickTrends.vue')
+);
+
+const LeftCertificateSection = defineAsyncComponent(
+  () => import('./components/bigscreenCertificate/LeftCertificateSection.vue')
+);
+const CenterCertificateSection = defineAsyncComponent(
+  () => import('./components/bigscreenCertificate/CenterCertificateSection.vue')
+);
+const RightCertificateSection = defineAsyncComponent(
+  () => import('./components/bigscreenCertificate/RightCertificateSection.vue')
+);
 
 defineOptions({ name: 'VisualizationBigScreen' });
 
-const activeMenu = ref('cert'); // 默认进入合格证视角以查看效果
+type BigScreenMenu = '' | 'task' | 'inspect' | 'cert' | 'warn';
+
+const activeMenu = ref<BigScreenMenu>('');
+const entranceLoading = ref(true);
+const { visibility: panelVisibility, schedule } = useDeferredPanelMount();
+let loadingTimer: number | null = null;
+
+const getPanelPlan = (mode: BigScreenMenu): DeferredPanelPlan => {
+  if (mode === 'task' || mode === 'inspect') {
+    return {
+      immediate: ['left', 'center', 'right'],
+      deferred: [
+        { key: 'bottom', delay: 120 }
+      ]
+    };
+  }
+
+  return {
+    immediate: ['left', 'center', 'right'],
+    deferred: []
+  };
+};
+
+watch(
+  () => activeMenu.value,
+  (mode) => {
+    schedule(getPanelPlan(mode));
+  }
+);
+
+onMounted(() => {
+  schedule(getPanelPlan(activeMenu.value));
+  loadingTimer = window.setTimeout(() => {
+    entranceLoading.value = false;
+    loadingTimer = null;
+  }, 520);
+});
+
+onUnmounted(() => {
+  if (loadingTimer !== null) {
+    window.clearTimeout(loadingTimer);
+    loadingTimer = null;
+  }
+});
 </script>
 
 <style scoped lang="scss">
@@ -107,7 +203,44 @@ const activeMenu = ref('cert'); // 默认进入合格证视角以查看效果
   padding-bottom: 0;
   display: grid;
   grid-template-columns: 470px 1fr 470px;
+  grid-template-areas: 'left center right';
   gap: 14px;
+}
+
+.default-left-panel,
+.cert-left-panel {
+  grid-area: left;
+  display: flex;
+  min-height: 0;
+
+  > * {
+    flex: 1;
+    min-height: 0;
+  }
+}
+
+.default-center-panel,
+.cert-center-panel {
+  grid-area: center;
+  display: flex;
+  min-height: 0;
+
+  > * {
+    flex: 1;
+    min-height: 0;
+  }
+}
+
+.default-right-panel,
+.cert-right-panel {
+  grid-area: right;
+  display: flex;
+  min-height: 0;
+
+  > * {
+    flex: 1;
+    min-height: 0;
+  }
 }
 
 .screen-main.task {
@@ -122,12 +255,46 @@ const activeMenu = ref('cert'); // 默认进入合格证视角以查看效果
   min-height: 0;
   display: grid;
   grid-template-columns: 470px minmax(0, 1fr) 560px;
+  grid-template-areas: 'left center right';
   gap: 10px;
 }
 
 .task-bottom-panel {
   height: 260px;
   flex-shrink: 0;
+}
+
+.task-left-panel {
+  grid-area: left;
+  display: flex;
+  min-height: 0;
+
+  > * {
+    flex: 1;
+    min-height: 0;
+  }
+}
+
+.task-center-panel {
+  grid-area: center;
+  display: flex;
+  min-height: 0;
+
+  > * {
+    flex: 1;
+    min-height: 0;
+  }
+}
+
+.task-right-panel {
+  grid-area: right;
+  display: flex;
+  min-height: 0;
+
+  > * {
+    flex: 1;
+    min-height: 0;
+  }
 }
 
 .screen-main.inspect {
@@ -142,21 +309,45 @@ const activeMenu = ref('cert'); // 默认进入合格证视角以查看效果
 
 .quick-left-panel {
   grid-area: left;
+  display: flex;
   min-height: 0;
+
+  > * {
+    flex: 1;
+    min-height: 0;
+  }
 }
 
 .quick-center-panel {
   grid-area: center;
+  display: flex;
   min-height: 0;
+
+  > * {
+    flex: 1;
+    min-height: 0;
+  }
 }
 
 .quick-bottom-panel {
   grid-area: bottom;
+  display: flex;
   min-height: 0;
+
+  > * {
+    flex: 1;
+    min-height: 0;
+  }
 }
 
 .quick-right-panel {
   grid-area: right;
+  display: flex;
   min-height: 0;
+
+  > * {
+    flex: 1;
+    min-height: 0;
+  }
 }
 </style>

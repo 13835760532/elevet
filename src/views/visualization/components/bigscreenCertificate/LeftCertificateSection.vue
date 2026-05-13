@@ -43,8 +43,17 @@
     </BigPanelCard>
 
     <BigPanelCard title="各品类合格证开具量" :bg-image="leftBg">
-      <div class="pie-wrap" style="height: 300px;">
-        <Echart :options="categoryPieOption" :height="280" width="100%" />
+      <div class="category-layout">
+        <div class="pie-container">
+          <Echart :options="categoryPieOption" height="230px" width="100%" />
+        </div>
+        <div class="category-legend">
+          <div class="legend-row" v-for="item in categoryItems" :key="item.name">
+            <span class="dot" :style="{ background: item.color }"></span>
+            <span class="name">{{ item.name }}</span>
+            <span class="value">{{ item.value }}</span>
+          </div>
+        </div>
       </div>
     </BigPanelCard>
   </section>
@@ -52,6 +61,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue';
+import echarts from '@/plugins/echarts';
 import { Echart } from '@/components/Echart';
 import BigPanelCard from '../bigscreen/BigPanelCard.vue';
 import BigScreenSelector from '../bigscreen/BigScreenSelector.vue';
@@ -63,10 +73,19 @@ import {
   type DashboardCertificateOverviewRespVO
 } from '@/api/agri/dashboard/certificate';
 import { getBigScreenQueryParams, subscribeBigScreenRefresh } from '../bigscreen/config';
-import { createBigScreenLineOption } from '../bigscreen/chartOption';
 
 const overview = ref<DashboardCertificateOverviewRespVO>({});
 const categoryDistribution = ref<CertificateCategoryDistributionRespVO[]>([]);
+const categoryColors = [
+  '#3f6dff',
+  '#ffb22c',
+  '#3ba4ff',
+  '#d8efff',
+  '#39e3e7',
+  '#8ad64c',
+  '#7d60ff',
+  '#ff8a34'
+];
 
 const overviewData = computed(() => [
   { label: '合格证开具', value: Number(overview.value.issueCount || 0), unit: '份', type: 'blue' },
@@ -94,18 +113,72 @@ const loadOverviewData = async () => {
   }
 };
 
-const categoryPieOption = computed(() =>
-  createBigScreenLineOption({
-    labels: categoryDistribution.value.length
-      ? categoryDistribution.value.map((item) => item.category || '--')
-      : ['蔬菜', '水果', '茶叶', '禽畜'],
-    values: categoryDistribution.value.length
-      ? categoryDistribution.value.map((item) => Number(item.issueCount || 0))
-      : [280, 190, 130, 98],
-    rotate: 18,
-    grid: { left: 36, right: 16, top: 18, bottom: 44 }
-  })
+const categoryItems = computed(() =>
+  [...categoryDistribution.value]
+    .map((item) => ({
+      name: item.category || '--',
+      value: Number(item.issueCount || 0)
+    }))
+    .sort((a, b) => b.value - a.value)
+    .map((item, index) => ({
+      ...item,
+      color: categoryColors[index % categoryColors.length]
+    }))
 );
+
+const pieItems = computed(() => categoryItems.value.filter((item) => item.value > 0));
+
+const categoryPieOption = computed(() => ({
+  tooltip: {
+    trigger: 'item',
+    backgroundColor: 'rgba(6, 18, 42, 0.92)',
+    borderColor: 'rgba(87, 226, 255, 0.35)',
+    textStyle: { color: '#dff7ff' },
+    formatter: ({ name, value }: { name: string; value: number }) => `${name}<br/>${value}`
+  },
+  series: [
+    {
+      type: 'pie',
+      radius: ['42%', '62%'],
+      center: ['38%', '50%'],
+      minAngle: 6,
+      avoidLabelOverlap: true,
+      label: {
+        show: true,
+        color: '#d6eefe',
+        fontSize: 12,
+        formatter: (params: { name: string; value: number }) =>
+          params.value > 0 ? `{name|${params.name}}\n{value|${params.value}}` : '',
+        rich: {
+          name: { color: '#d6eefe', fontSize: 12, lineHeight: 16 },
+          value: { color: '#57e2ff', fontSize: 12, lineHeight: 16, fontWeight: 700 }
+        }
+      },
+      labelLine: {
+        show: true,
+        length: 14,
+        length2: 18,
+        lineStyle: { color: 'rgba(255,255,255,0.85)', width: 1.2 }
+      },
+      itemStyle: {
+        borderColor: 'rgba(7, 16, 38, 0.96)',
+        borderWidth: 4,
+        shadowBlur: 10,
+        shadowColor: 'rgba(0, 0, 0, 0.2)'
+      },
+      data: pieItems.value.map((item) => ({
+        name: item.name,
+        value: item.value,
+        itemStyle: {
+          color: new echarts.graphic.LinearGradient(0, 0, 1, 1, [
+            { offset: 0, color: item.color },
+            { offset: 1, color: 'rgba(15, 52, 95, 0.9)' }
+          ])
+        }
+      }))
+    }
+  ]
+}));
 
 const loadCategoryDistribution = async () => {
   try {
@@ -365,9 +438,76 @@ onUnmounted(() => {
   }
 }
 
-.pie-wrap {
-  width: 100%;
+.category-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 210px;
+  align-items: center;
+  gap: 12px;
   height: 100%;
-  padding-top: 40px;
+  min-height: 0;
+}
+
+.pie-container {
+  min-width: 0;
+  height: 230px;
+  padding-top: 4px;
+}
+
+.category-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  height: 230px;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 6px;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(65, 190, 255, 0.5);
+    border-radius: 999px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: rgba(8, 18, 42, 0.35);
+  }
+}
+
+.legend-row {
+  display: grid;
+  grid-template-columns: 12px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 0 16px;
+  border: 1px solid rgba(52, 116, 195, 0.55);
+  background: linear-gradient(90deg, rgba(23, 51, 92, 0.78), rgba(10, 24, 56, 0.52));
+  box-shadow: inset 0 0 16px rgba(66, 159, 255, 0.1);
+}
+
+.dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  box-shadow: 0 0 8px rgba(87, 226, 255, 0.28);
+}
+
+.name {
+  min-width: 0;
+  color: #d6eefe;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.value {
+  color: #57e2ff;
+  font-family: 'DIN Alternate', 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
 }
 </style>

@@ -5,7 +5,6 @@ import echarts from '@/plugins/echarts'
 // @ts-ignore
 import * as maptalks from 'maptalks'
 // @ts-ignore
-import { E3Layer } from 'maptalks.e3'
 import 'maptalks/dist/maptalks.css'
 import fillImg from '@/assets/imgs/echarts/topographic_fill.png'
 import chinaLiteSafeGeo from '@/assets/data/map/geo/china-lite-safe.json'
@@ -42,9 +41,7 @@ const HOME_CENTER: [number, number] = [106.5, 37.5]
 const HOME_ZOOM = 4.5
 const isSwitching = ref(false)
 const FAST_MODE = true
-const NATIONAL_LABEL_LIMIT = FAST_MODE ? 8 : 20
 const DRILL_LABEL_LIMIT = FAST_MODE ? 20 : 30
-const MAX_GEO_CACHE = 6
 const ENABLE_HOVER_TOOLTIP = true
 const state = reactive({
   map: null as any,
@@ -52,12 +49,12 @@ const state = reactive({
   labelLayer: null as any, // national labels
   detailLabelLayer: null as any, // drill-down labels
   detailLayer: null as any,
-  e3Layer: null as any,
   chinaFullGeo: null as any
 })
 
 let remoteGeoCache: any = null
 const detailGeoCache = new Map<string, any>()
+let nationalLabelRaf = 0
 const certificateMapData = ref<DashboardCertificateMapRespVO>({})
 const fastMapData = ref<FastMapDataRespVO[]>([])
 const dashboardMapData = ref<MapDataRespVO[]>([])
@@ -72,79 +69,10 @@ const currentRegionParams = reactive<{
 }>({})
 
 const ui = reactive({
-  title: '中国物流监控中心',
-  subtitle: 'National Hub Matrix',
-  nodeCount: 42,
-  status: 'NORMAL',
-  loadPercent: 88,
-  orders: '128.5k',
+  title: '全国',
+  subtitle: '',
   isDrilled: false
 })
-
-// 业务数据
-const chinaHubs: Record<string, number[]> = {
-  "北京": [116.4074, 39.9042], "上海": [121.4737, 31.2304], "广州": [113.2644, 23.1292],
-  "深圳": [114.0579, 22.5431], "成都": [104.0657, 30.6595], "武汉": [114.3055, 30.5928],
-  "西安": [108.9401, 34.3416], "沈阳": [123.4290, 41.7967], "乌鲁木齐": [87.6177, 43.7928]
-}
-
-// 解码 ECharts 特有的 GeoJSON 压缩格式
-const decodeGeoJson = (json: any) => {
-  if (!json.encodeOffsets) return json
-
-  const decode = (str: string, offset: number, scale: number) => {
-    let out = []
-    let prev = 0
-    for (let i = 0; i < str.length; i++) {
-      let code = str.charCodeAt(i) - 64
-      if (code < 0) code += 64
-
-      let res = (code & 1) ? ~(code >> 1) : (code >> 1)
-      res += prev
-      prev = res
-      out.push(res / scale + offset)
-    }
-    return out
-  }
-
-  json.features.forEach((feature: any) => {
-    const { geometry, properties } = feature
-    const { encodeOffsets } = geometry
-    if (encodeOffsets) {
-      const scale = 1024
-      geometry.coordinates.forEach((rings: any, idx: number) => {
-        const offset = encodeOffsets[idx]
-        if (geometry.type === 'Polygon') {
-          geometry.coordinates[idx] = decodePolygon(rings, offset, scale)
-        } else if (geometry.type === 'MultiPolygon') {
-          rings.forEach((ring: any, ridx: number) => {
-            rings[ridx] = decodePolygon(ring, offset[ridx], scale)
-          })
-        }
-      })
-      delete geometry.encodeOffsets
-    }
-  })
-  return json
-}
-
-const decodePolygon = (coordinate: any, offset: any, scale: number) => {
-  const result = []
-  let prevX = offset[0]
-  let prevY = offset[1]
-  for (let i = 0; i < coordinate.length; i += 2) {
-    let x = coordinate.charCodeAt(i) - 64
-    let y = coordinate.charCodeAt(i + 1) - 64
-    x = (x & 1) ? ~(x >> 1) : (x >> 1)
-    y = (y & 1) ? ~(y >> 1) : (y >> 1)
-    x += prevX
-    y += prevY
-    prevX = x
-    prevY = y
-    result.push([x / scale, y / scale])
-  }
-  return result
-}
 
 // 采用更简洁的解码逻辑
 const decodeFeature = (feature: any) => {
@@ -155,7 +83,7 @@ const decodeFeature = (feature: any) => {
   const { type, coordinates, encodeOffsets } = geometry;
 
   const decodePart = (coordinate: string, encodeOffset: number[]) => {
-    const result = [];
+    const result: number[][] = [];
     let prevX = encodeOffset[0];
     let prevY = encodeOffset[1];
     for (let i = 0; i < coordinate.length; i += 2) {
@@ -199,6 +127,10 @@ const getFeatureCandidates = (featureProps: any) => {
   const name = String(featureProps?.name || '').trim()
   const shortName = name.replace(/省|市|壮族自治区|回族自治区|维吾尔自治区|自治区|特别行政区/g, '')
   return Array.from(new Set([name, shortName].filter(Boolean)))
+}
+
+const formatRegionLabel = (name: string) => {
+  return String(name || '').replace(/省|市|壮族自治区|回族自治区|维吾尔自治区|自治区|特别行政区/g, '')
 }
 
 const getColorByCount = (count: number) => {
@@ -303,48 +235,9 @@ const syncCurrentMapData = (geometries?: any[]) => {
 }
 
 
-const initECharts = () => {
-  if (!state.map || isCertificateMode.value) return
-
-  const option = {
-    animation: false,
-    GLMap: {},
-    series: [
-      {
-        name: 'Hub Points',
-        type: 'scatter',
-        coordinateSystem: 'GLMap',
-        zlevel: 2,
-        label: {
-          show: true, position: 'right', formatter: '{b}',
-          textStyle: { color: '#94a3b8', fontSize: 11, fontWeight: 'bold' }
-        },
-        itemStyle: { color: '#fbbf24' },
-        data: Object.keys(chinaHubs).map(name => ({
-          name: name, value: chinaHubs[name].concat([100])
-        }))
-      }
-    ]
-  }
-
-  try {
-    state.e3Layer = new E3Layer('e3', option).addTo(state.map)
-
-    setTimeout(() => {
-      const ins = state.e3Layer.getEChartsInstance()
-      if (ins) {
-        ins.resize()
-      }
-    }, 1500)
-  } catch (e) {
-    console.error('[Map] E3Layer Init Error:', e)
-  }
-}
-
-
 const loadRemoteGeoJson = async () => {
   if (remoteGeoCache) return remoteGeoCache
-  const geoJson = structuredClone(chinaLiteSafeGeo)
+  const geoJson = structuredClone(chinaLiteSafeGeo) as any
   if (geoJson?.features?.length && !geoJson.__decoded) {
     geoJson.features.forEach((f: any) => decodeFeature(f))
     geoJson.__decoded = true
@@ -514,14 +407,13 @@ const drillDown = async (geometry: any) => {
         zIndex: 6,
         enableSimplify: true,
         simplifyTolerance: 0.8
-      }).addTo(state.map)
+      } as any).addTo(state.map)
     }
 
     state.detailLayer.clear()
     state.detailLabelLayer?.clear?.()
     state.provinceLayer.getGeometries().forEach((g: any) => g.hide())
     state.labelLayer?.hide?.()
-    state.e3Layer?.hide?.()
 
     const detailGeometries = maptalks.GeoJSON.toGeometry(detailGeo)
     detailGeometries.forEach((geo: any) => {
@@ -569,8 +461,6 @@ const drillDown = async (geometry: any) => {
 
     ui.isDrilled = true
     ui.title = properties.name || '省级详情'
-    ui.subtitle = 'Province Detail'
-    ui.status = 'DRILL_DOWN'
   } catch (error) {
     console.error('[Map] Drill down failed:', error)
   } finally {
@@ -607,19 +497,13 @@ const rollUp = () => {
   }
 
   // 4. 重置 UI 状态 并重新渲染全国标签，恢复 ECharts 图层
-  ui.title = '中国物流监控中心'
-  ui.subtitle = 'National Hub Matrix'
+  ui.title = '全国'
+  ui.subtitle = ''
   ui.isDrilled = false
-  ui.status = 'NORMAL'
   currentDrillLevel.value = 0
   delete currentRegionParams.provinceName
   delete currentRegionParams.cityName
 
-  if (state.e3Layer) state.e3Layer.show()
-  if (state.e3Layer?.getEChartsInstance) {
-    const ins = state.e3Layer.getEChartsInstance()
-    if (ins) ins.resize()
-  }
   if (isCertificateMode.value) {
     void loadCertificateMapData()
   }
@@ -641,17 +525,19 @@ const renderNationalLabels = () => {
     state.labelLayer.show()
     return
   }
-  state.chinaFullGeo.features.slice(0, NATIONAL_LABEL_LIMIT).forEach((feature: any) => {
+  state.chinaFullGeo.features.forEach((feature: any) => {
     const { name, cp } = feature.properties
     if (cp && name) {
-      new maptalks.Label(name.substring(0, 2), cp, {
+      new maptalks.Label(formatRegionLabel(name), cp, {
         'draggable': false,
         'textSymbol': {
           'textFaceName': 'sans-serif',
           'textFill': '#ffffff',
-          'textSize': 14,
+          'textSize': 13,
           'textOpacity': 1,
           'textWeight': 'bold',
+          'textHaloFill': '#06233c',
+          'textHaloRadius': 3,
           'textDx': 0, 'textDy': 0
         }
       }).addTo(state.labelLayer)
@@ -659,9 +545,22 @@ const renderNationalLabels = () => {
   })
 }
 
-const resetView = () => {
-  if (ui.isDrilled) return
-  rollUp()
+const scheduleNationalLabels = () => {
+  if (nationalLabelRaf) {
+    cancelAnimationFrame(nationalLabelRaf)
+  }
+  nationalLabelRaf = requestAnimationFrame(() => {
+    renderNationalLabels()
+    nationalLabelRaf = 0
+  })
+}
+
+const loadInitialMapData = () => {
+  if (isCertificateMode.value) return loadCertificateMapData()
+  if (isFastMapMode.value) return loadFastMapData()
+  if (isDashboardMode.value) return loadDashboardMapData()
+  if (isTaskMapMode.value) return loadTaskMapData()
+  return Promise.resolve()
 }
 
 // 提取应用全国遮罩的逻辑
@@ -683,14 +582,14 @@ const initMap = async () => {
     maxExtent: new maptalks.Extent(73, 15, 135, 55),
     attribution: false,
     background: { fill: '#020617' }
-  })
+  } as any)
 
   // 省份图层
   state.provinceLayer = new maptalks.VectorLayer('province-layer', {
     zIndex: 5,
     enableSimplify: true,
     simplifyTolerance: 1.3
-  }).addTo(state.map)
+  } as any).addTo(state.map)
 
   // 4. 标签图层 (最顶层)
   state.labelLayer = new maptalks.VectorLayer('label-layer', {
@@ -705,10 +604,11 @@ const initMap = async () => {
     zIndex: 6,
     enableSimplify: true,
     simplifyTolerance: 0.8
-  }).addTo(state.map)
+  } as any).addTo(state.map)
 
   // 4. 加载数据并渲染
   try {
+    const initialMapDataPromise = loadInitialMapData()
     state.chinaFullGeo = await loadRemoteGeoJson()
 
     if (state.chinaFullGeo) {
@@ -748,22 +648,9 @@ const initMap = async () => {
 
           geo.addTo(state.provinceLayer)
         })
-        if (isCertificateMode.value) {
-          await loadCertificateMapData()
+        void initialMapDataPromise.finally(() => {
           syncCurrentMapData(geometries)
-        }
-        if (isFastMapMode.value) {
-          await loadFastMapData()
-          syncCurrentMapData(geometries)
-        }
-        if (isDashboardMode.value) {
-          await loadDashboardMapData()
-          syncCurrentMapData(geometries)
-        }
-        if (isTaskMapMode.value) {
-          await loadTaskMapData()
-          syncCurrentMapData(geometries)
-        }
+        })
         const extent = state.provinceLayer.getExtent?.()
         if (extent) {
           state.map.fitExtent(extent, 0, {
@@ -773,16 +660,13 @@ const initMap = async () => {
         }
       }
     }
-    renderNationalLabels()
+    scheduleNationalLabels()
   } catch (e) {
     console.error("GeoJSON Load Error", e)
   }
 
-  setTimeout(() => initECharts(), 80)
 }
 
-// Tooltip 相关内容
-const tooltipRef = ref<HTMLElement | null>(null)
 const tooltipData = reactive({
   name: '',
   show: false,
@@ -848,11 +732,11 @@ watch(
 
 onMounted(async () => {
   await nextTick()
-  await Promise.all([
-    initMap(),
-    new Promise((resolve) => setTimeout(resolve, 3000))
-  ])
-  loading.value = false
+  try {
+    await initMap()
+  } finally {
+    loading.value = false
+  }
 })
 
 const disposeRefresh = subscribeBigScreenRefresh(() => {
@@ -873,17 +757,15 @@ const disposeRefresh = subscribeBigScreenRefresh(() => {
 onUnmounted(() => {
   disposeRefresh()
   hideTooltip()
+  if (nationalLabelRaf) {
+    cancelAnimationFrame(nationalLabelRaf)
+    nationalLabelRaf = 0
+  }
   if (state.map) {
     state.detailLayer?.clear?.()
     state.detailLabelLayer?.clear?.()
     state.labelLayer?.clear?.()
     state.provinceLayer?.clear?.()
-    if (state.e3Layer?.getEChartsInstance) {
-      const ins = state.e3Layer.getEChartsInstance()
-      if (ins) ins.dispose?.()
-    }
-    remoteGeoCache = null
-    detailGeoCache.clear()
     state.map.remove()
   }
 })

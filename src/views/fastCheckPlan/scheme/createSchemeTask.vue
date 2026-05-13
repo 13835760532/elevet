@@ -57,20 +57,19 @@
                             <el-col :span="8">
                                 <el-form-item label="单位类型" style="margin-bottom: 0; align-items: center;">
                                     <el-select v-model="taskForm.deptType" placeholder="请选择单位类型" class="full-width"
-                                        disabled>
+                                        :disabled="false" clearable @change="loadOrgOptions">
+                                        <el-option label="监管机构" :value="1" />
+                                        <el-option label="检测机构" :value="2" />
                                         <el-option label="企业" :value="3" />
+                                        <el-option label="运营机构" :value="4" />
                                     </el-select>
                                 </el-form-item>
                             </el-col>
 
                             <el-col :span="8">
                                 <el-form-item label="所属区域" style="margin-bottom: 0; align-items: center;">
-                                    <AreaCascader 
-                                        class="full-width" 
-                                        v-model="areaPath" 
-                                        placeholder="请选择所属地区" 
-                                        checkStrictly
-                                        @select="(val) => {
+                                    <AreaCascader class="full-width" v-model="areaPath" placeholder="请选择所属地区"
+                                        checkStrictly @select="(val) => {
                                             taskForm.province = val.province;
                                             taskForm.city = val.city;
                                             taskForm.district = val.district;
@@ -78,8 +77,7 @@
                                             taskForm.cityCode = val.cityCode;
                                             taskForm.districtCode = val.districtCode;
                                             loadOrgOptions();
-                                        }" 
-                                    />
+                                        }" />
                                 </el-form-item>
                             </el-col>
                         </el-row>
@@ -262,22 +260,21 @@ const loadOrgOptions = async () => {
     orgLoading.value = true;
     try {
         const params = {
-            name: searchKeyword.value?.trim(),
+            keyword: searchKeyword.value?.trim(),
+            relationType: taskForm.systemType,
             deptType: taskForm.deptType,
             provinceCode: taskForm.provinceCode,
             cityCode: taskForm.cityCode,
-            districtCode: taskForm.districtCode,
-            pageNo: 1,
-            pageSize: 1000
+            districtCode: taskForm.districtCode
         };
-        const response = await DistRelationApi.getAssignableDepts(params);
-        orgOptions.value = (response.list || []).map((item) => ({
-            id: item.deptId,
-            name: item.name,
+        const response = await DistRelationApi.getAssignableTargets(params);
+        orgOptions.value = (response || []).map((item) => ({
+            id: item.targetId,
+            name: item.targetName,
             socialCreditCode: item.socialCreditCode,
             contactName: item.contactName,
             contactPhone: item.contactPhone,
-            address: item.address
+            address: '' // 新接口暂无 address 字段，设为空字符串
         }));
         reconcileSelectionState();
     } catch (error) {
@@ -390,7 +387,7 @@ watch(
         const currentList = [...taskList.value];
         // 移除不再选中的机构
         const filteredList = currentList.filter(item => newIds.includes(item.deptId));
-        
+
         // 添加新选中的机构
         newIds.forEach(id => {
             if (!filteredList.find(item => item.deptId === id)) {

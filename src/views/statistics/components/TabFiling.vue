@@ -1,26 +1,18 @@
 <template>
   <div class="stat-content">
     <!-- 数据范围筛选 -->
-    <div class="filter-section filter-task">
-      <div class="filter-left">
-        <div class="filter-label">数据范围</div>
-        <el-radio-group v-model="dateRangeType" class="date-radio">
-          <el-radio-button label="近一周" />
-          <el-radio-button label="近一月" />
-          <el-radio-button label="今年" />
-        </el-radio-group>
-        <el-date-picker v-model="dateRange" type="daterange" range-separator="至" start-placeholder="开始日期"
-          end-placeholder="结束日期" format="YYYY-MM-DD" value-format="YYYY-MM-DD" class="date-picker-custom" />
-        <el-select v-model="region" placeholder="省/市/县" class="region-select" clearable>
+    <StatisticsRangeFilter
+      v-model:range-type="dateRangeType"
+      v-model:date-range="dateRange"
+      description="建档备案统计周期"
+    >
+      <template #extra>
+        <el-select v-model="region" placeholder="省/市/县" clearable>
           <el-option label="北京市" value="beijing" />
           <el-option label="上海市" value="shanghai" />
         </el-select>
-      </div>
-      <div class="filter-right">
-        <el-button class="reset-btn">重置</el-button>
-        <el-button type="primary" class="search-btn">查询</el-button>
-      </div>
-    </div>
+      </template>
+    </StatisticsRangeFilter>
 
     <!-- 整体业务概况 -->
     <div class="card-section">
@@ -173,9 +165,10 @@
 
 <script setup lang="ts">
 import { ref, reactive } from 'vue'
+import StatisticsRangeFilter from './StatisticsRangeFilter.vue'
 
 const dateRangeType = ref('近一周')
-const dateRange = ref([])
+const dateRange = ref<string[]>([])
 const region = ref('')
 
 const filtersSubject = reactive({
@@ -207,47 +200,6 @@ const tableDataProduct = ref([
   display: flex;
   flex-direction: column;
   gap: 20px;
-}
-
-/* 筛选区域 */
-.filter-section {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background-color: #fff;
-  padding: 16px 24px;
-  border-radius: 4px;
-
-  .filter-left {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-  }
-  
-  .filter-right {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-
-  .filter-label {
-    font-size: 14px;
-    font-weight: bold;
-    color: #333;
-  }
-
-  .date-picker-custom {
-    width: 260px;
-  }
-  
-  .region-select {
-    width: 140px;
-  }
-
-  .search-btn {
-    background-color: #00B3ED;
-    border-color: #00B3ED;
-  }
 }
 
 /* 卡片通用 */

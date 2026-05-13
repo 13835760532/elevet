@@ -1,3 +1,5 @@
+import { DEFAULT_AGRI_MEASUREMENT_UNIT } from '@/utils/agriUnit';
+
 const PRODUCT_LAST_SUBMIT_STORAGE_KEY = 'AGRI_PRODUCT_LAST_SUBMIT';
 
 export interface ProductSubmitPayload {
@@ -32,7 +34,7 @@ export const buildProductCreatePayload = (
     subjectId: toNumberValue(source.subjectId),
     category: toStringValue(source.category) || undefined,
     productSpec: toStringValue(source.productSpec),
-    productUnit: toStringValue(source.productUnit) || 'kg',
+    productUnit: toStringValue(source.productUnit) || DEFAULT_AGRI_MEASUREMENT_UNIT,
     productImageUrl: toStringValue(source.productImageUrl),
     productionArea: toStringValue(source.productionArea),
     provinceCode: toStringValue(source.provinceCode),
@@ -63,4 +65,3 @@ export const getLastSubmittedProduct = (): ProductSubmitPayload | null => {
     return null;
   }
 };
-

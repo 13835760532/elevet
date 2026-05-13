@@ -56,9 +56,8 @@
                                 <el-col :span="10">
                                     <el-form-item label="单位">
                                         <el-select v-model="formData.unit" placeholder="选择计量单位">
-                                            <el-option label="kg" value="kg" />
-                                            <el-option label="吨" value="ton" />
-                                            <el-option label="箱" value="box" />
+                                            <el-option v-for="unit in measurementUnitOptions" :key="unit.value"
+                                                :label="unit.label" :value="unit.value" />
                                         </el-select>
                                     </el-form-item>
                                 </el-col>
@@ -116,7 +115,7 @@
                                             </div>
                                             <div class="tr">
                                                 <div class="td-label">产品数量</div>
-                                                <div class="td-value">{{ formData.quantity }}{{ formData.unit }}</div>
+                                                <div class="td-value">{{ formData.quantity }}{{ getAgriUnitLabel(formData.unit) }}</div>
                                             </div>
                                             <div class="tr">
                                                 <div class="td-label">产品产地</div>
@@ -154,7 +153,7 @@
                                         <div class="s-item required"><span class="s-label">产品名称</span><span
                                                 class="s-val">{{ formData.productName }}</span></div>
                                         <div class="s-item required"><span class="s-label">重量/数量</span><span
-                                                class="s-val">{{ formData.quantity }} {{ formData.unit }}</span></div>
+                                                class="s-val">{{ formData.quantity }} {{ getAgriUnitLabel(formData.unit) }}</span></div>
                                         <div class="s-item required"><span class="s-label">产品产地</span><span
                                                 class="s-val">{{ formData.productionArea }}</span></div>
                                         <div class="s-item required"><span class="s-label">生产经营主体</span><span
@@ -184,11 +183,16 @@
 </template>
 
 <script setup>
-import { reactive, ref, onMounted } from 'vue';
+import { computed, reactive, ref, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { FolderOpened, Plus } from '@element-plus/icons-vue';
 import { ElMessage, ElLoading } from 'element-plus';
 import { parseImage, createArchive, getVerification, updateCertificateVerification } from '@/api/agri/certificateVerification/index';
+import {
+    DEFAULT_AGRI_MEASUREMENT_UNIT,
+    getAgriUnitLabel,
+    usePreferredAgriMeasurementUnitOptions
+} from '@/utils/agriUnit';
 
 const router = useRouter();
 const route = useRoute();
@@ -199,7 +203,7 @@ const formData = reactive({
     productName: '',
     productionArea: '',
     quantity: '',
-    unit: 'kg',
+    unit: DEFAULT_AGRI_MEASUREMENT_UNIT,
     issueDate: '',
     contactName: '',
     contactPhone: '',
@@ -211,6 +215,19 @@ const formData = reactive({
     certificateType: null,
     source: 1
 });
+
+const unitRef = computed({
+    get: () => formData.unit,
+    set: (value) => {
+        formData.unit = value || DEFAULT_AGRI_MEASUREMENT_UNIT;
+    }
+});
+const measurementUnitOptions = usePreferredAgriMeasurementUnitOptions(
+    unitRef,
+    ['千克', 'kg'],
+    DEFAULT_AGRI_MEASUREMENT_UNIT,
+    computed(() => !isEdit.value)
+);
 
 const onFileChange = async (uploadFile) => {
     const loading = ElLoading.service({
@@ -241,7 +258,7 @@ const onFileChange = async (uploadFile) => {
             formData.productCategory = cert.productCategory;
             formData.productionArea = cert.productionArea;
             formData.quantity = cert.quantity;
-            formData.unit = cert.unit || 'kg';
+            formData.unit = cert.unit || DEFAULT_AGRI_MEASUREMENT_UNIT;
             formData.issueDate = cert.issueDate;
             formData.contactName = cert.contactName;
             formData.contactPhone = cert.contactPhone;
@@ -255,7 +272,7 @@ const onFileChange = async (uploadFile) => {
             formData.productCategory = ocr.productCategory || '';
             formData.productionArea = ocr.productionArea || '';
             formData.quantity = ocr.quantity || '';
-            formData.unit = ocr.unit || 'kg';
+            formData.unit = ocr.unit || DEFAULT_AGRI_MEASUREMENT_UNIT;
             formData.issueDate = ocr.issueDate || '';
             formData.contactName = ocr.contactName || '';
             formData.contactPhone = ocr.contactPhone || '';

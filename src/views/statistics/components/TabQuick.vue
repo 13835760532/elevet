@@ -1,26 +1,17 @@
 <template>
   <div class="stat-content">
     <!-- 数据范围筛选 -->
-    <div class="filter-section filter-task">
-      <div class="filter-left">
-        <div class="filter-label">数据范围</div>
-        <el-radio-group v-model="dateRangeType" class="date-radio">
-          <el-radio-button label="近一周" />
-          <el-radio-button label="近一月" />
-          <el-radio-button label="今年" />
-        </el-radio-group>
-        <el-date-picker v-model="dateRange" type="daterange" range-separator="至" start-placeholder="开始日期"
-          end-placeholder="结束日期" format="YYYY-MM-DD" value-format="YYYY-MM-DD" class="date-picker-custom" />
-        <el-select v-model="region" placeholder="省/市/县" class="region-select" clearable>
-          <el-option label="北京市" value="beijing" />
-          <el-option label="上海市" value="shanghai" />
-        </el-select>
-      </div>
-      <div class="filter-right">
-        <el-button class="reset-btn">重置</el-button>
-        <el-button type="primary" class="search-btn">查询</el-button>
-      </div>
-    </div>
+    <StatisticsRangeFilter
+      v-model:range-type="dateRangeType"
+      v-model:date-range="dateRange"
+      description="快速检测统计周期"
+      @search="handleSearch"
+      @reset="handleReset"
+    >
+      <template #extra>
+        <AreaCascader v-model="areaIds" placeholder="省/市/县" @select="handleAreaSelect" />
+      </template>
+    </StatisticsRangeFilter>
 
     <!-- 整体业务概况 -->
     <div class="card-section">
@@ -30,14 +21,14 @@
           <div class="card-bg-icon">¥</div>
           <div class="card-info">
             <div class="card-title">总样品量</div>
-            <div class="card-value">10,273 <span class="unit">个</span></div>
+            <div class="card-value">{{ formatNumber(overview.sampleBatchCount) }} <span class="unit">个</span></div>
           </div>
         </div>
         <div class="stat-card blue-card-light">
           <div class="card-bg-icon">¥</div>
           <div class="card-info">
             <div class="card-title">总检测量</div>
-            <div class="card-value">10,273 <span class="unit">项次</span></div>
+            <div class="card-value">{{ formatNumber(overview.detectionItemCount) }} <span class="unit">项次</span></div>
           </div>
         </div>
       </div>
@@ -54,48 +45,38 @@
           <el-option label="自主检测" value="1" />
           <el-option label="任务检测" value="2" />
         </el-select>
-        <el-select v-model="filters.sample" placeholder="样品" class="filter-item"></el-select>
-        <el-select v-model="filters.category" placeholder="产品分类" class="filter-item"></el-select>
-        <el-select v-model="filters.area" placeholder="检测地区" class="filter-item"></el-select>
+        <el-input v-model="filters.sample" placeholder="样品名称" class="filter-item" clearable />
+        <el-select v-model="filters.category" placeholder="产品分类" class="filter-item" clearable>
+          <el-option v-for="item in productCategoryOptions" :key="item.value" :label="item.label" :value="item.value" />
+        </el-select>
+        <el-input v-model="filters.area" placeholder="检测地区" class="filter-item" clearable />
         <el-select v-model="filters.org" placeholder="检测机构" class="filter-item"></el-select>
-        <el-select v-model="filters.result" placeholder="检测结果" class="filter-item"></el-select>
+        <el-select v-model="filters.result" placeholder="检测结果" class="filter-item" clearable>
+          <el-option label="阴性" :value="0" />
+          <el-option label="阳性" :value="1" />
+          <el-option label="结果异常" :value="2" />
+        </el-select>
         <el-date-picker v-model="filters.date" type="daterange" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期" class="filter-item date-picker-small" />
-        <el-button type="primary" class="export-btn">导出</el-button>
+        <el-button type="primary" class="export-btn" @click="handleSearch">查询</el-button>
+        <el-button class="export-btn plain-btn" @click="resetResultFilters">重置</el-button>
+        <el-button type="primary" class="export-btn" @click="handleExport">导出</el-button>
       </div>
 
-      <!-- 图表区域 mock -->
+      <!-- 图表区域 -->
       <div class="chart-area-wrapper">
         <div class="chart-header">
           <span class="chart-y-title">检测量</span>
           <div class="chart-legends">
-            <div class="legend-item"><span class="legend-dot purple"></span>阴性结果</div>
-            <div class="legend-item"><span class="legend-dot yellow"></span>阳性结果</div>
+            <div class="legend-item"><span class="legend-dot purple"></span>样品量</div>
+            <div class="legend-item"><span class="legend-dot yellow"></span>阳性率</div>
           </div>
         </div>
-        <div class="svg-chart-container">
-          <div class="chart-y-axis">
-            <span>60</span><span>50</span><span>40</span><span>30</span><span>20</span><span>10</span><span>0</span>
-          </div>
-          <div class="svg-wrapper">
-            <svg viewBox="0 0 1000 300" preserveAspectRatio="none" style="width: 100%; height: 300px;">
-              <!-- yellow area (positive) -->
-              <path d="M0,50 C100,40 200,40 300,100 C400,120 500,250 600,180 C700,250 800,250 900,50 C950,50 1000,100 L1000,300 L0,300 Z" fill="rgba(250, 166, 62, 0.2)" stroke="#faa63e" stroke-width="2"></path>
-              <!-- purple area (negative) -->
-              <path d="M0,250 C100,200 200,150 250,50 C300,60 400,150 500,200 C600,180 700,220 800,220 C900,250 1000,220 L1000,300 L0,300 Z" fill="rgba(163, 149, 255, 0.2)" stroke="#8D76FF" stroke-width="2"></path>
-            </svg>
-            <div class="chart-x-axis">
-              <span v-for="i in 12" :key="i">{{ i }}月</span>
-            </div>
-            <div class="chart-grid-lines">
-              <div class="grid-line" v-for="i in 6" :key="i"></div>
-            </div>
-          </div>
-        </div>
+        <Echart :options="trendOption" height="320px" />
       </div>
 
       <!-- 表格区域 -->
       <div class="table-container">
-        <el-table :data="tableData" style="width: 100%" border header-cell-class-name="custom-header">
+        <el-table v-loading="loading" :data="tableData" style="width: 100%" border header-cell-class-name="custom-header" empty-text="暂无快速检测记录">
           <el-table-column type="index" label="序号" width="60" align="center" />
           <el-table-column prop="taskNo" label="任务编号" align="center" width="100" />
           <el-table-column prop="taskName" label="任务名称" align="center" show-overflow-tooltip min-width="120" />
@@ -113,8 +94,15 @@
         </el-table>
         
         <div class="pagination-container">
-          <div class="total-text">合计：1891条</div>
-          <el-pagination background layout="prev, pager, next" :total="1891" :page-size="10" />
+          <div class="total-text">合计：{{ total }}条</div>
+          <el-pagination
+            v-model:current-page="pageNo"
+            v-model:page-size="pageSize"
+            background
+            layout="prev, pager, next"
+            :total="total"
+            @current-change="loadTable"
+          />
         </div>
       </div>
     </div>
@@ -122,11 +110,39 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
+import StatisticsRangeFilter from './StatisticsRangeFilter.vue'
+import AreaCascader from '@/components/AreaCascader/index.vue'
+import { Echart } from '@/components/Echart'
+import {
+  getFastOverview,
+  getFastPositiveRateTrend,
+  getFastSelfSampleTrend,
+  type DashboardFastOverviewRespVO,
+  type FastPositiveRateTrendRespVO,
+  type FastSelfSampleTrendRespVO
+} from '@/api/agri/dashboard/fast'
+import * as DetectionRecordApi from '@/api/agri/detectionRecord'
+import { useDict } from '@/hooks/web/useDict'
+import { buildRangeParams, formatNumber, normalizePagedResult } from './statisticsData'
+import { ElMessage } from 'element-plus'
 
 const dateRangeType = ref('近一周')
-const dateRange = ref([])
-const region = ref('')
+const dateRange = ref<string[]>([])
+const areaIds = ref<string[]>([])
+const areaParams = reactive({
+  provinceName: '',
+  cityName: ''
+})
+const overview = ref<DashboardFastOverviewRespVO>({})
+const selfTrend = ref<FastSelfSampleTrendRespVO>({})
+const positiveTrend = ref<FastPositiveRateTrendRespVO>({})
+const loading = ref(false)
+const tableData = ref<any[]>([])
+const total = ref(0)
+const pageNo = ref(1)
+const pageSize = ref(10)
+const { options: productCategoryOptions, getLabel: getCategoryLabel } = useDict('agri_product_category', 'str')
 
 const filters = reactive({
   keyword: '',
@@ -139,11 +155,190 @@ const filters = reactive({
   date: []
 })
 
-const tableData = ref([
-  { taskNo: '--', taskName: '--', type: '自主检测', sampleNo: 'yp20242132131', sampleName: '豇豆', category: '蔬菜', origin: '山东-济南', subject: '北京章三商户', inspectArea: '北京市-大兴区', inspectOrg: '盒马鲜生', time: '2023-09-09', item: '对硫磷、甲拌磷...', result: '阴性' },
-  { taskNo: 'RW-20032', taskName: '北京市快速检测任务', type: '任务检测', sampleNo: 'yp20242132131', sampleName: '草莓', category: '水果', origin: '山东-济南', subject: '北京章三商户', inspectArea: '北京市-大兴区', inspectOrg: '北京市平谷区农业综合检验检测中心', time: '2023-09-09', item: '对硫磷、甲拌磷...', result: '阴性' },
-  { taskNo: '--', taskName: '--', type: '自主检测', sampleNo: 'yp20242132131', sampleName: '桂鱼', category: '水产品', origin: '辽宁-大连', subject: '北京章三商户', inspectArea: '北京市-大兴区', inspectOrg: '北京果村蔬菜专业合作社', time: '2023-09-09', item: '对硫磷、甲拌磷...', result: '结果异常' },
-])
+const dashboardQueryParams = computed(() => ({
+  ...buildRangeParams(dateRangeType.value, dateRange.value),
+  provinceName: areaParams.provinceName || undefined,
+  cityName: areaParams.cityName || undefined
+}))
+
+const tableRangeParams = computed(() => {
+  if (Array.isArray(filters.date) && filters.date.length === 2) {
+    return {
+      startDate: filters.date[0],
+      endDate: filters.date[1]
+    }
+  }
+  return dashboardQueryParams.value
+})
+
+const trendOption = computed(() => {
+  const xAxis = selfTrend.value.xaxis?.length
+    ? selfTrend.value.xaxis
+    : positiveTrend.value.xaxis || []
+  return {
+    grid: { top: 24, right: 36, bottom: 36, left: 48 },
+    tooltip: { trigger: 'axis' },
+    xAxis: { type: 'category', boundaryGap: false, data: xAxis },
+    yAxis: [
+      { type: 'value', name: '样品量' },
+      { type: 'value', name: '阳性率(%)' }
+    ],
+    series: [
+      {
+        name: '样品量',
+        type: 'line',
+        smooth: true,
+        data: selfTrend.value.sampleCounts || [],
+        areaStyle: { opacity: 0.12 },
+        itemStyle: { color: '#8D76FF' }
+      },
+      {
+        name: '阳性率',
+        type: 'line',
+        smooth: true,
+        yAxisIndex: 1,
+        data: positiveTrend.value.positiveRates || [],
+        areaStyle: { opacity: 0.1 },
+        itemStyle: { color: '#faa63e' }
+      }
+    ]
+  }
+})
+
+const handleAreaSelect = (area: any) => {
+  areaParams.provinceName = area?.province || ''
+  areaParams.cityName = area?.city || ''
+}
+
+const parseDetectionItems = (value: any) => {
+  if (!value) return '--'
+  if (typeof value !== 'string') return '--'
+  try {
+    const parsed = JSON.parse(value)
+    if (Array.isArray(parsed?.results)) {
+      return parsed.results.map((item: any) => item.codeName || item.detectionItem).filter(Boolean).join('、') || '--'
+    }
+  } catch (error) {
+    return value || '--'
+  }
+  return '--'
+}
+
+const getResultLabel = (value: any) => {
+  if (value === 0) return '阴性'
+  if (value === 1) return '阳性'
+  if (value === 2) return '结果异常'
+  return '--'
+}
+
+const mapRecordRow = (item: any) => ({
+  taskNo: item.taskCode || item.task?.taskCode || (item.taskId ? String(item.taskId) : '--'),
+  taskName: item.taskName || item.task?.taskName || '--',
+  type: item.taskId ? '任务检测' : '自主检测',
+  sampleNo: item.sampleCode || item.recordCode || '--',
+  sampleName: item.productName || item.sampleName || '--',
+  category: item.productCategory ? getCategoryLabel(item.productCategory) : '--',
+  origin: item.sampleArea || item.productionArea || item.sample?.productionArea || '--',
+  subject: item.subjectName || '--',
+  inspectArea: item.detectionArea || '--',
+  inspectOrg: item.detectionOrgName || '--',
+  time: item.detectionDate ? String(item.detectionDate).slice(0, 10) : '--',
+  item: parseDetectionItems(item.aiRecognitionResult),
+  result: getResultLabel(item.overallResult)
+})
+
+const loadDashboardData = async () => {
+  try {
+    const [overviewData, selfTrendData, positiveTrendData] = await Promise.all([
+      getFastOverview(dashboardQueryParams.value),
+      getFastSelfSampleTrend(dashboardQueryParams.value),
+      getFastPositiveRateTrend(dashboardQueryParams.value)
+    ])
+    overview.value = overviewData || {}
+    selfTrend.value = selfTrendData || {}
+    positiveTrend.value = positiveTrendData || {}
+  } catch (error) {
+    console.error('[StatisticsQuick] load dashboard data failed:', error)
+    overview.value = {}
+    selfTrend.value = {}
+    positiveTrend.value = {}
+  }
+}
+
+const buildTableQuery = () => ({
+  pageNo: pageNo.value,
+  pageSize: pageSize.value,
+  ...tableRangeParams.value,
+  provinceName: areaParams.provinceName || undefined,
+  cityName: areaParams.cityName || undefined,
+  recordCode: filters.keyword || undefined,
+  sampleName: filters.sample || undefined,
+  productCategory: filters.category || undefined,
+  detectionArea: filters.area || undefined,
+  detectionOrgName: filters.org || undefined,
+  overallResult: filters.result !== '' ? filters.result : undefined,
+  selfDetection: filters.type === '1' ? 'true' : filters.type === '2' ? 'false' : undefined
+})
+
+const loadTable = async () => {
+  loading.value = true
+  try {
+    const data = await DetectionRecordApi.getDetectionRecordPage(buildTableQuery())
+    const normalized = normalizePagedResult<any>(data)
+    tableData.value = normalized.list.map(mapRecordRow)
+    total.value = normalized.total
+  } catch (error) {
+    console.error('[StatisticsQuick] load table failed:', error)
+    tableData.value = []
+    total.value = 0
+  } finally {
+    loading.value = false
+  }
+}
+
+const loadData = () => {
+  loadDashboardData()
+  loadTable()
+}
+
+const handleSearch = () => {
+  pageNo.value = 1
+  loadData()
+}
+
+const resetResultFilters = () => {
+  filters.keyword = ''
+  filters.type = ''
+  filters.sample = ''
+  filters.category = ''
+  filters.area = ''
+  filters.org = ''
+  filters.result = ''
+  filters.date = []
+  handleSearch()
+}
+
+const handleReset = () => {
+  dateRangeType.value = '近一周'
+  dateRange.value = []
+  areaIds.value = []
+  areaParams.provinceName = ''
+  areaParams.cityName = ''
+  resetResultFilters()
+}
+
+const handleExport = () => {
+  ElMessage.info('当前统计页暂未提供导出接口')
+}
+
+watch([dateRangeType, dateRange], () => {
+  pageNo.value = 1
+  loadData()
+})
+
+onMounted(() => {
+  loadData()
+})
 
 </script>
 
@@ -153,47 +348,6 @@ const tableData = ref([
   display: flex;
   flex-direction: column;
   gap: 20px;
-}
-
-/* 筛选区域 */
-.filter-section {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background-color: #fff;
-  padding: 16px 24px;
-  border-radius: 4px;
-
-  .filter-left {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-  }
-  
-  .filter-right {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-
-  .filter-label {
-    font-size: 14px;
-    font-weight: bold;
-    color: #333;
-  }
-
-  .date-picker-custom {
-    width: 260px;
-  }
-  
-  .region-select {
-    width: 140px;
-  }
-
-  .search-btn {
-    background-color: #00B3ED;
-    border-color: #00B3ED;
-  }
 }
 
 /* 卡片通用 */
@@ -289,7 +443,6 @@ const tableData = ref([
   .export-btn {
     background-color: #00B3ED;
     border-color: #00B3ED;
-    margin-left: auto;
   }
 }
 

@@ -59,8 +59,8 @@
                         <el-input-number v-model="form.scaleSize" :min="0" class="custom-input-number"
                             style="flex: 1" />
                         <el-select v-model="form.scaleUnit" class="custom-select" style="width: 100px">
-                            <el-option label="亩" value="mu" />
-                            <el-option label="公顷" value="ha" />
+                            <el-option v-for="unit in scaleUnitOptions" :key="unit.value" :label="unit.label"
+                                :value="unit.value" />
                         </el-select>
                     </div>
                 </el-form-item>
@@ -105,10 +105,11 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue';
+import { computed, ref, reactive } from 'vue';
 import { useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
 import ImageUpload from '@/components/ImageUpload/index.vue';
+import { DEFAULT_PRODUCTION_SCALE_UNIT, usePreferredAgriMeasurementUnitOptions } from '@/utils/agriUnit';
 
 const router = useRouter();
 const filingFormRef = ref(null);
@@ -125,13 +126,21 @@ const form = reactive({
     contact: '',
     phone: '',
     scaleSize: 10,
-    scaleUnit: 'mu',
+    scaleUnit: DEFAULT_PRODUCTION_SCALE_UNIT,
     businessLicense: '',
     creditCode: '',
     idCard: '',
     qualification: '',
     description: ''
 });
+
+const scaleUnitRef = computed({
+    get: () => form.scaleUnit,
+    set: (value) => {
+        form.scaleUnit = value || DEFAULT_PRODUCTION_SCALE_UNIT;
+    }
+});
+const scaleUnitOptions = usePreferredAgriMeasurementUnitOptions(scaleUnitRef, ['亩', 'mu'], DEFAULT_PRODUCTION_SCALE_UNIT);
 
 // 表单校验规则
 const rules = {

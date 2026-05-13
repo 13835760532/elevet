@@ -99,7 +99,7 @@ onUnmounted(() => {
     min-height: 0;
     display: flex;
     flex-direction: column;
-    
+
     .card-content {
       flex: 1;
       min-height: 0;
@@ -123,7 +123,7 @@ onUnmounted(() => {
     padding: 0 2px;
     border-bottom: 1px solid rgba(35, 92, 168, 0.35);
     font-size: 14px;
-    line-height: 1;
+    line-height: 20px;
     text-align: center;
     color: #d6eefe;
     white-space: nowrap;
@@ -135,12 +135,12 @@ onUnmounted(() => {
     color: #8fb7dc;
     font-weight: 600;
     font-size: 14px;
-    height: 28px;
+    height: 32px;
     background: rgba(13, 45, 96, 0.5);
   }
 
   tbody td {
-    height: 27px;
+    height: 32px;
   }
 
   td.left {

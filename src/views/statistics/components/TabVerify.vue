@@ -1,26 +1,17 @@
 <template>
   <div class="stat-content">
     <!-- 数据范围筛选 -->
-    <div class="filter-section filter-task">
-      <div class="filter-left">
-        <div class="filter-label">数据范围</div>
-        <el-radio-group v-model="dateRangeType" class="date-radio">
-          <el-radio-button label="近一周" />
-          <el-radio-button label="近一月" />
-          <el-radio-button label="今年" />
-        </el-radio-group>
-        <el-date-picker v-model="dateRange" type="daterange" range-separator="至" start-placeholder="开始日期"
-          end-placeholder="结束日期" format="YYYY-MM-DD" value-format="YYYY-MM-DD" class="date-picker-custom" />
-        <el-select v-model="region" placeholder="省/市/县" class="region-select" clearable>
-          <el-option label="北京市" value="beijing" />
-          <el-option label="上海市" value="shanghai" />
-        </el-select>
-      </div>
-      <div class="filter-right">
-        <el-button class="reset-btn">重置</el-button>
-        <el-button type="primary" class="search-btn">查询</el-button>
-      </div>
-    </div>
+    <StatisticsRangeFilter
+      v-model:range-type="dateRangeType"
+      v-model:date-range="dateRange"
+      description="合格证收证统计周期"
+      @search="handleSearch"
+      @reset="handleReset"
+    >
+      <template #extra>
+        <AreaCascader v-model="areaIds" placeholder="省/市/县" @select="handleAreaSelect" />
+      </template>
+    </StatisticsRangeFilter>
 
     <!-- 整体业务概况 -->
     <div class="card-section">
@@ -29,15 +20,15 @@
         <div class="stat-card blue-card">
           <div class="card-bg-icon">¥</div>
           <div class="card-info">
-            <div class="card-title">涉及样品量</div>
-            <div class="card-value">10,273 <span class="unit">↑</span></div>
+            <div class="card-title">合格证收证份数</div>
+            <div class="card-value">{{ formatNumber(overview.verificationCount) }} <span class="unit">份</span></div>
           </div>
         </div>
         <div class="stat-card blue-card-light">
           <div class="card-bg-icon">¥</div>
           <div class="card-info">
-            <div class="card-title">涉及生产经营主体量</div>
-            <div class="card-value">10,273 <span class="unit">↑</span></div>
+            <div class="card-title">收证主体量</div>
+            <div class="card-value">{{ formatNumber(overview.verificationSubjectCount) }} <span class="unit">个</span></div>
           </div>
         </div>
       </div>
@@ -50,51 +41,31 @@
       <!-- 第二层筛选 -->
       <div class="result-filters">
         <el-input v-model="filters.certNo" placeholder="合格证编号" class="filter-item input-item" />
-        <el-select v-model="filters.source" placeholder="合格证来源" class="filter-item"></el-select>
-        <el-select v-model="filters.productName" placeholder="产品名称" class="filter-item"></el-select>
-        <el-select v-model="filters.category" placeholder="产品类别" class="filter-item"></el-select>
-        <el-select v-model="filters.origin" placeholder="产地" class="filter-item"></el-select>
-        <el-button type="primary" class="export-btn">导出</el-button>
+        <el-select v-model="filters.source" placeholder="合格证来源" class="filter-item" clearable>
+          <el-option label="本平台" :value="1" />
+          <el-option label="其他" :value="2" />
+        </el-select>
+        <el-input v-model="filters.productName" placeholder="产品名称" class="filter-item" clearable />
+        <el-select v-model="filters.category" placeholder="产品类别" class="filter-item" clearable>
+          <el-option v-for="item in productCategoryOptions" :key="item.value" :label="item.label" :value="item.value" />
+        </el-select>
+        <el-input v-model="filters.origin" placeholder="产地" class="filter-item" clearable />
+        <el-button type="primary" class="export-btn" @click="handleSearch">查询</el-button>
+        <el-button class="export-btn plain-btn" @click="resetTableFilters">重置</el-button>
+        <el-button type="primary" class="export-btn" @click="handleExport">导出</el-button>
       </div>
 
-      <!-- 图表区域 mock -->
+      <!-- 图表区域 -->
       <div class="chart-area-wrapper">
         <div class="chart-header">
           <span class="chart-y-title">合格证数量</span>
         </div>
-        <div class="svg-chart-container">
-          <div class="chart-y-axis">
-            <span>60</span><span>50</span><span>40</span><span>30</span><span>20</span><span>10</span><span>0</span>
-          </div>
-          <div class="svg-wrapper">
-            <svg viewBox="0 0 1000 300" preserveAspectRatio="none" style="width: 100%; height: 300px;">
-              <!-- purple area only -->
-              <path d="M0,250 C100,200 200,150 250,50 C300,60 400,150 500,200 C600,180 700,220 800,220 C900,250 1000,220 L1000,300 L0,300 Z" fill="rgba(163, 149, 255, 0.2)" stroke="#8D76FF" stroke-width="2"></path>
-              <!-- Add data points markers -->
-              <circle cx="0" cy="250" r="3" fill="#fff" stroke="#8D76FF" stroke-width="1.5" />
-              <circle cx="150" cy="180" r="3" fill="#fff" stroke="#8D76FF" stroke-width="1.5" />
-              <circle cx="250" cy="50" r="3" fill="#fff" stroke="#8D76FF" stroke-width="1.5" />
-              <circle cx="350" cy="100" r="3" fill="#fff" stroke="#8D76FF" stroke-width="1.5" />
-              <circle cx="450" cy="180" r="3" fill="#fff" stroke="#8D76FF" stroke-width="1.5" />
-              <circle cx="550" cy="190" r="3" fill="#fff" stroke="#8D76FF" stroke-width="1.5" />
-              <circle cx="650" cy="200" r="3" fill="#fff" stroke="#8D76FF" stroke-width="1.5" />
-              <circle cx="750" cy="220" r="3" fill="#fff" stroke="#8D76FF" stroke-width="1.5" />
-              <circle cx="850" cy="240" r="3" fill="#fff" stroke="#8D76FF" stroke-width="1.5" />
-              <circle cx="1000" cy="220" r="3" fill="#fff" stroke="#8D76FF" stroke-width="1.5" />
-            </svg>
-            <div class="chart-x-axis">
-              <span v-for="i in 12" :key="i">{{ i }}月</span>
-            </div>
-            <div class="chart-grid-lines">
-              <div class="grid-line" v-for="i in 6" :key="i"></div>
-            </div>
-          </div>
-        </div>
+        <Echart :options="trendOption" height="320px" />
       </div>
 
       <!-- 表格区域 -->
       <div class="table-container">
-        <el-table :data="tableData" style="width: 100%" border header-cell-class-name="custom-header">
+        <el-table v-loading="loading" :data="tableData" style="width: 100%" border header-cell-class-name="custom-header" empty-text="暂无合格证收证记录">
           <el-table-column type="index" label="序号" width="60" align="center" />
           <el-table-column prop="certNo" label="合格证编号" align="center" min-width="160" />
           <el-table-column prop="source" label="合格证来源" align="center" width="120" />
@@ -106,8 +77,15 @@
         </el-table>
         
         <div class="pagination-container">
-          <div class="total-text">合计：1891条</div>
-          <el-pagination background layout="prev, pager, next" :total="1891" :page-size="10" />
+          <div class="total-text">合计：{{ total }}条</div>
+          <el-pagination
+            v-model:current-page="pageNo"
+            v-model:page-size="pageSize"
+            background
+            layout="prev, pager, next"
+            :total="total"
+            @current-change="loadTable"
+          />
         </div>
       </div>
     </div>
@@ -115,25 +93,170 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
+import StatisticsRangeFilter from './StatisticsRangeFilter.vue'
+import AreaCascader from '@/components/AreaCascader/index.vue'
+import { Echart } from '@/components/Echart'
+import {
+  getCertificateOverview,
+  getCertificateServiceTrend,
+  type CertificateServiceTrendRespVO,
+  type DashboardCertificateOverviewRespVO
+} from '@/api/agri/dashboard/certificate'
+import * as CertificateApi from '@/api/agri/certificate'
+import { buildRangeParams, formatNumber, normalizePagedResult } from './statisticsData'
+import { useDict } from '@/hooks/web/useDict'
+import { ElMessage } from 'element-plus'
 
 const dateRangeType = ref('近一周')
-const dateRange = ref([])
-const region = ref('')
+const dateRange = ref<string[]>([])
+const areaIds = ref<string[]>([])
+const areaParams = reactive({
+  provinceName: '',
+  cityName: ''
+})
+const overview = ref<DashboardCertificateOverviewRespVO>({})
+const trend = ref<CertificateServiceTrendRespVO>({})
+const tableData = ref<any[]>([])
+const loading = ref(false)
+const total = ref(0)
+const pageNo = ref(1)
+const pageSize = ref(10)
+const { options: productCategoryOptions, getLabel: getProductCategoryLabel } = useDict('agri_product_category', 'str')
 
 const filters = reactive({
   certNo: '',
-  source: '',
+  source: undefined as number | undefined,
   productName: '',
   category: '',
   origin: ''
 })
 
-const tableData = ref([
-  { certNo: 'HGZ2025121290', source: '本平台', productName: '白菜', category: '蔬菜', origin: '山东省胶州市', subject: '山东胶州XXX合作社', time: '2025-12-12 16:00' },
-  { certNo: 'HGZ2025121290', source: '本平台', productName: '黄瓜', category: '蔬菜', origin: '山东省胶州市', subject: '北京福莱生态科技有限公司', time: '2025-12-12 16:00' },
-  { certNo: '--', source: '其他', productName: '黄瓜', category: '蔬菜', origin: '山东省胶州市', subject: '北京福莱生态科技有限公司', time: '2025-12-12 16:00' },
-])
+const queryParams = computed(() => ({
+  ...buildRangeParams(dateRangeType.value, dateRange.value),
+  provinceName: areaParams.provinceName || undefined,
+  cityName: areaParams.cityName || undefined
+}))
+
+const trendOption = computed(() => ({
+  grid: { top: 24, right: 32, bottom: 36, left: 48 },
+  tooltip: { trigger: 'axis' },
+  xAxis: { type: 'category', boundaryGap: false, data: trend.value.xaxis || [] },
+  yAxis: { type: 'value' },
+  series: [
+    {
+      name: '收证份数',
+      type: 'line',
+      smooth: true,
+      data: trend.value.verificationCounts || [],
+      areaStyle: { opacity: 0.12 },
+      itemStyle: { color: '#8D76FF' }
+    }
+  ]
+}))
+
+const handleAreaSelect = (area: any) => {
+  areaParams.provinceName = area?.province || ''
+  areaParams.cityName = area?.city || ''
+}
+
+const getSourceLabel = (value?: number) => {
+  if (value === 1) return '本平台'
+  if (value === 2) return '其他'
+  return '--'
+}
+
+const mapRow = (item: any) => ({
+  certNo: item.certificateCode || '--',
+  source: getSourceLabel(item.certificateSource),
+  productName: item.productName || '--',
+  category: item.productCategory ? getProductCategoryLabel(item.productCategory) : '--',
+  origin: item.productionArea || '--',
+  subject: item.subjectName || '--',
+  time: item.verificationTime || item.createTime || '--'
+})
+
+const loadDashboardData = async () => {
+  try {
+    const [overviewData, trendData] = await Promise.all([
+      getCertificateOverview(queryParams.value),
+      getCertificateServiceTrend(queryParams.value)
+    ])
+    overview.value = overviewData || {}
+    trend.value = trendData || {}
+  } catch (error) {
+    console.error('[StatisticsVerify] load dashboard data failed:', error)
+    overview.value = {}
+    trend.value = {}
+  }
+}
+
+const loadTable = async () => {
+  loading.value = true
+  try {
+    const data = await CertificateApi.getCertificateVerificationPage({
+      pageNo: pageNo.value,
+      pageSize: pageSize.value,
+      certificateCode: filters.certNo || undefined,
+      certificateSource: filters.source,
+      productName: filters.productName || undefined,
+      productCategory: filters.category || undefined,
+      productionArea: filters.origin || undefined,
+      startDate: queryParams.value.startDate,
+      endDate: queryParams.value.endDate
+    })
+    const normalized = normalizePagedResult<any>(data)
+    tableData.value = normalized.list.map(mapRow)
+    total.value = normalized.total
+  } catch (error) {
+    console.error('[StatisticsVerify] load table failed:', error)
+    tableData.value = []
+    total.value = 0
+  } finally {
+    loading.value = false
+  }
+}
+
+const loadData = () => {
+  loadDashboardData()
+  loadTable()
+}
+
+const handleSearch = () => {
+  pageNo.value = 1
+  loadData()
+}
+
+const resetTableFilters = () => {
+  filters.certNo = ''
+  filters.source = undefined
+  filters.productName = ''
+  filters.category = ''
+  filters.origin = ''
+  handleSearch()
+}
+
+const handleReset = () => {
+  dateRangeType.value = '近一周'
+  dateRange.value = []
+  areaIds.value = []
+  areaParams.provinceName = ''
+  areaParams.cityName = ''
+  resetTableFilters()
+}
+
+const handleExport = () => {
+  ElMessage.info('当前统计页暂未提供导出接口')
+}
+
+watch([dateRangeType, dateRange], () => {
+  pageNo.value = 1
+  loadData()
+})
+
+onMounted(() => {
+  loadData()
+})
 
 </script>
 
@@ -143,47 +266,6 @@ const tableData = ref([
   display: flex;
   flex-direction: column;
   gap: 20px;
-}
-
-/* 筛选区域 */
-.filter-section {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background-color: #fff;
-  padding: 16px 24px;
-  border-radius: 4px;
-
-  .filter-left {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-  }
-  
-  .filter-right {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-
-  .filter-label {
-    font-size: 14px;
-    font-weight: bold;
-    color: #333;
-  }
-
-  .date-picker-custom {
-    width: 260px;
-  }
-  
-  .region-select {
-    width: 140px;
-  }
-
-  .search-btn {
-    background-color: #00B3ED;
-    border-color: #00B3ED;
-  }
 }
 
 /* 卡片通用 */
@@ -275,7 +357,6 @@ const tableData = ref([
   .export-btn {
     background-color: #00B3ED;
     border-color: #00B3ED;
-    margin-left: auto;
   }
 }
 

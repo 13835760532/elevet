@@ -3,6 +3,7 @@
  * 用于在 createIssue、secondIssue、thirdIssue 三个页面间共享数据
  */
 import { defineStore } from 'pinia'
+import { DEFAULT_AGRI_MEASUREMENT_UNIT } from '@/utils/agriUnit'
 
 export const useCertificateStore = defineStore('certificate', {
     state: () => ({
@@ -17,7 +18,7 @@ export const useCertificateStore = defineStore('certificate', {
             category: '',
             origin: '',
             batchSize: '',
-            unit: 'kg',
+            unit: DEFAULT_AGRI_MEASUREMENT_UNIT,
             createDate: '',
             entity: '',
             productId: undefined,
@@ -34,7 +35,7 @@ export const useCertificateStore = defineStore('certificate', {
         issueInfo: {
             issueType: 'buy',
             quantity: 0,
-            unit: 'unit',
+            unit: DEFAULT_AGRI_MEASUREMENT_UNIT,
             basis: ['quality'],
             thirdPartyType: '',
             platformType: '',
@@ -83,7 +84,7 @@ export const useCertificateStore = defineStore('certificate', {
                 category: '',
                 origin: '',
                 batchSize: '',
-                unit: 'kg',
+                unit: DEFAULT_AGRI_MEASUREMENT_UNIT,
                 createDate: '',
                 entity: '',
                 productId: undefined,
@@ -98,7 +99,7 @@ export const useCertificateStore = defineStore('certificate', {
             this.issueInfo = {
                 issueType: 'buy',
                 quantity: 0,
-                unit: 'unit',
+                unit: DEFAULT_AGRI_MEASUREMENT_UNIT,
                 basis: ['quality'],
                 thirdPartyType: '',
                 platformType: '',

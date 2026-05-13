@@ -12,7 +12,7 @@
 
                 <!-- 详情数据列表 - 产品信息 -->
                 <div class="detail-list mb-30">
-                
+
                     <div class="detail-row">
                         <div class="label">*产品编码：</div>
                         <div class="value">{{ productInfo.productCode || '--' }}</div>
@@ -23,7 +23,8 @@
                     </div>
                     <div class="detail-row">
                         <div class="label">*产品类别：</div>
-                        <div class="value">{{ productInfo.category ? getProductCategoryLabel(productInfo.category) : '--' }}</div>
+                        <div class="value">{{ productInfo.category ? getProductCategoryLabel(productInfo.category) ==
+                            '--' ? productInfo.category : getProductCategoryLabel(productInfo.category) : '--' }}</div>
                     </div>
                     <div class="detail-row">
                         <div class="label">*产品产地：</div>
@@ -31,7 +32,8 @@
                     </div>
                     <div class="detail-row">
                         <div class="label">建档时间：</div>
-                        <div class="value">{{ productInfo.archiveDate ? formatDate(productInfo.archiveDate, 'YYYY-MM-DD HH:mm:ss') : '--' }}</div>
+                        <div class="value">{{ formatDate(productInfo.archiveDate, 'YYYY-MM-DD HH:mm:ss') || '--' }}
+                        </div>
                     </div>
                     <div class="detail-row">
                         <div class="label">*宣传照片：</div>
@@ -42,7 +44,9 @@
                                         <Picture />
                                     </el-icon>
                                     <template v-else>
-                                        <el-image :src="productInfo.productImageUrl" :preview-src-list="[productInfo.productImageUrl]" class="preview-img" fit="cover" :preview-teleported="true" />
+                                        <el-image :src="productInfo.productImageUrl"
+                                            :preview-src-list="[productInfo.productImageUrl]" class="preview-img"
+                                            fit="cover" :preview-teleported="true" />
                                     </template>
                                 </div>
                             </div>
@@ -50,7 +54,9 @@
                     </div>
                     <div class="detail-row">
                         <div class="label">*批次规模：</div>
-                        <div class="value">{{ productInfo.productSpec ? productInfo.productSpec + ' ' + (productInfo.productUnit || '') : '--' }}</div>
+                        <div class="value">{{ productInfo.productSpec ? productInfo.productSpec + ' ' +
+                            getAgriUnitLabel(productInfo.productUnit) :
+                            '--' }}</div>
                     </div>
                 </div>
 
@@ -67,7 +73,8 @@
                     </div>
                     <div class="detail-row">
                         <div class="label">*主体类型：</div>
-                        <div class="value">{{ subjectInfo.category ? getCategoryLabel(subjectInfo.category) : '--' }}</div>
+                        <div class="value">{{ subjectInfo.category ? getCategoryLabel(subjectInfo.category) : '--' }}
+                        </div>
                     </div>
                     <div class="detail-row">
                         <div class="label">*备案类型：</div>
@@ -79,7 +86,8 @@
                     </div>
                     <div class="detail-row">
                         <div class="label">*所属地区：</div>
-                        <div class="value">{{ [subjectInfo.provinceCode, subjectInfo.cityCode, subjectInfo.districtCode].filter(Boolean).join('') || '--' }}</div>
+                        <div class="value">{{ [subjectInfo.provinceCode, subjectInfo.cityCode,
+                        subjectInfo.districtCode].filter(Boolean).join('') || '--' }}</div>
                     </div>
                     <div class="detail-row">
                         <div class="label">*详细地址：</div>
@@ -95,7 +103,8 @@
                     </div>
                     <div class="detail-row">
                         <div class="label">*生产规模：</div>
-                        <div class="value">{{ subjectInfo.productionScale ? subjectInfo.productionScale + ' ' + (subjectInfo.productionScaleUnit || '') : '--' }}</div>
+                        <div class="value">{{ subjectInfo.productionScale ? subjectInfo.productionScale + ' ' +
+                            getAgriUnitLabel(subjectInfo.productionScaleUnit) : '--' }}</div>
                     </div>
                     <div class="detail-row" v-if="subjectInfo.type === 1">
                         <div class="label">*信用代码：</div>
@@ -114,7 +123,9 @@
                                         <Picture />
                                     </el-icon>
                                     <template v-else>
-                                        <el-image :src="subjectInfo.businessLicenseUrl" :preview-src-list="[subjectInfo.businessLicenseUrl]" class="preview-img" fit="cover" :preview-teleported="true" />
+                                        <el-image :src="subjectInfo.businessLicenseUrl"
+                                            :preview-src-list="[subjectInfo.businessLicenseUrl]" class="preview-img"
+                                            fit="cover" :preview-teleported="true" />
                                     </template>
                                 </div>
                             </div>
@@ -126,15 +137,24 @@
                             <div class="img-preview-group">
                                 <div class="id-card-boxes">
                                     <div class="preview-box">
-                                        <el-icon v-if="!subjectInfo.idCardFrontUrl"><Postcard /></el-icon>
+                                        <el-icon v-if="!subjectInfo.idCardFrontUrl">
+                                            <Postcard />
+                                        </el-icon>
                                         <template v-else>
-                                            <el-image :src="subjectInfo.idCardFrontUrl" :preview-src-list="[subjectInfo.idCardFrontUrl, subjectInfo.idCardBackUrl].filter(Boolean)" class="preview-img" fit="cover" :preview-teleported="true" />
+                                            <el-image :src="subjectInfo.idCardFrontUrl"
+                                                :preview-src-list="[subjectInfo.idCardFrontUrl, subjectInfo.idCardBackUrl].filter(Boolean)"
+                                                class="preview-img" fit="cover" :preview-teleported="true" />
                                         </template>
                                     </div>
                                     <div class="preview-box">
-                                        <el-icon v-if="!subjectInfo.idCardBackUrl"><Postcard /></el-icon>
+                                        <el-icon v-if="!subjectInfo.idCardBackUrl">
+                                            <Postcard />
+                                        </el-icon>
                                         <template v-else>
-                                            <el-image :src="subjectInfo.idCardBackUrl" :preview-src-list="[subjectInfo.idCardFrontUrl, subjectInfo.idCardBackUrl].filter(Boolean)" :initial-index="subjectInfo.idCardFrontUrl ? 1 : 0" class="preview-img" fit="cover" :preview-teleported="true" />
+                                            <el-image :src="subjectInfo.idCardBackUrl"
+                                                :preview-src-list="[subjectInfo.idCardFrontUrl, subjectInfo.idCardBackUrl].filter(Boolean)"
+                                                :initial-index="subjectInfo.idCardFrontUrl ? 1 : 0" class="preview-img"
+                                                fit="cover" :preview-teleported="true" />
                                         </template>
                                     </div>
                                 </div>
@@ -144,14 +164,21 @@
                     <div class="detail-row" v-if="subjectInfo.type === 1">
                         <div class="label">企业资质：</div>
                         <div class="value">
-                             <div class="img-preview-group">
-                                <template v-if="subjectInfo.qualificationUrls && parseUrls(subjectInfo.qualificationUrls).length">
-                                    <div class="preview-box" v-for="(url, index) in parseUrls(subjectInfo.qualificationUrls)" :key="index">
-                                         <el-image :src="url" :preview-src-list="parseUrls(subjectInfo.qualificationUrls)" :initial-index="index" class="preview-img" fit="cover" :preview-teleported="true" />
+                            <div class="img-preview-group">
+                                <template
+                                    v-if="subjectInfo.qualificationUrls && parseUrls(subjectInfo.qualificationUrls).length">
+                                    <div class="preview-box"
+                                        v-for="(url, index) in parseUrls(subjectInfo.qualificationUrls)" :key="index">
+                                        <el-image :src="url"
+                                            :preview-src-list="parseUrls(subjectInfo.qualificationUrls)"
+                                            :initial-index="index" class="preview-img" fit="cover"
+                                            :preview-teleported="true" />
                                     </div>
                                 </template>
                                 <div class="preview-box" v-else>
-                                    <el-icon><Picture /></el-icon>
+                                    <el-icon>
+                                        <Picture />
+                                    </el-icon>
                                 </div>
                             </div>
                         </div>
@@ -177,6 +204,7 @@ import * as ProductApi from '@/api/agri/product/index';
 import * as SubjectApi from '@/api/agri/subject/index';
 import { formatDate } from '@/utils/formatTime';
 import { useDict } from '@/hooks/web/useDict';
+import { getAgriUnitLabel } from '@/utils/agriUnit';
 
 const { getLabel: getCategoryLabel } = useDict('agri_subject_category', 'str');
 const { getLabel: getFilingTypeLabel } = useDict('agri_filing_type', 'int');
@@ -205,13 +233,13 @@ const loadDetail = async () => {
     try {
         const prodData = await ProductApi.getProduct(id);
         productInfo.value = prodData || {};
-        
+
         if (prodData && prodData.subjectId) {
-             const subData = await SubjectApi.getSubject(prodData.subjectId);
-             subjectInfo.value = subData || {};
-             return;
+            const subData = await SubjectApi.getSubject(prodData.subjectId);
+            subjectInfo.value = subData || {};
+            return;
         }
-        
+
         const mySubData = await SubjectApi.getMySubject();
         subjectInfo.value = mySubData || {};
     } catch (error) {
@@ -370,5 +398,4 @@ watch(() => route.query.id, (newId) => {
     font-weight: 500;
     font-size: 14px;
 }
-
 </style>

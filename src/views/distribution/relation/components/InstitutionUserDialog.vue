@@ -6,7 +6,7 @@
       </div>
     </div>
 
-    <!-- 本地过滤搜索表单 -->
+    <!-- 搜索表单 -->
     <div class="search-form">
       <el-form :inline="true" :model="queryParams" class="demo-form-inline">
         <el-form-item label="机构名称">
@@ -17,6 +17,7 @@
             <el-option label="监管机构" :value="1" />
             <el-option label="检测机构" :value="2" />
             <el-option label="企业" :value="3" />
+            <el-option label="系统部门" :value="4" />
           </el-select>
         </el-form-item>
         <el-form-item label="状态">
@@ -34,35 +35,13 @@
 
     <!-- 数据表格 -->
     <el-table ref="tableRef" :data="list" v-loading="loading" border @selection-change="handleSelectionChange"
-      max-height="400" row-key="id">
+      max-height="400" row-key="deptId">
       <el-table-column type="selection" width="55" align="center" :reserve-selection="true" />
       <el-table-column label="机构名称" prop="name" align="center" min-width="180" show-overflow-tooltip />
-      <el-table-column label="机构类型" prop="deptType" align="center" width="120">
-        <template #default="scope">
-          <el-tag :type="getDeptTypeTag(scope.row.deptType)">
-            {{ getDeptTypeLabel(scope.row.deptType) }}
-          </el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column label="行政级别" prop="areaLevel" align="center" width="120">
-        <template #default="scope">
-          {{ getAreaLevelLabel(scope.row.areaLevel) }}
-        </template>
-      </el-table-column>
+      <el-table-column label="社会信用代码" prop="socialCreditCode" align="center" width="180" show-overflow-tooltip />
       <el-table-column label="联系人" prop="contactName" align="center" width="120" />
       <el-table-column label="联系电话" prop="contactPhone" align="center" width="130" />
-      <el-table-column label="账号状态" prop="status" align="center" width="100">
-        <template #default="scope">
-          <el-tag :type="scope.row.status === 0 ? 'success' : 'danger'">
-            {{ scope.row.status === 0 ? '启用' : '禁用' }}
-          </el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column label="创建时间" prop="createTime" align="center" width="180">
-        <template #default="scope">
-          {{ formatDate(scope.row.createTime) }}
-        </template>
-      </el-table-column>
+      <el-table-column label="详细地址" prop="address" align="center" min-width="200" show-overflow-tooltip />
     </el-table>
 
     <!-- 分页 -->
@@ -79,10 +58,9 @@
 
 <script setup lang="ts">
 import { ref, reactive, nextTick } from 'vue'
-import { getDeptPage } from '@/api/system/dept'
+import { getAssignableDepts, createDistNodeTarget } from '@/api/agri/dist-relation'
 import * as OrganizationApi from '@/api/agri/organization'
 import { useMessage } from '@/hooks/web/useMessage'
-import { formatDate } from '@/utils/formatTime'
 import type { ElTable } from 'element-plus'
 
 const message = useMessage()
@@ -96,6 +74,8 @@ const list = ref<any[]>([])
 const total = ref(0)
 const selectedRows = ref<any[]>([])
 const initialSelectedIds = ref<number[]>([])
+const relationId = ref<number>(0)
+const currentLevelId = ref<number>(0)
 
 const queryParams = reactive({
   pageNo: 1,
@@ -103,47 +83,15 @@ const queryParams = reactive({
   name: '',
   deptType: undefined,
   status: undefined,
-  areaCode: undefined,
-  areaLevel: undefined
+  provinceCode: undefined,
+  cityCode: undefined,
+  districtCode: undefined
 })
-
-const getAreaLevelLabel = (level: number) => {
-  const map: any = {
-    1: '省级',
-    2: '市级',
-    3: '区县级',
-    4: '乡镇级',
-    5: '村级'
-  }
-  return map[level] || '--'
-}
-
-const getDeptTypeLabel = (type: number) => {
-  const map: any = {
-    0: '虚拟节点',
-    1: '监管机构',
-    2: '检测机构',
-    3: '企业',
-    4: '系统部门'
-  }
-  return map[type] || '未知'
-}
-
-const getDeptTypeTag = (type: number) => {
-  const map: any = {
-    0: 'info',
-    1: 'warning',
-    2: 'success',
-    3: 'primary',
-    4: ''
-  }
-  return map[type] || 'info'
-}
 
 const getList = async () => {
   loading.value = true
   try {
-    const data = await getDeptPage(queryParams)
+    const data = await getAssignableDepts(queryParams)
     list.value = data.list || []
     total.value = data.total || 0
 
@@ -151,7 +99,7 @@ const getList = async () => {
     if (initialSelectedIds.value.length > 0) {
       nextTick(() => {
         list.value.forEach((row) => {
-          if (initialSelectedIds.value.includes(row.id)) {
+          if (initialSelectedIds.value.includes(row.deptId)) {
             tableRef.value?.toggleRowSelection(row, true)
           }
         })
@@ -165,26 +113,23 @@ const getList = async () => {
   }
 }
 
-
-
 const handleQuery = () => {
   queryParams.pageNo = 1
   getList()
 }
 
 const resetQuery = () => {
-  const areaCode = queryParams.areaCode
-  const areaLevel = queryParams.areaLevel
-
-  // 重置表单但保留传入的过滤条件
+  // 重置表单但保留传入的编码过滤条件
+  const { provinceCode, cityCode, districtCode } = queryParams
   Object.assign(queryParams, {
     pageNo: 1,
     pageSize: 10,
     name: '',
     deptType: undefined,
     status: undefined,
-    areaCode,
-    areaLevel
+    provinceCode,
+    cityCode,
+    districtCode
   })
   getList()
 }
@@ -208,7 +153,13 @@ const handleConfirm = async () => {
   confirmLoading.value = true
   try {
     const selectedDept = selectedRows.value[0]
-    await OrganizationApi.bindDept(selectedDept.id)
+    await createDistNodeTarget({
+      relationId: relationId.value,
+      levelId: currentLevelId.value,
+      targetType: 2, // 2-机构(dept)
+      targetId: selectedDept.deptId,
+      targetName: selectedDept.name
+    })
     message.success('机构绑定成功')
     emit('confirm', selectedRows.value)
     dialogVisible.value = false
@@ -221,10 +172,12 @@ const handleConfirm = async () => {
 
 const open = (name: string, params: any = {}) => {
   levelName.value = name || '层级'
+  relationId.value = params.relationId
+  currentLevelId.value = params.levelId
 
   // 回显逻辑：记录初始选中的 ID
   if (params.selectedTargets && Array.isArray(params.selectedTargets)) {
-    initialSelectedIds.value = params.selectedTargets.map((t: any) => t.targetId || t.id)
+    initialSelectedIds.value = params.selectedTargets.map((t: any) => t.targetId || t.deptId || t.id)
     selectedRows.value = [...params.selectedTargets]
   } else {
     initialSelectedIds.value = []
@@ -236,9 +189,10 @@ const open = (name: string, params: any = {}) => {
     tableRef.value?.clearSelection()
   })
 
-  // 将传入的层级过滤条件同步到查询参数中
-  queryParams.areaCode = params.areaCode
-  queryParams.areaLevel = null
+  // 同步过滤条件
+  queryParams.provinceCode = params.provinceCode
+  queryParams.cityCode = params.cityCode
+  queryParams.districtCode = params.districtCode
   queryParams.pageNo = 1
 
   dialogVisible.value = true

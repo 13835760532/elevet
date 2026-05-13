@@ -85,8 +85,8 @@
                         <div class="scale-row">
                             <el-input v-model="formData.productionScale" placeholder="请填写生产规模" />
                             <el-select v-model="formData.productionScaleUnit" placeholder="亩" style="width: 100px">
-                                <el-option label="亩" value="亩" />
-                                <el-option label="公顷" value="公顷" />
+                                <el-option v-for="unit in productionScaleUnitOptions" :key="unit.value"
+                                    :label="unit.label" :value="unit.value" />
                             </el-select>
                         </div>
                     </el-form-item>
@@ -187,6 +187,7 @@ import AreaCascader from '@/components/AreaCascader/index.vue';
 import * as SubjectApi from '@/api/agri/subject/index';
 import { useMessage } from '@/hooks/web/useMessage';
 import { buildSubjectSubmitPayload, getLastSubmittedSubject, saveLastSubmittedSubject } from './lastSubmitCache';
+import { DEFAULT_PRODUCTION_SCALE_UNIT, usePreferredAgriMeasurementUnitOptions } from '@/utils/agriUnit';
 
 import { useDict } from '@/hooks/web/useDict';
 
@@ -215,7 +216,7 @@ const formData = reactive({
     contactName: '',
     contactPhone: '',
     productionScale: '',
-    productionScaleUnit: '亩',
+    productionScaleUnit: DEFAULT_PRODUCTION_SCALE_UNIT,
     businessLicenseUrl: '',
     socialCreditCode: '',
     idCard: '',
@@ -224,6 +225,19 @@ const formData = reactive({
     qualificationUrls: '',
     introduction: ''
 });
+
+const productionScaleUnitRef = computed({
+    get: () => formData.productionScaleUnit,
+    set: (value) => {
+        formData.productionScaleUnit = value || DEFAULT_PRODUCTION_SCALE_UNIT;
+    }
+});
+const productionScaleUnitOptions = usePreferredAgriMeasurementUnitOptions(
+    productionScaleUnitRef,
+    ['亩', 'mu'],
+    DEFAULT_PRODUCTION_SCALE_UNIT,
+    computed(() => !id)
+);
 
 const PERSONAL_FILING_TYPE = 2;
 const isPersonalFilingType = computed(() => Number(formData.type) === PERSONAL_FILING_TYPE);

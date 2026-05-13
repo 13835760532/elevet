@@ -1,11 +1,11 @@
 import type { App } from 'vue'
 import type { RouteRecordRaw } from 'vue-router'
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHashHistory } from 'vue-router'
 import remainingRouter from './modules/remaining'
 
 // 创建路由实例
 const router = createRouter({
-  history: createWebHistory(import.meta.env.VITE_BASE_PATH), // createWebHashHistory URL带#，createWebHistory URL不带#
+  history: createWebHashHistory(import.meta.env.VITE_BASE_PATH),
   strict: true,
   routes: remainingRouter as RouteRecordRaw[],
   scrollBehavior: () => {

@@ -16,7 +16,8 @@
                 <div class="detail-list">
                     <div class="detail-row">
                         <span class="label">*建档时间：</span>
-                        <span class="value">{{ productInfo.createTime ? formatDate(productInfo.createTime, 'YYYY-MM-DD HH:mm:ss') : '--' }}</span>
+                        <span class="value">{{ formatDate(productInfo.archiveDate, 'YYYY-MM-DD HH:mm:ss') || '--' }}
+                        </span>
                     </div>
                     <div class="detail-row">
                         <span class="label">*产品编码：</span>
@@ -28,7 +29,8 @@
                     </div>
                     <div class="detail-row">
                         <span class="label">*产品类别：</span>
-                        <span class="value">{{ productInfo.category || '--' }}</span>
+                        <span class="value">{{ getProductCategoryLabel(productInfo.category) == '--' ?
+                            productInfo.category : getProductCategoryLabel(productInfo.category) }}</span>
                     </div>
                     <div class="detail-row">
                         <span class="label">*产品产地：</span>
@@ -39,15 +41,15 @@
                         <div class="value">
                             <div class="preview-img-box" v-if="productInfo.productImageUrl">
                                 <el-image :src="productInfo.productImageUrl"
-                                    :preview-src-list="[productInfo.productImageUrl]"
-                                    fit="cover" />
+                                    :preview-src-list="[productInfo.productImageUrl]" fit="cover" />
                             </div>
                             <span v-else>--</span>
                         </div>
                     </div>
                     <div class="detail-row">
                         <span class="label">*批次规模：</span>
-                        <span class="value">{{ productInfo.productSpec ? productInfo.productSpec + ' ' + (productInfo.productUnit || '') : '--' }}</span>
+                        <span class="value">{{ productInfo.productSpec ? productInfo.productSpec + ' ' +
+                            getAgriUnitLabel(productInfo.productUnit) : '--' }}</span>
                     </div>
                 </div>
             </div>
@@ -62,7 +64,8 @@
                     </div>
                     <div class="detail-row">
                         <span class="label">*主体类型：</span>
-                        <span class="value">{{ subjectInfo.category ? getCategoryLabel(subjectInfo.category) : '--' }}</span>
+                        <span class="value">{{ subjectInfo.category ? getCategoryLabel(subjectInfo.category) : '--'
+                        }}</span>
                     </div>
                     <div class="detail-row">
                         <span class="label">*备案类型：</span>
@@ -74,7 +77,8 @@
                     </div>
                     <div class="detail-row">
                         <span class="label">*所属地区：</span>
-                        <span class="value">{{ [subjectInfo.provinceCode, subjectInfo.cityCode, subjectInfo.districtCode].filter(Boolean).join('') || '--' }}</span>
+                        <span class="value">{{ [subjectInfo.provinceCode, subjectInfo.cityCode,
+                        subjectInfo.districtCode].filter(Boolean).join('') || '--' }}</span>
                     </div>
                     <div class="detail-row">
                         <span class="label">*详细地址：</span>
@@ -90,7 +94,8 @@
                     </div>
                     <div class="detail-row">
                         <span class="label">*生产规模：</span>
-                        <span class="value">{{ subjectInfo.productionScale ? subjectInfo.productionScale + ' ' + (subjectInfo.productionScaleUnit || '') : '--' }}</span>
+                        <span class="value">{{ subjectInfo.productionScale ? subjectInfo.productionScale + ' ' +
+                            getAgriUnitLabel(subjectInfo.productionScaleUnit) : '--' }}</span>
                     </div>
                     <div class="detail-row complex">
                         <span class="label">*信用代码<br />（身份证代码）：</span>
@@ -98,19 +103,21 @@
                     </div>
                     <div class="detail-row">
                         <span class="label">*营业执照：</span>
-                        <span class="value active-link" v-if="subjectInfo.businessLicenseUrl" @click="handlePreview(subjectInfo.businessLicenseUrl)">预览</span>
+                        <span class="value active-link" v-if="subjectInfo.businessLicenseUrl"
+                            @click="handlePreview(subjectInfo.businessLicenseUrl)">预览</span>
                         <span class="value" v-else>--</span>
                     </div>
                     <div class="detail-row">
                         <span class="label">身份证：</span>
-                        <span class="value active-link" v-if="subjectInfo.idCardFrontUrl || subjectInfo.idCardBackUrl" 
-                              @click="handlePreview([subjectInfo.idCardFrontUrl, subjectInfo.idCardBackUrl].filter(Boolean))">预览</span>
+                        <span class="value active-link" v-if="subjectInfo.idCardFrontUrl || subjectInfo.idCardBackUrl"
+                            @click="handlePreview([subjectInfo.idCardFrontUrl, subjectInfo.idCardBackUrl].filter(Boolean))">预览</span>
                         <span class="value" v-else>--</span>
                     </div>
                     <div class="detail-row">
                         <span class="label">企业资质：</span>
-                        <span class="value active-link" v-if="subjectInfo.qualificationUrls && parseUrls(subjectInfo.qualificationUrls).length" 
-                              @click="handlePreview(parseUrls(subjectInfo.qualificationUrls))">预览</span>
+                        <span class="value active-link"
+                            v-if="subjectInfo.qualificationUrls && parseUrls(subjectInfo.qualificationUrls).length"
+                            @click="handlePreview(parseUrls(subjectInfo.qualificationUrls))">预览</span>
                         <span class="value" v-else>--</span>
                     </div>
                     <div class="detail-row no-border">
@@ -126,14 +133,10 @@
                 <el-button class="btn-back" @click="handleBack">返回</el-button>
             </div>
         </div>
-        
+
         <!-- 图片预览组件 -->
-        <el-image-viewer 
-            v-if="imgPreviewViewerVisible" 
-            :url-list="previewUrlList" 
-            @close="imgPreviewViewerVisible = false" 
-            :teleported="true"
-        />
+        <el-image-viewer v-if="imgPreviewViewerVisible" :url-list="previewUrlList"
+            @close="imgPreviewViewerVisible = false" :teleported="true" />
     </div>
 </template>
 
@@ -145,6 +148,7 @@ import * as SubjectApi from '@/api/agri/subject/index';
 import { formatDate } from '@/utils/formatTime';
 
 import { useDict } from '@/hooks/web/useDict';
+import { getAgriUnitLabel } from '@/utils/agriUnit';
 
 const { getLabel: getCategoryLabel } = useDict('agri_subject_category', 'str');
 const { getLabel: getFilingTypeLabel } = useDict('agri_filing_type', 'int');
@@ -172,7 +176,7 @@ const handlePreview = (urls) => {
     if (!urls) return;
     const urlArray = Array.isArray(urls) ? urls : [urls];
     if (urlArray.length === 0) return;
-    
+
     previewUrlList.value = urlArray;
     imgPreviewViewerVisible.value = true;
 };
@@ -184,18 +188,18 @@ const loadDetail = async () => {
         if (id) {
             const prodData = await ProductApi.getProduct(id);
             productInfo.value = prodData || {};
-            
+
             if (prodData && prodData.subjectId) {
-                 const subData = await SubjectApi.getSubject(prodData.subjectId);
-                 subjectInfo.value = subData || {};
-                 return;
+                const subData = await SubjectApi.getSubject(prodData.subjectId);
+                subjectInfo.value = subData || {};
+                return;
             }
         }
-        
+
         // 如果没有产品ID，或者没有关联subjectId，则使用我的主体作为回退/展示
         const mySubData = await SubjectApi.getMySubject();
         subjectInfo.value = mySubData || {};
-        
+
     } catch (error) {
         console.error('获取档案详情失败', error);
     } finally {
@@ -299,7 +303,7 @@ const handleBack = () => {
             color: #3B82F6;
             cursor: pointer;
             font-weight: 500;
-            
+
             &:hover {
                 text-decoration: underline;
             }
@@ -330,7 +334,7 @@ const handleBack = () => {
     :deep(.el-image) {
         width: 100%;
         height: 100%;
-        
+
         img {
             object-fit: cover;
         }

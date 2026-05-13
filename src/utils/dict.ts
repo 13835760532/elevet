@@ -257,5 +257,6 @@ export enum DICT_TYPE {
   AGRI_CERTIFICATE_TYPE = 'agri_certificate_type', // 合格证出证类型
   AGRI_DETECTION_TASK_STATUS = 'agri_detection_task_status', // 检测任务状态
   AGRI_SAMPLE_STATUS = 'agri_sample_status', // 检测样品状态
-  AGRI_PRODUCT_CATEGORY = 'agri_product_category' // 产品类别
+  AGRI_PRODUCT_CATEGORY = 'agri_product_category', // 产品类别
+  AGRI_MEASUREMENT_UNIT = 'agri_measurement_unit' // 农产品计量单位
 }

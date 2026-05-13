@@ -24,7 +24,6 @@ import {
 } from '@/api/agri/dashboard/fast';
 import { getBigScreenQueryParams, subscribeBigScreenRefresh } from '../bigscreen/config';
 
-const months = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
 const leftTrendTab = ref('快检量');
 const rightTrendTab = ref('自主检测样本量');
 const positiveRateTrend = ref<FastPositiveRateTrendRespVO>({});
@@ -36,12 +35,12 @@ const formatMonthLabel = (value?: string) => {
   return matched ? `${matched[1]}月` : value;
 };
 const getAxisData = (axis?: string[]) =>
-  axis?.length ? axis.map((item) => formatMonthLabel(item) || item) : months;
+  axis?.length ? axis.map((item) => formatMonthLabel(item) || item) : [];
 const normalizeSeries = <T extends number>(list: T[] | undefined, length: number) =>
   Array.from({ length }, (_, index) => Number(list?.[index] || 0));
-const calcMax = (data: number[], fallback: number) => {
+const calcMax = (data: number[], emptyMax: number) => {
   const max = Math.max(...data, 0);
-  if (!max) return fallback;
+  if (!max) return emptyMax;
   return Math.ceil(max * 1.2);
 };
 
@@ -65,7 +64,7 @@ const createTrendOption = (xAxisData: string[], data: number[], max: number, for
   series: [
     {
       type: 'line',
-      smooth: true,
+      smooth: false,
       symbol: 'circle',
       symbolSize: 6,
       lineStyle: { color: '#4deaff', width: 2 },

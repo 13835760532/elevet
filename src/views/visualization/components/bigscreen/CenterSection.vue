@@ -14,6 +14,14 @@
       </div>
 
       <div class="map-area">
+        <div class="left-stats">
+          <div class="stat-item" v-for="item in sideStats" :key="item.label">
+            <div class="stat-content">
+              <span class="stat-label">{{ item.label }}</span>
+              <span class="stat-value">{{ item.value }}</span>
+            </div>
+          </div>
+        </div>
         <Map />
       </div>
     </BigPanelCard>
@@ -54,7 +62,16 @@ const topMetrics = computed(() => [
   { img: n3, label: '生产经营主体', value: Number(overview.value.enterpriseCount || 0) }
 ]);
 
-const defaultXAxis = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
+const sideStats = computed(() => [
+  { label: '任务下发项次', value: `${Number(overview.value.taskIssuedCount || 0)}` },
+  { label: '任务完成项次', value: `${Number(overview.value.taskCompletedCount || 0)}` },
+  { label: '任务完成率', value: `${Number(overview.value.taskCompletionRate || 0).toFixed(2)}%` },
+  { label: '检测样品量', value: `${Number(overview.value.sampleCount || 0)}` },
+  { label: '检测项次', value: `${Number(overview.value.detectionItemCount || 0)}` },
+  { label: '合格证开具份', value: `${Number(overview.value.certificateIssueCount || 0)}` },
+  { label: '合格证校证份', value: `${Number(overview.value.certificateVerifyCount || 0)}` }
+]);
+
 const formatMonthLabel = (month?: string) => {
   if (!month) return '--';
   const value = String(month).trim();
@@ -63,15 +80,11 @@ const formatMonthLabel = (month?: string) => {
 };
 
 const xAxisData = computed(() =>
-  trendData.value.length ? trendData.value.map((item) => formatMonthLabel(item.month)) : defaultXAxis
+  trendData.value.map((item) => formatMonthLabel(item.month))
 );
 
 const lineValues = computed(() =>
-  trendData.value.length
-    ? trendData.value.map((item) => Number(item.statValue || 0))
-    : trendTab.value === '阳性率'
-    ? [3.2, 6.4, 5.1, 7, 8, 8.7, 5.3, 6.5, 7.2, 6.3, 5.2, 5.2]
-    : [1200, 2800, 2400, 3600, 4200, 4600, 2800, 3400, 3900, 3500, 2900, 2700]
+  trendData.value.map((item) => Number(item.statValue || 0))
 );
 
 const yAxisMax = computed(() => {
@@ -84,37 +97,89 @@ const yAxisMax = computed(() => {
 });
 
 const createLineTrendOption = (data: number[], max: number, formatter?: string) => ({
-  grid: { left: 45, right: 20, top: 24, bottom: 24 },
-  tooltip: { trigger: 'axis' },
+  grid: { left: 52, right: 18, top: 26, bottom: 20 },
+  tooltip: {
+    trigger: 'axis',
+    backgroundColor: 'rgba(6, 18, 42, 0.92)',
+    borderColor: 'rgba(87, 226, 255, 0.35)',
+    textStyle: { color: '#dff7ff' }
+  },
   xAxis: {
     type: 'category',
-    boundaryGap: false,
+    boundaryGap: true,
     data: xAxisData.value,
-    axisLabel: { color: '#90b5da' },
-    axisLine: { lineStyle: { color: '#2d67ac' } }
+    axisLabel: {
+      color: '#d5e6ff',
+      fontSize: 12,
+      margin: 14
+    },
+    axisTick: {
+      show: true,
+      length: 8,
+      lineStyle: { color: 'rgba(174, 197, 227, 0.35)' }
+    },
+    axisLine: {
+      lineStyle: {
+        color: 'rgba(140, 167, 196, 0.4)',
+        width: 1.2
+      }
+    },
+    splitLine: {
+      show: false
+    }
   },
   yAxis: {
     type: 'value',
     min: 0,
     max,
-    axisLabel: { color: '#90b5da', formatter: formatter || '{value}' },
-    splitLine: { lineStyle: { color: 'rgba(45, 106, 184, 0.35)', type: 'dashed' } }
+    splitNumber: 5,
+    axisLabel: {
+      color: '#b8cce4',
+      fontSize: 12,
+      margin: 12,
+      formatter: formatter || '{value}'
+    },
+    axisTick: { show: false },
+    axisLine: { show: false },
+    splitLine: {
+      lineStyle: {
+        color: 'rgba(54, 114, 181, 0.22)',
+        type: 'dashed'
+      }
+    }
   },
   series: [
     {
       type: 'line',
-      smooth: true,
+      smooth: false,
       symbol: 'circle',
-      symbolSize: 8,
-      lineStyle: { color: '#4deaff', width: 3 },
-      itemStyle: { color: '#48e8ff', borderColor: '#fff', borderWidth: 2 },
+      symbolSize: 6,
+      showSymbol: true,
+      lineStyle: {
+        color: '#57e2ff',
+        width: 2
+      },
+      itemStyle: {
+        color: '#57e2ff',
+        borderColor: 'rgba(255, 255, 255, 0.65)',
+        borderWidth: 1.5
+      },
       areaStyle: {
         color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-          { offset: 0, color: 'rgba(72, 232, 255, 0.38)' },
-          { offset: 1, color: 'rgba(72, 232, 255, 0.02)' }
+          { offset: 0, color: 'rgba(87, 226, 255, 0.42)' },
+          { offset: 0.65, color: 'rgba(87, 226, 255, 0.14)' },
+          { offset: 1, color: 'rgba(87, 226, 255, 0)' }
         ])
       },
-      data: [3.2, 6.4, 5.1, 7, 8, 8.7, 5.3, 6.5, 7.2, 6.3, 5.2, 5.2]
+      emphasis: {
+        focus: 'series',
+        itemStyle: {
+          color: '#7cecff',
+          borderColor: '#ffffff',
+          borderWidth: 2
+        }
+      },
+      data
     }
   ]
 });

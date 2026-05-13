@@ -24,43 +24,64 @@ import {
 } from '@/api/agri/dashboard/task';
 import { getBigScreenQueryParams, subscribeBigScreenRefresh } from '../bigscreen/config';
 
-const xData = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
 const volumeTrend = ref<TaskVolumeTrendRespVO>({});
 const riskTrend = ref<TaskRiskTrendRespVO>({});
 const lineBase = {
-  grid: { left: 42, right: 16, top: 16, bottom: 24 },
-  tooltip: { trigger: 'axis' },
+  grid: { left: 52, right: 18, top: 20, bottom: 18 },
+  tooltip: {
+    trigger: 'axis',
+    backgroundColor: 'rgba(6, 18, 42, 0.92)',
+    borderColor: 'rgba(87, 226, 255, 0.35)',
+    textStyle: { color: '#dff7ff' }
+  },
   legend: {
     right: 16,
     top: 0,
-    textStyle: { color: '#8fb6da', fontSize: 11 }
+    itemWidth: 10,
+    itemHeight: 10,
+    textStyle: { color: '#c0d7f2', fontSize: 11 }
   },
   xAxis: {
     type: 'category',
-    boundaryGap: false,
-    data: xData,
-    axisLabel: { color: '#8fb6da', fontSize: 11 },
-    axisLine: { lineStyle: { color: '#2d67ac' } }
+    boundaryGap: true,
+    data: [],
+    axisLabel: { color: '#d5e6ff', fontSize: 12, margin: 12 },
+    axisTick: {
+      show: true,
+      length: 7,
+      lineStyle: { color: 'rgba(174, 197, 227, 0.35)' }
+    },
+    axisLine: { lineStyle: { color: 'rgba(140, 167, 196, 0.4)', width: 1.2 } }
   },
   yAxis: {
     type: 'value',
-    axisLabel: { color: '#8fb6da', fontSize: 11 },
-    splitLine: { lineStyle: { color: 'rgba(45, 106, 184, 0.35)', type: 'dashed' } }
+    splitNumber: 6,
+    axisLabel: { color: '#b8cce4', fontSize: 12 },
+    axisTick: { show: false },
+    axisLine: { show: false },
+    splitLine: { lineStyle: { color: 'rgba(54, 114, 181, 0.22)', type: 'dashed' } }
   }
 };
 
-const getAxisData = (axis?: string[]) => (axis?.length ? axis : xData);
+const getAxisData = (axis?: string[]) => (axis?.length ? axis : []);
 const normalizeSeries = (list: number[] | undefined, length: number) =>
   Array.from({ length }, (_, index) => Number(list?.[index] || 0));
 
-const leftTrendXAxis = computed(() => getAxisData(volumeTrend.value.xaxis));
+const formatMonthLabel = (month?: string) => {
+  if (!month) return '--';
+  const value = String(month).trim();
+  const monthPart = value.split('-')[1];
+  return monthPart ? `${Number(monthPart)}月` : value;
+};
+
+const leftTrendXAxis = computed(() => getAxisData(volumeTrend.value.xaxis).map((item) => formatMonthLabel(item)));
 const sampleCounts = computed(() =>
   normalizeSeries(volumeTrend.value.sampleCounts, leftTrendXAxis.value.length)
 );
 const itemCounts = computed(() =>
   normalizeSeries(volumeTrend.value.itemCounts, leftTrendXAxis.value.length)
 );
-const rightTrendXAxis = computed(() => getAxisData(riskTrend.value.xaxis));
+const rightTrendXAxis = computed(() => getAxisData(riskTrend.value.xaxis).map((item) => formatMonthLabel(item)));
 const samplePositiveRates = computed(() =>
   normalizeSeries(riskTrend.value.samplePositiveRates, rightTrendXAxis.value.length)
 );
@@ -68,34 +89,52 @@ const itemPositiveRates = computed(() =>
   normalizeSeries(riskTrend.value.itemPositiveRates, rightTrendXAxis.value.length)
 );
 
+const leftAxisMax = computed(() => {
+  const maxValue = Math.max(...sampleCounts.value, ...itemCounts.value, 0);
+  if (maxValue <= 0) return 10;
+  return Math.ceil(maxValue / 10) * 10 + 10;
+});
+
+const rightAxisMax = computed(() => {
+  const maxValue = Math.max(...samplePositiveRates.value, ...itemPositiveRates.value, 0);
+  return Math.max(60, Math.ceil(maxValue / 10) * 10);
+});
+
 const leftTrendOption = computed(() => ({
   ...lineBase,
   xAxis: {
     ...lineBase.xAxis,
     data: leftTrendXAxis.value
   },
+  yAxis: {
+    ...lineBase.yAxis,
+    max: leftAxisMax.value
+  },
   legend: { ...lineBase.legend, data: ['样品批次', '检测项次'] },
   series: [
     {
       name: '样品批次',
       type: 'line',
-      smooth: true,
-      symbolSize: 5,
-      lineStyle: { color: '#7bd644', width: 2 },
-      itemStyle: { color: '#7bd644' },
+      smooth: false,
+      symbol: 'circle',
+      symbolSize: 4,
+      lineStyle: { color: '#83d54b', width: 2 },
+      itemStyle: { color: '#83d54b' },
       data: sampleCounts.value
     },
     {
       name: '检测项次',
       type: 'line',
-      smooth: true,
-      symbolSize: 5,
+      smooth: false,
+      symbol: 'circle',
+      symbolSize: 4,
       lineStyle: { color: '#56e8ff', width: 2 },
-      itemStyle: { color: '#56e8ff' },
+      itemStyle: { color: '#56e8ff', borderColor: 'rgba(255,255,255,0.65)', borderWidth: 1 },
       areaStyle: {
         color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-          { offset: 0, color: 'rgba(86, 232, 255, 0.25)' },
-          { offset: 1, color: 'rgba(86, 232, 255, 0.02)' }
+          { offset: 0, color: 'rgba(86, 232, 255, 0.45)' },
+          { offset: 0.7, color: 'rgba(86, 232, 255, 0.12)' },
+          { offset: 1, color: 'rgba(86, 232, 255, 0)' }
         ])
       },
       data: itemCounts.value
@@ -111,30 +150,34 @@ const rightTrendOption = computed(() => ({
   },
   yAxis: {
     ...lineBase.yAxis,
-    axisLabel: { color: '#8fb6da', formatter: '{value}%', fontSize: 11 }
+    max: rightAxisMax.value,
+    axisLabel: { color: '#b8cce4', formatter: '{value}%', fontSize: 12 }
   },
   legend: { ...lineBase.legend, data: ['样品阳性率', '检测项阳性率'] },
   series: [
     {
       name: '样品阳性率',
       type: 'line',
-      smooth: true,
-      symbolSize: 5,
-      lineStyle: { color: '#7bd644', width: 2 },
-      itemStyle: { color: '#7bd644' },
+      smooth: false,
+      symbol: 'circle',
+      symbolSize: 4,
+      lineStyle: { color: '#83d54b', width: 2 },
+      itemStyle: { color: '#83d54b' },
       data: samplePositiveRates.value
     },
     {
       name: '检测项阳性率',
       type: 'line',
-      smooth: true,
-      symbolSize: 5,
+      smooth: false,
+      symbol: 'circle',
+      symbolSize: 4,
       lineStyle: { color: '#56e8ff', width: 2 },
-      itemStyle: { color: '#56e8ff' },
+      itemStyle: { color: '#56e8ff', borderColor: 'rgba(255,255,255,0.65)', borderWidth: 1 },
       areaStyle: {
         color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-          { offset: 0, color: 'rgba(86, 232, 255, 0.25)' },
-          { offset: 1, color: 'rgba(86, 232, 255, 0.02)' }
+          { offset: 0, color: 'rgba(86, 232, 255, 0.45)' },
+          { offset: 0.7, color: 'rgba(86, 232, 255, 0.12)' },
+          { offset: 1, color: 'rgba(86, 232, 255, 0)' }
         ])
       },
       data: itemPositiveRates.value

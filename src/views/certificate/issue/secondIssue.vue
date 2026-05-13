@@ -27,9 +27,8 @@
                                     <button type="button" class="step-btn yellow" @click="handleAdd">+</button>
                                 </div>
                                 <el-select v-model="formData.unit" class="unit-select">
-                                    <el-option label="单位" value="unit" />
-                                    <el-option label="千克" value="kg" />
-                                    <el-option label="吨" value="t" />
+                                    <el-option v-for="unit in measurementUnitOptions" :key="unit.value"
+                                        :label="unit.label" :value="unit.value" />
                                 </el-select>
                             </div>
                         </el-form-item>
@@ -133,6 +132,7 @@ import * as DetectionRecordApi from '@/api/agri/detectionRecord';
 import * as DetectionResultItemApi from '@/api/agri/detectionResultItem';
 import UploadImg from '@/components/UploadFile/src/UploadImg.vue';
 import { useMessage } from '@/hooks/web/useMessage';
+import { DEFAULT_AGRI_MEASUREMENT_UNIT, usePreferredAgriMeasurementUnitOptions } from '@/utils/agriUnit';
 
 const router = useRouter();
 const message = useMessage();
@@ -144,13 +144,21 @@ const currentStep = computed(() => certStore.currentStep);
 const formData = reactive({
     issueType: 'buy',
     quantity: 0,
-    unit: 'kg',
+    unit: DEFAULT_AGRI_MEASUREMENT_UNIT,
     basis: ['quality'],
     thirdPartyType: 'third',
     thirdPartyReportUrl: '',
     platformType: 'platform',
     platformRecordId: undefined
 });
+
+const unitRef = computed({
+    get: () => formData.unit,
+    set: (value) => {
+        formData.unit = value || DEFAULT_AGRI_MEASUREMENT_UNIT;
+    }
+});
+const measurementUnitOptions = usePreferredAgriMeasurementUnitOptions(unitRef, ['千克', 'kg'], DEFAULT_AGRI_MEASUREMENT_UNIT);
 
 // 平台数据管理
 const searchLoading = ref(false);

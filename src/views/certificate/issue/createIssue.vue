@@ -125,7 +125,7 @@
                             <div class="form-row two-cols">
                                 <el-form-item label="产品类别" required class="form-col">
                                     <el-select v-model="formData.category" placeholder="选择产品类别" class="full-width"
-                                        :disabled="formData.linkProfile === 'yes'">
+                                        :disabled="formData.linkProfile === 'yes'" filterable allow-create clearable>
                                         <el-option v-for="dict in productCategoryOptions" :key="dict.value"
                                             :label="dict.label" :value="dict.value" />
                                     </el-select>
@@ -144,8 +144,8 @@
                                             :disabled="formData.linkProfile === 'yes'" />
                                         <el-select v-model="formData.unit" placeholder="单位" style="width: 100px;"
                                             :disabled="formData.linkProfile === 'yes'">
-                                            <el-option v-for="unit in AGRI_UNITS" :key="unit.value" :label="unit.label"
-                                                :value="unit.value" />
+                                            <el-option v-for="unit in measurementUnitOptions" :key="unit.value"
+                                                :label="unit.label" :value="unit.value" />
                                         </el-select>
                                     </div>
                                 </el-form-item>
@@ -298,8 +298,7 @@
                                 formData.productName || '--'
                                     }}</span></div>
                             <div class="info-row"><span class="label">数量/重量</span><span class="value">{{
-                                formData.batchSize || '--' }} {{
-                                        formData.unit || '' }}</span></div>
+                                formData.batchSize || '--' }} {{ getAgriUnitLabel(formData.unit) }}</span></div>
                             <div class="info-row">
                                 <span class="label">产品类别</span>
                                 <span class="value">
@@ -351,7 +350,7 @@
                                 <button type="button" class="step-btn yellow" @click="handleAdd">+</button>
                             </div>
                             <el-select v-model="formData.unit" class="unit-select">
-                                <el-option v-for="unit in AGRI_UNITS" :key="unit.value" :label="unit.label"
+                                <el-option v-for="unit in measurementUnitOptions" :key="unit.value" :label="unit.label"
                                     :value="unit.value" />
                             </el-select>
                         </div>
@@ -498,8 +497,7 @@
                                 <div class="info-row">
                                     <div class="label">数量/重量</div>
                                     <div class="value">{{ (formData.quantity ?? formData.batchSize ?? '--') }} {{
-                                        formData.unit ||
-                                        '' }}</div>
+                                        getAgriUnitLabel(formData.unit) }}</div>
                                 </div>
                                 <div class="info-row">
                                     <div class="label">产品产地</div>
@@ -612,7 +610,11 @@ import { BluetoothPrinter } from '@/utils';
 import { parseImage } from '@/api/agri/certificateVerification/index';
 import { uploadFile } from '@/api/common/index';
 import { ElLoading } from 'element-plus';
-import { AGRI_UNITS } from '@/utils/constants';
+import {
+    DEFAULT_AGRI_MEASUREMENT_UNIT,
+    getAgriUnitLabel,
+    usePreferredAgriMeasurementUnitOptions
+} from '@/utils/agriUnit';
 
 const router = useRouter();
 const route = useRoute();
@@ -671,18 +673,20 @@ const queryProduce = async (queryString, cb) => {
     }
 };
 
-const matchCategoryFromFullCategory = (fullCategory) => {
+const matchCategoryFromFullCategory = (item) => {
+    if (item.fullCategory) return item.fullCategory;
+    const fullCategory = item.category;
     if (!fullCategory) return null;
     const firstLevel = fullCategory.split('/')[0];
     const matchedOption = productCategoryOptions.find(opt => 
         firstLevel.includes(opt.label) || opt.label.includes(firstLevel.replace('类', ''))
     );
-    return matchedOption ? matchedOption.value : null;
+    return matchedOption ? matchedOption.value : fullCategory;
 };
 
 const handleProduceSelect = (item) => {
     formData.productName = item.name;
-    const category = matchCategoryFromFullCategory(item.fullCategory);
+    const category = matchCategoryFromFullCategory(item);
     if (category) {
         formData.category = category;
     }
@@ -695,7 +699,7 @@ const handleProduceBlur = async () => {
         if (res.list && res.list.length > 0) {
             const item = res.list[0];
             if (item.name === formData.productName) {
-                const category = matchCategoryFromFullCategory(item.fullCategory);
+                const category = matchCategoryFromFullCategory(item);
                 if (category) {
                     formData.category = category;
                 }
@@ -720,7 +724,7 @@ const formData = reactive({
     category: '',
     origin: '',
     batchSize: '',
-    unit: 'kg',
+    unit: DEFAULT_AGRI_MEASUREMENT_UNIT,
     createDate: formatDate(new Date()),
     entity: '',
     registeredCity: '',
@@ -751,6 +755,19 @@ const formData = reactive({
     commitmentContent: '', // 新增记录字段内容
     upstreamCertificateImageUrl: '', // 上游合格证照片
 });
+
+const unitRef = computed({
+    get: () => formData.unit,
+    set: (value) => {
+        formData.unit = value || DEFAULT_AGRI_MEASUREMENT_UNIT;
+    }
+});
+const measurementUnitOptions = usePreferredAgriMeasurementUnitOptions(
+    unitRef,
+    ['千克', 'kg'],
+    DEFAULT_AGRI_MEASUREMENT_UNIT,
+    computed(() => !id && !formData.productId)
+);
 
 // 监听关联档案状态，切换至“否”时清空产品信息
 watch(() => formData.linkProfile, (val) => {
@@ -989,7 +1006,7 @@ const loadDetails = async () => {
             category: data.productCategory || data.productDraft?.category || 'vegetable',
             origin: data.productionArea || data.productDraft?.productionArea || '',
             batchSize: data.batchNo || data.quantity || '',
-            unit: data.unit || data.productDraft?.productUnit || 'kg',
+            unit: data.unit || data.productDraft?.productUnit || DEFAULT_AGRI_MEASUREMENT_UNIT,
             createDate: data.issueDate || data.createTime || '',
             entity: data.subjectName || '',
             subjectId: data.subjectId,
@@ -1016,7 +1033,7 @@ const loadDetails = async () => {
 
         // 如果有关联产品，则触发产品详情加载以完善产品编号等信息
         if (data.productId) {
-            handleProductSelect(data.productId);
+            handleProductSelect(data.productId, { keepCurrentUnit: true });
         }
 
         // 为确保 select 显示名称，如果有 ID 则构造一个 option
@@ -1106,7 +1123,7 @@ const searchProduct = async (query) => {
     }
 };
 
-const handleProductSelect = async (id) => {
+const handleProductSelect = async (id, options = {}) => {
     if (!id) return;
     try {
         const data = await ProductApi.getProduct(id);
@@ -1117,7 +1134,9 @@ const handleProductSelect = async (id) => {
         formData.productImageUrl = data.productImageUrl || '';
         formData.productId = data.id;
         formData.batchSize = data.productSpec || '';
-        formData.unit = data.productUnit || 'kg';
+        if (!options.keepCurrentUnit) {
+            formData.unit = data.productUnit || DEFAULT_AGRI_MEASUREMENT_UNIT;
+        }
         // 转换时间戳为完整日期时间字符串
         if (data.createTime) {
             formData.createDate = formatDate(new Date(data.createTime));
@@ -1348,7 +1367,7 @@ const handleGenerate = async () => {
             certificateType: formData.issueType,
             productId: currentProductId,
             quantity: Number(formData.quantity) || 0,
-            unit: formData.unit || 'kg',
+            unit: formData.unit || DEFAULT_AGRI_MEASUREMENT_UNIT,
             commitmentContent: Array.isArray(computedCommitment.value) ? computedCommitment.value.join('\n') : (computedCommitment.value || ''), // 提交动态生成的内容，使用换行符连接
             commitmentBasis: JSON.stringify(mappedBasis),
             productionDate: formData.createDate ? new Date(formData.createDate).toISOString().split('T')[0] : '',

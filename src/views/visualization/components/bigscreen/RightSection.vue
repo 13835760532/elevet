@@ -31,9 +31,9 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(city, idx) in currentRankData" :key="city + idx">
-              <td><span class="rank-badge" :class="`top-${idx + 1}`">{{ String(idx + 1).padStart(2, '0') }}</span></td>
-              <td>{{ city }}</td>
+            <tr v-for="(item, idx) in currentRankData" :key="`${item.areaName}-${idx}`">
+              <td><span class="rank-badge" :class="`top-${idx + 1}`">{{ String(item.rank).padStart(2, '0') }}</span></td>
+              <td>{{ item.areaName }}</td>
             </tr>
           </tbody>
         </table>
@@ -48,6 +48,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import echarts from '@/plugins/echarts';
 import { Echart } from '@/components/Echart';
 import BigPanelCard from './BigPanelCard.vue';
 import noticeBg from '@/assets/imgs/echarts/首页/bg_fxgg.png';
@@ -61,7 +62,6 @@ import {
 } from '@/api/agri/dashboard';
 import { getNoticePage, type NoticeVO } from '@/api/system/notice';
 import { getBigScreenQueryParams, subscribeBigScreenRefresh } from './config';
-import { createBigScreenLineOption } from './chartOption';
 import { formatDate } from '@/utils/formatTime';
 
 const noticeList = ref<NoticeVO[]>([]);
@@ -72,29 +72,26 @@ const rankList = ref<RiskAreaTopRespVO[]>([]);
 const projectRiskList = ref<ProductPesticideTopRespVO[]>([]);
 const areaLevelTabs = ['城市', '区县'];
 
-const currentRankData = computed(() => rankList.value.map((item) => item.areaName || '--'));
+const formatRankAreaName = (item: RiskAreaTopRespVO) =>
+  item.areaName || item.cityName || item.districtName || item.provinceName || '--';
+
+const currentRankData = computed(() => {
+  const rows = rankList.value.map((item, index) => ({
+    rank: item.rank || index + 1,
+    areaName: formatRankAreaName(item)
+  }));
+  if (rows.length) return rows;
+  return Array.from({ length: 10 }, (_, index) => ({
+    rank: index + 1,
+    areaName: '--'
+  }));
+});
+
 const projectLabels = computed(() =>
-  projectRiskList.value.length
-    ? projectRiskList.value.map((item) => item.combineName || '--')
-    : [
-        '丝瓜-甲氨基',
-        '地瓜-阿维菌素',
-        '四季豆-倍硫磷',
-        '南瓜-氟虫腈',
-        '西瓜-氟虫腈',
-        '白菜-毒死蜱',
-        '白菜-毒死蜱',
-        '白菜-毒死蜱',
-        '白菜-毒死蜱',
-        '白菜-毒死蜱'
-      ]
+  projectRiskList.value.map((item) => item.combineName || '--')
 );
 const projectValues = computed(() =>
-  projectRiskList.value.length
-    ? projectRiskList.value.map((item) => Number(item.statValue || 0))
-    : projectRiskTab.value === '阳性率'
-    ? [0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.33, 0.29, 0.21, 0.2]
-    : [490, 430, 380, 320, 280, 210, 180, 150, 110, 95]
+  projectRiskList.value.map((item) => Number(item.statValue || 0))
 );
 const projectMax = computed(() => {
   const maxValue = Math.max(...projectValues.value, 0);
@@ -104,25 +101,72 @@ const projectMax = computed(() => {
   if (maxValue <= 0) return 100;
   return Math.ceil(maxValue * 1.1);
 });
-const currentProjectRiskOption = computed(() =>
-  projectRiskTab.value === '阳性率'
-    ? createBigScreenLineOption({
-        labels: projectLabels.value,
-        values: projectValues.value,
-        max: projectMax.value,
-        formatter: (val: number) => `${Number(val).toFixed(2)}%`,
-        rotate: 28,
-        grid: { left: 40, right: 16, top: 18, bottom: 62 }
-      })
-    : createBigScreenLineOption({
-        labels: projectLabels.value,
-        values: projectValues.value,
-        max: projectMax.value,
-        formatter: '{value}',
-        rotate: 28,
-        grid: { left: 40, right: 16, top: 18, bottom: 62 }
-      })
-);
+const formatProjectValue = (value: number) =>
+  projectRiskTab.value === '阳性率' ? Number(value).toFixed(2) : `${Number(value)}`;
+
+const currentProjectRiskOption = computed(() => ({
+  animation: false,
+  grid: { left: 152, right: 42, top: 10, bottom: 18 },
+  xAxis: {
+    type: 'value',
+    min: 0,
+    max: projectMax.value,
+    axisLabel: {
+      color: '#a9c1dd',
+      formatter: '{value}'
+    },
+    splitLine: {
+      lineStyle: {
+        color: 'rgba(54, 114, 181, 0.22)',
+        type: 'dashed'
+      }
+    },
+    axisLine: {
+      lineStyle: { color: 'rgba(140, 167, 196, 0.35)' }
+    },
+    axisTick: { show: true, lineStyle: { color: 'rgba(140, 167, 196, 0.35)' } }
+  },
+  yAxis: {
+    type: 'category',
+    inverse: true,
+    data: projectLabels.value,
+    axisTick: { show: false },
+    axisLine: { show: false },
+    axisLabel: {
+      color: '#e6f0ff',
+      fontSize: 13,
+      margin: 16
+    }
+  },
+  series: [
+    {
+      type: 'bar',
+      data: projectValues.value,
+      barWidth: 16,
+      showBackground: true,
+      backgroundStyle: {
+        color: 'rgba(16, 40, 78, 0.7)',
+        borderRadius: 8
+      },
+      itemStyle: {
+        borderRadius: 8,
+        color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
+          { offset: 0, color: '#183b72' },
+          { offset: 1, color: '#56c8ff' }
+        ])
+      },
+      label: {
+        show: true,
+        position: 'right',
+        distance: 10,
+        color: '#57e2ff',
+        fontSize: 14,
+        fontWeight: 700,
+        formatter: ({ value }: { value: number }) => formatProjectValue(value)
+      }
+    }
+  ]
+}));
 
 const loadRiskAreaTop10 = async () => {
   try {
@@ -157,7 +201,7 @@ const loadNoticeList = async () => {
       pageNo: 1,
       pageSize: 10,
       status: 0 // 开启状态
-    });
+    } as PageParam & { status: number });
     noticeList.value = data?.list || [];
   } catch (error) {
     console.error('加载风险公告失败', error);

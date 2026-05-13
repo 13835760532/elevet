@@ -5,7 +5,6 @@ import { debounce } from 'lodash-es'
 // import 'echarts-wordcloud'
 import { propTypes } from '@/utils/propTypes'
 import { PropType } from 'vue'
-import { useAppStore } from '@/store/modules/app'
 import { isString } from '@/utils/is'
 import { useDesign } from '@/hooks/web/useDesign'
 
@@ -16,8 +15,6 @@ const { getPrefixCls, variables } = useDesign()
 
 const prefixCls = getPrefixCls('echart')
 
-const appStore = useAppStore()
-
 const props = defineProps({
   options: {
     type: Object as PropType<any>,
@@ -25,14 +22,6 @@ const props = defineProps({
   },
   width: propTypes.oneOfType([Number, String]).def(''),
   height: propTypes.oneOfType([Number, String]).def('500px')
-})
-
-const isDark = computed(() => appStore.getIsDark)
-
-const theme = computed(() => {
-  const echartTheme: boolean | string = unref(isDark) ? true : 'auto'
-
-  return echartTheme
 })
 
 const options = computed(() => {
@@ -58,7 +47,7 @@ const styles = computed(() => {
 const initChart = () => {
   if (unref(elRef) && props.options) {
     echartRef = echarts.init(unref(elRef) as HTMLElement)
-    echartRef?.setOption(unref(options))
+    echartRef?.setOption(unref(options), true)
   }
 }
 
@@ -66,7 +55,7 @@ watch(
   () => options.value,
   (options) => {
     if (echartRef) {
-      echartRef?.setOption(options)
+      echartRef?.setOption(options, true)
       echartRef?.resize()
     }
   },

@@ -220,7 +220,7 @@ $input-default-width: 150px;
     width: $input-default-width;
 
     &.w180 {
-        width: 180px;
+        width: 180px!important;
 
         .el-input__wrapper {
             width: 180px;

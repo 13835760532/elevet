@@ -91,10 +91,8 @@
                                 controls-position="right" :disabled="formState.linkProduct" />
                             <el-select v-model="formState.quantityUnit" placeholder="单位" style="width: 140px"
                                 :disabled="formState.linkProduct">
-                                <el-option label="kg" value="kg" />
-                                <el-option label="吨" value="ton" />
-                                <el-option label="箱" value="box" />
-                                <el-option label="个" value="pcs" />
+                                <el-option v-for="unit in measurementUnitOptions" :key="unit.value"
+                                    :label="unit.label" :value="unit.value" />
                             </el-select>
                         </div>
                     </el-form-item>
@@ -438,6 +436,7 @@ import AreaCascader from '@/components/AreaCascader/index.vue';
 import ImageUpload from '@/components/ImageUpload/index.vue';
 import SubjectFormDrawer from '@/views/filing/subject/components/SubjectFormDrawer.vue';
 import RapidDetectionReport from './components/RapidDetectionReport.vue';
+import { DEFAULT_AGRI_MEASUREMENT_UNIT, usePreferredAgriMeasurementUnitOptions } from '@/utils/agriUnit';
 
 const router = useRouter();
 const route = useRoute();
@@ -467,12 +466,25 @@ const formState = reactive({
     selectedProduct: null,
     selectedSubject: null,
     productCategory: undefined,
-    quantityUnit: 'kg',
+    quantityUnit: DEFAULT_AGRI_MEASUREMENT_UNIT,
     origin: [],
     tempFileUrl: '',
     rawFile: null,
     aiDetailResults: []
 });
+
+const quantityUnitRef = computed({
+    get: () => formState.quantityUnit,
+    set: (value) => {
+        formState.quantityUnit = value || DEFAULT_AGRI_MEASUREMENT_UNIT;
+    }
+});
+const measurementUnitOptions = usePreferredAgriMeasurementUnitOptions(
+    quantityUnitRef,
+    ['千克', 'kg'],
+    DEFAULT_AGRI_MEASUREMENT_UNIT,
+    computed(() => !formState.linkProduct)
+);
 
 const aiLoading = ref(false);
 
@@ -503,7 +515,7 @@ watch(() => formState.linkProduct, (newVal) => {
         formData.sample.productionArea = '';
         formState.origin = [];
         formData.sample.sampleQuantity = 0;
-        formState.quantityUnit = 'kg';
+        formState.quantityUnit = DEFAULT_AGRI_MEASUREMENT_UNIT;
         formData.subjectName = '';
         formState.selectedSubject = null;
         formState.selectedProduct = null;

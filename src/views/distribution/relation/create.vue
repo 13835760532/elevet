@@ -222,6 +222,7 @@ const handleManageInstitution = (row: any) => {
   currentRow.value = row
   const params = {
     relationId: id,
+    levelId: row.id,
     relationType: formData.relationType,
     areaCode: row.areaCode,
     areaLevel: row.areaLevel || row.levelSort, // 默认使用层级深度作为行政级别参考

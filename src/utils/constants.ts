@@ -463,20 +463,3 @@ export const BpmAutoApproveType = {
   APPROVE_ALL: 1, // 仅审批一次，后续重复的审批节点均自动通过
   APPROVE_SEQUENT: 2 // 仅针对连续审批的节点自动通过
 }
-
-// ========== AGRI 模块 ==========
-/**
- * 常用单位定义
- */
-export const AGRI_UNITS = [
-  { label: '吨', value: 't' },
-  { label: '千克', value: 'kg' },
-  { label: '克', value: 'g' },
-  { label: '箱', value: 'box' },
-  { label: '袋', value: 'bag' },
-  { label: '件', value: 'piece' },
-  { label: '筐', value: 'basket' },
-  { label: '个', value: 'unit' },
-  { label: '盘', value: 'plate' },
-  { label: '瓶', value: 'bottle' }
-]

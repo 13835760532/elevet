@@ -1,23 +1,68 @@
 <template>
   <div class="big-screen-shell">
     <BigScreenHeader :show-data-config="false" active-menu="task" />
+    <BigScreenLoadingOverlay :visible="entranceLoading" />
     <main class="screen-main">
-      <LeftTaskSection class="task-left-panel" />
-      <CenterTaskSection class="task-center-panel" />
-      <BottomTaskSection class="task-bottom-panel" />
-      <RightTaskSection class="task-right-panel" />
+      <div class="task-left-panel">
+        <LeftTaskSection v-if="panelVisibility.left" />
+      </div>
+      <div class="task-center-panel">
+        <CenterTaskSection v-if="panelVisibility.center" />
+      </div>
+      <div class="task-bottom-panel">
+        <BottomTaskSection v-if="panelVisibility.bottom" />
+      </div>
+      <div class="task-right-panel">
+        <RightTaskSection v-if="panelVisibility.right" />
+      </div>
     </main>
   </div>
 </template>
 
 <script setup lang="ts">
+import { defineAsyncComponent, onMounted, onUnmounted, ref } from 'vue';
 import BigScreenHeader from './components/bigscreen/BigScreenHeader.vue';
-import LeftTaskSection from './components/bigscreenTask/LeftTaskSection.vue';
-import CenterTaskSection from './components/bigscreenTask/CenterTaskSection.vue';
-import RightTaskSection from './components/bigscreenTask/RightTaskSection.vue';
-import BottomTaskSection from './components/bigscreenTask/BottomTaskSection.vue';
+import BigScreenLoadingOverlay from './components/bigscreen/BigScreenLoadingOverlay.vue';
+import { useDeferredPanelMount } from './useDeferredPanelMount';
+
+const LeftTaskSection = defineAsyncComponent(
+  () => import('./components/bigscreenTask/LeftTaskSection.vue')
+);
+const CenterTaskSection = defineAsyncComponent(
+  () => import('./components/bigscreenTask/CenterTaskSection.vue')
+);
+const RightTaskSection = defineAsyncComponent(
+  () => import('./components/bigscreenTask/RightTaskSection.vue')
+);
+const BottomTaskSection = defineAsyncComponent(
+  () => import('./components/bigscreenTask/BottomTaskSection.vue')
+);
 
 defineOptions({ name: 'VisualizationBigScreenTask' });
+
+const entranceLoading = ref(true);
+const { visibility: panelVisibility, schedule } = useDeferredPanelMount();
+let loadingTimer: number | null = null;
+
+onMounted(() => {
+  schedule({
+    immediate: ['left', 'center', 'right'],
+    deferred: [
+      { key: 'bottom', delay: 120 }
+    ]
+  });
+  loadingTimer = window.setTimeout(() => {
+    entranceLoading.value = false;
+    loadingTimer = null;
+  }, 520);
+});
+
+onUnmounted(() => {
+  if (loadingTimer !== null) {
+    window.clearTimeout(loadingTimer);
+    loadingTimer = null;
+  }
+});
 </script>
 
 <style scoped lang="scss">

@@ -1,3 +1,5 @@
+import { DEFAULT_PRODUCTION_SCALE_UNIT } from '@/utils/agriUnit';
+
 const SUBJECT_LAST_SUBMIT_STORAGE_KEY = 'AGRI_SUBJECT_LAST_SUBMIT';
 
 export interface SubjectSubmitPayload {
@@ -61,7 +63,7 @@ export const buildSubjectSubmitPayload = (source: Record<string, unknown>): Subj
     contactName: toStringValue(source.contactName),
     contactPhone: toStringValue(source.contactPhone),
     productionScale: toStringValue(source.productionScale),
-    productionScaleUnit: toStringValue(source.productionScaleUnit) || '亩',
+    productionScaleUnit: toStringValue(source.productionScaleUnit) || DEFAULT_PRODUCTION_SCALE_UNIT,
     businessLicenseUrl: toStringValue(source.businessLicenseUrl),
     socialCreditCode: toStringValue(source.socialCreditCode),
     idCard: toStringValue(source.idCard),
@@ -87,4 +89,3 @@ export const getLastSubmittedSubject = (): SubjectSubmitPayload | null => {
     return null;
   }
 };
-

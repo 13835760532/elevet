@@ -2,7 +2,7 @@
     <div class="table-container">
         <!-- 主体建档 标题 -->
         <div class="guide-card">
-            <div class="card-header"> 
+            <div class="card-header">
                 <h2 class="card-title">产品建档</h2>
             </div>
         </div>
@@ -13,52 +13,32 @@
                 <h2 class="card-title">产品建档查询</h2>
             </div>
             <div class="query-form-wrapper">
-                <el-form :inline="true" :model="queryParams" class="custom-query-form custom-query-form-row" label-position="left">
+                <el-form :inline="true" :model="queryParams" class="custom-query-form custom-query-form-row"
+                    label-position="left">
                     <el-form-item label="">
-                        <el-input 
-                            clearable 
-                            v-model="queryParams.productCode" 
-                            placeholder="请输入产品编码" 
-                            class="custom-input w180" 
-                        />
+                        <el-input clearable v-model="queryParams.productCode" placeholder="请输入产品编码"
+                            class="custom-input w180" />
                     </el-form-item>
                     <el-form-item label="">
-                        <el-input 
-                            clearable 
-                            v-model="queryParams.subjectName" 
-                            placeholder="请输入主体名称" 
-                            class="custom-input w180" 
-                        />
+                        <el-input clearable v-model="queryParams.subjectName" placeholder="请输入主体名称"
+                            class="custom-input w180" />
                     </el-form-item>
                     <el-form-item label="">
-                        <AreaCascader 
-                            v-model="queryParams.region" 
-                            placeholder="请选择产地"
-                            class="custom-cascader w180"
-                            @select="handleAreaSelect"
-                        />
+                        <AreaCascader v-model="queryParams.region" placeholder="请选择产地" class="custom-cascader w180"
+                            @select="handleAreaSelect" />
                     </el-form-item>
                     <el-form-item label="">
-                        <el-select v-model="queryParams.subjectType" placeholder="主体类型" class="custom-select w130" clearable>
+                        <el-select v-model="queryParams.subjectType" placeholder="主体类型" class="custom-select w130"
+                            clearable>
                             <el-option label="全部" value="" />
-                            <el-option 
-                                v-for="dict in filingTypeOptions" 
-                                :key="dict.value" 
-                                :label="dict.label" 
-                                :value="dict.value" 
-                            />
+                            <el-option v-for="dict in filingTypeOptions" :key="dict.value" :label="dict.label"
+                                :value="dict.value" />
                         </el-select>
                     </el-form-item>
                     <el-form-item label="">
-                        <el-date-picker
-                            v-model="queryParams.archiveTime"
-                            type="daterange"
-                            start-placeholder="开始日期"
-                            end-placeholder="结束日期"
-                            value-format="YYYY-MM-DD"
-                            class="custom-datepicker w240"
-                            style="width: 260px !important; flex-shrink: 0;"
-                        />
+                        <el-date-picker v-model="queryParams.archiveTime" type="daterange" start-placeholder="开始日期"
+                            end-placeholder="结束日期" value-format="YYYY-MM-DD" class="custom-datepicker w240"
+                            style="width: 260px !important; flex-shrink: 0;" />
                     </el-form-item>
 
                     <div class="query-btns">
@@ -86,17 +66,19 @@
                     <el-table-column label="产品编号" prop="productCode" min-width="160" show-overflow-tooltip />
                     <el-table-column label="产品名称" prop="productName" min-width="120" show-overflow-tooltip />
                     <el-table-column label="所属主体" prop="subjectInfo.name" min-width="150" show-overflow-tooltip />
-                    <el-table-column label="产品类别" prop="category" min-width="100" align="center">
+                    <el-table-column label="产品类别" prop="category" min-width="180" align="center" show-overflow-tooltip>
                         <template #default="scope">
                             <el-tag v-if="scope.row.category" effect="light" type="primary">
-                                {{ getProductCategoryLabel(scope.row.category) }}
+                                {{ getProductCategoryLabel(scope.row.category) == '--' ? scope.row.category :
+                                    getProductCategoryLabel(scope.row.category) }}
                             </el-tag>
                             <span v-else>--</span>
                         </template>
                     </el-table-column>
                     <el-table-column label="规格" prop="productSpec" min-width="100" align="center" />
                     <el-table-column label="产地" prop="productionArea" min-width="120" show-overflow-tooltip />
-                    <el-table-column label="建档日期" prop="archiveDate" width="160" align="center" :formatter="dateFormatter2" />
+                    <el-table-column label="建档日期" prop="archiveDate" width="160" align="center"
+                        :formatter="dateFormatter2" />
                     <el-table-column label="操作" width="160" align="center" fixed="right">
                         <template #default="scope">
                             <div class="table-operate-action-btns">
@@ -180,7 +162,7 @@ const getList = async () => {
 
             params.provinceCode = selectedAreaNames.value[0];
             params.cityCode = selectedAreaNames.value[1];
-            params.districtCode = selectedAreaNames.value[2]; 
+            params.districtCode = selectedAreaNames.value[2];
         }
         params.createTime = []
         // 处理归档时间
@@ -231,7 +213,7 @@ const handleExport = async () => {
             // params.productionArea = selectedAreaNames.value.join('-');
             params.provinceCode = selectedAreaNames.value[0];
             params.cityCode = selectedAreaNames.value[1];
-            params.districtCode = selectedAreaNames.value[2];   
+            params.districtCode = selectedAreaNames.value[2];
         }
         params.createTime = []
         if (queryParams.archiveTime && queryParams.archiveTime.length === 2) {
@@ -266,7 +248,7 @@ const handleDelete = async (row) => {
         await ProductApi.deleteProduct(row.id);
         message.success('删除成功');
         getList();
-    } catch (error) {}
+    } catch (error) { }
 };
 
 const handleView = (row) => { router.push('/filing/productDetail?id=' + row.id); };
@@ -303,15 +285,30 @@ onMounted(() => {
     min-height: 0;
 }
 
-.w160 { width: 160px !important; }
-.w130 { width: 130px !important; }
-.w180 { width: 180px !important; }
-.w220 { width: 220px !important; }
-.w240 { width: 240px !important; }
+.w160 {
+    width: 160px !important;
+}
+
+.w130 {
+    width: 130px !important;
+}
+
+.w180 {
+    width: 180px !important;
+}
+
+.w220 {
+    width: 220px !important;
+}
+
+.w240 {
+    width: 240px !important;
+}
 
 @media (max-width: 1500px) {
     .custom-query-form-row {
         gap: 12px;
+
         :deep(.el-form-item) {
             margin-right: 12px !important;
         }

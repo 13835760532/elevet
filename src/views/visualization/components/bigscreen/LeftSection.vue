@@ -16,6 +16,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import echarts from '@/plugins/echarts';
 import { Echart } from '@/components/Echart';
 import BigPanelCard from './BigPanelCard.vue';
 import CategoryGauges from './CategoryGauges.vue';
@@ -26,7 +27,6 @@ import {
   type ProduceRiskTopRespVO
 } from '@/api/agri/dashboard';
 import { getBigScreenQueryParams, subscribeBigScreenRefresh } from './config';
-import { createBigScreenLineOption } from './chartOption';
 
 const categoryTab = ref<'检测量' | '阳性率'>('检测量');
 const riskTab = ref<'检测量' | '阳性率'>('检测量');
@@ -35,21 +35,11 @@ const pesticideTab = ref<'检测量' | '阳性率'>('检测量');
 const produceRiskList = ref<ProduceRiskTopRespVO[]>([]);
 const pesticideRiskList = ref<PesticideRiskTopRespVO[]>([]);
 
-const fallbackRiskNames = ['芹菜', '菠菜', '韭菜', '萝卜', '青椒', '丝瓜', '南瓜', '黄瓜', '白菜', '生姜'];
-const fallbackRiskRateValues = [0.9, 0.8, 0.7, 0.6, 0.52, 0.45, 0.4, 0.34, 0.29, 0.2];
-const fallbackRiskCountValues = [460, 420, 390, 355, 320, 285, 260, 220, 210, 180];
-
 const riskNames = computed(() =>
-  produceRiskList.value.length
-    ? produceRiskList.value.map((item) => item.productName || '--')
-    : fallbackRiskNames
+  produceRiskList.value.map((item) => item.productName || '--')
 );
 const riskValues = computed(() =>
-  produceRiskList.value.length
-    ? produceRiskList.value.map((item) => Number(item.statValue || 0))
-    : riskTab.value === '阳性率'
-    ? fallbackRiskRateValues
-    : fallbackRiskCountValues
+  produceRiskList.value.map((item) => Number(item.statValue || 0))
 );
 const riskMax = computed(() => {
   const maxValue = Math.max(...riskValues.value, 0);
@@ -59,21 +49,11 @@ const riskMax = computed(() => {
   if (maxValue <= 0) return 100;
   return Math.ceil(maxValue * 1.1);
 });
-const fallbackPesticideNames = ['甲氨基', '氟虫胺', '毒死蜱', '毒死蜱', '氟虫', '阿维菌素', '腈虫胺', '溴氰菊酯', '咪鲜胺'];
-const fallbackPesticideRateValues = [0.82, 0.72, 0.61, 0.55, 0.46, 0.4, 0.36, 0.28, 0.21];
-const fallbackPesticideCountValues = [400, 350, 300, 270, 230, 200, 180, 150, 100];
-
 const pesticideLabels = computed(() =>
-  pesticideRiskList.value.length
-    ? pesticideRiskList.value.map((item) => item.pesticideName || '--')
-    : fallbackPesticideNames
+  pesticideRiskList.value.map((item) => item.pesticideName || '--')
 );
 const pesticideValues = computed(() =>
-  pesticideRiskList.value.length
-    ? pesticideRiskList.value.map((item) => Number(item.statValue || 0))
-    : pesticideTab.value === '阳性率'
-    ? fallbackPesticideRateValues
-    : fallbackPesticideCountValues
+  pesticideRiskList.value.map((item) => Number(item.statValue || 0))
 );
 const pesticideMax = computed(() => {
   const maxValue = Math.max(...pesticideValues.value, 0);
@@ -84,45 +64,142 @@ const pesticideMax = computed(() => {
   return Math.ceil(maxValue * 1.1);
 });
 
-const currentRiskTopOption = computed(() =>
-  riskTab.value === '阳性率'
-    ? createBigScreenLineOption({
-        labels: riskNames.value,
-        values: riskValues.value,
-        max: riskMax.value,
-        formatter: (val: number) => `${Number(val).toFixed(2)}%`,
-        rotate: 24,
-        grid: { left: 40, right: 16, top: 18, bottom: 56 }
-      })
-    : createBigScreenLineOption({
-        labels: riskNames.value,
-        values: riskValues.value,
-        max: riskMax.value,
-        formatter: '{value}',
-        rotate: 24,
-        grid: { left: 40, right: 16, top: 18, bottom: 56 }
-      })
-);
+const formatRiskValue = (value: number, mode: '检测量' | '阳性率') =>
+  mode === '阳性率' ? Number(value).toFixed(2) : `${Number(value)}`;
 
-const currentPesticideTopOption = computed(() =>
-  pesticideTab.value === '阳性率'
-    ? createBigScreenLineOption({
-        labels: pesticideLabels.value,
-        values: pesticideValues.value,
-        max: pesticideMax.value,
-        formatter: (val: number) => `${Number(val).toFixed(2)}%`,
-        rotate: 22,
-        grid: { left: 40, right: 16, top: 18, bottom: 54 }
-      })
-    : createBigScreenLineOption({
-        labels: pesticideLabels.value,
-        values: pesticideValues.value,
-        max: pesticideMax.value,
-        formatter: '{value}',
-        rotate: 22,
-        grid: { left: 40, right: 16, top: 18, bottom: 54 }
-      })
-);
+const currentRiskTopOption = computed(() => ({
+  animation: false,
+  grid: { left: 98, right: 42, top: 14, bottom: 18 },
+  xAxis: {
+    type: 'value',
+    min: 0,
+    max: riskMax.value,
+    axisLabel: {
+      color: '#a9c1dd',
+      formatter: riskTab.value === '阳性率' ? '{value}' : '{value}'
+    },
+    splitLine: {
+      lineStyle: {
+        color: 'rgba(54, 114, 181, 0.22)',
+        type: 'dashed'
+      }
+    },
+    axisLine: {
+      lineStyle: { color: 'rgba(140, 167, 196, 0.35)' }
+    },
+    axisTick: { show: true, lineStyle: { color: 'rgba(140, 167, 196, 0.35)' } }
+  },
+  yAxis: {
+    type: 'category',
+    inverse: true,
+    data: riskNames.value,
+    axisTick: { show: false },
+    axisLine: { show: false },
+    axisLabel: {
+      color: '#e6f0ff',
+      fontSize: 14,
+      margin: 18,
+      formatter: (value: string, index: number) => {
+        const rank = `NO.${index + 1}`;
+        const rich = index === 0 ? 'top1' : index === 1 ? 'top2' : index === 2 ? 'top3' : 'normal';
+        return `{${rich}|${rank}}  ${value}`;
+      },
+      rich: {
+        top1: { color: '#2de17c', fontStyle: 'italic', fontWeight: 700 },
+        top2: { color: '#37d4ff', fontStyle: 'italic', fontWeight: 700 },
+        top3: { color: '#f6be35', fontStyle: 'italic', fontWeight: 700 },
+        normal: { color: '#e6f0ff', fontStyle: 'italic', fontWeight: 600 }
+      }
+    }
+  },
+  series: [
+    {
+      type: 'bar',
+      data: riskValues.value,
+      barWidth: 14,
+      showBackground: true,
+      backgroundStyle: {
+        color: 'rgba(16, 40, 78, 0.7)',
+        borderRadius: 7
+      },
+      itemStyle: {
+        borderRadius: 7,
+        color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
+          { offset: 0, color: '#183b72' },
+          { offset: 1, color: '#56c8ff' }
+        ])
+      },
+      label: {
+        show: true,
+        position: 'right',
+        distance: 10,
+        color: '#57e2ff',
+        fontSize: 14,
+        fontWeight: 700,
+        formatter: ({ value }: { value: number }) => formatRiskValue(value, riskTab.value)
+      }
+    }
+  ]
+}));
+
+const currentPesticideTopOption = computed(() => ({
+  animation: false,
+  grid: { left: 44, right: 16, top: 26, bottom: 40 },
+  xAxis: {
+    type: 'category',
+    data: pesticideLabels.value,
+    axisLabel: {
+      color: '#c7d8ee',
+      fontSize: 12,
+      interval: 0,
+      rotate: pesticideLabels.value.length > 6 ? 18 : 0
+    },
+    axisTick: { show: false },
+    axisLine: {
+      lineStyle: { color: 'rgba(140, 167, 196, 0.35)' }
+    }
+  },
+  yAxis: {
+    type: 'value',
+    min: 0,
+    max: pesticideMax.value,
+    axisLabel: {
+      color: '#a9c1dd',
+      fontSize: 12,
+      formatter: pesticideTab.value === '阳性率' ? '{value}' : '{value}'
+    },
+    splitLine: {
+      lineStyle: {
+        color: 'rgba(54, 114, 181, 0.22)',
+        type: 'dashed'
+      }
+    },
+    axisTick: { show: false },
+    axisLine: { show: false }
+  },
+  series: [
+    {
+      type: 'bar',
+      data: pesticideValues.value,
+      barWidth: 30,
+      itemStyle: {
+        borderRadius: [4, 4, 0, 0],
+        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+          { offset: 0, color: '#4fdcff' },
+          { offset: 1, color: '#163d78' }
+        ])
+      },
+      label: {
+        show: true,
+        position: 'top',
+        color: '#57e2ff',
+        fontSize: 14,
+        fontWeight: 700,
+        formatter: ({ value }: { value: number }) => formatRiskValue(value, pesticideTab.value)
+      }
+    }
+  ]
+}));
 
 const loadProduceRiskTop10 = async () => {
   try {
@@ -184,46 +261,5 @@ onUnmounted(() => {
   display: grid;
   grid-template-rows: 350px 346px 328px;
   gap: 14px;
-}
-
-.pie-layout {
-  height: 248px;
-  display: grid;
-  grid-template-columns: 1fr 170px;
-  align-items: center;
-  gap: 8px;
-}
-
-.category-legend {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.legend-row {
-  display: grid;
-  grid-template-columns: 10px 1fr auto;
-  align-items: center;
-  gap: 8px;
-  padding: 4px 8px;
-  background: rgba(11, 44, 88, 0.45);
-  border: 1px solid rgba(39, 110, 196, 0.35);
-
-  .dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 2px;
-  }
-
-  .name {
-    color: #bbdbfa;
-    font-size: 16px;
-  }
-
-  .value {
-    color: #4ce9ff;
-    font-weight: 700;
-    font-size: 16px;
-  }
 }
 </style>

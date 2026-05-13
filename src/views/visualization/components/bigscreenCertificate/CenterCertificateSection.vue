@@ -31,9 +31,7 @@ import { getBigScreenQueryParams, subscribeBigScreenRefresh } from '../bigscreen
 const mapTab = ref('开具');
 const trendData = ref<CertificateServiceTrendRespVO>({});
 
-const defaultMonths = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
-
-const normalizeSeries = (series?: number[], length = 12) => {
+const normalizeSeries = (series?: number[], length = 0) => {
   const result = Array.from({ length }, (_, index) => Number(series?.[index] || 0));
   return result;
 };
@@ -68,7 +66,7 @@ const createTrendOption = (
     {
       name: '开具次数',
       type: 'line',
-      smooth: true,
+      smooth: false,
       symbol: 'circle',
       symbolSize: 6,
       itemStyle: { color: '#55e8ff' },
@@ -84,7 +82,7 @@ const createTrendOption = (
     {
       name: '存证次数',
       type: 'line',
-      smooth: true,
+      smooth: false,
       symbolSize: 5,
       lineStyle: { color: '#7bd644', width: 2 },
       itemStyle: { color: '#7bd644' },
@@ -93,7 +91,7 @@ const createTrendOption = (
     {
       name: '溯源次数',
       type: 'line',
-      smooth: true,
+      smooth: false,
       symbolSize: 5,
       lineStyle: { color: '#7d60ff', width: 2 },
       itemStyle: { color: '#7d60ff' },
@@ -104,7 +102,7 @@ const createTrendOption = (
 
 const xAxisData = computed(() => {
   const axis = trendData.value.xaxis || [];
-  return axis.length ? axis : defaultMonths;
+  return axis;
 });
 
 const currentTrendOption = computed(() =>

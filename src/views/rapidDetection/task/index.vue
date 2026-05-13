@@ -16,11 +16,11 @@
                 <el-form :model="queryParams" ref="queryRef" :inline="true"
                     class="custom-query-form custom-query-form-row">
                     <el-form-item label="" prop="taskNo">
-                        <el-input v-model="queryParams.taskNo" placeholder="输入任务编号" class="w180" clearable />
+                        <el-input v-model="queryParams.taskNo" placeholder="输入任务编号" class="w200" clearable />
                     </el-form-item>
 
                     <el-form-item label="" prop="taskName">
-                        <el-input v-model="queryParams.taskName" placeholder="输入任务名称" class="w180" clearable />
+                        <el-input v-model="queryParams.taskName" placeholder="输入任务名称" class="w200" clearable />
                     </el-form-item>
 
                     <el-form-item label="" prop="isReport">
@@ -38,7 +38,7 @@
                     </el-form-item>
 
                     <el-form-item label="" prop="schemeName">
-                        <el-input v-model="queryParams.schemeName" placeholder="输入方案名称" class="w180" clearable />
+                        <el-input v-model="queryParams.schemeName" placeholder="输入方案名称" class="w200" clearable />
                     </el-form-item>
 
                     <el-form-item label="" prop="status">
@@ -154,7 +154,7 @@ const realFetchApi = async (params) => {
         pageSize: params.pageSize || 10,
         taskName: params.taskName,
         status: params.status,
-        excludeStatuses: '1',
+        excludeStatuses: '0',
         detectionArea: params.area ? (Array.isArray(params.area) ? params.area.join('-') : params.area) : undefined,
         isAuto: false // 控制为方案相关的抽检任务
     }

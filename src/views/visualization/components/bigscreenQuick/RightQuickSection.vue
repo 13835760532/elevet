@@ -19,6 +19,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import echarts from '@/plugins/echarts';
 import { Echart } from '@/components/Echart';
 import BigPanelCard from '../bigscreen/BigPanelCard.vue';
 import rightBg from '@/assets/imgs/echarts/检测任务/rwjcfx_bg.png';
@@ -31,7 +32,6 @@ import {
   type FastPesticideTopRespVO
 } from '@/api/agri/dashboard/fast';
 import { getBigScreenQueryParams, subscribeBigScreenRefresh } from '../bigscreen/config';
-import { createBigScreenLineOption } from '../bigscreen/chartOption';
 
 const topTab = ref('检测量');
 const categoryTop10 = ref<FastCategoryTopRespVO[]>([]);
@@ -39,74 +39,230 @@ const categoryPesticideTop10 = ref<FastCategoryPesticideTopRespVO[]>([]);
 const pesticideTop10 = ref<FastPesticideTopRespVO[]>([]);
 
 const productNames = computed(() =>
-  categoryPesticideTop10.value.length
-    ? categoryPesticideTop10.value.map((item) => item.combineName || '--')
-    : ['丝瓜-甲氨基', '地瓜-阿维菌素', '四季豆-倍硫磷', '南瓜-氟虫腈', '西瓜-氟虫腈', '白菜-毒死蜱', '白菜-毒死蜱', '白菜-毒死蜱', '白菜-毒死蜱', '白菜-毒死蜱']
+  categoryPesticideTop10.value.map((item) => item.combineName || '--')
 );
 const productValues = computed(() =>
-  categoryPesticideTop10.value.length
-    ? categoryPesticideTop10.value.map((item) => Number(item.positiveRate || 0))
-    : [500, 400, 350, 300, 250, 200, 150, 150, 100, 100]
+  categoryPesticideTop10.value.map((item) => Number(item.positiveRate || 0))
 );
 const categoryNames = computed(() =>
-  categoryTop10.value.length
-    ? categoryTop10.value.map((item) => item.category || '--')
-    : ['1.生姜', '2.白菜', '3.黄瓜', '4.南瓜', '5.丝瓜', '6.芹菜', '7.萝卜', '8.韭菜', '9.波菜', '10.芹菜']
+  categoryTop10.value.map((item) => item.category || '--')
 );
 const categoryValues = computed(() =>
-  categoryTop10.value.length
-    ? categoryTop10.value.map((item) => Number(item.statValue || 0))
-    : [420, 390, 360, 340, 320, 300, 280, 240, 190, 150]
+  categoryTop10.value.map((item) => Number(item.statValue || 0))
 );
 const itemNames = computed(() =>
-  pesticideTop10.value.length
-    ? pesticideTop10.value.map((item) => item.pesticideName || '--')
-    : ['甲氨基', '维菌素', '倍硫磷', '氟虫腈', '氟虫腈', '毒死蜱', '毒死蜱', '毒死蜱', '毒死蜱', '毒死蜱']
+  pesticideTop10.value.map((item) => item.pesticideName || '--')
 );
 const itemValues = computed(() =>
-  pesticideTop10.value.length
-    ? pesticideTop10.value.map((item) => Number(item.positiveRate || 0))
-    : productValues.value
+  pesticideTop10.value.map((item) => Number(item.positiveRate || 0))
 );
 
-const middleBarOption = computed(() =>
-  createBigScreenLineOption({
-    labels: productNames.value,
-    values: productValues.value,
-    formatter: '{value}%',
-    rotate: 28,
-    max: 100,
-    grid: { left: 36, right: 16, top: 18, bottom: 58 }
-  })
-);
-const bottomBarOption = computed(() =>
-  createBigScreenLineOption({
-    labels: itemNames.value,
-    values: itemValues.value,
-    formatter: '{value}%',
-    rotate: 22,
-    max: 100,
-    grid: { left: 36, right: 16, top: 18, bottom: 52 }
-  })
-);
+const topMax = computed(() => {
+  const maxValue = Math.max(...categoryValues.value, 0);
+  if (topTab.value === '阳性率') {
+    return Math.max(1, Math.ceil(maxValue / 0.2) * 0.2);
+  }
+  if (maxValue <= 0) return 10;
+  return Math.ceil(maxValue * 1.1);
+});
+
+const horizontalProductMax = computed(() => {
+  const maxValue = Math.max(...productValues.value, 0);
+  return maxValue <= 0 ? 100 : Math.ceil(maxValue * 1.1);
+});
+
+const horizontalItemMax = computed(() => {
+  const maxValue = Math.max(...itemValues.value, 0);
+  return maxValue <= 0 ? 100 : Math.ceil(maxValue * 1.1);
+});
+
+const formatTopValue = (value: number) =>
+  topTab.value === '阳性率' ? Number(value).toFixed(2) : `${Number(value)}`;
+const formatBarValue = (value: number) => Number(value).toFixed(2);
+
+const middleBarOption = computed(() => ({
+  animation: false,
+  grid: { left: 122, right: 44, top: 14, bottom: 14 },
+  xAxis: {
+    type: 'value',
+    min: 0,
+    max: horizontalProductMax.value,
+    axisLabel: {
+      color: '#a9c1dd',
+      formatter: '{value}'
+    },
+    splitLine: {
+      lineStyle: {
+        color: 'rgba(54, 114, 181, 0.22)',
+        type: 'dashed'
+      }
+    },
+    axisLine: {
+      lineStyle: { color: 'rgba(140, 167, 196, 0.35)' }
+    },
+    axisTick: { show: true, lineStyle: { color: 'rgba(140, 167, 196, 0.35)' } }
+  },
+  yAxis: {
+    type: 'category',
+    inverse: true,
+    data: productNames.value,
+    axisTick: { show: false },
+    axisLine: { show: false },
+    axisLabel: {
+      color: '#e6f0ff',
+      fontSize: 13,
+      margin: 14
+    }
+  },
+  series: [
+    {
+      type: 'bar',
+      data: productValues.value,
+      barWidth: 14,
+      showBackground: true,
+      backgroundStyle: {
+        color: 'rgba(16, 40, 78, 0.7)',
+        borderRadius: 7
+      },
+      itemStyle: {
+        borderRadius: 7,
+        color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
+          { offset: 0, color: '#183b72' },
+          { offset: 1, color: '#56c8ff' }
+        ])
+      },
+      label: {
+        show: true,
+        position: 'right',
+        distance: 10,
+        color: '#57e2ff',
+        fontSize: 14,
+        fontWeight: 700,
+        formatter: ({ value }: { value: number }) => formatBarValue(value)
+      }
+    }
+  ]
+}));
+
+const bottomBarOption = computed(() => ({
+  animation: false,
+  grid: { left: 122, right: 44, top: 14, bottom: 14 },
+  xAxis: {
+    type: 'value',
+    min: 0,
+    max: horizontalItemMax.value,
+    axisLabel: {
+      color: '#a9c1dd',
+      formatter: '{value}'
+    },
+    splitLine: {
+      lineStyle: {
+        color: 'rgba(54, 114, 181, 0.22)',
+        type: 'dashed'
+      }
+    },
+    axisLine: {
+      lineStyle: { color: 'rgba(140, 167, 196, 0.35)' }
+    },
+    axisTick: { show: true, lineStyle: { color: 'rgba(140, 167, 196, 0.35)' } }
+  },
+  yAxis: {
+    type: 'category',
+    inverse: true,
+    data: itemNames.value,
+    axisTick: { show: false },
+    axisLine: { show: false },
+    axisLabel: {
+      color: '#e6f0ff',
+      fontSize: 13,
+      margin: 14
+    }
+  },
+  series: [
+    {
+      type: 'bar',
+      data: itemValues.value,
+      barWidth: 14,
+      showBackground: true,
+      backgroundStyle: {
+        color: 'rgba(16, 40, 78, 0.7)',
+        borderRadius: 7
+      },
+      itemStyle: {
+        borderRadius: 7,
+        color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
+          { offset: 0, color: '#183b72' },
+          { offset: 1, color: '#56c8ff' }
+        ])
+      },
+      label: {
+        show: true,
+        position: 'right',
+        distance: 10,
+        color: '#57e2ff',
+        fontSize: 14,
+        fontWeight: 700,
+        formatter: ({ value }: { value: number }) => formatBarValue(value)
+      }
+    }
+  ]
+}));
+
 const currentTopColumnOption = computed(() =>
-  topTab.value === '阳性率'
-    ? createBigScreenLineOption({
-        labels: categoryNames.value,
-        values: categoryValues.value,
-        max: Math.min(Math.max(...categoryValues.value, 1) * 1.2, 100),
-        formatter: '{value}%',
-        rotate: 18,
-        grid: { left: 34, right: 16, top: 18, bottom: 40 }
-      })
-    : createBigScreenLineOption({
-        labels: categoryNames.value,
-        values: categoryValues.value,
-        max: Math.max(...categoryValues.value, 500),
-        formatter: '{value}',
-        rotate: 18,
-        grid: { left: 34, right: 16, top: 18, bottom: 40 }
-      })
+  ({
+    animation: false,
+    grid: { left: 34, right: 16, top: 18, bottom: 40 },
+    xAxis: {
+      type: 'category',
+      data: categoryNames.value,
+      axisLabel: {
+        color: '#c7d8ee',
+        fontSize: 11,
+        interval: 0,
+        rotate: categoryNames.value.length > 6 ? 18 : 0,
+        formatter: (value: string, index: number) => `${index + 1}.${value}`
+      },
+      axisTick: { show: false },
+      axisLine: {
+        lineStyle: { color: 'rgba(140, 167, 196, 0.35)' }
+      }
+    },
+    yAxis: {
+      type: 'value',
+      min: 0,
+      max: topMax.value,
+      axisLabel: {
+        color: '#a9c1dd',
+        formatter: '{value}'
+      },
+      splitLine: {
+        lineStyle: {
+          color: 'rgba(54, 114, 181, 0.22)',
+          type: 'dashed'
+        }
+      },
+      axisTick: { show: false },
+      axisLine: { show: false }
+    },
+    series: [
+      {
+        type: 'bar',
+        data: categoryValues.value,
+        barWidth: 18,
+        itemStyle: {
+          borderRadius: [4, 4, 0, 0],
+          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: '#58ddff' },
+            { offset: 1, color: '#163d78' }
+          ])
+        },
+        label: {
+          show: false,
+          formatter: ({ value }: { value: number }) => formatTopValue(value)
+        }
+      }
+    ]
+  })
 );
 
 const loadCategoryTop10 = async () => {

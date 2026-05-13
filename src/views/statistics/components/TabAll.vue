@@ -1,259 +1,156 @@
 <template>
-    <div class="stat-content">
-      <!-- 数据范围筛选 -->
-      <div class="filter-section">
-        <div class="filter-label">数据范围</div>
-        <el-radio-group v-model="dateRangeType" class="date-radio">
-          <el-radio-button label="近一周" />
-          <el-radio-button label="近一月" />
-          <el-radio-button label="今年" />
-        </el-radio-group>
-        <el-date-picker v-model="dateRange" type="daterange" range-separator="至" start-placeholder="开始日期"
-          end-placeholder="结束日期" format="YYYY-MM-DD" value-format="YYYY-MM-DD" class="date-picker-custom" />
-        <el-button type="primary" class="search-btn">查询</el-button>
-        <el-button class="reset-btn">重置</el-button>
-      </div>
+  <div class="stat-content">
+    <!-- 数据范围筛选 -->
+    <StatisticsRangeFilter
+      v-model:range-type="dateRangeType"
+      v-model:date-range="dateRange"
+      description="全部业务统计周期"
+      @search="loadData"
+      @reset="handleReset"
+    />
 
-      <!-- 整体业务概况 -->
-      <div class="card-section">
-        <div class="section-title">整体业务概况</div>
-        <div class="overview-cards">
-          <!-- 蓝色卡片 -->
-          <div class="stat-card blue-card">
-            <div class="card-bg-icon">¥</div>
-            <div class="card-info">
-              <div class="card-title">任务下发项</div>
-              <div class="card-value">10,273</div>
-            </div>
+    <!-- 整体业务概况 -->
+    <div class="card-section">
+      <div class="section-title">整体业务概况</div>
+      <div class="overview-cards">
+        <!-- 蓝色卡片 -->
+        <div class="stat-card blue-card">
+          <div class="card-bg-icon">¥</div>
+          <div class="card-info">
+            <div class="card-title">任务下发项</div>
+            <div class="card-value">{{ formatNumber(overview.taskIssuedCount) }}</div>
           </div>
-          <div class="stat-card blue-card-light">
-            <div class="card-bg-icon">¥</div>
-            <div class="card-info">
-              <div class="card-title">任务完成项</div>
-              <div class="card-value">10,273</div>
-            </div>
+        </div>
+        <div class="stat-card blue-card-light">
+          <div class="card-bg-icon">¥</div>
+          <div class="card-info">
+            <div class="card-title">任务完成项</div>
+            <div class="card-value">{{ formatNumber(overview.taskCompletedCount) }}</div>
           </div>
-          <div class="stat-card blue-card-light">
-            <div class="card-bg-icon">¥</div>
-            <div class="card-info">
-              <div class="card-title">任务完成率</div>
-              <div class="card-value">80%</div>
-            </div>
+        </div>
+        <div class="stat-card blue-card-light">
+          <div class="card-bg-icon">¥</div>
+          <div class="card-info">
+            <div class="card-title">任务完成率</div>
+            <div class="card-value">{{ formatPercent(overview.taskCompletionRate) }}</div>
           </div>
+        </div>
 
-          <!-- 黄色卡片 -->
-          <div class="stat-card yellow-card">
-            <div class="card-bg-icon">🛡️</div>
-            <div class="card-info">
-              <div class="card-title">检测样品量</div>
-              <div class="card-value">9,204</div>
-            </div>
+        <!-- 黄色卡片 -->
+        <div class="stat-card yellow-card">
+          <div class="card-bg-icon">🛡️</div>
+          <div class="card-info">
+            <div class="card-title">检测样品量</div>
+            <div class="card-value">{{ formatNumber(overview.sampleCount) }}</div>
           </div>
+        </div>
 
-          <!-- 紫色卡片 -->
-          <div class="stat-card purple-card">
-            <div class="card-bg-icon">📄</div>
-            <div class="card-info">
-              <div class="card-title">合格证开具份</div>
-              <div class="card-value">6408</div>
-            </div>
+        <!-- 紫色卡片 -->
+        <div class="stat-card purple-card">
+          <div class="card-bg-icon">📄</div>
+          <div class="card-info">
+            <div class="card-title">合格证开具份</div>
+            <div class="card-value">{{ formatNumber(overview.certificateIssueCount) }}</div>
           </div>
-          <div class="stat-card purple-card-light">
-            <div class="card-bg-icon">📄</div>
-            <div class="card-info">
-              <div class="card-title">合格证查验量</div>
-              <div class="card-value">6408</div>
-            </div>
+        </div>
+        <div class="stat-card purple-card-light">
+          <div class="card-bg-icon">📄</div>
+          <div class="card-info">
+            <div class="card-title">合格证查验量</div>
+            <div class="card-value">{{ formatNumber(overview.certificateVerifyCount) }}</div>
           </div>
+        </div>
 
-          <!-- 青色卡片 -->
-          <div class="stat-card teal-card">
-            <div class="card-bg-icon">📦</div>
-            <div class="card-info">
-              <div class="card-title">农产品溯源查验</div>
-              <div class="card-value">89402</div>
-            </div>
+        <!-- 青色卡片 -->
+        <div class="stat-card teal-card">
+          <div class="card-bg-icon">📦</div>
+          <div class="card-info">
+            <div class="card-title">农产品溯源查验</div>
+            <div class="card-value">{{ formatNumber(certificateOverview.traceCount) }}</div>
           </div>
         </div>
       </div>
+    </div>
 
-      <!-- 业务覆盖群体 -->
-      <div class="card-section">
-        <div class="section-title">业务覆盖群体</div>
-        <div class="coverage-group">
-          <div class="coverage-item">
-            <div class="coverage-icon icon-blue">
-              <Icon icon="ep:monitor" :size="32" color="#fff" />
-            </div>
-            <div class="coverage-info">
-              <div class="coverage-title">监管机构</div>
-              <div class="coverage-value">1, 602</div>
-            </div>
+    <!-- 业务覆盖群体 -->
+    <div class="card-section">
+      <div class="section-title">业务覆盖群体</div>
+      <div class="coverage-group">
+        <div class="coverage-item">
+          <div class="coverage-icon icon-blue">
+            <Icon icon="ep:monitor" :size="32" color="#fff" />
           </div>
-          <div class="coverage-divider"></div>
-          <div class="coverage-item">
-            <div class="coverage-icon icon-purple">
-              <Icon icon="ep:service" :size="32" color="#fff" />
-            </div>
-            <div class="coverage-info">
-              <div class="coverage-title">检测机构</div>
-              <div class="coverage-value">27, 030</div>
-            </div>
+          <div class="coverage-info">
+            <div class="coverage-title">监管机构</div>
+            <div class="coverage-value">{{ formatNumber(overview.supervisorCount) }}</div>
           </div>
-          <div class="coverage-divider"></div>
-          <div class="coverage-item">
-            <div class="coverage-icon icon-red">
-              <Icon icon="ep:view" :size="32" color="#fff" />
-            </div>
-            <div class="coverage-info">
-              <div class="coverage-title">生产经营主体</div>
-              <div class="coverage-value">1, 452, 856</div>
-            </div>
+        </div>
+        <div class="coverage-divider"></div>
+        <div class="coverage-item">
+          <div class="coverage-icon icon-purple">
+            <Icon icon="ep:service" :size="32" color="#fff" />
+          </div>
+          <div class="coverage-info">
+            <div class="coverage-title">检测机构</div>
+            <div class="coverage-value">{{ formatNumber(overview.detectionOrgCount) }}</div>
+          </div>
+        </div>
+        <div class="coverage-divider"></div>
+        <div class="coverage-item">
+          <div class="coverage-icon icon-red">
+            <Icon icon="ep:view" :size="32" color="#fff" />
+          </div>
+          <div class="coverage-info">
+            <div class="coverage-title">生产经营主体</div>
+            <div class="coverage-value">{{ formatNumber(overview.enterpriseCount) }}</div>
           </div>
         </div>
       </div>
+    </div>
 
-      <!-- 业务分布地图 -->
-      <div class="card-section map-section">
-        <div class="map-header">
-          <div class="section-title">业务分布地图</div>
-          <div class="map-actions">
-            <el-radio-group v-model="mapType" class="map-radio" size="small">
-              <el-radio-button label="检测量分布" />
-              <el-radio-button label="阳性率分布" />
-              <el-radio-button label="任务监督分布" />
-              <el-radio-button label="检测执行分布" />
-              <el-radio-button label="合格证分布" />
-            </el-radio-group>
-            <span class="view-all">查看全部</span>
-          </div>
+    <!-- 业务分布地图 -->
+    <div class="card-section map-section">
+      <div class="map-header">
+        <div class="section-title">业务分布地图</div>
+        <div class="map-actions">
+          <el-radio-group v-model="mapType" class="map-radio" size="small">
+            <el-radio-button label="检测量分布" />
+            <el-radio-button label="阳性率分布" />
+            <el-radio-button label="任务监督分布" />
+            <el-radio-button label="检测执行分布" />
+            <el-radio-button label="合格证分布" />
+          </el-radio-group>
+          <span class="view-all">查看全部</span>
         </div>
-        <div class="map-container">
-          <div class="map-left">
-            <!-- 这里可以引入已有的 Map 组件 -->
-            <div class="map-placeholder">地图加载中...</div>
-          </div>
-          <div class="map-right">
-            <!-- 右侧柱状图列表 -->
-            <div class="bar-chart-list">
-              <div class="bar-item" v-for="(item, index) in rankData" :key="index">
-                <span class="bar-label">{{ item.name }}</span>
-                <div class="bar-track">
-                  <div class="bar-fill" :style="{ width: item.percent + '%' }"></div>
-                </div>
-                <span class="bar-value">{{ item.value }}</span>
+      </div>
+      <div class="map-container">
+        <div class="map-left">
+          <Echart :options="mapChartOption" height="320px" />
+        </div>
+        <div class="map-right">
+          <!-- 右侧柱状图列表 -->
+          <div class="bar-chart-list">
+            <div class="bar-item" v-for="(item, index) in rankData" :key="index">
+              <span class="bar-label">{{ item.name }}</span>
+              <div class="bar-track">
+                <div class="bar-fill" :style="{ width: item.percent + '%' }"></div>
               </div>
+              <span class="bar-value">{{ formatNumber(item.value, item.fractionDigits || 0) }}</span>
             </div>
           </div>
         </div>
       </div>
-      <!-- 业务风险及其他 -->
-      <div class="risk-section-container">
-        <div class="section-title">业务风险</div>
-        <div class="risk-grid">
-          <div class="risk-left">
-            <div class="risk-card">
-              <div class="risk-header">
-                <span class="risk-title">产品风险top排行榜</span>
-                <div class="risk-actions">
-                  <el-radio-group v-model="productRiskType" class="map-radio" size="small">
-                    <el-radio-button label="检测量" />
-                    <el-radio-button label="阳性率" />
-                  </el-radio-group>
-                  <span class="view-all">查看所有</span>
-                </div>
-              </div>
-              <div class="chart-content">
-                <div class="horizontal-bar-list">
-                  <div class="h-bar-item" v-for="(item, index) in productRiskData" :key="index">
-                    <span class="h-bar-label">NO{{ index + 1 }} {{ item.name }}</span>
-                    <div class="h-bar-track">
-                      <div class="h-bar-fill yellow-fill" :style="{ width: item.percent + '%' }"></div>
-                    </div>
-                  </div>
-                </div>
-                <div class="h-bar-axis">
-                  <span>0</span><span>0.2</span><span>0.4</span><span>0.6</span><span>0.8</span><span>1</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="risk-card">
-              <div class="risk-header">
-                <span class="risk-title">产品检测项风险</span>
-                <div class="risk-actions">
-                  <el-radio-group v-model="testItemRiskType" class="map-radio" size="small">
-                    <el-radio-button label="检测量" />
-                    <el-radio-button label="阳性率" />
-                  </el-radio-group>
-                  <span class="view-all">查看所有</span>
-                </div>
-              </div>
-              <div class="chart-content">
-                <div class="horizontal-bar-list">
-                  <div class="h-bar-item" v-for="(item, index) in testItemRiskData" :key="index">
-                    <span class="h-bar-label">{{ item.name }}</span>
-                    <div class="h-bar-track">
-                      <div class="h-bar-fill yellow-fill" :style="{ width: item.percent + '%' }"></div>
-                    </div>
-                  </div>
-                </div>
-                <div class="h-bar-axis">
-                  <span>0</span><span>100</span><span>200</span><span>300</span><span>400</span><span>500</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="risk-right">
-            <div class="risk-card">
-              <div class="risk-header">
-                <span class="risk-title">农产品品类风险</span>
-                <div class="risk-actions">
-                  <el-radio-group v-model="categoryRiskType" class="map-radio" size="small">
-                    <el-radio-button label="检测量" />
-                    <el-radio-button label="阳性率" />
-                  </el-radio-group>
-                  <span class="view-all">查看所有</span>
-                </div>
-              </div>
-              <div class="chart-content flex-center">
-                <!-- 简单CSS饼图占位 -->
-                <div class="pie-chart-mock"></div>
-              </div>
-            </div>
-
-            <div class="risk-card">
-              <div class="risk-header">
-                <span class="risk-title">风险集中区域</span>
-                <div class="risk-actions">
-                  <el-radio-group v-model="regionRiskType" class="map-radio" size="small">
-                    <el-radio-button label="产地" />
-                    <el-radio-button label="检测地" />
-                  </el-radio-group>
-                  <span class="view-all">查看所有</span>
-                </div>
-              </div>
-              <div class="chart-content">
-                <div class="ranking-list">
-                  <div class="ranking-item" v-for="(item, index) in regionRiskData" :key="index">
-                    <span :class="['rank-num', { 'top-three': index < 3 }]">{{ item.rank }}</span>
-                    <span class="rank-name">{{ item.name }}</span>
-                    <span :class="['rank-value', { 'top-three-val': index < 3 }]">{{ item.value }}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 底部两列 -->
-        <div class="bottom-grid">
+    </div>
+    <!-- 业务风险及其他 -->
+    <div class="risk-section-container">
+      <div class="section-title">业务风险</div>
+      <div class="risk-grid">
+        <div class="risk-left">
           <div class="risk-card">
             <div class="risk-header">
-              <span class="risk-title">农药残留风险排行榜</span>
+              <span class="risk-title">产品风险top排行榜</span>
               <div class="risk-actions">
-                <el-radio-group v-model="pesticideRiskType" class="map-radio" size="small">
+                <el-radio-group v-model="productRiskType" class="map-radio" size="small">
                   <el-radio-button label="检测量" />
                   <el-radio-button label="阳性率" />
                 </el-radio-group>
@@ -261,69 +158,177 @@
               </div>
             </div>
             <div class="chart-content">
-              <div class="vertical-bar-chart">
-                <div class="v-bar-item" v-for="(item, index) in pesticideRiskData" :key="index">
-                  <span class="v-bar-val">{{ item.value }}</span>
-                  <div class="v-bar-track">
-                    <div class="v-bar-fill green-fill" :style="{ height: (item.value / 500 * 100) + '%' }"></div>
+              <div class="horizontal-bar-list">
+                <div class="h-bar-item" v-for="(item, index) in productRiskData" :key="index">
+                  <span class="h-bar-label">NO{{ index + 1 }} {{ item.name }}</span>
+                  <div class="h-bar-track">
+                    <div class="h-bar-fill yellow-fill" :style="{ width: item.percent + '%' }"></div>
                   </div>
+                </div>
+              </div>
+              <div class="h-bar-axis">
+                <span>0</span><span>0.2</span><span>0.4</span><span>0.6</span><span>0.8</span><span>1</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="risk-card">
+            <div class="risk-header">
+              <span class="risk-title">产品检测项风险</span>
+              <div class="risk-actions">
+                <el-radio-group v-model="testItemRiskType" class="map-radio" size="small">
+                  <el-radio-button label="检测量" />
+                  <el-radio-button label="阳性率" />
+                </el-radio-group>
+                <span class="view-all">查看所有</span>
+              </div>
+            </div>
+            <div class="chart-content">
+              <div class="horizontal-bar-list">
+                <div class="h-bar-item" v-for="(item, index) in testItemRiskData" :key="index">
+                  <span class="h-bar-label">{{ item.name }}</span>
+                  <div class="h-bar-track">
+                    <div class="h-bar-fill yellow-fill" :style="{ width: item.percent + '%' }"></div>
+                  </div>
+                </div>
+              </div>
+              <div class="h-bar-axis">
+                <span>0</span><span>100</span><span>200</span><span>300</span><span>400</span><span>500</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="risk-right">
+          <div class="risk-card">
+            <div class="risk-header">
+              <span class="risk-title">农产品品类风险</span>
+              <div class="risk-actions">
+                <el-radio-group v-model="categoryRiskType" class="map-radio" size="small">
+                  <el-radio-button label="检测量" />
+                  <el-radio-button label="阳性率" />
+                </el-radio-group>
+                <span class="view-all">查看所有</span>
+              </div>
+            </div>
+            <div class="chart-content flex-center">
+              <div class="ranking-list category-list">
+                <div class="ranking-item" v-for="(item, index) in categoryRiskData" :key="item.name">
+                  <span :class="['rank-num', { 'top-three': index < 3 }]">{{ index + 1 }}</span>
+                  <span class="rank-name">{{ item.name }}</span>
+                  <span class="rank-value">{{ formatNumber(item.value, item.fractionDigits || 0) }}</span>
                 </div>
               </div>
             </div>
           </div>
 
-          <div class="risk-card notice-card">
+          <div class="risk-card">
             <div class="risk-header">
-              <div class="risk-title-wrapper">
-                <span class="risk-title">业务风险公告</span>
-                <span class="risk-subtitle">显示最近5分钟风险公告</span>
+              <span class="risk-title">风险集中区域</span>
+              <div class="risk-actions">
+                <el-radio-group v-model="regionRiskType" class="map-radio" size="small">
+                  <el-radio-button label="产地" />
+                  <el-radio-button label="检测地" />
+                </el-radio-group>
+                <span class="view-all">查看所有</span>
               </div>
-              <span class="view-all">查看所有</span>
             </div>
-            <div class="notice-list">
-              <div class="notice-item" v-for="item in noticeData" :key="item.id">
-                <div class="notice-tag">
-                  <span class="tag-new" v-if="item.id < 3">new</span>
-                  <span class="tag-risk">风险</span>
-                </div>
-                <div class="notice-content">
-                  <div class="notice-time">{{ item.time }}</div>
-                  <div class="notice-title">{{ item.title }}</div>
+            <div class="chart-content">
+              <div class="ranking-list">
+                <div class="ranking-item" v-for="(item, index) in regionRiskData" :key="index">
+                <span :class="['rank-num', { 'top-three': index < 3 }]">{{ item.rank }}</span>
+                <span class="rank-name">{{ item.name }}</span>
+                <span :class="['rank-value', { 'top-three-val': index < 3 }]">{{ formatNumber(item.value, item.fractionDigits || 0) }}</span>
                 </div>
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      <!-- 底部两列 -->
+      <div class="bottom-grid">
+        <div class="risk-card">
+          <div class="risk-header">
+            <span class="risk-title">农药残留风险排行榜</span>
+            <div class="risk-actions">
+              <el-radio-group v-model="pesticideRiskType" class="map-radio" size="small">
+                <el-radio-button label="检测量" />
+                <el-radio-button label="阳性率" />
+              </el-radio-group>
+              <span class="view-all">查看所有</span>
+            </div>
+          </div>
+          <div class="chart-content">
+            <div class="vertical-bar-chart">
+              <div class="v-bar-item" v-for="(item, index) in pesticideRiskData" :key="index">
+                <span class="v-bar-val">{{ formatNumber(item.value, item.fractionDigits || 0) }}</span>
+                <div class="v-bar-track">
+                  <div class="v-bar-fill green-fill" :style="{ height: item.percent + '%' }"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="risk-card notice-card">
+          <div class="risk-header">
+            <div class="risk-title-wrapper">
+              <span class="risk-title">业务风险公告</span>
+              <span class="risk-subtitle">显示最近5分钟风险公告</span>
+            </div>
+            <span class="view-all">查看所有</span>
+          </div>
+          <div class="notice-list">
+            <div class="notice-item" v-for="item in noticeData" :key="item.id">
+              <div class="notice-tag">
+                <span class="tag-new" v-if="item.id < 3">new</span>
+                <span class="tag-risk">风险</span>
+              </div>
+              <div class="notice-content">
+                <div class="notice-time">{{ item.time }}</div>
+                <div class="notice-title">{{ item.title }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-
-const currentTab = ref('all')
-const tabs = [
-  { label: '全部', value: 'all', icon: 'ep:user' },
-  { label: '检测任务', value: 'task', icon: 'ep:message' },
-  { label: '快速检测', value: 'quick', icon: 'ep:home-filled' },
-  { label: '合格证开具', value: 'issue', icon: 'ep:document' },
-  { label: '合格证收证', value: 'verify', icon: 'ep:document-checked' },
-  { label: '建档备案', value: 'filing', icon: 'ep:folder' }
-]
+import { computed, onMounted, ref, watch } from 'vue'
+import StatisticsRangeFilter from './StatisticsRangeFilter.vue'
+import { Echart } from '@/components/Echart'
+import {
+  getCategoryRisk,
+  getDashboardMapData,
+  getDashboardOverview,
+  getPesticideRiskTop10,
+  getProduceRiskTop10,
+  getProductPesticideTop10,
+  getRiskAreaTop10,
+  type DashboardOverviewRespVO
+} from '@/api/agri/dashboard'
+import {
+  getCertificateOverview,
+  getCertificateMap,
+  type DashboardCertificateOverviewRespVO
+} from '@/api/agri/dashboard/certificate'
+import { getTaskMap } from '@/api/agri/dashboard/task'
+import { getNoticePage, type NoticeVO } from '@/api/system/notice'
+import { buildRangeParams, formatNumber, formatPercent, getStatValue } from './statisticsData'
+import { formatDate } from '@/utils/formatTime'
 
 const dateRangeType = ref('近一周')
-const dateRange = ref([])
+const dateRange = ref<string[]>([])
+const overview = ref<DashboardOverviewRespVO>({})
+const certificateOverview = ref<DashboardCertificateOverviewRespVO>({})
 
 const mapType = ref('检测量分布')
 
-const rankData = ref([
-  { name: '浙江', value: 62310, percent: 95 },
-  { name: '上海', value: 59190, percent: 90 },
-  { name: '江苏', value: 45000, percent: 70 },
-  { name: '安徽', value: 38000, percent: 60 },
-  { name: '山东', value: 31000, percent: 50 },
-  { name: '福建', value: 25000, percent: 40 },
-])
+const rankData = ref<any[]>([])
 
 const productRiskType = ref('检测量')
 const testItemRiskType = ref('检测量')
@@ -331,64 +336,203 @@ const categoryRiskType = ref('检测量')
 const regionRiskType = ref('产地')
 const pesticideRiskType = ref('检测量')
 
-const productRiskData = ref([
-  { name: '芹菜', percent: 95 },
-  { name: '菠菜', percent: 85 },
-  { name: '韭菜', percent: 70 },
-  { name: '萝卜', percent: 60 },
-  { name: '青椒', percent: 55 },
-  { name: '丝瓜', percent: 50 },
-  { name: '南瓜', percent: 45 },
-  { name: '黄瓜', percent: 42 },
-  { name: '白菜', percent: 38 },
-  { name: '生姜', percent: 25 },
-])
+const productRiskData = ref<any[]>([])
+const testItemRiskData = ref<any[]>([])
+const categoryRiskData = ref<any[]>([])
+const regionRiskData = ref<any[]>([])
+const pesticideRiskData = ref<any[]>([])
+const noticeData = ref<Array<{ id?: number; time: string; title: string }>>([])
 
-const testItemRiskData = ref([
-  { name: '丝瓜-甲氧基...', percent: 95 },
-  { name: '地瓜-阿维菌素...', percent: 85 },
-  { name: '四季豆-倍硫磷...', percent: 78 },
-  { name: '南瓜-氟虫腈...', percent: 70 },
-  { name: '西瓜-氟虫腈...', percent: 65 },
-  { name: '白菜-毒死蜱...', percent: 55 },
-  { name: '白菜-毒死蜱...', percent: 50 },
-  { name: '白菜-毒死蜱...', percent: 45 },
-  { name: '白菜-毒死蜱...', percent: 40 },
-  { name: '白菜-毒死蜱...', percent: 35 },
-])
+const queryParams = computed(() => buildRangeParams(dateRangeType.value, dateRange.value))
 
-const regionRiskData = ref([
-  { rank: 1, name: '北京', value: 193 },
-  { rank: 2, name: '上海', value: 187 },
-  { rank: 3, name: '广州', value: 186 },
-  { rank: 4, name: '武汉', value: 173 },
-  { rank: 5, name: '南昌', value: 170 },
-  { rank: 6, name: '山东', value: 162 },
-  { rank: 7, name: '广西', value: 159 },
-  { rank: 8, name: '广西', value: 159 },
-  { rank: 9, name: '广西', value: 159 },
-  { rank: 10, name: '广西', value: 159 },
-])
+const toBarData = (list: any[], getName: (item: any) => string, statType: '检测量' | '阳性率') => {
+  const rows = list.map((item) => ({
+    name: getName(item),
+    value: getStatValue(item, statType),
+    fractionDigits: statType === '阳性率' ? 2 : 0
+  }))
+  const max = Math.max(...rows.map((item) => item.value), 0)
+  return rows.map((item) => ({
+    ...item,
+    percent: max ? Math.max(4, Math.min(100, (item.value / max) * 100)) : 0
+  }))
+}
 
-const pesticideRiskData = ref([
-  { name: '1', value: 460 },
-  { name: '2', value: 450 },
-  { name: '3', value: 430 },
-  { name: '4', value: 400 },
-  { name: '5', value: 350 },
-  { name: '6', value: 175 },
-  { name: '7', value: 150 },
-  { name: '8', value: 130 },
-  { name: '9', value: 120 },
-])
+const mapChartOption = computed(() => ({
+  grid: { top: 18, right: 16, bottom: 28, left: 56 },
+  tooltip: { trigger: 'axis' },
+  xAxis: { type: 'value' },
+  yAxis: {
+    type: 'category',
+    inverse: true,
+    data: rankData.value.map((item) => item.name)
+  },
+  series: [
+    {
+      type: 'bar',
+      data: rankData.value.map((item) => item.value),
+      barWidth: 12,
+      itemStyle: { color: '#00B3ED', borderRadius: [0, 8, 8, 0] }
+    }
+  ]
+}))
 
-const noticeData = ref([
-  { id: 1, time: '2025-10-01 17:56', title: '北京市昌平区东小口镇，农业农村局快检豇豆中发现氟虫腈超标;' },
-  { id: 2, time: '2025-10-01 17:56', title: '北京市昌平区东小口镇，农业农村局快检豇豆中发现氟虫腈超标;' },
-  { id: 3, time: '2025-10-01 17:56', title: '北京市昌平区东小口镇，农业农村局快检豇豆中发现氟虫腈超标;' },
-  { id: 4, time: '2025-10-01 17:56', title: '北京市昌平区东小口镇，农业农村局快检豇豆中发现氟虫腈超标;' },
-  { id: 5, time: '2025-10-01 17:56', title: '北京市昌平区东小口镇，农业农村局快检豇豆中发现氟虫腈超标;' },
-])
+const loadOverview = async () => {
+  try {
+    const [overviewData, certificateData] = await Promise.all([
+      getDashboardOverview(queryParams.value),
+      getCertificateOverview(queryParams.value)
+    ])
+    overview.value = overviewData || {}
+    certificateOverview.value = certificateData || {}
+  } catch (error) {
+    console.error('[StatisticsAll] load overview failed:', error)
+    overview.value = {}
+    certificateOverview.value = {}
+  }
+}
+
+const loadMapData = async () => {
+  try {
+    const isTaskMap = mapType.value === '任务监督分布' || mapType.value === '检测执行分布'
+    const isCertificateMap = mapType.value === '合格证分布'
+    const data = isTaskMap
+      ? await getTaskMap({
+          ...queryParams.value,
+          areaLevel: '1'
+        })
+      : isCertificateMap
+      ? await getCertificateMap({
+          ...queryParams.value,
+          areaLevel: '1'
+        })
+      : await getDashboardMapData({
+          ...queryParams.value,
+          areaLevel: '1'
+        })
+    const sourceList = isCertificateMap
+      ? (data as any)?.issueList || []
+      : Array.isArray(data)
+      ? data
+      : []
+    const rows = sourceList
+      .map((item) => ({
+        name: item.areaName || item.cityName || item.provinceName || '--',
+        value: Number(
+          mapType.value === '阳性率分布'
+            ? item.positiveRate || 0
+            : mapType.value === '任务监督分布'
+            ? item.taskIssuedCount || 0
+            : mapType.value === '检测执行分布'
+            ? item.taskCompletedCount || 0
+            : mapType.value === '合格证分布'
+            ? item.count || 0
+            : item.sampleCount || 0
+        ),
+        fractionDigits: mapType.value === '阳性率分布' ? 2 : 0
+      }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 8)
+    const max = Math.max(...rows.map((item) => item.value), 0)
+    rankData.value = rows.map((item) => ({
+      ...item,
+      percent: max ? Math.max(4, Math.min(100, (item.value / max) * 100)) : 0
+    }))
+  } catch (error) {
+    console.error('[StatisticsAll] load map data failed:', error)
+    rankData.value = []
+  }
+}
+
+const loadRiskData = async () => {
+  try {
+    const [
+      productRiskList,
+      productPesticideList,
+      categoryRiskList,
+      regionRiskList,
+      pesticideRiskList
+    ] = await Promise.all([
+      getProduceRiskTop10({
+        ...queryParams.value,
+        statType: productRiskType.value === '阳性率' ? '2' : '1'
+      }),
+      getProductPesticideTop10({
+        ...queryParams.value,
+        statType: testItemRiskType.value === '阳性率' ? '2' : '1'
+      }),
+      getCategoryRisk({
+        ...queryParams.value,
+        statType: categoryRiskType.value === '阳性率' ? '2' : '1'
+      }),
+      getRiskAreaTop10({
+        ...queryParams.value,
+        areaType: regionRiskType.value === '产地' ? '1' : '2',
+        areaLevel: '1'
+      }),
+      getPesticideRiskTop10({
+        ...queryParams.value,
+        statType: pesticideRiskType.value === '阳性率' ? '2' : '1'
+      })
+    ])
+    productRiskData.value = toBarData(productRiskList || [], (item) => item.productName || '--', productRiskType.value as any)
+    testItemRiskData.value = toBarData(productPesticideList || [], (item) => item.combineName || '--', testItemRiskType.value as any)
+    categoryRiskData.value = toBarData(categoryRiskList || [], (item) => item.category || '--', categoryRiskType.value as any)
+    regionRiskData.value = (regionRiskList || []).map((item, index) => ({
+      rank: item.rank || index + 1,
+      name: item.areaName || item.cityName || item.provinceName || '--',
+      value: Number(item.positiveRate || 0),
+      fractionDigits: 2
+    }))
+    pesticideRiskData.value = toBarData(pesticideRiskList || [], (item) => item.pesticideName || '--', pesticideRiskType.value as any)
+  } catch (error) {
+    console.error('[StatisticsAll] load risk data failed:', error)
+    productRiskData.value = []
+    testItemRiskData.value = []
+    categoryRiskData.value = []
+    regionRiskData.value = []
+    pesticideRiskData.value = []
+  }
+}
+
+const loadNotices = async () => {
+  try {
+    const data = await getNoticePage({
+      pageNo: 1,
+      pageSize: 5,
+      status: 0
+    } as any)
+    noticeData.value = ((data?.list || []) as NoticeVO[]).map((item) => ({
+      id: item.id,
+      time: item.createTime ? formatDate(item.createTime, 'YYYY-MM-DD HH:mm') : '--',
+      title: item.title || '--'
+    }))
+  } catch (error) {
+    console.error('[StatisticsAll] load notices failed:', error)
+    noticeData.value = []
+  }
+}
+
+const loadData = () => {
+  loadOverview()
+  loadMapData()
+  loadRiskData()
+  loadNotices()
+}
+
+const handleReset = () => {
+  dateRangeType.value = '近一周'
+  dateRange.value = []
+  loadData()
+}
+
+watch([dateRangeType, dateRange], loadData)
+watch([mapType], loadMapData)
+watch([productRiskType, testItemRiskType, categoryRiskType, regionRiskType, pesticideRiskType], loadRiskData)
+
+onMounted(() => {
+  loadData()
+})
 
 </script>
 
@@ -454,43 +598,30 @@ const noticeData = ref([
   gap: 20px;
 }
 
-/* 筛选区域 */
-.filter-section {
-  display: flex;
-  align-items: center;
-  background-color: #fff;
-  padding: 16px 24px;
-  border-radius: 4px;
-  gap: 16px;
-
-  .filter-label {
-    font-size: 14px;
-    font-weight: bold;
-    color: #333;
-  }
-
-  .date-picker-custom {
-    width: 260px;
-  }
-
-  .search-btn {
-    background-color: #00B3ED;
-    border-color: #00B3ED;
-  }
-}
-
 /* 卡片通用 */
 .card-section {
   background-color: #fff;
   padding: 24px;
-  border-radius: 4px;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+  border: 1px solid #f0f0f0;
 }
 
 .section-title {
   font-size: 16px;
-  font-weight: bold;
-  color: #333;
-  margin-bottom: 20px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  &::before {
+    content: '';
+    width: 4px;
+    height: 16px;
+    background: #00B3ED;
+    margin-right: 10px;
+    border-radius: 2px;
+  }
 }
 
 /* 整体业务概况卡片 */
@@ -502,59 +633,92 @@ const noticeData = ref([
 
 .stat-card {
   position: relative;
-  height: 100px;
-  border-radius: 8px;
+  height: 110px;
+  border-radius: 12px;
   padding: 20px 16px;
   overflow: hidden;
   color: #fff;
   display: flex;
   flex-direction: column;
   justify-content: center;
+  transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+  cursor: pointer;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
+    &::before {
+      opacity: 0.3;
+      transform: scale(1.2);
+    }
+  }
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: -20%;
+    right: -10%;
+    width: 80px;
+    height: 80px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 50%;
+    transition: all 0.6s ease;
+  }
 
   .card-bg-icon {
     position: absolute;
-    right: 10px;
-    bottom: -10px;
-    font-size: 60px;
-    opacity: 0.15;
-    font-weight: bold;
+    right: 8px;
+    bottom: -12px;
+    font-size: 56px;
+    opacity: 0.12;
+    font-weight: 800;
+    pointer-events: none;
+  }
+
+  .card-info {
+    position: relative;
+    z-index: 1;
   }
 
   .card-title {
-    font-size: 14px;
-    opacity: 0.9;
-    margin-bottom: 8px;
+    font-size: 13px;
+    opacity: 0.85;
+    margin-bottom: 6px;
+    font-weight: 500;
+    white-space: nowrap;
   }
 
   .card-value {
-    font-size: 24px;
-    font-weight: bold;
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   }
 }
 
 /* 渐变色定义 */
 .blue-card {
-  background: linear-gradient(135deg, #6bb9ff 0%, #3e88ff 100%);
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
 }
 
 .blue-card-light {
-  background: linear-gradient(135deg, #8dc8ff 0%, #61a6ff 100%);
+  background: linear-gradient(135deg, #74ebd5 0%, #9face6 100%);
 }
 
 .yellow-card {
-  background: linear-gradient(135deg, #ffcf6b 0%, #faa63e 100%);
+  background: linear-gradient(135deg, #fccb90 0%, #d57eeb 100%);
 }
 
 .purple-card {
-  background: linear-gradient(135deg, #a395ff 0%, #7b61ff 100%);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
 .purple-card-light {
-  background: linear-gradient(135deg, #b6aaff 0%, #907aff 100%);
+  background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%);
 }
 
 .teal-card {
-  background: linear-gradient(135deg, #74ded4 0%, #48b8ad 100%);
+  background: linear-gradient(135deg, #13f1fc 0%, #0470dc 100%);
 }
 
 /* 业务覆盖群体 */
@@ -562,54 +726,54 @@ const noticeData = ref([
   display: flex;
   align-items: center;
   justify-content: space-around;
-  padding: 20px 0;
+  padding: 30px 0;
+  background: #fafcff;
+  border-radius: 12px;
 }
 
 .coverage-item {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 24px;
+  transition: transform 0.3s;
+  &:hover {
+    transform: scale(1.05);
+  }
 }
 
 .coverage-icon {
-  width: 64px;
-  height: 64px;
-  border-radius: 12px;
+  width: 72px;
+  height: 72px;
+  border-radius: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
 
-  &.icon-blue {
-    background-color: #00B3ED;
-  }
-
-  &.icon-purple {
-    background-color: #8D76FF;
-  }
-
-  &.icon-red {
-    background-color: #FF6B6B;
-  }
+  &.icon-blue { background: linear-gradient(135deg, #00B3ED, #0088cc); }
+  &.icon-purple { background: linear-gradient(135deg, #8D76FF, #6c52ee); }
+  &.icon-red { background: linear-gradient(135deg, #FF6B6B, #ee4c4c); }
 }
 
 .coverage-info {
   .coverage-title {
     font-size: 14px;
-    color: #666;
-    margin-bottom: 8px;
+    color: #888;
+    margin-bottom: 6px;
+    font-weight: 500;
   }
 
   .coverage-value {
-    font-size: 28px;
-    font-weight: bold;
-    color: #333;
+    font-size: 32px;
+    font-weight: 800;
+    color: #2c3e50;
   }
 }
 
 .coverage-divider {
   width: 1px;
-  height: 60px;
-  background-color: #eee;
+  height: 70px;
+  background: linear-gradient(to bottom, transparent, #e0e6ed, transparent);
 }
 
 /* 业务分布地图 */
@@ -818,9 +982,11 @@ const noticeData = ref([
   height: 100%;
   border-radius: 0 6px 6px 0;
 }
+
 .yellow-fill {
   background-color: #F8E71C;
 }
+
 .green-fill {
   background-color: #7ED321;
 }
@@ -833,31 +999,6 @@ const noticeData = ref([
   color: #999;
   border-top: 1px solid #eee;
   padding-top: 8px;
-}
-
-.pie-chart-mock {
-  width: 180px;
-  height: 180px;
-  border-radius: 50%;
-  background: conic-gradient(
-    #8B5CF6 0% 30%,
-    #3B82F6 30% 60%,
-    #10B981 60% 80%,
-    #F59E0B 80% 100%
-  );
-  position: relative;
-  
-  &::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 90px;
-    height: 90px;
-    background-color: #fff;
-    border-radius: 50%;
-  }
 }
 
 .ranking-list {

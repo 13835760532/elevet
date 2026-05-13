@@ -56,10 +56,10 @@
               <span>小壹正在思考中...</span>
             </div>
 
-            <!-- 执行过程状态展示 (模拟工具调用) -->
+            <!-- 执行过程状态展示 -->
             <div v-if="msg.status === 'typing' || msg.status === 'done'" class="action-steps">
-              <div class="step-item"><Icon icon="ep:document" /> 一份农产品分析报告</div>
-              <div class="step-desc">正在回答中...</div>
+              <div class="step-item"><Icon icon="ep:document" /> {{ msg.actionTitle || '农产品风险分析' }}</div>
+              <div class="step-desc">{{ msg.status === 'done' ? '已生成回答' : '正在回答中...' }}</div>
             </div>
 
             <!-- AI 回答气泡 -->
@@ -73,17 +73,20 @@
                 <!-- 表格数据展示 -->
                 <div v-if="msg.tableData && msg.tableData.length" class="report-table">
                   <el-table :data="msg.tableData" border style="width: 100%" size="small">
-                    <el-table-column prop="index" label="序号" width="60" align="center" />
-                    <el-table-column prop="city" label="州级" min-width="120" />
-                    <el-table-column prop="district" label="县级" min-width="120" />
-                    <el-table-column prop="unit" label="单位" min-width="150" />
-                    <el-table-column prop="tester" label="检测人" width="80" />
-                    <el-table-column prop="time" label="检测时间" width="100" />
+                    <el-table-column
+                      v-for="column in msg.tableColumns"
+                      :key="column.prop"
+                      :prop="column.prop"
+                      :label="column.label"
+                      :width="column.width"
+                      :min-width="column.minWidth"
+                      :align="column.align"
+                    />
                   </el-table>
                 </div>
                 
                 <!-- 结论富文本 -->
-                <p v-if="msg.conclusion" class="report-conclusion" v-html="msg.conclusion"></p>
+                <p v-if="msg.conclusion" class="report-conclusion" v-html="formatContent(msg.conclusion)"></p>
               </div>
 
               <!-- 底部操作与追问 -->
@@ -123,7 +126,7 @@
           resize="none"
           maxlength="100"
           show-word-limit
-          @keydown.enter.prevent="handleSend(inputText)"
+          @keydown.enter.exact.prevent="handleSend(inputText)"
         />
         <div class="send-btn" :class="{ active: inputText.trim() && !isTyping }" @click="handleSend(inputText)">
           <Icon icon="ep:position" :size="20" />
@@ -135,6 +138,17 @@
 
 <script setup lang="ts">
 import { ref, nextTick, onMounted } from 'vue'
+import { ElMessage } from 'element-plus'
+import {
+  VoiceAssistantApi,
+  type CategoryRiskReportRespVO,
+  type ProjectRiskRankingRespVO,
+  type RegionRiskRankingRespVO,
+  type RiskMonthlyReportRespVO,
+  type RiskProductItemVO,
+  type RiskTrendCompareRespVO,
+  type VoiceAssistantAskRespVO
+} from '@/api/agri/voiceAssistant'
 
 defineOptions({ name: 'ChatAssistant' })
 
@@ -164,9 +178,29 @@ interface Message {
   content: string
   status?: 'thinking' | 'typing' | 'done' | 'error'
   title?: string
+  actionTitle?: string
   tableData?: any[]
+  tableColumns?: TableColumn[]
   conclusion?: string
   suggestions?: string[]
+}
+
+interface TableColumn {
+  prop: string
+  label: string
+  width?: number | string
+  minWidth?: number | string
+  align?: 'left' | 'center' | 'right'
+}
+
+interface RenderedAnswer {
+  title: string
+  content: string
+  actionTitle: string
+  tableData?: any[]
+  tableColumns?: TableColumn[]
+  conclusion?: string
+  suggestions: string[]
 }
 
 const messages = ref<Message[]>([])
@@ -184,25 +218,242 @@ const scrollToBottom = async () => {
 
 // 格式化换行
 const formatContent = (text: string) => {
-  return text.replace(/\n/g, '<br/>')
+  return escapeHtml(text || '').replace(/\n/g, '<br/>')
 }
 
 const generateId = () => Math.random().toString(36).substring(2, 9)
 
+const escapeHtml = (text: string) => {
+  return text.replace(/[&<>"']/g, (char) => {
+    const charMap: Record<string, string> = {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;'
+    }
+    return charMap[char]
+  })
+}
+
+const formatPercent = (value?: number) => {
+  return value === undefined || value === null ? '--' : `${value}%`
+}
+
+const formatNumber = (value?: number) => {
+  return value === undefined || value === null ? '--' : value
+}
+
+const joinNames = (values?: string[]) => {
+  return values?.length ? values.join('、') : '--'
+}
+
+const getHazardText = (item: { restrictionLabel?: string; restrictionType?: string }) => {
+  return item.restrictionLabel || item.restrictionType || '--'
+}
+
+const getDetectionItemsText = (items?: RiskProductItemVO['detectionItems']) => {
+  if (!items?.length) return '--'
+  return items.map((item) => `${item.itemName || '--'}（${getHazardText(item)}）`).join('、')
+}
+
+const riskProductColumns: TableColumn[] = [
+  { prop: 'rank', label: '排名', width: 70, align: 'center' },
+  { prop: 'productName', label: '农产品', minWidth: 120 },
+  { prop: 'category', label: '分类', minWidth: 100 },
+  { prop: 'positiveCount', label: '阳性次数', width: 100, align: 'center' },
+  { prop: 'positiveRate', label: '阳性率', width: 90, align: 'center' },
+  { prop: 'detectionItems', label: '检出项目', minWidth: 180 }
+]
+
+const positiveItemColumns: TableColumn[] = [
+  { prop: 'rank', label: '排名', width: 70, align: 'center' },
+  { prop: 'itemName', label: '检测项目', minWidth: 130 },
+  { prop: 'positiveCount', label: '阳性次数', width: 100, align: 'center' },
+  { prop: 'relatedProductName', label: '关联农产品', minWidth: 120 },
+  { prop: 'hazard', label: '危害等级', width: 100, align: 'center' }
+]
+
+const renderRiskProducts = (list?: RiskProductItemVO[]) => {
+  return (list || []).map((item, index) => ({
+    rank: item.rank || index + 1,
+    productName: item.productName || '--',
+    category: item.category || '--',
+    positiveCount: formatNumber(item.positiveCount),
+    positiveRate: formatPercent(item.positiveRate),
+    detectionItems: getDetectionItemsText(item.detectionItems)
+  }))
+}
+
+const renderMonthlyReport = (report: RiskMonthlyReportRespVO, voiceText: string): RenderedAnswer => {
+  const summary = report.summary
+  const content = voiceText || `${report.area || ''}${report.month || ''}农产品风险情况已生成。`
+  const conclusionParts = [
+    `总抽检 ${formatNumber(summary?.totalCount ?? report.totalCount)} 批次`,
+    `阳性 ${formatNumber(summary?.positiveCount ?? report.positiveCount)} 批次`,
+    `阳性率 ${formatPercent(summary?.positiveRate ?? report.positiveRate)}`,
+    `禁用 ${formatNumber(summary?.forbiddenCount)} 次`,
+    `限用 ${formatNumber(summary?.restrictedCount)} 次`,
+    `常规 ${formatNumber(summary?.regularCount)} 次`
+  ]
+  return {
+    title: `${report.month || ''}${report.area || ''}农产品风险月报`,
+    actionTitle: '农产品月度风险报告',
+    content,
+    tableColumns: riskProductColumns,
+    tableData: renderRiskProducts(report.riskTopList),
+    conclusion: `${conclusionParts.join('，')}。${report.suggestion || ''}`,
+    suggestions: ['哪些地区抽检不合格比较多？', '哪些检测项目不合格最多？', '对比上个月风险有什么变化？']
+  }
+}
+
+const renderRegionRanking = (ranking: RegionRiskRankingRespVO, voiceText: string): RenderedAnswer => {
+  return {
+    title: `${ranking.month || ''}${ranking.parentArea || ''}地区风险排名`,
+    actionTitle: '地区风险排名',
+    content: voiceText || '已生成地区风险排名。',
+    tableColumns: [
+      { prop: 'rank', label: '排名', width: 70, align: 'center' },
+      { prop: 'regionName', label: '地区', minWidth: 130 },
+      { prop: 'totalCount', label: '总批次', width: 90, align: 'center' },
+      { prop: 'positiveCount', label: '阳性批次', width: 100, align: 'center' },
+      { prop: 'positiveRate', label: '阳性率', width: 90, align: 'center' },
+      { prop: 'topHazardLabel', label: '最高危害等级', width: 120, align: 'center' }
+    ],
+    tableData: (ranking.regionList || []).map((item, index) => ({
+      rank: item.rank || index + 1,
+      regionName: item.regionName || '--',
+      totalCount: formatNumber(item.totalCount),
+      positiveCount: formatNumber(item.positiveCount),
+      positiveRate: formatPercent(item.positiveRate),
+      topHazardLabel: item.topHazardLabel || item.topHazardLevel || '--'
+    })),
+    suggestions: ['这个地区主要阳性项目有哪些？', '生成一份月度风险报告', '对比上个月风险有什么变化？']
+  }
+}
+
+const renderProjectRanking = (ranking: ProjectRiskRankingRespVO, voiceText: string): RenderedAnswer => {
+  const categoryText = ranking.categoryDistribution?.length
+    ? `分类分布：${ranking.categoryDistribution
+      .map((item) => `${item.category || '--'}（${joinNames(item.mainItems)}，${formatNumber(item.positiveCount)}次）`)
+      .join('；')}`
+    : ''
+  return {
+    title: `${ranking.month || ''}${ranking.area || ''}检测项目风险排名`,
+    actionTitle: '检测项目风险排名',
+    content: voiceText || '已生成检测项目风险排名。',
+    tableColumns: positiveItemColumns,
+    tableData: (ranking.projectList || []).map((item, index) => ({
+      rank: item.rank || index + 1,
+      itemName: item.itemName || '--',
+      positiveCount: formatNumber(item.positiveCount),
+      relatedProductName: item.relatedProductName || '--',
+      hazard: getHazardText(item)
+    })),
+    conclusion: categoryText,
+    suggestions: ['这些项目涉及哪些农产品？', '蔬菜类风险情况怎么样？', '生成监管建议']
+  }
+}
+
+const renderTrendCompare = (trend: RiskTrendCompareRespVO, voiceText: string): RenderedAnswer => {
+  const trendMap: Record<string, string> = {
+    IMPROVED: '好转',
+    WORSENED: '上升',
+    STABLE: '平稳'
+  }
+  return {
+    title: `${trend.area || ''}${trend.currentMonth || ''}与${trend.previousMonth || ''}风险对比`,
+    actionTitle: '风险趋势对比',
+    content: voiceText || '已生成风险趋势对比。',
+    tableColumns: [
+      { prop: 'metric', label: '指标', minWidth: 120 },
+      { prop: 'current', label: '本月', width: 100, align: 'center' },
+      { prop: 'previous', label: '上月', width: 100, align: 'center' },
+      { prop: 'diff', label: '变化', width: 100, align: 'center' }
+    ],
+    tableData: [
+      {
+        metric: '总批次',
+        current: formatNumber(trend.current?.totalCount),
+        previous: formatNumber(trend.previous?.totalCount),
+        diff: formatNumber(trend.totalDiff)
+      },
+      {
+        metric: '阳性批次',
+        current: formatNumber(trend.current?.positiveCount),
+        previous: formatNumber(trend.previous?.positiveCount),
+        diff: formatNumber(trend.positiveDiff)
+      },
+      {
+        metric: '阳性率',
+        current: formatPercent(trend.current?.positiveRate),
+        previous: formatPercent(trend.previous?.positiveRate),
+        diff: formatPercent(trend.positiveRateDiff)
+      },
+      { metric: '禁用检出', current: '--', previous: '--', diff: formatNumber(trend.forbiddenDiff) },
+      { metric: '限用检出', current: '--', previous: '--', diff: formatNumber(trend.restrictedDiff) },
+      { metric: '常规检出', current: '--', previous: '--', diff: formatNumber(trend.regularDiff) }
+    ],
+    conclusion: `风险趋势：${trendMap[trend.riskTrend || ''] || trend.riskTrend || '--'}。${trend.keyAlert || ''}`,
+    suggestions: ['风险上升的原因是什么？', '生成本月监管建议', '查看检测项目风险排名']
+  }
+}
+
+const renderCategoryReport = (report: CategoryRiskReportRespVO, voiceText: string): RenderedAnswer => {
+  return {
+    title: `${report.month || ''}${report.area || ''}${report.category || ''}风险报告`,
+    actionTitle: '品类风险报告',
+    content: voiceText || '已生成品类风险报告。',
+    tableColumns: riskProductColumns,
+    tableData: renderRiskProducts(report.riskProductList),
+    conclusion: `总批次 ${formatNumber(report.totalCount)}，阳性 ${formatNumber(report.positiveCount)}，阳性率 ${formatPercent(report.positiveRate)}。${report.subCategoryHint ? `重点关注：${report.subCategoryHint}。` : ''}${report.suggestion || ''}`,
+    suggestions: ['这个品类的主要阳性指标有哪些？', '对比上个月有什么变化？', '哪些地区风险更高？']
+  }
+}
+
+const renderGenericAnswer = (response: VoiceAssistantAskRespVO): RenderedAnswer => ({
+  title: '小壹助手',
+  actionTitle: '智能问答',
+  content: response.voiceText || (response.success === false ? '暂未识别到可回答的问题，请换一种问法试试。' : '已完成分析。'),
+  suggestions: ['生成一份月度风险报告', '哪些地区抽检不合格比较多？', '哪些检测项目不合格最多？']
+})
+
+const renderAnswer = (response: VoiceAssistantAskRespVO): RenderedAnswer => {
+  if (response.monthReport) return renderMonthlyReport(response.monthReport, response.voiceText || '')
+  if (response.regionRanking) return renderRegionRanking(response.regionRanking, response.voiceText || '')
+  if (response.projectRanking) return renderProjectRanking(response.projectRanking, response.voiceText || '')
+  if (response.trendCompare) return renderTrendCompare(response.trendCompare, response.voiceText || '')
+  if (response.categoryReport) return renderCategoryReport(response.categoryReport, response.voiceText || '')
+  return renderGenericAnswer(response)
+}
+
+const typeWriter = async (targetMsg: Message, text: string, prop: 'content' | 'conclusion') => {
+  let currentText = ''
+  for (let i = 0; i < text.length; i++) {
+    currentText += text[i]
+    targetMsg[prop] = currentText
+    await new Promise(r => setTimeout(r, 18))
+    scrollToBottom()
+  }
+}
+
 // --- 核心交互逻辑 ---
-const handleSend = async (text: string) => {
+const handleSend = async (text: string, options: { appendUser?: boolean } = {}) => {
   if (!text || !text.trim() || isTyping.value) return
   
   const query = text.trim()
   inputText.value = ''
+  const appendUser = options.appendUser !== false
   
   // 1. 添加用户消息
-  messages.value.push({
-    id: generateId(),
-    role: 'user',
-    content: query
-  })
-  scrollToBottom()
+  if (appendUser) {
+    messages.value.push({
+      id: generateId(),
+      role: 'user',
+      content: query
+    })
+    scrollToBottom()
+  }
 
   // 2. 添加 AI 思考状态消息
   isTyping.value = true
@@ -216,66 +467,41 @@ const handleSend = async (text: string) => {
   messages.value.push(aiMsg)
   scrollToBottom()
 
-  // 3. 模拟网络请求与思考延迟
-  await new Promise(resolve => setTimeout(resolve, 1500))
-
-  // 4. 开始流式输出
   const targetMsg = messages.value.find(m => m.id === aiMsgId)
-  if (targetMsg) {
+  if (!targetMsg) return
+
+  try {
+    const response = await VoiceAssistantApi.ask(query)
+    const answer = renderAnswer(response || {})
+
     targetMsg.status = 'typing'
-    
-    // 模拟一段硬编码的回复 (符合截图展示效果)
-    const mockTitle = '4月份北京市地区农产品风险情况'
-    const mockIntro = '根据输出结果，已成功统计出高风险样品排名前3名，具体信息如下：'
-    const mockTable = [
-      { index: 1, city: '保山市农业农村局', district: '保山市农业农村局', unit: '保山市农业农村局', tester: '王磊', time: '2026-04-20' },
-      { index: 2, city: '保山市农业农村局', district: '保山市农业农村局', unit: '保山市农业农村局', tester: '李娜', time: '2026-04-21' },
-      { index: 3, city: '保山市农业农村局', district: '保山市农业农村局', unit: '保山市农业农村局', tester: '张强', time: '2026-04-22' }
-    ]
-    const mockConclusion = '从结果上看，最近一个月高风险样品前三名分别为<span style="color: #00B3ED; font-weight: bold;">芹菜、菠菜、萝卜</span>。阳性指标包括：<span style="color: #00B3ED; font-weight: bold;">噻虫胺、啶虫脒</span>；其中，最高风险样品为<span style="color: #00B3ED; font-weight: bold;">芹菜</span>，共检测<span style="color: #00B3ED; font-weight: bold;">5个</span>样品、<span style="color: #00B3ED; font-weight: bold;">10个</span>检测项目，共检<span style="color: #00B3ED; font-weight: bold;">65</span>项次，样品阳性率<span style="color: #00B3ED; font-weight: bold;">3%</span>、检测项阳性率<span style="color: #00B3ED; font-weight: bold;">2%</span>。'
-    const mockSuggestions = [
-      '可以在报告中增加一些具体的建议吗',
-      '对比上个月的数据有什么明显变化？',
-      '导出这份分析报告'
-    ]
+    targetMsg.title = answer.title
+    targetMsg.actionTitle = answer.actionTitle
+    targetMsg.tableColumns = answer.tableColumns
 
-    targetMsg.title = mockTitle
-    
-    // 模拟打字机效果
-    const typeWriter = async (text: string, prop: 'content' | 'conclusion') => {
-      let currentText = ''
-      // 按字符切割，包括HTML标签作为一个整体处理
-      const parts = text.split(/(<[^>]+>)/g)
-      for (const part of parts) {
-        if (part.startsWith('<')) {
-           currentText += part
-           targetMsg[prop] = currentText
-        } else {
-          for (let i = 0; i < part.length; i++) {
-            currentText += part[i]
-            targetMsg[prop] = currentText
-            await new Promise(r => setTimeout(r, 30)) // 打字速度
-            scrollToBottom()
-          }
-        }
-      }
-    }
-
-    await typeWriter(mockIntro, 'content')
+    await typeWriter(targetMsg, answer.content, 'content')
     
     // 出现表格
-    targetMsg.tableData = mockTable
+    targetMsg.tableData = answer.tableData
     scrollToBottom()
-    await new Promise(resolve => setTimeout(resolve, 500))
 
     // 输出结论
-    await typeWriter(mockConclusion, 'conclusion')
+    if (answer.conclusion) {
+      await typeWriter(targetMsg, answer.conclusion, 'conclusion')
+    }
 
     // 完成状态
     targetMsg.status = 'done'
-    targetMsg.suggestions = mockSuggestions
-    isTyping.value = false
+    targetMsg.suggestions = answer.suggestions
     scrollToBottom()
+  } catch (error) {
+    console.error('小壹助手提问失败', error)
+    targetMsg.status = 'error'
+    targetMsg.title = '小壹助手'
+    targetMsg.content = '抱歉，小壹暂时没有拿到结果，请稍后再试。'
+    ElMessage.error('小壹助手请求失败')
+  } finally {
+    isTyping.value = false
   }
 }
 
@@ -287,7 +513,7 @@ const handleRegenerate = (id: string) => {
     // 移除从当前 AI 回答开始的所有消息
     messages.value.splice(index, messages.value.length - index)
     // 重新发送
-    handleSend(query)
+    handleSend(query, { appendUser: false })
   }
 }
 

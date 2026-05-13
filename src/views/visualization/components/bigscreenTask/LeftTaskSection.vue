@@ -35,15 +35,25 @@
     </BigPanelCard>
 
     <BigPanelCard title="下发检测产品品类" :bg-image="leftBg">
-      <div class="pie-container">
-        <Echart :options="categoryPieOption" height="230px" width="100%" />
+      <div class="category-layout">
+        <div class="pie-container">
+          <Echart :options="categoryPieOption" height="230px" width="100%" />
+        </div>
+        <div class="category-legend">
+          <div class="legend-row" v-for="item in categoryItems" :key="item.name">
+            <span class="dot" :style="{ background: item.color }"></span>
+            <span class="name">{{ item.name }}</span>
+            <span class="value">{{ item.value }}</span>
+          </div>
+        </div>
       </div>
     </BigPanelCard>
   </section>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, reactive, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
+import echarts from '@/plugins/echarts';
 import { Echart } from '@/components/Echart';
 import BigPanelCard from '../bigscreen/BigPanelCard.vue';
 import BigScreenSelector from '../bigscreen/BigScreenSelector.vue';
@@ -57,10 +67,10 @@ import {
   type TaskCategoryDistributionRespVO
 } from '@/api/agri/dashboard/task';
 import { getBigScreenQueryParams, subscribeBigScreenRefresh } from '../bigscreen/config';
-import { createBigScreenLineOption } from '../bigscreen/chartOption';
 
 const overview = ref<DashboardTaskOverviewRespVO>({});
 const categoryDistribution = ref<TaskCategoryDistributionRespVO[]>([]);
+const categoryColors = ['#3f6dff', '#ffb22c', '#3ba4ff', '#d8efff', '#39e3e7', '#8ad64c', '#7d60ff', '#ff8a34'];
 
 const formatCount = (value?: number) => Number(value || 0);
 const formatRate = (value?: number) => `${Number(value || 0).toFixed(2)}%`;
@@ -86,18 +96,72 @@ const loadOverviewData = async () => {
   }
 };
 
-const categoryPieOption = computed(() =>
-  createBigScreenLineOption({
-    labels: categoryDistribution.value.length
-      ? categoryDistribution.value.map((item) => item.category || '--')
-      : ['蔬菜', '水果', '茶叶', '粮油'],
-    values: categoryDistribution.value.length
-      ? categoryDistribution.value.map((item) => Number(item.sampleCount || 0))
-      : [120, 88, 56, 40],
-    rotate: 18,
-    grid: { left: 36, right: 16, top: 18, bottom: 44 }
-  })
+const categoryItems = computed(() =>
+  [...categoryDistribution.value]
+    .map((item) => ({
+      name: item.category || '--',
+      value: Number(item.sampleCount || 0)
+    }))
+    .sort((a, b) => b.value - a.value)
+    .map((item, index) => ({
+      ...item,
+      color: categoryColors[index % categoryColors.length]
+    }))
 );
+
+const pieItems = computed(() => categoryItems.value.filter((item) => item.value > 0));
+
+const categoryPieOption = computed(() => ({
+  tooltip: {
+    trigger: 'item',
+    backgroundColor: 'rgba(6, 18, 42, 0.92)',
+    borderColor: 'rgba(87, 226, 255, 0.35)',
+    textStyle: { color: '#dff7ff' },
+    formatter: ({ name, value }: { name: string; value: number }) => `${name}<br/>${value}`
+  },
+  series: [
+    {
+      type: 'pie',
+      radius: ['42%', '62%'],
+      center: ['38%', '50%'],
+      minAngle: 6,
+      avoidLabelOverlap: true,
+      label: {
+        show: true,
+        color: '#d6eefe',
+        fontSize: 12,
+        formatter: (params: { name: string; value: number }) =>
+          params.value > 0 ? `{name|${params.name}}\n{value|${params.value}}` : '',
+        rich: {
+          name: { color: '#d6eefe', fontSize: 12, lineHeight: 16 },
+          value: { color: '#57e2ff', fontSize: 12, lineHeight: 16, fontWeight: 700 }
+        }
+      },
+      labelLine: {
+        show: true,
+        length: 14,
+        length2: 18,
+        lineStyle: { color: 'rgba(255,255,255,0.85)', width: 1.2 }
+      },
+      itemStyle: {
+        borderColor: 'rgba(7, 16, 38, 0.96)',
+        borderWidth: 4,
+        shadowBlur: 10,
+        shadowColor: 'rgba(0, 0, 0, 0.2)'
+      },
+          data: pieItems.value.map((item) => ({
+            name: item.name,
+            value: item.value,
+            itemStyle: {
+          color: new echarts.graphic.LinearGradient(0, 0, 1, 1, [
+            { offset: 0, color: item.color },
+            { offset: 1, color: 'rgba(15, 52, 95, 0.9)' }
+          ])
+        }
+      }))
+    }
+  ]
+}));
 
 const loadCategoryDistribution = async () => {
   try {
@@ -308,10 +372,71 @@ onUnmounted(() => {
   }
 }
 
-.pie-container {
+.category-layout {
   width: 100%;
   height: 100%;
   padding-top: 10px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 160px;
+  align-items: center;
+  gap: 10px;
+}
+
+.pie-container {
+  width: 100%;
+  height: 100%;
+}
+
+.category-legend {
+  height: 230px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+  padding-right: 6px;
+}
+
+.category-legend::-webkit-scrollbar {
+  width: 6px;
+}
+
+.category-legend::-webkit-scrollbar-thumb {
+  background: rgba(76, 233, 255, 0.35);
+  border-radius: 999px;
+}
+
+.category-legend::-webkit-scrollbar-track {
+  background: rgba(9, 26, 52, 0.35);
+}
+
+.legend-row {
+  display: grid;
+  grid-template-columns: 12px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px;
+  background: rgba(11, 44, 88, 0.45);
+  border: 1px solid rgba(39, 110, 196, 0.35);
+
+  .dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+  }
+
+  .name {
+    color: #bbdbfa;
+    font-size: 15px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .value {
+    color: #4ce9ff;
+    font-weight: 700;
+    font-size: 15px;
+  }
 }
 
 @keyframes dialRotate {

@@ -28,8 +28,12 @@
           <!-- 所属行业 -->
           <el-form-item label="所属行业" prop="industry">
             <el-select v-model="formData.industry" placeholder="选择所属行业" class="full-width">
-              <el-option label="农业" value="agriculture" />
-              <el-option label="工业" value="industry" />
+              <el-option
+                v-for="dict in industryOptions"
+                :key="dict.value"
+                :label="dict.label"
+                :value="dict.value"
+              />
             </el-select>
           </el-form-item>
 
@@ -154,6 +158,7 @@ const route = useRoute()
 const message = useMessage()
 const formRef = ref()
 const { options: filingSubjectTypeOptions } = useDict('agri_filing_subject_type', 'int')
+const { options: industryOptions } = useDict('agri_industry', 'str')
 
 const id = route.query.id ? Number(route.query.id) : undefined
 const isEdit = !!id

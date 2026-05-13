@@ -13,26 +13,31 @@
                 <h2 class="card-title">自主检测查询</h2>
             </div>
             <div class="query-form-wrapper">
-                <el-form :inline="true" :model="queryParams" class="custom-query-form custom-query-form-row" label-position="left">
+                <el-form :inline="true" :model="queryParams" class="custom-query-form custom-query-form-row"
+                    label-position="left">
                     <el-form-item label="">
-                        <el-input v-model="queryParams.sampleCode" placeholder="请输入编号查询"
-                            class="custom-input w160" clearable />
+                        <el-input v-model="queryParams.sampleCode" placeholder="请输入编号查询" class="custom-input w160"
+                            clearable />
                     </el-form-item>
                     <el-form-item label="">
-                        <el-input v-model="queryParams.productName" placeholder="请输入样品名称"
-                            class="custom-input w160" clearable />
+                        <el-input v-model="queryParams.productName" placeholder="请输入样品名称" class="custom-input w160"
+                            clearable />
                     </el-form-item>
                     <el-form-item label="">
-                        <el-select v-model="queryParams.category" placeholder="产品分类" class="custom-select w140" clearable>
+                        <el-select v-model="queryParams.category" placeholder="产品分类" class="custom-select w140"
+                            clearable>
                             <el-option label="全部" value="" />
-                            <el-option v-for="dict in productCategoryOptions" :key="dict.value + ''" :label="dict.label" :value="dict.value" />
+                            <el-option v-for="dict in productCategoryOptions" :key="dict.value + ''" :label="dict.label"
+                                :value="dict.value" />
                         </el-select>
                     </el-form-item>
                     <el-form-item label="">
-                        <AreaCascader v-model="areaIds" @select="handleAreaSelect" placeholder="抽检地区" style="width: 240px;" />
+                        <AreaCascader v-model="areaIds" @select="handleAreaSelect" placeholder="抽检地区"
+                            style="width: 240px;" />
                     </el-form-item>
                     <el-form-item label="">
-                        <el-select v-model="queryParams.isRetest" placeholder="是否复检" class="custom-select w140" clearable>
+                        <el-select v-model="queryParams.isRetest" placeholder="是否复检" class="custom-select w140"
+                            clearable>
                             <el-option label="全部" value="" />
                             <el-option label="是" :value="true" />
                             <el-option label="否" :value="false" />
@@ -77,13 +82,15 @@
                         <el-table-column label="样品来源" prop="samplingLocation" width="100" align="center" />
                         <el-table-column label="产品分类" prop="productCategory" width="80" align="center">
                             <template #default="scope">
-                                {{ getCategoryLabel(scope.row.productCategory) }}
+                                {{ getCategoryLabel(scope.row.productCategory) == '--' ? scope.row.productCategory :
+                                    getCategoryLabel(scope.row.productCategory) }}
                             </template>
                         </el-table-column>
                         <el-table-column label="抽检地区" prop="detectionArea" width="100" align="center" />
-                        <el-table-column label="检测项目" prop="aiRecognitionResult" min-width="120" align="center" show-overflow-tooltip>
+                        <el-table-column label="检测项目" prop="aiRecognitionResult" min-width="120" align="center"
+                            show-overflow-tooltip>
                             <template #default="scope">
-                                {{ scope.row.aiRecognitionResult}}
+                                {{ scope.row.aiRecognitionResult }}
                             </template>
                         </el-table-column>
                         <el-table-column label="是否复检" prop="isRetest" width="90" align="center">
@@ -94,9 +101,9 @@
                             </template>
                         </el-table-column>
                         <el-table-column label="被检主体名称" prop="subjectName" min-width="110" show-overflow-tooltip />
-                        <el-table-column label="检测机构" prop="detectionOrgName" min-width="130" show-overflow-tooltip >
+                        <el-table-column label="检测机构" prop="detectionOrgName" min-width="130" show-overflow-tooltip>
                             <template #default="scope">
-                                {{ scope.row.detectionOrgName ||  scope.row.subjectName ||  '-' }}
+                                {{ scope.row.detectionOrgName || scope.row.subjectName || '-' }}
                             </template>
                         </el-table-column>
                         <el-table-column label="检测时间" prop="detectionDate" width="100" align="center">
@@ -106,13 +113,13 @@
                         </el-table-column>
                         <el-table-column label="检测结果" prop="overallResult" width="100" align="center">
                             <template #default="scope">
-                                <template v-if="scope.row.overallResult !== null && scope.row.overallResult !== undefined">
-                                    <el-tag 
+                                <template
+                                    v-if="scope.row.overallResult !== null && scope.row.overallResult !== undefined">
+                                    <el-tag
                                         :type="scope.row.overallResult === 0 ? 'success' : (scope.row.overallResult === 1 ? 'danger' : 'warning')"
-                                        size="small"
-                                        effect="light"
-                                    >
-                                        {{ scope.row.overallResult === 0 ? '阴性' : (scope.row.overallResult === 1 ? '阳性' : '结果异常') }}
+                                        size="small" effect="light">
+                                        {{ scope.row.overallResult === 0 ? '阴性' : (scope.row.overallResult === 1 ? '阳性'
+                                        : '结果异常') }}
                                     </el-tag>
                                 </template>
                                 <span v-else>--</span>
@@ -126,27 +133,24 @@
                         <el-table-column label="操作" width="200" align="center" fixed="right">
                             <template #default="scope">
                                 <div class="table-operate-action-btns">
-                                    <span class="table-view-operate" v-if="scope.row.status == 0 &&  !scope.row.reportGenerated" @click="handleDetect(scope.row)">去检测</span>
+                                    <span class="table-view-operate"
+                                        v-if="scope.row.status == 0 && !scope.row.reportGenerated"
+                                        @click="handleDetect(scope.row)">去检测</span>
                                     <span class="table-view-operate" @click="handleView(scope.row)">查看详情</span>
-                                    <span class="table-edit-operate" @click="handleRetest(scope.row)" v-if="scope.row.status && scope.row.recheckNo == 0">复检</span>
+                                    <span class="table-edit-operate" @click="handleRetest(scope.row)"
+                                        v-if="scope.row.status && scope.row.recheckNo == 0">复检</span>
                                     <span class="table-delete-operate" @click="handleDelete(scope.row)">删除</span>
                                 </div>
                             </template>
                         </el-table-column>
                     </el-table>
                 </div>
-    
+
                 <!-- 分页区域 -->
                 <div class="pagination-wrapper">
-                    <el-pagination 
-                        v-model:current-page="pageParams.pageNo" 
-                        v-model:page-size="pageParams.pageSize"
-                        :total="total" 
-                        background 
-                        layout="total, sizes, prev, pager, next, jumper" 
-                        @size-change="getList"
-                        @current-change="getList"
-                        class="custom-pagination" />
+                    <el-pagination v-model:current-page="pageParams.pageNo" v-model:page-size="pageParams.pageSize"
+                        :total="total" background layout="total, sizes, prev, pager, next, jumper"
+                        @size-change="getList" @current-change="getList" class="custom-pagination" />
                 </div>
             </div>
         </div>
@@ -251,7 +255,7 @@ const getList = async () => {
             sampleName: queryParams.productName // 映射为名称搜索
         });
         data.list.forEach(item => {
-            if(item.aiRecognitionResult) {
+            if (item.aiRecognitionResult) {
                 let data = JSON.parse(item.aiRecognitionResult)
                 item.aiRecognitionResult = data.results.map(item => item.codeName).join(', ');
                 item.testTime = data.timestamp || '-';
@@ -460,110 +464,114 @@ onMounted(() => {
         top: 6px;
         right: 6px;
         font-size: 20px;
+
         &:hover .el-dialog__close {
             color: #00B3ED;
         }
     }
 
-.dialog-header {
-    padding: 14px 10px;
-    .title-with-accent {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        .dialog-title {
-            font-size: 20px;
-            font-weight: 700;
-            color: #1E293B;
-            margin: 0;
-            letter-spacing: -0.01em;
-        }
-    }
+    .dialog-header {
+        padding: 14px 10px;
 
-    .dialog-desc {
-        font-size: 12px;
-        color: #64748B;
-        margin: 0;
-        padding-left: 16px;
-    }
-}
+        .title-with-accent {
+            display: flex;
+            align-items: center;
+            gap: 12px;
 
-.rule-form {
-    padding: 14px;
-    margin-top: -4px;
-
-    .form-item {
-        margin-bottom: 14px;
-        &:last-child {
-            margin-bottom: 0;
-        }
-    }
-
-    .form-label {
-        display: block;
-        font-size: 14px;
-        color: #1a1a1a;
-        margin-bottom: 4px;
-    }
-
-    :deep(.el-radio-group) {
-        display: flex;
-        gap: 32px;
-    }
-
-    :deep(.el-radio) {
-        .el-radio__label {
-            font-size: 15px;
-            color: #333;
-        }
-
-        .el-radio__inner {
-            width: 18px;
-            height: 18px;
-            border-color: #d9d9d9;
-        }
-
-        &.is-checked {
-            .el-radio__inner {
-                border-color: #00B3ED;
-                background: #00B3ED;
-            }
-        }
-    }
-
-    .date-range-picker {
-        width: 360px !important;
-        height: 40px !important;
-        border-radius: 4px;
-        overflow: hidden;
-        transition: all 0.2s;
-
-        &.el-date-editor--daterange {
-            width: 360px !important;
-        }
-
-        .el-range-input {
-            background: transparent;
-            font-size: 14px;
-            color: #333;
-
-            &::placeholder {
-                color: #999;
+            .dialog-title {
+                font-size: 20px;
+                font-weight: 700;
+                color: #1E293B;
+                margin: 0;
+                letter-spacing: -0.01em;
             }
         }
 
-        .el-range-separator {
+        .dialog-desc {
+            font-size: 12px;
             color: #64748B;
-            padding: 0 8px;
-            font-size: 13px;
-        }
-
-        .el-range__icon {
-            color: #00B3ED;
-            font-size: 16px;
+            margin: 0;
+            padding-left: 16px;
         }
     }
-}
+
+    .rule-form {
+        padding: 14px;
+        margin-top: -4px;
+
+        .form-item {
+            margin-bottom: 14px;
+
+            &:last-child {
+                margin-bottom: 0;
+            }
+        }
+
+        .form-label {
+            display: block;
+            font-size: 14px;
+            color: #1a1a1a;
+            margin-bottom: 4px;
+        }
+
+        :deep(.el-radio-group) {
+            display: flex;
+            gap: 32px;
+        }
+
+        :deep(.el-radio) {
+            .el-radio__label {
+                font-size: 15px;
+                color: #333;
+            }
+
+            .el-radio__inner {
+                width: 18px;
+                height: 18px;
+                border-color: #d9d9d9;
+            }
+
+            &.is-checked {
+                .el-radio__inner {
+                    border-color: #00B3ED;
+                    background: #00B3ED;
+                }
+            }
+        }
+
+        .date-range-picker {
+            width: 360px !important;
+            height: 40px !important;
+            border-radius: 4px;
+            overflow: hidden;
+            transition: all 0.2s;
+
+            &.el-date-editor--daterange {
+                width: 360px !important;
+            }
+
+            .el-range-input {
+                background: transparent;
+                font-size: 14px;
+                color: #333;
+
+                &::placeholder {
+                    color: #999;
+                }
+            }
+
+            .el-range-separator {
+                color: #64748B;
+                padding: 0 8px;
+                font-size: 13px;
+            }
+
+            .el-range__icon {
+                color: #00B3ED;
+                font-size: 16px;
+            }
+        }
+    }
 }
 
 .dialog-footer {
@@ -589,13 +597,15 @@ onMounted(() => {
         height: 38px;
         border-radius: 8px;
         font-size: 14px;
+
         &:hover {
             opacity: 0.8;
         }
     }
 }
-.w140{
-    width: 140px!important;
+
+.w140 {
+    width: 140px !important;
 }
 
 /* 核心优化：确保操作按钮区域横向排布不折行 */
@@ -609,6 +619,7 @@ onMounted(() => {
     span {
         white-space: nowrap;
         font-size: 13px;
+
         &:hover {
             opacity: 0.8;
             text-decoration: underline;

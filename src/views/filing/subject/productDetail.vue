@@ -69,7 +69,7 @@
                 <!-- 生产规模 -->
                 <div class="detail-row">
                     <div class="label">*生产规模：</div>
-                    <div class="value">{{ subjectInfo.productionScale ? (subjectInfo.productionScale + ' ' + (subjectInfo.productionScaleUnit || '')) : '--' }}</div>
+                    <div class="value">{{ subjectInfo.productionScale ? (subjectInfo.productionScale + ' ' + getAgriUnitLabel(subjectInfo.productionScaleUnit)) : '--' }}</div>
                 </div>
 
                 <!-- 营业执照 -->
@@ -189,6 +189,7 @@ import { ElMessage, ElLoading } from 'element-plus';
 import PageHeader from '@/components/PageHeader/index.vue';
 import * as SubjectApi from '@/api/agri/subject/index';
 import { useDict } from '@/hooks/web/useDict';
+import { getAgriUnitLabel } from '@/utils/agriUnit';
 import { useUserStore } from '@/store/modules/user';
 
 const router = useRouter();

@@ -30,7 +30,8 @@
                                 <div class="qty-unit-group">
                                     <el-input v-model="formData.quantity" disabled />
                                     <el-select v-model="formData.unit" disabled style="width: 100px;">
-                                        <el-option v-for="unit in AGRI_UNITS" :key="unit.value" :label="unit.label" :value="unit.value" />
+                                        <el-option v-for="unit in measurementUnitOptions" :key="unit.value"
+                                            :label="unit.label" :value="unit.value" />
                                     </el-select>
                                 </div>
                             </el-form-item>
@@ -139,15 +140,18 @@
 </template>
 
 <script setup>
-import { reactive, onMounted } from 'vue';
+import { computed, reactive, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { Picture } from '@element-plus/icons-vue';
 import { ElLoading } from 'element-plus';
 import { Qrcode } from '@/components/Qrcode';
 import { getVerification } from '@/api/agri/certificateVerification/index';
 import { dateFormatter } from '@/utils/formatTime';
-import { AGRI_UNITS } from '@/utils/constants';
-import { getAgriUnitLabel } from '@/utils';
+import {
+    DEFAULT_AGRI_MEASUREMENT_UNIT,
+    getAgriUnitLabel,
+    usePreferredAgriMeasurementUnitOptions
+} from '@/utils/agriUnit';
 
 const router = useRouter();
 const route = useRoute();
@@ -157,7 +161,7 @@ const formData = reactive({
     productName: '',
     productionArea: '',
     quantity: '',
-    unit: 'kg',
+    unit: DEFAULT_AGRI_MEASUREMENT_UNIT,
     issueDate: '',
     contactName: '',
     contactPhone: '',
@@ -166,6 +170,14 @@ const formData = reactive({
     certificateCode: '',
     verificationTime: ''
 });
+
+const unitRef = computed({
+    get: () => formData.unit,
+    set: (value) => {
+        formData.unit = value || DEFAULT_AGRI_MEASUREMENT_UNIT;
+    }
+});
+const measurementUnitOptions = usePreferredAgriMeasurementUnitOptions(unitRef, ['千克', 'kg'], DEFAULT_AGRI_MEASUREMENT_UNIT, false);
 
 onMounted(async () => {
     const id = route.query.id;

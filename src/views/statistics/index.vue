@@ -46,9 +46,9 @@ const tabs = [
 const initTab = () => {
   if (route.query.tab) {
     currentTab.value = route.query.tab as string
-  } else if (route.path.includes('quick') || route.path.includes('rapid')) {
-    currentTab.value = 'quick'
+    return
   }
+  currentTab.value = 'all'
 }
 
 onMounted(() => {
@@ -72,34 +72,45 @@ watch(() => route.path, () => {
 /* 顶部 Tabs */
 .stat-tabs-wrapper {
   background-color: #fff;
-  padding: 0 20px;
-  border-bottom: 1px solid #ebeef5;
+  padding: 0 32px;
+  border-bottom: 1px solid #f0f2f5;
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
 .stat-tabs {
   display: flex;
   align-items: center;
-  gap: 30px;
+  gap: 40px;
 }
 
 .tab-item {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 16px 0;
+  gap: 8px;
+  padding: 20px 0;
   cursor: pointer;
   font-size: 15px;
-  color: #606266;
+  color: #8c8c8c;
   position: relative;
-  transition: all 0.3s;
+  transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
+  font-weight: 500;
+
+  .tab-icon {
+    transition: transform 0.3s;
+  }
 
   &:hover {
     color: #00B3ED;
+    .tab-icon {
+      transform: translateY(-2px);
+    }
   }
 
   &.active {
     color: #00B3ED;
-    font-weight: 500;
+    font-weight: 600;
 
     &::after {
       content: '';
@@ -107,9 +118,10 @@ watch(() => route.path, () => {
       bottom: 0;
       left: 0;
       width: 100%;
-      height: 3px;
-      background-color: #00B3ED;
-      border-radius: 2px 2px 0 0;
+      height: 4px;
+      background: linear-gradient(90deg, #00B3ED 0%, #00f2fe 100%);
+      border-radius: 4px 4px 0 0;
+      box-shadow: 0 -2px 8px rgba(0, 179, 237, 0.2);
     }
   }
 }

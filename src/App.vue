@@ -15,6 +15,13 @@ const currentSize = computed(() => appStore.getCurrentSize)
 const greyMode = computed(() => appStore.getGreyMode)
 const { wsCache } = useCache()
 const route = useRoute()
+const bigScreenAutofitOptions = {
+  el: 'body',
+  dh: 1180,
+  dw: 1920,
+  resize: true
+}
+let isBigScreenAutofitActive = false
 
 // 根据浏览器当前主题设置系统主题色
 const setDefaultTheme = () => {
@@ -28,18 +35,25 @@ setDefaultTheme()
 
 // 仅在大屏页面启用 autofit
 const bigScreenRoutes = ['BigScreen', 'BigScreenCertificate', 'BigScreenTask', 'BigScreenQuick']
+const enableBigScreenAutofit = () => {
+  if (isBigScreenAutofitActive) return
+  autofit.init(bigScreenAutofitOptions, false)
+  isBigScreenAutofitActive = true
+}
+
+const disableBigScreenAutofit = () => {
+  if (!isBigScreenAutofitActive) return
+  autofit.off()
+  isBigScreenAutofitActive = false
+}
+
 watch(
   () => route.name,
   (newName) => {
     if (bigScreenRoutes.includes(newName as string)) {
-      autofit.init({
-        el: 'body',
-        dh: 1180,
-        dw: 1920,
-        resize: true
-      })
+      enableBigScreenAutofit()
     } else {
-      autofit.off()
+      disableBigScreenAutofit()
     }
   },
   { immediate: true }

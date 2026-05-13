@@ -1,16 +1,4 @@
 import request from '@/config/axios'
-import {
-  getMockCategoryRisk,
-  getMockDashboardMapData,
-  getMockDashboardOverview,
-  getMockDashboardTrend,
-  getMockPesticideRiskTop10,
-  getMockProduceRiskTop10,
-  getMockProductPesticideTop10,
-  getMockRiskAreaTop10,
-  resolveDashboardMock,
-  shouldUseDashboardMock
-} from './mock'
 
 export interface DashboardQueryParams {
   startDate?: string
@@ -114,9 +102,6 @@ export interface CategoryRiskRespVO {
 
 // 首页大屏 - 概览统计
 export const getDashboardOverview = (params?: DashboardQueryParams) => {
-  if (shouldUseDashboardMock()) {
-    return resolveDashboardMock(() => getMockDashboardOverview(params))
-  }
   return request.get<DashboardOverviewRespVO>({
     url: '/agri/dashboard/overview',
     params
@@ -125,9 +110,6 @@ export const getDashboardOverview = (params?: DashboardQueryParams) => {
 
 // 首页大屏 - 月度检测趋势
 export const getDashboardTrend = (params: TrendQueryParams) => {
-  if (shouldUseDashboardMock()) {
-    return resolveDashboardMock(() => getMockDashboardTrend(params.statType, params))
-  }
   return request.get<TrendRespVO[]>({
     url: '/agri/dashboard/trend',
     params
@@ -136,9 +118,6 @@ export const getDashboardTrend = (params: TrendQueryParams) => {
 
 // 首页大屏 - 风险集中区域 TOP10
 export const getRiskAreaTop10 = (params: RiskAreaTopQueryParams) => {
-  if (shouldUseDashboardMock()) {
-    return resolveDashboardMock(() => getMockRiskAreaTop10(params.areaLevel, params))
-  }
   return request.get<RiskAreaTopRespVO[]>({
     url: '/agri/dashboard/risk-area-top10',
     params
@@ -147,9 +126,6 @@ export const getRiskAreaTop10 = (params: RiskAreaTopQueryParams) => {
 
 // 首页大屏 - 产品检测项风险 TOP10
 export const getProductPesticideTop10 = (params: TrendQueryParams) => {
-  if (shouldUseDashboardMock()) {
-    return resolveDashboardMock(() => getMockProductPesticideTop10(params.statType, params))
-  }
   return request.get<ProductPesticideTopRespVO[]>({
     url: '/agri/dashboard/product-pesticide-top10',
     params
@@ -158,9 +134,6 @@ export const getProductPesticideTop10 = (params: TrendQueryParams) => {
 
 // 首页大屏 - 农产品风险 TOP10
 export const getProduceRiskTop10 = (params: TrendQueryParams) => {
-  if (shouldUseDashboardMock()) {
-    return resolveDashboardMock(() => getMockProduceRiskTop10(params.statType, params))
-  }
   return request.get<ProduceRiskTopRespVO[]>({
     url: '/agri/dashboard/produce-risk-top10',
     params
@@ -169,9 +142,6 @@ export const getProduceRiskTop10 = (params: TrendQueryParams) => {
 
 // 首页大屏 - 农药残留风险 TOP10
 export const getPesticideRiskTop10 = (params: TrendQueryParams) => {
-  if (shouldUseDashboardMock()) {
-    return resolveDashboardMock(() => getMockPesticideRiskTop10(params.statType, params))
-  }
   return request.get<PesticideRiskTopRespVO[]>({
     url: '/agri/dashboard/pesticide-risk-top10',
     params
@@ -180,9 +150,6 @@ export const getPesticideRiskTop10 = (params: TrendQueryParams) => {
 
 // 首页大屏 - 地图热力数据
 export const getDashboardMapData = (params: MapDataQueryParams) => {
-  if (shouldUseDashboardMock()) {
-    return resolveDashboardMock(() => getMockDashboardMapData(params.areaLevel, params))
-  }
   return request.get<MapDataRespVO[]>({
     url: '/agri/dashboard/map-data',
     params
@@ -191,9 +158,6 @@ export const getDashboardMapData = (params: MapDataQueryParams) => {
 
 // 首页大屏 - 农产品品类风险分布
 export const getCategoryRisk = (params: TrendQueryParams) => {
-  if (shouldUseDashboardMock()) {
-    return resolveDashboardMock(() => getMockCategoryRisk(params.statType, params))
-  }
   return request.get<CategoryRiskRespVO[]>({
     url: '/agri/dashboard/category-risk',
     params

@@ -3,7 +3,7 @@
         <!-- 标题卡 -->
         <div class="guide-card">
             <div class="card-header">
-             
+
                 <h2 class="card-title">合格证开具（生产者/收购者/销售者）</h2>
             </div>
         </div>
@@ -11,19 +11,23 @@
         <!-- 查询卡 -->
         <div class="query-card">
             <div class="card-header">
-             
+
                 <h2 class="card-title">合格证开具查询</h2>
             </div>
             <div class="query-form-wrapper">
-                <el-form :model="queryParams" :inline="true" class="custom-query-form custom-query-form-row" label-position="left">
+                <el-form :model="queryParams" :inline="true" class="custom-query-form custom-query-form-row"
+                    label-position="left">
                     <el-form-item label="" prop="certNo">
-                        <el-input :prefix-icon="Search" v-model="queryParams.certNo" placeholder="搜索合格证编号" clearable class="custom-input w220" />
+                        <el-input :prefix-icon="Search" v-model="queryParams.certNo" placeholder="搜索合格证编号" clearable
+                            class="custom-input w220" />
                     </el-form-item>
                     <el-form-item label="" prop="productName">
-                        <el-input :prefix-icon="Search" v-model="queryParams.productName" placeholder="搜索产品名称" clearable class="custom-input w220" />
+                        <el-input :prefix-icon="Search" v-model="queryParams.productName" placeholder="搜索产品名称" clearable
+                            class="custom-input w220" />
                     </el-form-item>
                     <el-form-item label="" prop="entity">
-                        <el-input :prefix-icon="Search" v-model="queryParams.entity" placeholder="搜索生产经营企业/个人" clearable class="custom-input w220" />
+                        <el-input :prefix-icon="Search" v-model="queryParams.entity" placeholder="搜索生产经营企业/个人" clearable
+                            class="custom-input w220" />
                     </el-form-item>
                     <el-form-item label="" prop="issueType">
                         <el-select v-model="queryParams.issueType" placeholder="出证类型" clearable class="custom-select">
@@ -32,8 +36,9 @@
                             <el-option label="批发市场" :value="3" />
                         </el-select>
                     </el-form-item>
-                     <el-form-item label="" prop="contactPhone">
-                        <el-input :prefix-icon="Search" v-model="queryParams.contactPhone" placeholder="请输入联系电话" clearable class="custom-input w220" />
+                    <el-form-item label="" prop="contactPhone">
+                        <el-input :prefix-icon="Search" v-model="queryParams.contactPhone" placeholder="请输入联系电话"
+                            clearable class="custom-input w220" />
                     </el-form-item>
                     <el-form-item label="" prop="status">
                         <el-select v-model="queryParams.status" placeholder="开具状态" clearable class="custom-select">
@@ -43,7 +48,8 @@
                         </el-select>
                     </el-form-item>
                     <el-form-item label="" prop="province">
-                        <AreaCascader v-model="areaIds" @select="handleAreaSelect" placeholder="请选择产地" style="width: 260px;" />
+                        <AreaCascader v-model="areaIds" @select="handleAreaSelect" placeholder="请选择产地"
+                            style="width: 260px;" />
                         <!-- <el-cascader placeholder="产品产地" v-model="queryParams.province" :options="provinceAndCityData" :props="{label: 'name', value: 'code'}" clearable class="custom-select" /> -->
                         <!-- <el-select v-show="false" v-model="queryParams.province" placeholder="省" clearable class="custom-select">
                             <el-option label="山东省" value="shandong" />
@@ -56,7 +62,9 @@
                         </el-select> -->
                     </el-form-item>
                     <el-form-item label="" prop="dateRange">
-                        <el-date-picker style="width: 240px !important;" v-model="queryParams.dateRange" type="daterange" range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" value-format="YYYY-MM-DD" class="custom-datepicker" />
+                        <el-date-picker style="width: 240px !important;" v-model="queryParams.dateRange"
+                            type="daterange" range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期"
+                            value-format="YYYY-MM-DD" class="custom-datepicker" />
                     </el-form-item>
                     <div class="query-btns">
                         <el-button @click="handleReset" class="reset-btn">重置</el-button>
@@ -86,15 +94,21 @@
                     <el-table-column label="合格证编号" prop="certificateCode" width="160" align="center" />
                     <el-table-column label="出证类型" prop="certificateType" width="100" align="center">
                         <template #default="scope">
-                            <span class="type-tag" :class="scope.row.certificateType === 1 ? 'producer' : (scope.row.certificateType === 2 ? 'buyer' : 'seller')">
-                                {{ scope.row.certificateType === 1 ? '生产者' : (scope.row.certificateType === 2 ? '收购者' : '批发市场') }}
+                            <span class="type-tag"
+                                :class="scope.row.certificateType === 1 ? 'producer' : (scope.row.certificateType === 2 ? 'buyer' : 'seller')">
+                                {{ scope.row.certificateType === 1 ? '生产者' : (scope.row.certificateType === 2 ? '收购者' :
+                                '批发市场') }}
                             </span>
                         </template>
                     </el-table-column>
                     <el-table-column label="产品名称" prop="productName" width="110" align="center" />
-                    <el-table-column label="产品类别" prop="productCategory" width="110" align="center">
+                    <el-table-column label="产品类别" prop="productCategory" width="160" align="center" show-overflow-tooltip>
                         <template #default="scope">
-                            <dict-tag :type="DICT_TYPE.AGRI_PRODUCT_CATEGORY" :value="scope.row.productCategory" />
+                            <el-tag v-if="scope.row.productCategory" effect="light" type="primary">
+                                {{ productCategoryOptions.find(item => item.value === scope.row.productCategory)?.label ||
+                                    scope.row.productCategory }}
+                            </el-tag>
+                            <span v-else>--</span>
                         </template>
                     </el-table-column>
                     <el-table-column label="产地" prop="productionArea" min-width="150" show-overflow-tooltip />
@@ -115,8 +129,10 @@
                         </template>
                         <template #default="scope">
                             <div v-if="scope.row.contactPhone" class="phone-display">
-                                <span>{{ isPhoneVisible(scope.row.id) ? scope.row.contactPhone : hidePhone(scope.row.contactPhone) }}</span>
-                                <el-button link type="primary" @click="togglePhone(scope.row.id)" style="margin-left: 8px;">
+                                <span>{{ isPhoneVisible(scope.row.id) ? scope.row.contactPhone :
+                                    hidePhone(scope.row.contactPhone) }}</span>
+                                <el-button link type="primary" @click="togglePhone(scope.row.id)"
+                                    style="margin-left: 8px;">
                                     {{ isPhoneVisible(scope.row.id) ? '隐藏' : '显示' }}
                                 </el-button>
                             </div>
@@ -125,12 +141,14 @@
                     </el-table-column>
                     <el-table-column label="开具状态" prop="status" width="100" align="center">
                         <template #default="{ row }">
-                            <el-tag :type="row.status === 1 ? 'success' : (row.status === 0 ? 'warning' : 'danger')" size="small">
+                            <el-tag :type="row.status === 1 ? 'success' : (row.status === 0 ? 'warning' : 'danger')"
+                                size="small">
                                 {{ row.status === 1 ? '已开具' : (row.status === 0 ? '未开具' : '作废') }}
                             </el-tag>
                         </template>
                     </el-table-column>
-                    <el-table-column label="开具日期" prop="issueDate" width="160" align="center" :formatter="dateFormatter2" />
+                    <el-table-column label="开具日期" prop="issueDate" width="160" align="center"
+                        :formatter="dateFormatter2" />
                     <el-table-column label="操作" width="200" align="center" fixed="right">
                         <template #default="scope">
                             <div class="table-operate-action-btns">
@@ -170,12 +188,13 @@ import download from '@/utils/download';
 import { dateFormatter2 } from '@/utils/formatTime';
 import * as CertificateApi from '@/api/agri/certificate';
 import { useTableHeight } from '@/hooks/web/useTableHeight';
-import { DICT_TYPE } from '@/utils/dict';
+import { DICT_TYPE, getDictOptions } from '@/utils/dict';
 
 const router = useRouter();
 const message = useMessage();
 const tableRef = ref(null);
 const { tableHeight } = useTableHeight(tableRef, 70);
+const productCategoryOptions = getDictOptions(DICT_TYPE.AGRI_PRODUCT_CATEGORY);
 
 // 手机号显示控制
 const visiblePhoneIds = ref<number[]>([]);
@@ -325,7 +344,7 @@ const handleInvalidate = async (row: any) => {
             message.warning('作废原因不能为空');
             return;
         }
-        
+
         await CertificateApi.voidCertificate({
             id: row.id,
             voidReason: result.value
@@ -348,17 +367,18 @@ const handleCurrentChange = (val: number) => {
 .custom-datepicker {
     width: 260px !important;
 }
+
 .type-tag {
     padding: 2px 8px;
     border-radius: 4px;
     font-size: 12px;
-    
+
     &.producer {
         background: rgba(0, 179, 237, 0.1);
         color: #00B3ED;
         border: 1px solid rgba(0, 179, 237, 0.2);
     }
-    
+
     &.seller {
         background: rgba(103, 194, 58, 0.1);
         color: #67c23a;
@@ -376,30 +396,31 @@ const handleCurrentChange = (val: number) => {
     display: flex;
     justify-content: center;
     gap: 12px;
-    
+
     span {
         cursor: pointer;
         font-size: 14px;
         transition: all 0.2s;
-        
+
         &:hover {
             opacity: 0.8;
         }
     }
-    
+
     .table-edit-operate {
         color: #00B3ED;
     }
-    
+
     .table-view-operate {
         color: #67c23a;
+
         &.disabled {
             color: #999 !important;
             cursor: not-allowed !important;
             pointer-events: none;
         }
     }
-    
+
     .table-delete-operate {
         color: #f56c6c;
     }
@@ -409,7 +430,7 @@ const handleCurrentChange = (val: number) => {
     display: flex;
     align-items: center;
     justify-content: center;
-    
+
     span {
         font-family: monospace;
     }

@@ -1,21 +1,60 @@
 <template>
   <div class="big-screen-shell">
     <BigScreenHeader :show-data-config="false" active-menu="cert" />
+    <BigScreenLoadingOverlay :visible="entranceLoading" />
     <main class="screen-main">
-      <LeftCertificateSection />
-      <CenterCertificateSection />
-      <RightCertificateSection />
+      <div class="left-panel">
+        <LeftCertificateSection v-if="panelVisibility.left" />
+      </div>
+      <div class="center-panel">
+        <CenterCertificateSection v-if="panelVisibility.center" />
+      </div>
+      <div class="right-panel">
+        <RightCertificateSection v-if="panelVisibility.right" />
+      </div>
     </main>
   </div>
 </template>
 
 <script setup lang="ts">
+import { defineAsyncComponent, onMounted, onUnmounted, ref } from 'vue';
 import BigScreenHeader from './components/bigscreen/BigScreenHeader.vue';
-import LeftCertificateSection from './components/bigscreenCertificate/LeftCertificateSection.vue';
-import CenterCertificateSection from './components/bigscreenCertificate/CenterCertificateSection.vue';
-import RightCertificateSection from './components/bigscreenCertificate/RightCertificateSection.vue';
+import BigScreenLoadingOverlay from './components/bigscreen/BigScreenLoadingOverlay.vue';
+import { useDeferredPanelMount } from './useDeferredPanelMount';
+
+const LeftCertificateSection = defineAsyncComponent(
+  () => import('./components/bigscreenCertificate/LeftCertificateSection.vue')
+);
+const CenterCertificateSection = defineAsyncComponent(
+  () => import('./components/bigscreenCertificate/CenterCertificateSection.vue')
+);
+const RightCertificateSection = defineAsyncComponent(
+  () => import('./components/bigscreenCertificate/RightCertificateSection.vue')
+);
 
 defineOptions({ name: 'VisualizationBigScreenCertificate' });
+
+const entranceLoading = ref(true);
+const { visibility: panelVisibility, schedule } = useDeferredPanelMount();
+let loadingTimer: number | null = null;
+
+onMounted(() => {
+  schedule({
+    immediate: ['left', 'center', 'right'],
+    deferred: []
+  });
+  loadingTimer = window.setTimeout(() => {
+    entranceLoading.value = false;
+    loadingTimer = null;
+  }, 420);
+});
+
+onUnmounted(() => {
+  if (loadingTimer !== null) {
+    window.clearTimeout(loadingTimer);
+    loadingTimer = null;
+  }
+});
 </script>
 
 <style scoped lang="scss">
@@ -38,7 +77,41 @@ defineOptions({ name: 'VisualizationBigScreenCertificate' });
   padding: 8px 12px 0;
   display: grid;
   grid-template-columns: 470px 1fr 460px;
+  grid-template-areas: 'left center right';
   gap: 12px;
+}
+
+.left-panel {
+  grid-area: left;
+  display: flex;
+  min-height: 0;
+
+  > * {
+    flex: 1;
+    min-height: 0;
+  }
+}
+
+.center-panel {
+  grid-area: center;
+  display: flex;
+  min-height: 0;
+
+  > * {
+    flex: 1;
+    min-height: 0;
+  }
+}
+
+.right-panel {
+  grid-area: right;
+  display: flex;
+  min-height: 0;
+
+  > * {
+    flex: 1;
+    min-height: 0;
+  }
 }
 
 .screen-toolbar {

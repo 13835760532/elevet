@@ -1,23 +1,68 @@
 <template>
   <div class="big-screen-shell">
     <BigScreenHeader :show-data-config="false" active-menu="inspect" />
+    <BigScreenLoadingOverlay :visible="entranceLoading" />
     <main class="screen-main">
-      <LeftQuickSection class="left-panel" />
-      <CenterQuickSection class="center-panel" />
-      <BottomQuickTrends class="bottom-panel" />
-      <RightQuickSection class="right-panel" />
+      <div class="left-panel">
+        <LeftQuickSection v-if="panelVisibility.left" />
+      </div>
+      <div class="center-panel">
+        <CenterQuickSection v-if="panelVisibility.center" />
+      </div>
+      <div class="bottom-panel">
+        <BottomQuickTrends v-if="panelVisibility.bottom" />
+      </div>
+      <div class="right-panel">
+        <RightQuickSection v-if="panelVisibility.right" />
+      </div>
     </main>
   </div>
 </template>
 
 <script setup lang="ts">
+import { defineAsyncComponent, onMounted, onUnmounted, ref } from 'vue';
 import BigScreenHeader from './components/bigscreen/BigScreenHeader.vue';
-import LeftQuickSection from './components/bigscreenQuick/LeftQuickSection.vue';
-import CenterQuickSection from './components/bigscreenQuick/CenterQuickSection.vue';
-import RightQuickSection from './components/bigscreenQuick/RightQuickSection.vue';
-import BottomQuickTrends from './components/bigscreenQuick/BottomQuickTrends.vue';
+import BigScreenLoadingOverlay from './components/bigscreen/BigScreenLoadingOverlay.vue';
+import { useDeferredPanelMount } from './useDeferredPanelMount';
+
+const LeftQuickSection = defineAsyncComponent(
+  () => import('./components/bigscreenQuick/LeftQuickSection.vue')
+);
+const CenterQuickSection = defineAsyncComponent(
+  () => import('./components/bigscreenQuick/CenterQuickSection.vue')
+);
+const RightQuickSection = defineAsyncComponent(
+  () => import('./components/bigscreenQuick/RightQuickSection.vue')
+);
+const BottomQuickTrends = defineAsyncComponent(
+  () => import('./components/bigscreenQuick/BottomQuickTrends.vue')
+);
 
 defineOptions({ name: 'VisualizationBigScreenQuick' });
+
+const entranceLoading = ref(true);
+const { visibility: panelVisibility, schedule } = useDeferredPanelMount();
+let loadingTimer: number | null = null;
+
+onMounted(() => {
+  schedule({
+    immediate: ['left', 'center', 'right'],
+    deferred: [
+      { key: 'bottom', delay: 120 }
+    ]
+  });
+  loadingTimer = window.setTimeout(() => {
+    entranceLoading.value = false;
+    loadingTimer = null;
+  }, 520);
+});
+
+onUnmounted(() => {
+  if (loadingTimer !== null) {
+    window.clearTimeout(loadingTimer);
+    loadingTimer = null;
+  }
+});
 </script>
 
 <style scoped lang="scss">
@@ -76,21 +121,45 @@ defineOptions({ name: 'VisualizationBigScreenQuick' });
 
 .left-panel {
   grid-area: left;
+  display: flex;
   min-height: 0;
+
+  > * {
+    flex: 1;
+    min-height: 0;
+  }
 }
 
 .center-panel {
   grid-area: center;
+  display: flex;
   min-height: 0;
+
+  > * {
+    flex: 1;
+    min-height: 0;
+  }
 }
 
 .bottom-panel {
   grid-area: bottom;
+  display: flex;
   min-height: 0;
+
+  > * {
+    flex: 1;
+    min-height: 0;
+  }
 }
 
 .right-panel {
   grid-area: right;
+  display: flex;
   min-height: 0;
+
+  > * {
+    flex: 1;
+    min-height: 0;
+  }
 }
 </style>
