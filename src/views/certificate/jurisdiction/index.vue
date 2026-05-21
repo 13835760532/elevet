@@ -58,20 +58,24 @@
 
                     <!-- 交互页签 -->
                     <div class="record-tabs">
-                        <div class="tab-item" :class="{ active: activeTab === 'produce' }" @click="handleTabChange('produce')">
+                        <div class="tab-item" :class="{ active: activeTab === 'produce' }"
+                            @click="handleTabChange('produce')">
                             合格证开具（生产者）
                         </div>
-                        <div class="tab-item" :class="{ active: activeTab === 'verify' }" @click="handleTabChange('verify')">
-                            合格证查验存证（收购者与消费者）
+                        <div class="tab-item" :class="{ active: activeTab === 'verify' }"
+                            @click="handleTabChange('verify')">
+                            合格证查验存证（收购者与批发市场）
                         </div>
                     </div>
                     <div class="query-form-wrapper">
-                        <el-form :model="queryParams" class="custom-query-form custom-query-form-row" label-position="left">
+                        <el-form :model="queryParams" class="custom-query-form custom-query-form-row"
+                            label-position="left">
                             <div class="query-row" style="margin-bottom: 16px;">
                                 <el-form-item label="统计周期" prop="dateRange">
                                     <el-date-picker v-model="queryParams.dateRange" type="daterange" range-separator="至"
                                         start-placeholder="开始日期" end-placeholder="结束日期" value-format="YYYY-MM-DD"
-                                        class="date-picker custom-input" :prefix-icon="Search" style="width: 240px !important;" />
+                                        class="date-picker custom-input" :prefix-icon="Search"
+                                        style="width: 240px !important;" />
                                 </el-form-item>
                             </div>
                             <div class="query-row main-filters">
@@ -87,20 +91,34 @@
                                     <el-input v-model="queryParams.subjectName" placeholder="请输入" clearable
                                         class="custom-input w140" />
                                 </el-form-item>
-                                <el-form-item label="出证类型" prop="certificateType">
-                                    <el-select v-model="queryParams.certificateType" placeholder="请选择" clearable
+                                <el-form-item v-if="activeTab === 'produce'" label="状态" prop="status">
+                                    <el-select v-model="queryParams.status" placeholder="请选择" clearable
                                         class="custom-select w100">
-                                        <el-option label="生产者" :value="1" />
-                                        <el-option label="收购者" :value="2" />
-                                        <el-option label="批发市场" :value="3" />
+                                        <el-option v-for="item in certificateStatusOptions" :key="item.value"
+                                            :label="item.label" :value="item.value" />
                                     </el-select>
                                 </el-form-item>
                                 <el-form-item label="产品产地" prop="productionArea">
                                     <div class="area-selectors">
-                                        <AreaCascader v-model="areaIds" @select="handleAreaSelect" placeholder="请选择产地" style="width: 260px;" />
+                                        <AreaCascader v-model="areaIds" @select="handleAreaSelect" placeholder="请选择产地"
+                                            style="width: 260px;" />
                                     </div>
                                 </el-form-item>
-                                <el-form-item label="联系人" prop="contactPhone">
+                                <el-form-item v-if="activeTab === 'verify'" label="来源" prop="certificateSource">
+                                    <el-select v-model="queryParams.certificateSource" placeholder="请选择" clearable
+                                        class="custom-select w100">
+                                        <el-option label="本平台" :value="1" />
+                                        <el-option label="其他平台" :value="2" />
+                                    </el-select>
+                                </el-form-item>
+                                <el-form-item v-if="activeTab === 'verify'" label="查验状态" prop="verificationType">
+                                    <el-select v-model="queryParams.verificationType" placeholder="请选择" clearable
+                                        class="custom-select w100">
+                                        <el-option label="仅查验" :value="1" />
+                                        <el-option label="已存证" :value="2" />
+                                    </el-select>
+                                </el-form-item>
+                                <el-form-item label="联系电话" prop="contactPhone">
                                     <el-input v-model="queryParams.contactPhone" placeholder="请输入" clearable
                                         class="custom-input w140" />
                                 </el-form-item>
@@ -119,7 +137,7 @@
                             <h3 class="table-section-title">辖区合格证列表</h3>
                         </div>
                         <div class="action-right">
-                            <el-button class="export-btn">导出</el-button>
+                            <el-button class="export-btn" :loading="exportLoading" @click="handleExport">导出</el-button>
                         </div>
                     </div>
 
@@ -139,12 +157,14 @@
                             <el-table-column prop="productCategory" label="产品类别" width="100" align="center" />
                             <el-table-column prop="productionArea" label="产地" width="150" show-overflow-tooltip />
                             <el-table-column prop="subjectName" label="生产经营主体" min-width="160" show-overflow-tooltip />
-                            <el-table-column v-if="activeTab === 'produce'" prop="issueDate" label="开具日期" width="160" align="center" :formatter="dateFormatter" />
-                            
+                            <el-table-column v-if="activeTab === 'produce'" prop="issueDate" label="开具日期" width="160"
+                                align="center" :formatter="dateFormatter" />
+
                             <template v-if="activeTab === 'verify'">
                                 <el-table-column prop="certificateSource" label="来源" width="100" align="center">
                                     <template #default="scope">
-                                        <el-tag :type="scope.row.certificateSource === 1 ? 'primary' : 'info'" effect="plain">
+                                        <el-tag :type="scope.row.certificateSource === 1 ? 'primary' : 'info'"
+                                            effect="plain">
                                             {{ scope.row.certificateSource === 1 ? '本平台' : '其他平台' }}
                                         </el-tag>
                                     </template>
@@ -156,7 +176,8 @@
                                         </el-tag>
                                     </template>
                                 </el-table-column>
-                                <el-table-column prop="verificationTime" label="查验时间" width="160" align="center" :formatter="dateFormatter" />
+                                <el-table-column prop="verificationTime" label="查验时间" width="160" align="center"
+                                    :formatter="dateFormatter" />
                             </template>
 
                             <el-table-column prop="contactName" label="联系人" width="100" align="center">
@@ -174,7 +195,8 @@
                             <el-table-column label="操作" width="180" fixed="right" align="center">
                                 <template #default="scope">
                                     <div class="table-ops">
-                                        <el-button v-if="activeTab === 'produce'" link type="primary" @click="handleEdit(scope.row)">编辑</el-button>
+                                        <el-button v-if="activeTab === 'produce'" link type="primary"
+                                            @click="handleEdit(scope.row)">编辑</el-button>
                                         <el-button link type="primary" @click="handleDetail(scope.row)">详情</el-button>
                                         <el-button link type="danger" @click="handleDelete(scope.row)">删除</el-button>
                                     </div>
@@ -197,12 +219,13 @@
 
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive, onMounted, computed } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { Search, Plus } from '@element-plus/icons-vue';
 import * as CertificateApi from '@/api/agri/certificate';
 import * as CertificateVerificationApi from '@/api/agri/certificateVerification';
 import * as AreaApi from '@/api/system/area';
+import download from '@/utils/download';
 import { dateFormatter } from '@/utils/formatTime';
 import AreaCascader from '@/components/AreaCascader/index.vue';
 import { useTableHeight } from '@/hooks/web/useTableHeight';
@@ -210,6 +233,7 @@ import { useTableHeight } from '@/hooks/web/useTableHeight';
 const router = useRouter();
 const tableRef = ref(null);
 const { tableHeight } = useTableHeight(tableRef, 70);
+const exportLoading = ref(false);
 
 // 搜索区域
 const searchRegion = ref('');
@@ -225,7 +249,10 @@ const treeProps = {
 const getRegionTree = async () => {
     try {
         const data = await AreaApi.getAreaTree();
-        regionTree.value = data;
+        regionTree.value = [
+            { id: '', name: '全部辖区' },
+            ...data
+        ];
     } catch (e) {
         console.error('获取区域树失败', e);
     }
@@ -237,14 +264,15 @@ const queryParams = reactive({
     certificateCode: '',
     productName: '',
     subjectName: '',
-    certificateType: undefined,
+    certificateType: 1 as number | undefined,
     productionArea: '',
     province: '',
     city: '',
     county: '',
     certificateSource: undefined,
     verificationType: undefined,
-    contactPhone: ''
+    contactPhone: '',
+    status: undefined as number | undefined
 });
 
 const areaIds = ref([]);
@@ -263,6 +291,12 @@ const total = ref(0);
 // 页签状态
 const activeTab = ref('produce');
 
+const certificateStatusOptions = [
+    { label: '未开具', value: 0 },
+    { label: '已开具', value: 1 },
+    { label: '作废', value: 2 }
+];
+
 // 表格数据
 const tableData = ref([]);
 const loading = ref(false);
@@ -273,9 +307,46 @@ const statsData = reactive({
     archivedCount: 0
 });
 
-const loadStats = async (deptId?: number) => {
+const selectedArea = ref<any>(null);
+
+const buildPageParams = () => {
+    const params: any = {
+        pageNo: pageNum.value,
+        pageSize: pageSize.value,
+        certificateCode: queryParams.certificateCode || undefined,
+        productName: queryParams.productName || undefined,
+        subjectName: queryParams.subjectName || undefined,
+        productionArea: selectedArea.value?.productionArea || queryParams.productionArea || undefined,
+        contactPhone: queryParams.contactPhone || undefined,
+        startDate: queryParams.dateRange?.[0] || undefined,
+        endDate: queryParams.dateRange?.[1] || undefined,
+        areaCode: selectedArea.value?.areaCode,
+        areaLevel: selectedArea.value?.areaLevel
+    };
+
+    if (activeTab.value === 'produce') {
+        params.certificateType = 1;
+        params.status =
+            queryParams.status === 0 || queryParams.status
+                ? queryParams.status
+                : undefined;
+    } else {
+        params.certificateType = '2';
+        params.certificateSource = queryParams.certificateSource || undefined;
+        params.verificationType = queryParams.verificationType || undefined;
+    }
+
+    return params;
+};
+
+const loadStats = async () => {
     try {
-        const res = await CertificateVerificationApi.getStatistics(deptId);
+        const params: any = {};
+        if (selectedArea.value) {
+            params.areaCode = selectedArea.value.areaCode;
+            params.areaLevel = selectedArea.value.areaLevel;
+        }
+        const res = await CertificateVerificationApi.getStatistics(params);
         if (res) {
             statsData.certificateIssueCount = res.certificateIssueCount || 0;
             statsData.verificationOnlyCount = res.verificationOnlyCount || 0;
@@ -289,29 +360,13 @@ const loadStats = async (deptId?: number) => {
 const loadData = async () => {
     loading.value = true;
     try {
-        const params: any = {
-            pageNo: pageNum.value,
-            pageSize: pageSize.value,
-            certificateCode: queryParams.certificateCode || undefined,
-            productName: queryParams.productName || undefined,
-            subjectName: queryParams.subjectName || undefined,
-            certificateType: queryParams.certificateType || undefined,
-            productionArea: queryParams.productionArea || undefined,
-            contactPhone: queryParams.contactPhone || undefined,
-        };
-        
-        if (activeTab.value === 'verify') {
-          params.certificateSource = queryParams.certificateSource || undefined;
-          params.verificationType = queryParams.verificationType || undefined;
-        }
-
         let res;
         if (activeTab.value === 'produce') {
-          res = await CertificateApi.getCertificatePage(params);
+            res = await CertificateApi.getCertificatePage(buildPageParams());
         } else {
-          res = await CertificateApi.getCertificateVerificationPage(params);
+            res = await CertificateApi.getCertificateVerificationPage(buildPageParams());
         }
-        
+
         tableData.value = res.list || [];
         total.value = res.total || 0;
     } finally {
@@ -328,6 +383,10 @@ onMounted(() => {
 // 页签切换处理
 const handleTabChange = (tab: string) => {
     activeTab.value = tab;
+    queryParams.certificateType = tab === 'produce' ? 1 : undefined;
+    queryParams.status = undefined;
+    queryParams.certificateSource = undefined;
+    queryParams.verificationType = undefined;
     pageNum.value = 1;
     loadData();
 };
@@ -352,14 +411,57 @@ const handleReset = () => {
     queryParams.certificateSource = undefined;
     queryParams.verificationType = undefined;
     queryParams.contactPhone = '';
+    queryParams.status = undefined;
+    queryParams.certificateType = activeTab.value === 'produce' ? 1 : undefined;
     handleSearch();
 };
 
-const handleNodeClick = (data) => {
-    ElMessage.info(`切换区域: ${data.name}`);
-    loadStats(data.id);
+const handleNodeClick = (data: any, node: any) => {
+    if (!data.id) {
+        selectedArea.value = null;
+    } else {
+        const getFullName = (n: any): string => {
+            if (!n || !n.data || !n.data.id) return '';
+            return getFullName(n.parent) + (n.data.name || '');
+        };
+        selectedArea.value = {
+            areaCode: data.id,
+            areaLevel: data.type || node.level,
+            productionArea: getFullName(node)
+        };
+    }
+    loadStats();
     pageNum.value = 1;
     loadData();
+};
+
+const handleExport = async () => {
+    try {
+        await ElMessageBox.confirm('是否确认导出当前筛选条件下的合格证数据？', '提示', {
+            confirmButtonText: '确定',
+            cancelButtonText: '取消',
+            type: 'warning'
+        });
+
+        exportLoading.value = true;
+        const params = { ...buildPageParams() };
+
+        if (activeTab.value === 'produce') {
+            const data = await CertificateApi.exportCertificate(params);
+            download.excel(data, '辖区合格证记录.xls');
+        } else {
+            const data = await CertificateApi.exportCertificateVerification(params);
+            download.excel(data, '辖区合格证查验存证记录.xls');
+        }
+        ElMessage.success('导出成功');
+    } catch (e) {
+        if (e !== 'cancel') {
+            console.error('导出失败', e);
+            ElMessage.error('导出失败');
+        }
+    } finally {
+        exportLoading.value = false;
+    }
 };
 
 const handleCurrentChange = (val) => {
@@ -395,13 +497,13 @@ const handleDelete = async (row: any) => {
                 type: 'warning',
             }
         );
-        
+
         if (activeTab.value === 'produce') {
             await CertificateApi.deleteCertificate(row.id);
         } else {
             await CertificateApi.deleteCertificateVerification(row.id);
         }
-        
+
         ElMessage.success('删除成功');
         loadData();
     } catch (e) {
@@ -461,8 +563,9 @@ const handleDelete = async (row: any) => {
 .tree-wrapper {
     flex: 1;
     overflow-y: auto;
+
     &::-webkit-scrollbar {
-        width: 1px!important;
+        width: 1px !important;
         display: none;
     }
 }
@@ -535,7 +638,7 @@ const handleDelete = async (row: any) => {
 .main-filters {
     display: flex;
     align-items: center;
-    flex-wrap: wrap; 
+    flex-wrap: wrap;
     gap: 12px 0;
     padding-bottom: 8px;
 }
@@ -543,14 +646,23 @@ const handleDelete = async (row: any) => {
 .area-selectors {
     display: flex;
     gap: 4px;
+
     .area-select {
         width: 80px;
     }
 }
 
-.w120 { width: 120px !important; }
-.w140 { width: 140px !important; }
-.w100 { width: 100px !important; }
+.w120 {
+    width: 120px !important;
+}
+
+.w140 {
+    width: 140px !important;
+}
+
+.w100 {
+    width: 100px !important;
+}
 
 .query-btns {
     margin-left: auto;
@@ -644,7 +756,7 @@ const handleDelete = async (row: any) => {
     display: flex;
     margin: 0px 0 16px 0;
     width: 500px;
-    
+
     .tab-item {
         flex: 1;
         height: 44px;
@@ -658,23 +770,23 @@ const handleDelete = async (row: any) => {
         cursor: pointer;
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         user-select: none;
-        
+
         &:first-child {
             border-radius: 4px 0 0 4px;
         }
-        
+
         &:last-child {
             border-radius: 0 4px 4px 0;
         }
-        
-        & + .tab-item {
+
+        &+.tab-item {
             border-left: none;
         }
-        
+
         &:hover {
             background: rgba(0, 179, 237, 0.05);
         }
-        
+
         &.active {
             background: #00B3ED;
             color: #FFFFFF;

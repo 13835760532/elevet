@@ -21,6 +21,10 @@ interface UserInfoVO {
   user: UserVO
 }
 
+const isValidUserInfo = (userInfo: any) => {
+  return userInfo && typeof userInfo === 'object' && userInfo.user
+}
+
 export const useUserStore = defineStore('admin-user', {
   state: (): UserInfoVO => ({
     permissions: new Set<string>(),
@@ -62,12 +66,20 @@ export const useUserStore = defineStore('admin-user', {
           userInfo = await getInfo()
         } catch (error) {}
       }
+
+      if (!isValidUserInfo(userInfo)) {
+        removeToken()
+        deleteUserCache()
+        this.resetState()
+        throw new Error('登录信息已失效，请重新登录')
+      }
+
       this.permissions = new Set(userInfo.permissions || []) // 兜底为 [] https://t.zsxq.com/xCJew
-      this.roles = userInfo.roles
+      this.roles = userInfo.roles || []
       this.user = userInfo.user
       this.isSetUser = true
       wsCache.set(CACHE_KEY.USER, userInfo)
-      wsCache.set(CACHE_KEY.ROLE_ROUTERS, userInfo.menus)
+      wsCache.set(CACHE_KEY.ROLE_ROUTERS, userInfo.menus || [])
     },
     async setUserAvatarAction(avatar: string) {
       const userInfo = wsCache.get(CACHE_KEY.USER)

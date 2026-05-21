@@ -14,18 +14,20 @@
             </div>
             <div class="query-form-wrapper">
                 <el-form :model="queryParams" ref="queryRef" :inline="true"
-                    class="custom-query-form custom-query-form-row">
+                    class="custom-query-form custom-query-form-row rapid-task-query-form">
                     <el-form-item label="" prop="taskNo">
-                        <el-input v-model="queryParams.taskNo" placeholder="输入任务编号" class="w200" clearable />
+                        <el-input v-model="queryParams.taskNo" placeholder="输入任务编号"
+                            class="rapid-task-query-field rapid-task-query-field--wide" clearable />
                     </el-form-item>
 
                     <el-form-item label="" prop="taskName">
-                        <el-input v-model="queryParams.taskName" placeholder="输入任务名称" class="w200" clearable />
+                        <el-input v-model="queryParams.taskName" placeholder="输入任务名称"
+                            class="rapid-task-query-field rapid-task-query-field--wide" clearable />
                     </el-form-item>
 
                     <el-form-item label="" prop="isReport">
-                        <el-select v-model="queryParams.isReport" placeholder="检测结果上报" clearable class="w150"
-                            style="width: 150px;">
+                        <el-select v-model="queryParams.isReport" placeholder="检测结果上报" clearable
+                            class="rapid-task-query-field rapid-task-query-field--select">
                             <el-option label="是" :value="true" />
                             <el-option label="否" :value="false" />
                         </el-select>
@@ -34,23 +36,25 @@
                     <el-form-item label="" prop="dateRange">
                         <el-date-picker v-model="dateRange" type="daterange" range-separator="至"
                             start-placeholder="开始日期" end-placeholder="结束日期" value-format="YYYY-MM-DD"
-                            style="width: 240px" />
+                            class="rapid-task-query-field rapid-task-query-field--date" />
                     </el-form-item>
 
                     <el-form-item label="" prop="schemeName">
-                        <el-input v-model="queryParams.schemeName" placeholder="输入方案名称" class="w200" clearable />
+                        <el-input v-model="queryParams.schemeName" placeholder="输入方案名称"
+                            class="rapid-task-query-field rapid-task-query-field--wide" clearable />
                     </el-form-item>
 
                     <el-form-item label="" prop="status">
-                        <el-select v-model="queryParams.status" placeholder="任务状态" clearable class="w150"
-                            style="width: 150px;">
+                        <el-select v-model="queryParams.status" placeholder="任务状态" clearable
+                            class="rapid-task-query-field rapid-task-query-field--select">
                             <el-option v-for="dict in taskStatusOptions" :key="dict.value" :label="dict.label"
                                 :value="dict.value" />
                         </el-select>
                     </el-form-item>
 
                     <el-form-item label="" prop="area">
-                        <AreaCascader v-model="queryParams.area" placeholder="监测区域" style="width: 150px" />
+                        <AreaCascader v-model="queryParams.area" placeholder="监测区域"
+                            class="rapid-task-query-field rapid-task-query-field--select" />
                     </el-form-item>
 
 
@@ -65,7 +69,7 @@
                 <div class="action-left">
                 </div>
                 <div class="action-right">
-                    <el-button @click="handleExport">导出</el-button>
+                    <el-button @click="handleExport" :loading="exportLoading">导出</el-button>
                 </div>
             </div>
 
@@ -122,7 +126,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { Search } from '@element-plus/icons-vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { useTableData } from '@/hooks/useTableData'
 import { useRouter } from 'vue-router'
 import AreaCascader from '@/components/AreaCascader/index.vue'
@@ -130,12 +134,14 @@ import * as DetectionTaskApi from '@/api/agri/detectionTask/index'
 import * as DeptApi from '@/api/system/dept'
 import { useDict } from '@/hooks/web/useDict'
 import { useTableHeight } from '@/hooks/web/useTableHeight'
+import download from '@/utils/download'
 
 const router = useRouter()
 const { options: taskStatusOptions } = useDict('agri_task_status', 'int')
 
 const activeTab = ref('task')
 const dateRange = ref([])
+const exportLoading = ref(false)
 
 // 获取部门相关的字典
 const deptMap = ref({})
@@ -147,8 +153,7 @@ DeptApi.getSimpleDeptList().then(depts => {
     deptMap.value = map;
 }).catch(e => { })
 
-// 真实的 API 请求
-const realFetchApi = async (params) => {
+const buildQueryParams = (params = {}, withPage = true) => {
     const query = {
         pageNo: params.pageNum || 1,
         pageSize: params.pageSize || 10,
@@ -157,6 +162,11 @@ const realFetchApi = async (params) => {
         excludeStatuses: '0',
         detectionArea: params.area ? (Array.isArray(params.area) ? params.area.join('-') : params.area) : undefined,
         isAuto: false // 控制为方案相关的抽检任务
+    }
+
+    if (!withPage) {
+        delete query.pageNo
+        delete query.pageSize
     }
 
     // 处理时间
@@ -168,6 +178,14 @@ const realFetchApi = async (params) => {
     // 后端目前好像未显式支持 taskCode, schemeName, isReport等条件，这里先向后端透传或暂存
     if (params.taskNo) query.taskCode = params.taskNo;
     if (params.schemeName) query.planName = params.schemeName;
+    if (params.isReport !== undefined && params.isReport !== '') query.resultReported = params.isReport;
+
+    return query
+}
+
+// 真实的 API 请求
+const realFetchApi = async (params) => {
+    const query = buildQueryParams(params)
 
     try {
         const res = await DetectionTaskApi.getDetectionTaskPage(query)
@@ -230,8 +248,30 @@ function handleTabChange(tab) {
     fetchData()
 }
 
-function handleExport() {
-    console.log('导出')
+const handleExport = async () => {
+    try {
+        await ElMessageBox.confirm('是否确认导出当前筛选条件下的检测任务数据？', '提示', {
+            confirmButtonText: '确定',
+            cancelButtonText: '取消',
+            type: 'warning'
+        })
+
+        exportLoading.value = true
+        const data = await DetectionTaskApi.exportDetectionTask({
+            ...buildQueryParams(queryParams, false),
+            pageNo: 1,
+            pageSize: 1000
+        })
+        download.excel(data, '快速检测任务.xlsx')
+        ElMessage.success('导出成功')
+    } catch (error) {
+        if (error !== 'cancel') {
+            console.error('导出失败', error)
+            ElMessage.error('导出失败')
+        }
+    } finally {
+        exportLoading.value = false
+    }
 }
 
 function handleCheck(row) {
@@ -275,6 +315,40 @@ const { tableHeight } = useTableHeight(tableRef, 85);
     overflow: hidden;
     margin-bottom: 0;
     min-height: 0;
+}
+
+.rapid-task-query-form {
+    :deep(.el-form-item__content) {
+        flex: none;
+        min-width: 0;
+    }
+
+    :deep(.rapid-task-query-field) {
+        flex: none !important;
+        width: 200px !important;
+        max-width: 200px !important;
+    }
+
+    :deep(.rapid-task-query-field--wide) {
+        width: 200px !important;
+        max-width: 200px !important;
+    }
+
+    :deep(.rapid-task-query-field--select) {
+        width: 150px !important;
+        max-width: 150px !important;
+    }
+
+    :deep(.rapid-task-query-field--date) {
+        width: 240px !important;
+        max-width: 240px !important;
+    }
+
+    :deep(.rapid-task-query-field .el-input__wrapper),
+    :deep(.rapid-task-query-field .el-select__wrapper),
+    :deep(.rapid-task-query-field .el-cascader) {
+        width: 100% !important;
+    }
 }
 
 .content-card {

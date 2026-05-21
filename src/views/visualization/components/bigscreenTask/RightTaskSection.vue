@@ -4,12 +4,12 @@
       <div class="table-wrap">
         <table class="analysis-table">
           <colgroup>
-            <col style="width: 7%" />
-            <col style="width: 38%" />
-            <col style="width: 19%" />
-            <col style="width: 12%" />
-            <col style="width: 12%" />
-            <col style="width: 12%" />
+            <col class="col-index" />
+            <col class="col-name" />
+            <col class="col-org" />
+            <col class="col-count" />
+            <col class="col-count" />
+            <col class="col-rate" />
           </colgroup>
           <thead>
             <tr>
@@ -109,14 +109,53 @@ onUnmounted(() => {
 
 .table-wrap {
   height: 100%;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
   padding-top: 2px;
+  padding-bottom: 6px;
+  scrollbar-color: rgba(73, 232, 255, 0.65) rgba(13, 45, 96, 0.35);
+  scrollbar-width: thin;
+
+  &::-webkit-scrollbar {
+    height: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: rgba(13, 45, 96, 0.35);
+    border-radius: 999px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(73, 232, 255, 0.65);
+    border-radius: 999px;
+  }
 }
 
 .analysis-table {
   width: 100%;
+  min-width: 820px;
   border-collapse: collapse;
   table-layout: fixed;
+
+  .col-index {
+    width: 58px;
+  }
+
+  .col-name {
+    width: 280px;
+  }
+
+  .col-org {
+    width: 168px;
+  }
+
+  .col-count {
+    width: 94px;
+  }
+
+  .col-rate {
+    width: 126px;
+  }
 
   th,
   td {

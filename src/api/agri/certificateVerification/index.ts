@@ -33,10 +33,10 @@ export const getCertificateVerificationPage = (params: any) => {
 
 /**
  * 辖区统计
- * @param deptId 部门编号
+ * @param params { deptId?: number, areaLevel?: number, areaCode?: string }
  */
-export const getStatistics = (deptId?: number) => {
-  return request.get({ url: '/agri/certificate-verification/statistics', params: { deptId } })
+export const getStatistics = (params?: any) => {
+  return request.get({ url: '/agri/certificate-verification/statistics', params })
 }
 
 /**

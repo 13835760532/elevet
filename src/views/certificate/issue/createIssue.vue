@@ -112,11 +112,8 @@
                                 </el-form-item>
                                 <el-form-item label="产品名称" required class="form-col">
                                     <el-autocomplete v-model="formData.productName" placeholder="输入产品名称"
-                                        :disabled="formData.linkProfile === 'yes'"
-                                        :fetch-suggestions="queryProduce"
-                                        @select="handleProduceSelect"
-                                        @blur="handleProduceBlur"
-                                        value-key="name"
+                                        :disabled="formData.linkProfile === 'yes'" :fetch-suggestions="queryProduce"
+                                        @select="handleProduceSelect" @blur="handleProduceBlur" value-key="name"
                                         class="full-width" />
                                 </el-form-item>
                             </div>
@@ -462,7 +459,7 @@
                         <h2 class="cert-subtitle">承诺事项：</h2>
                         <div class="cert-declaration-list">
                             <p v-for="(line, idx) in computedCommitment" :key="idx" class="declaration-line">• {{ line
-                            }}</p>
+                                }}</p>
                         </div>
 
                         <div class="cert-middle-section">
@@ -678,7 +675,7 @@ const matchCategoryFromFullCategory = (item) => {
     const fullCategory = item.category;
     if (!fullCategory) return null;
     const firstLevel = fullCategory.split('/')[0];
-    const matchedOption = productCategoryOptions.find(opt => 
+    const matchedOption = productCategoryOptions.find(opt =>
         firstLevel.includes(opt.label) || opt.label.includes(firstLevel.replace('类', ''))
     );
     return matchedOption ? matchedOption.value : fullCategory;
@@ -705,7 +702,7 @@ const handleProduceBlur = async () => {
                 }
             }
         }
-    } catch (e) {}
+    } catch (e) { }
 };
 
 const formRef2 = ref(null);
@@ -979,7 +976,7 @@ const handleEntityChange = (val) => {
         formData.subjectId = selected.id;
         formData.legalPerson = selected.legalPerson || '';
         // 暂时回显城市代码，实际项目中可能需要通过 Code 转换
-        formData.registeredCity = selected.cityCode || '青岛市';
+        formData.registeredCity = selected.cityCode || '--';
     }
 };
 

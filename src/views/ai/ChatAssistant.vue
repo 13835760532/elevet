@@ -154,14 +154,13 @@ defineOptions({ name: 'ChatAssistant' })
 
 // --- 推荐问题数据 ---
 const allRecommends = [
-  '你好小壹，4月份北京地区农产品风险情况怎么样？',
-  '你好小壹，哪些地区抽检不合格比较多？',
-  '你好小壹，哪些检测项目不合格最多？',
-  '你好小壹，对比上个月，这个月的风险有什么变化？',
-  '你好小壹，蔬菜类的风险情况怎么样？',
-  '生成一份第一季度的质量安全分析报告',
-  '帮我查一下寿光市最近一周的抽检数据',
-  '当前高频不合格农药主要是哪些？'
+  '哪些地区抽检不合格比较多？',
+  '4月份农产品风险情况怎么样？',
+  '哪些检测项目不合格最多？',
+  '对比上个月这个月风险有什么变化？',
+  '本月和上月相比阳性率怎么样？',
+  '哪种农药检出最多？',
+  '上个月抽检合格率如何？'
 ]
 const currentRecommends = ref<string[]>([])
 
@@ -303,7 +302,7 @@ const renderMonthlyReport = (report: RiskMonthlyReportRespVO, voiceText: string)
     tableColumns: riskProductColumns,
     tableData: renderRiskProducts(report.riskTopList),
     conclusion: `${conclusionParts.join('，')}。${report.suggestion || ''}`,
-    suggestions: ['哪些地区抽检不合格比较多？', '哪些检测项目不合格最多？', '对比上个月风险有什么变化？']
+    suggestions: ['哪些地区抽检不合格比较多？', '哪些检测项目不合格最多？', '对比上个月这个月风险有什么变化？']
   }
 }
 
@@ -328,7 +327,7 @@ const renderRegionRanking = (ranking: RegionRiskRankingRespVO, voiceText: string
       positiveRate: formatPercent(item.positiveRate),
       topHazardLabel: item.topHazardLabel || item.topHazardLevel || '--'
     })),
-    suggestions: ['这个地区主要阳性项目有哪些？', '生成一份月度风险报告', '对比上个月风险有什么变化？']
+    suggestions: ['本月和上月相比阳性率怎么样？', '4月份农产品风险情况怎么样？', '对比上个月这个月风险有什么变化？']
   }
 }
 
@@ -351,7 +350,7 @@ const renderProjectRanking = (ranking: ProjectRiskRankingRespVO, voiceText: stri
       hazard: getHazardText(item)
     })),
     conclusion: categoryText,
-    suggestions: ['这些项目涉及哪些农产品？', '蔬菜类风险情况怎么样？', '生成监管建议']
+    suggestions: ['哪种农药检出最多？', '4月份农产品风险情况怎么样？', '哪些地区抽检不合格比较多？']
   }
 }
 
@@ -395,7 +394,7 @@ const renderTrendCompare = (trend: RiskTrendCompareRespVO, voiceText: string): R
       { metric: '常规检出', current: '--', previous: '--', diff: formatNumber(trend.regularDiff) }
     ],
     conclusion: `风险趋势：${trendMap[trend.riskTrend || ''] || trend.riskTrend || '--'}。${trend.keyAlert || ''}`,
-    suggestions: ['风险上升的原因是什么？', '生成本月监管建议', '查看检测项目风险排名']
+    suggestions: ['本月和上月相比阳性率怎么样？', '上个月抽检合格率如何？', '哪些检测项目不合格最多？']
   }
 }
 
@@ -407,7 +406,7 @@ const renderCategoryReport = (report: CategoryRiskReportRespVO, voiceText: strin
     tableColumns: riskProductColumns,
     tableData: renderRiskProducts(report.riskProductList),
     conclusion: `总批次 ${formatNumber(report.totalCount)}，阳性 ${formatNumber(report.positiveCount)}，阳性率 ${formatPercent(report.positiveRate)}。${report.subCategoryHint ? `重点关注：${report.subCategoryHint}。` : ''}${report.suggestion || ''}`,
-    suggestions: ['这个品类的主要阳性指标有哪些？', '对比上个月有什么变化？', '哪些地区风险更高？']
+    suggestions: ['哪种农药检出最多？', '对比上个月这个月风险有什么变化？', '哪些地区抽检不合格比较多？']
   }
 }
 
@@ -415,7 +414,7 @@ const renderGenericAnswer = (response: VoiceAssistantAskRespVO): RenderedAnswer 
   title: '小壹助手',
   actionTitle: '智能问答',
   content: response.voiceText || (response.success === false ? '暂未识别到可回答的问题，请换一种问法试试。' : '已完成分析。'),
-  suggestions: ['生成一份月度风险报告', '哪些地区抽检不合格比较多？', '哪些检测项目不合格最多？']
+  suggestions: ['4月份农产品风险情况怎么样？', '哪些地区抽检不合格比较多？', '哪些检测项目不合格最多？']
 })
 
 const renderAnswer = (response: VoiceAssistantAskRespVO): RenderedAnswer => {
