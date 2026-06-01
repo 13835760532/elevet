@@ -7,7 +7,7 @@
                     <img src="@/assets/logo/logo.png" alt="logo" class="logo-img" />
                 </div>
                 <div class="title-box">
-                    <div class="main-title">链安食检数智服务平台</div>
+                    <div class="main-title">壹拾智检数智服务平台</div>
                     <div class="sub-title">专业版(v2.0-2026)</div>
                 </div>
             </div>
@@ -26,8 +26,7 @@
 
                 <div class="code-row">
                     <el-form-item prop="code" class="code-input-item">
-                        <el-input v-model="forgotForm.code" type="text" placeholder="请输入6位验证码"
-                            maxlength="6" />
+                        <el-input v-model="forgotForm.code" type="text" placeholder="请输入6位验证码" maxlength="6" />
                     </el-form-item>
                     <el-button class="send-code-btn" :disabled="countdown > 0" @click="handleSendCode">
                         {{ countdown > 0 ? `${countdown}s后重新获取` : '发送验证码' }}
@@ -94,7 +93,7 @@ function handleSendCode() {
                 clearInterval(timer)
             }
         }, 1000)
-    }).catch(() => {})
+    }).catch(() => { })
 }
 
 function handleContinue() {

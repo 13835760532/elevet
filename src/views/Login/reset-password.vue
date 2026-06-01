@@ -7,7 +7,7 @@
                     <img src="@/assets/logo/logo.png" alt="logo" class="logo-img" />
                 </div>
                 <div class="title-box">
-                    <div class="main-title">链安食检数智服务平台</div>
+                    <div class="main-title">壹拾智检数智服务平台</div>
                     <div class="sub-title">专业版(v2.0-2026)</div>
                 </div>
             </div>
@@ -34,8 +34,7 @@
                 </div>
 
                 <el-form-item prop="password">
-                    <el-input v-model="resetForm.password" type="password" show-password
-                        placeholder="请输入新密码（至少8个字符）">
+                    <el-input v-model="resetForm.password" type="password" show-password placeholder="请输入新密码（至少8个字符）">
                     </el-input>
                 </el-form-item>
 
@@ -49,8 +48,7 @@
                 </div>
 
                 <el-form-item prop="confirmPassword">
-                    <el-input v-model="resetForm.confirmPassword" type="password" show-password
-                        placeholder="请再次输入密码">
+                    <el-input v-model="resetForm.confirmPassword" type="password" show-password placeholder="请再次输入密码">
                     </el-input>
                 </el-form-item>
 
@@ -133,7 +131,7 @@ function handleSendCode() {
                 clearInterval(timer)
             }
         }, 1000)
-    }).catch(() => {})
+    }).catch(() => { })
 }
 
 function handleReset() {
@@ -146,7 +144,7 @@ function handleReset() {
                 code: resetForm.value.code,
                 password: resetForm.value.password
             }
-            
+
             smsResetPassword(data).then(() => {
                 ElMessage.success('密码重置成功，请重新登录')
                 router.push('/login')
@@ -360,6 +358,7 @@ function handleReset() {
     border: none;
     transition: all 0.3s;
     color: #fff;
+
     &:active {
         transform: translateY(0);
     }

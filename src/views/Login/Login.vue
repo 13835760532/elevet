@@ -7,7 +7,7 @@
           <img src="@/assets/logo/logo.png" alt="logo" class="logo-img" />
         </div>
         <div class="title-box">
-          <div class="main-title">链安食检数智服务平台</div>
+          <div class="main-title">壹拾智检数智服务平台</div>
           <div class="sub-title">专业版(v2.0-2026)</div>
         </div>
       </div>

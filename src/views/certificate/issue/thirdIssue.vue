@@ -40,7 +40,8 @@
                             </div>
                             <div class="info-row">
                                 <div class="label">产品数量</div>
-                                <div class="value">{{ certStore.issueInfo.quantity }} {{ getAgriUnitLabel(certStore.issueInfo.unit) }}
+                                <div class="value">{{ certStore.issueInfo.quantity }} {{
+                                    getAgriUnitLabel(certStore.issueInfo.unit) }}
                                 </div>
                             </div>
                             <div class="info-row">
@@ -63,7 +64,7 @@
                     </div>
 
                     <div class="footer-tip">
-                        *电子合格证由链安食检数智服务平台承载展示
+                        *电子合格证由壹拾智检数智服务平台承载展示
                     </div>
 
                     <div class="divider"></div>

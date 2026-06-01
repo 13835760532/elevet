@@ -24,8 +24,8 @@
                             class="custom-input w180" />
                     </el-form-item>
                     <el-form-item label="">
-                        <AreaCascader v-model="queryParams.region" placeholder="请选择产地" class="custom-cascader w180"
-                            @select="handleAreaSelect" />
+                        <AreaCascader v-model="queryParams.region" :check-strictly="true" :show-all-levels="false"
+                            placeholder="请选择产地" class="custom-cascader w180" @select="handleAreaSelect" />
                     </el-form-item>
                     <el-form-item label="">
                         <el-select v-model="queryParams.subjectType" placeholder="主体类型" class="custom-select w130"
@@ -158,7 +158,7 @@ const getList = async () => {
         // 处理产地：核心逻辑——将 region 也转为中文并拼接 productionArea
         if (selectedAreaNames.value.length > 0 && queryParams.region && queryParams.region.length > 0) {
             params.region = selectedAreaNames.value; // region 数组转为中文
-            // params.productionArea = selectedAreaNames.value.join('-');
+            params.productionArea = selectedAreaNames.value.join('');
 
             params.provinceCode = selectedAreaNames.value[0];
             params.cityCode = selectedAreaNames.value[1];
@@ -210,7 +210,7 @@ const handleExport = async () => {
         };
         if (selectedAreaNames.value.length > 0 && queryParams.region && queryParams.region.length > 0) {
             params.region = selectedAreaNames.value;
-            // params.productionArea = selectedAreaNames.value.join('-');
+            params.productionArea = selectedAreaNames.value.join('');
             params.provinceCode = selectedAreaNames.value[0];
             params.cityCode = selectedAreaNames.value[1];
             params.districtCode = selectedAreaNames.value[2];

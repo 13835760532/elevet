@@ -58,32 +58,25 @@ watch(
 
 <template>
   <div>
-    <router-link
-      :class="[
-        prefixCls,
-        layout !== 'classic' ? `${prefixCls}__Top` : '',
-        'flex !h-[var(--logo-height)] items-center cursor-pointer pl-8px relative decoration-none overflow-hidden'
-      ]"
-      to="/"
-    >
-      <img
-        class="h-[calc(var(--logo-height)-26px)] w-[calc(var(--logo-height)-26px)]"
-        src="@/assets/logo/logo.png"
-      />
-      <div class="company-title" >
-        链安食检数智服务平台（专业版v2.0）
+    <router-link :class="[
+      prefixCls,
+      layout !== 'classic' ? `${prefixCls}__Top` : '',
+      'flex !h-[var(--logo-height)] items-center cursor-pointer pl-8px relative decoration-none overflow-hidden'
+    ]" to="/">
+      <img class="h-[calc(var(--logo-height)-26px)] w-[calc(var(--logo-height)-26px)]" src="@/assets/logo/logo.png" />
+      <div class="company-title">
+        壹拾智检数智服务平台（专业版v2.0）
       </div>
     </router-link>
   </div>
 </template>
 
 <style lang="scss" scoped>
-
-  .company-title {
-    font-weight: 600;
-    font-size: 18px;
-    color: #00B3ED;
-    line-height: 26px;
-    margin-left: 10px;
-  }
+.company-title {
+  font-weight: 600;
+  font-size: 18px;
+  color: #00B3ED;
+  line-height: 26px;
+  margin-left: 10px;
+}
 </style>

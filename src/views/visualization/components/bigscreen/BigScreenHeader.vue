@@ -62,7 +62,7 @@
       </div>
     </div>
     <div class="header-center">
-      <h1>链安食检数智服务平台</h1>
+      <h1>壹拾智检数智服务平台</h1>
     </div>
     <div class="header-side right">
       <div class="nav-btn" v-for="item in rightMenus" :key="item.key" :class="{ active: activeMenu === item.key }"

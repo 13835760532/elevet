@@ -19,7 +19,8 @@
                         <div class="cert-body">
                             <h2 class="main-title">承诺事项</h2>
                             <div class="commitment-list">
-                                <div v-for="(line, idx) in (certificate?.commitmentContent || '').split('\n')" :key="idx" class="commitment-item">
+                                <div v-for="(line, idx) in (certificate?.commitmentContent || '').split('\n')"
+                                    :key="idx" class="commitment-item">
                                     {{ line }}
                                 </div>
                             </div>
@@ -35,8 +36,8 @@
                                 </div>
                                 <div class="qr-code">
                                     <Qrcode v-if="certificate?.qrCode"
-                                         :text="`https://yishizhijian.jikeyun.net/certificate/trace?qrcode=${certificate.qrCode}`" 
-                                         :options="{ errorCorrectionLevel: 'L' }" :width="80" />
+                                        :text="`https://yishizhijian.jikeyun.net/certificate/trace?qrcode=${certificate.qrCode}`"
+                                        :options="{ errorCorrectionLevel: 'L' }" :width="80" />
                                 </div>
                             </div>
                         </div>
@@ -73,14 +74,14 @@
                                 <div class="val">{{ certificate?.issueDate || '--' }}</div>
                             </div>
                         </div>
-                        <p class="footer-tip">*电子合格证由链安食检数智服务平台承载展示</p>
+                        <p class="footer-tip">*电子合格证由壹拾智检数智服务平台承载展示</p>
                     </div>
                 </div>
 
                 <div class="divider"></div>
 
                 <!-- 产品图片区域 -->
-                <div class="images-section" >
+                <div class="images-section">
                     <div class="section-title" v-if="certificate?.productImageUrl">产品图片</div>
                     <div class="image-grid" v-if="certificate?.productImageUrl">
                         <div v-if="certificate?.productImageUrl" class="image-box">
@@ -99,14 +100,17 @@
             </div>
 
             <!-- 已关联的上游合格证 -->
-            <div class="info-card mt-20" v-if="certificate?.upstreamCertificateSource" :class="{ 'no-print-section': !isSelected2 }">
+            <div class="info-card mt-20" v-if="certificate?.upstreamCertificateSource"
+                :class="{ 'no-print-section': !isSelected2 }">
                 <div class="card-title-row no-print">
                     <h2 class="card-inner-title">已关联的上游合格证</h2>
-                    <el-checkbox v-model="isSelected2" v-if="certificate?.upstreamCertificateSource === 1" @change="handleSelect2">打印此联</el-checkbox>
+                    <el-checkbox v-model="isSelected2" v-if="certificate?.upstreamCertificateSource === 1"
+                        @change="handleSelect2">打印此联</el-checkbox>
                 </div>
 
                 <!-- 1. 本平台来源：展示票据详情 -->
-                <div class="cert-display-box" v-if="certificate?.upstreamCertificateSource === 1 && upstreamCertificate">
+                <div class="cert-display-box"
+                    v-if="certificate?.upstreamCertificateSource === 1 && upstreamCertificate">
                     <!-- 合格证票据样式 (左侧) -->
                     <div class="cert-ticket orange-border">
                         <div class="cert-header">
@@ -125,7 +129,9 @@
                                     </el-checkbox-group>
                                 </div>
                                 <div class="qr-code">
-                                    <Qrcode v-if="upstreamCertificate?.qrCode" :text="`https://yishizhijian.jikeyun.net/certificate/trace?qrcode=${upstreamCertificate.qrCode}`"  :options="{ errorCorrectionLevel: 'L' }" :width="80" />
+                                    <Qrcode v-if="upstreamCertificate?.qrCode"
+                                        :text="`https://yishizhijian.jikeyun.net/certificate/trace?qrcode=${upstreamCertificate.qrCode}`"
+                                        :options="{ errorCorrectionLevel: 'L' }" :width="80" />
                                 </div>
                             </div>
                         </div>
@@ -141,7 +147,8 @@
                             </div>
                             <div class="table-row">
                                 <div class="label">产品数量</div>
-                                <div class="val">{{ upstreamCertificate?.quantity ?? '--' }}{{ getAgriUnitLabel(upstreamCertificate?.unit) }}</div>
+                                <div class="val">{{ upstreamCertificate?.quantity ?? '--' }}{{
+                                    getAgriUnitLabel(upstreamCertificate?.unit) }}</div>
                             </div>
                             <div class="table-row">
                                 <div class="label">产品产地</div>
@@ -162,22 +169,21 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- 2. 其他平台来源：展示原件照片 -->
-                <div v-else-if="certificate?.upstreamCertificateSource === 2 && certificate?.upstreamCertificateImageUrl" class="other-upstream-snapshot">
+                <div v-else-if="certificate?.upstreamCertificateSource === 2 && certificate?.upstreamCertificateImageUrl"
+                    class="other-upstream-snapshot">
                     <div class="snapshot-header">
                         <div class="header-left">
-                            <el-icon><Picture /></el-icon>
+                            <el-icon>
+                                <Picture />
+                            </el-icon>
                             <span>其他平台合格证照片</span>
                         </div>
                     </div>
                     <div class="snapshot-body">
-                        <el-image 
-                            :src="certificate.upstreamCertificateImageUrl" 
-                            fit="contain" 
-                            class="upstream-full-img"
-                            :preview-src-list="[certificate.upstreamCertificateImageUrl]"
-                        />
+                        <el-image :src="certificate.upstreamCertificateImageUrl" fit="contain" class="upstream-full-img"
+                            :preview-src-list="[certificate.upstreamCertificateImageUrl]" />
                     </div>
                 </div>
 
@@ -192,7 +198,7 @@
                 <!-- 产品图片区域 -->
                 <div class="images-section">
                     <div class="section-title" v-if="upstreamCertificate?.productImageUrl">产品图片</div>
-                    <div class="image-grid" v-if="upstreamCertificate?.productImageUrl"> 
+                    <div class="image-grid" v-if="upstreamCertificate?.productImageUrl">
                         <div v-if="upstreamCertificate?.productImageUrl" class="image-box">
                             <img :src="upstreamCertificate.productImageUrl" class="product-img" />
                         </div>
@@ -202,7 +208,7 @@
                             </el-icon>
                         </div>
                     </div>
-                    <div class="reports-link" v-if="certificate?.upstreamCertificateSource != 2 ">
+                    <div class="reports-link" v-if="certificate?.upstreamCertificateSource != 2">
                         检测报告 <el-button link type="primary" @click="handlePreview()">预览</el-button>
                     </div>
                 </div>
@@ -212,29 +218,18 @@
                 <div class="card-title-row">
                     <h2 class="card-inner-title">关联样品检测结果{{ thirdPartyType === 'third' ? '第三方' : '平台' }}</h2>
                 </div>
-                
+
                 <!-- 平台检测结果展示 -->
-                <PlatformDetectionSelector
-                    v-if="thirdPartyType === 'platform'"
-                    v-model="linkedDetectionRecordIds"
-                    v-model:linked-records="linkedPlatformRecords"
-                    :search-method="searchPlatformRecords"
-                    :readonly="true"
-                    @update:active-record="handlePlatformActiveRecordChange"
-                />
+                <PlatformDetectionSelector v-if="thirdPartyType === 'platform'" v-model="linkedDetectionRecordIds"
+                    v-model:linked-records="linkedPlatformRecords" :search-method="searchPlatformRecords"
+                    :readonly="true" @update:active-record="handlePlatformActiveRecordChange" />
 
                 <!-- 第三方检测报告图片展示 -->
                 <div v-else class="third-party-content">
                     <div v-if="thirdPartyReportUrls.length > 0" class="image-preview-grid">
                         <div v-for="(url, idx) in thirdPartyReportUrls" :key="idx" class="preview-box">
-                            <el-image 
-                                :src="url" 
-                                class="preview-img" 
-                                :preview-src-list="thirdPartyReportUrls"
-                                :initial-index="idx"
-                                :preview-teleported="true"
-                                fit="contain"
-                            />
+                            <el-image :src="url" class="preview-img" :preview-src-list="thirdPartyReportUrls"
+                                :initial-index="idx" :preview-teleported="true" fit="contain" />
                         </div>
                     </div>
                     <el-empty v-else description="暂无关联检测报告" :image-size="64" />
@@ -243,7 +238,8 @@
 
             <!-- 底部操作按钮 -->
             <div class="footer-actions no-print">
-                <el-button type="primary" class="print-btn" :loading="captureLoading" @click="handlePreview">打印预览</el-button>
+                <el-button type="primary" class="print-btn" :loading="captureLoading"
+                    @click="handlePreview">打印预览</el-button>
                 <el-button class="close-btn" @click="() => $router.back()">返回</el-button>
             </div>
         </div>
@@ -258,14 +254,16 @@
                     <h1 class="cert-title">承诺达标合格证</h1>
                     <h2 class="cert-subtitle">承诺事项：</h2>
                     <div class="cert-declaration-list">
-                        <p v-for="(line, idx) in primaryCommitmentLines" :key="`p-${idx}`" class="declaration-line">• {{ line }}</p>
+                        <p v-for="(line, idx) in primaryCommitmentLines" :key="`p-${idx}`" class="declaration-line">• {{
+                            line }}</p>
                     </div>
 
                     <div class="cert-middle-section">
                         <div class="cert-basis">
                             <h3 class="basis-title" style="margin-bottom: 12px;">承诺依据：</h3>
                             <div class="custom-basis-group">
-                                <div class="basis-item" v-for="item in selectedCommitmentBasisOptions" :key="`pb-${item.value}`">
+                                <div class="basis-item" v-for="item in selectedCommitmentBasisOptions"
+                                    :key="`pb-${item.value}`">
                                     <span class="basis-box checked">✔</span>
                                     <span class="basis-label">
                                         <span class="basis-index">{{ item.indexLabel }}</span>
@@ -275,7 +273,8 @@
                             </div>
                         </div>
                         <div class="qr-code-wrapper">
-                            <Qrcode v-if="certificate?.certificateCode" :text="certificate?.certificateCode" :options="{ errorCorrectionLevel: 'L' }" :width="132" />
+                            <Qrcode v-if="certificate?.certificateCode" :text="certificate?.certificateCode"
+                                :options="{ errorCorrectionLevel: 'L' }" :width="132" />
                         </div>
                     </div>
 
@@ -290,7 +289,8 @@
                             </div>
                             <div class="info-row">
                                 <div class="label">数量/重量</div>
-                                <div class="value">{{ certificate?.quantity ?? '--' }} {{ getAgriUnitLabel(certificate?.unit) }}</div>
+                                <div class="value">{{ certificate?.quantity ?? '--' }} {{
+                                    getAgriUnitLabel(certificate?.unit) }}</div>
                             </div>
                             <div class="info-row">
                                 <div class="label">产品产地</div>
@@ -315,7 +315,8 @@
                     <div class="image-section no-print print-keep-space">
                         <h3 class="info-title">产品图片</h3>
                         <div class="image-preview-box">
-                            <img v-if="certificate?.productImageUrl" :src="certificate?.productImageUrl" class="cert-product-img" alt="产品图片" />
+                            <img v-if="certificate?.productImageUrl" :src="certificate?.productImageUrl"
+                                class="cert-product-img" alt="产品图片" />
                             <el-icon v-else class="placeholder-icon">
                                 <Picture />
                             </el-icon>
@@ -325,7 +326,8 @@
             </div>
 
             <!-- 仅在本平台来源且勾选时显示打印联 -->
-            <div v-if="isSelected2 && certificate?.upstreamCertificateSource === 1 && upstreamCertificate" class="certificate-document print-doc-gap">
+            <div v-if="isSelected2 && certificate?.upstreamCertificateSource === 1 && upstreamCertificate"
+                class="certificate-document print-doc-gap">
                 <div class="cert-header">
                     <span class="cert-no-tag">合格证编号－{{ upstreamCertificate?.certificateCode || '--' }}</span>
                 </div>
@@ -334,14 +336,16 @@
                     <h1 class="cert-title">承诺达标合格证</h1>
                     <h2 class="cert-subtitle">承诺事项：</h2>
                     <div class="cert-declaration-list">
-                        <p v-for="(line, idx) in upstreamCommitmentLines" :key="`u-${idx}`" class="declaration-line">• {{ line }}</p>
+                        <p v-for="(line, idx) in upstreamCommitmentLines" :key="`u-${idx}`" class="declaration-line">•
+                            {{ line }}</p>
                     </div>
 
                     <div class="cert-middle-section">
                         <div class="cert-basis">
                             <h3 class="basis-title" style="margin-bottom: 12px;">承诺依据：</h3>
                             <div class="custom-basis-group">
-                                <div class="basis-item" v-for="item in selectedUpstreamBasisOptions" :key="`ub-${item.value}`">
+                                <div class="basis-item" v-for="item in selectedUpstreamBasisOptions"
+                                    :key="`ub-${item.value}`">
                                     <span class="basis-box checked">✔</span>
                                     <span class="basis-label">
                                         <span class="basis-index">{{ item.indexLabel }}</span>
@@ -351,7 +355,9 @@
                             </div>
                         </div>
                         <div class="qr-code-wrapper">
-                            <Qrcode v-if="upstreamCertificate?.certificateCode" :text="upstreamCertificate?.certificateCode"  :options="{ errorCorrectionLevel: 'L' }" :width="132" />
+                            <Qrcode v-if="upstreamCertificate?.certificateCode"
+                                :text="upstreamCertificate?.certificateCode" :options="{ errorCorrectionLevel: 'L' }"
+                                :width="132" />
                         </div>
                     </div>
 
@@ -366,7 +372,8 @@
                             </div>
                             <div class="info-row">
                                 <div class="label">数量/重量</div>
-                                <div class="value">{{ upstreamCertificate?.quantity ?? '--' }} {{ getAgriUnitLabel(upstreamCertificate?.unit) }}</div>
+                                <div class="value">{{ upstreamCertificate?.quantity ?? '--' }} {{
+                                    getAgriUnitLabel(upstreamCertificate?.unit) }}</div>
                             </div>
                             <div class="info-row">
                                 <div class="label">产品产地</div>
@@ -391,7 +398,8 @@
                     <div class="image-section no-print print-keep-space">
                         <h3 class="info-title">产品图片</h3>
                         <div class="image-preview-box">
-                            <img v-if="upstreamCertificate?.productImageUrl" :src="upstreamCertificate?.productImageUrl" class="cert-product-img" alt="产品图片" />
+                            <img v-if="upstreamCertificate?.productImageUrl" :src="upstreamCertificate?.productImageUrl"
+                                class="cert-product-img" alt="产品图片" />
                             <el-icon v-else class="placeholder-icon">
                                 <Picture />
                             </el-icon>
@@ -402,13 +410,7 @@
         </div>
 
 
-    <el-dialog
-            v-model="previewVisible"
-            title="打印预览"
-            width="840px"
-            append-to-body
-            class="print-preview-dialog"
-        >
+        <el-dialog v-model="previewVisible" title="打印预览" width="840px" append-to-body class="print-preview-dialog">
             <div class="preview-section-title">热敏打印效果预览</div>
             <div class="preview-wrapper print-effect-wrapper" v-loading="printEffectLoading">
                 <img v-if="printEffectPreviewSrc" :src="printEffectPreviewSrc" class="preview-img print-effect-img" />
@@ -416,15 +418,11 @@
             </div>
             <template #footer>
                 <el-button @click="previewVisible = false">关闭</el-button>
-                <el-button
-                    plain
-                    class="bluetooth-btn"
-                    :loading="bluetoothConnecting"
-                    @click="connectBluetoothPrinter"
-                >
+                <el-button plain class="bluetooth-btn" :loading="bluetoothConnecting" @click="connectBluetoothPrinter">
                     {{ bluetoothReady ? `已连接：${printerName}` : '连接蓝牙打印机' }}
                 </el-button>
-                <el-button type="primary" :loading="bluetoothPrinting" :disabled="!preparedPrintBytes || !bluetoothReady" @click="handlePrint(previewSrc)">蓝牙打印</el-button>
+                <el-button type="primary" :loading="bluetoothPrinting"
+                    :disabled="!preparedPrintBytes || !bluetoothReady" @click="handlePrint(previewSrc)">蓝牙打印</el-button>
             </template>
         </el-dialog>
     </div>
@@ -611,7 +609,7 @@ const mapReportOption = (item: any) => {
             const parsed = typeof item.aiRecognitionResult === 'string' ? JSON.parse(item.aiRecognitionResult) : item.aiRecognitionResult;
             rDate = parsed.timestamp || '-';
         }
-    } catch (e) {}
+    } catch (e) { }
 
     return {
         ...item,
@@ -680,7 +678,7 @@ const hydrateLinkedDetectionRecords = async (recordIds: number[]) => {
             .filter(Boolean)
             .map((detail) => mapReportOption(detail));
 
-            console.log(mappedList)
+        console.log(mappedList)
 
         if (mappedList.length) {
             linkedPlatformRecords.value = mappedList;
@@ -702,7 +700,7 @@ const loadDetail = async (id: number) => {
         // 解析检测结果类型
         thirdPartyReportUrls.value = data.thirdPartyReportUrl ? data.thirdPartyReportUrl.split(',').filter(Boolean) : [];
         const recordIds = normalizeDetectionRecordIds(data?.detectionRecordId);
-        
+
         if (thirdPartyReportUrls.value.length > 0) {
             thirdPartyType.value = 'third';
         } else if (recordIds.length > 0) {
@@ -710,7 +708,7 @@ const loadDetail = async (id: number) => {
             await hydrateLinkedDetectionRecords(recordIds);
         } else {
             thirdPartyType.value = 'third'; // 默认
-        } 
+        }
         // if (data.upstreamCertificate) {
         //    upstreamCertificate.value = data.upstreamCertificate;
         //    upstreamCommitmentBasis.value = parseBasisData(data.upstreamCertificate.commitmentBasis);
@@ -971,7 +969,7 @@ const handlePrint = async (prepared?: string | null) => {
         display: flex;
         flex-wrap: wrap;
         gap: 16px;
-        
+
         .preview-box {
             width: 180px;
             height: 240px;
@@ -1011,7 +1009,7 @@ const handlePrint = async (prepared?: string | null) => {
                 z-index: 2;
                 backdrop-filter: blur(2px);
             }
-            
+
             .preview-img {
                 width: 100%;
                 height: 100%;
@@ -1095,6 +1093,7 @@ const handlePrint = async (prepared?: string | null) => {
             margin-top: 0 !important;
             margin-bottom: 12px !important;
             overflow: visible !important;
+
             .cert-no-tag {
                 font-size: 31px !important; // 放大 1.3 倍
                 font-weight: 800 !important;
@@ -1116,6 +1115,7 @@ const handlePrint = async (prepared?: string | null) => {
         .cert-declaration-list {
             text-align: left !important;
             margin: 8px 0 !important;
+
             .declaration-line {
                 font-size: 21px !important; // 放大 1.3 倍
                 margin: 4px 0 !important;
@@ -1129,6 +1129,7 @@ const handlePrint = async (prepared?: string | null) => {
             margin-top: 12px !important;
             padding-top: 8px !important;
             border-top: 1px dashed #000 !important;
+
             .info-title {
                 font-size: 23px !important; // 18 * 1.3
                 margin-bottom: 6px !important;
@@ -1138,9 +1139,11 @@ const handlePrint = async (prepared?: string | null) => {
 
         .info-table {
             border: none !important;
+
             .info-row {
                 border: none !important;
                 display: flex !important;
+
                 .label,
                 .value {
                     font-size: 23px !important; // 放大 1.3 倍
@@ -1149,6 +1152,7 @@ const handlePrint = async (prepared?: string | null) => {
                     border: none !important;
                     box-shadow: none !important;
                 }
+
                 .label {
                     width: 130px !important;
                 }
@@ -1164,6 +1168,7 @@ const handlePrint = async (prepared?: string | null) => {
             display: flex !important;
             justify-content: space-between !important;
             align-items: flex-start !important;
+
             .basis-title {
                 font-size: 20px !important; // 与副标题配套
             }
@@ -1180,6 +1185,7 @@ const handlePrint = async (prepared?: string | null) => {
                 display: flex !important;
                 align-items: center !important;
                 margin-bottom: 8px !important;
+
                 .basis-box {
                     width: 32px !important;
                     height: 32px !important;
@@ -1189,9 +1195,11 @@ const handlePrint = async (prepared?: string | null) => {
                     line-height: 26px !important;
                     text-align: center !important;
                 }
+
                 .basis-label {
                     font-size: 23px !important; // 放大 1.3 倍
                     color: #000 !important;
+
                     .basis-index {
                         display: none !important;
                     }
@@ -1205,6 +1213,7 @@ const handlePrint = async (prepared?: string | null) => {
             display: flex;
             align-items: center;
             margin-bottom: 12px;
+
             .basis-box {
                 width: 18px;
                 height: 18px;
@@ -1216,15 +1225,18 @@ const handlePrint = async (prepared?: string | null) => {
                 line-height: 16px;
                 font-size: 14px;
                 background: #F5F7FA;
+
                 &.checked {
                     background: #fff;
                     border-color: #00B3ED;
                     color: #00B3ED;
                 }
             }
+
             .basis-label {
                 font-size: 14px;
                 color: #606266;
+
                 .basis-index {
                     margin-right: 4px;
                     color: inherit;
@@ -1235,6 +1247,7 @@ const handlePrint = async (prepared?: string | null) => {
 
     .cert-header {
         margin-bottom: 24px;
+
         .cert-no-tag {
             background: #F0F7FF;
             color: #333;
@@ -1266,6 +1279,7 @@ const handlePrint = async (prepared?: string | null) => {
 .qr-code-wrapper {
     width: 120px;
     height: 120px;
+
     img {
         width: 100%;
     }
@@ -1274,12 +1288,15 @@ const handlePrint = async (prepared?: string | null) => {
 .info-table {
     border: 1px solid #EDEDED;
     text-align: left;
+
     .info-row {
         display: flex;
         border-bottom: 1px solid #EDEDED;
+
         &:last-child {
             border-bottom: none;
         }
+
         .label {
             width: 140px;
             background: #F9FAFB;
@@ -1287,6 +1304,7 @@ const handlePrint = async (prepared?: string | null) => {
             font-weight: 600;
             border-right: 1px solid #EDEDED;
         }
+
         .value {
             flex: 1;
             padding: 12px;
@@ -1359,7 +1377,7 @@ const handlePrint = async (prepared?: string | null) => {
 
         .commitment-list {
             margin-bottom: 20px;
-            
+
             .commitment-item {
                 font-size: 16px;
                 font-weight: 700;
@@ -1493,7 +1511,7 @@ const handlePrint = async (prepared?: string | null) => {
         padding: 10px 16px;
         background: #F3F4F6;
         border-bottom: 1px solid #E5E7EB;
-        
+
         .header-left {
             display: flex;
             align-items: center;
@@ -1501,7 +1519,7 @@ const handlePrint = async (prepared?: string | null) => {
             font-size: 14px;
             font-weight: 600;
             color: #374151;
-            
+
             .el-icon {
                 font-size: 16px;
                 color: #6B7280;
@@ -1520,7 +1538,7 @@ const handlePrint = async (prepared?: string | null) => {
             max-height: 400px;
             cursor: zoom-in;
             border-radius: 4px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
     }
 }
@@ -1677,5 +1695,4 @@ const handlePrint = async (prepared?: string | null) => {
     color: #666;
     font-size: 14px;
 }
-
 </style>

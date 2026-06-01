@@ -183,7 +183,6 @@
                             <div class="entity-info-card">
                                 <div class="info-line">主体名称: {{ formData.entity || '-' }}</div>
                                 <div class="info-line">注册城市: {{ formData.registeredCity || '-' }}</div>
-                                <div class="info-line">法人: {{ formData.legalPerson || '-' }}</div>
                                 <div class="info-actions">
                                     <el-button class="theme-default-btn">关闭</el-button>
                                     <el-button type="primary" class="theme-primary-btn"
@@ -459,7 +458,7 @@
                         <h2 class="cert-subtitle">承诺事项：</h2>
                         <div class="cert-declaration-list">
                             <p v-for="(line, idx) in computedCommitment" :key="idx" class="declaration-line">• {{ line
-                                }}</p>
+                            }}</p>
                         </div>
 
                         <div class="cert-middle-section">

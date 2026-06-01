@@ -7,7 +7,7 @@
           <img src="@/assets/logo/logo.png" alt="logo" class="logo-img" />
         </div>
         <div class="title-box">
-          <div class="main-title">链安食检数智服务平台</div>
+          <div class="main-title">壹拾智检数智服务平台</div>
           <div class="sub-title">专业版(v2.0-2026)</div>
         </div>
       </div>
@@ -23,7 +23,7 @@
           <el-form-item prop="nickname">
             <el-input v-model="registerForm.nickname" type="text" placeholder="请输入昵称" />
           </el-form-item>
-          
+
           <el-form-item prop="mobile">
             <el-input v-model="registerForm.mobile" type="text" placeholder="请输入手机号" />
           </el-form-item>
@@ -64,10 +64,11 @@
 
           <el-form-item>
             <div class="step2-actions">
-               <el-button :loading="loading" type="primary" class="register-submit-btn" @click.prevent="handleRegisterPre">
-                  {{ loading ? '注册中...' : '确认注册' }}
-               </el-button>
-               <el-button class="back-link-btn" @click="currentStep = 1">返回修改基础信息</el-button>
+              <el-button :loading="loading" type="primary" class="register-submit-btn"
+                @click.prevent="handleRegisterPre">
+                {{ loading ? '注册中...' : '确认注册' }}
+              </el-button>
+              <el-button class="back-link-btn" @click="currentStep = 1">返回修改基础信息</el-button>
             </div>
           </el-form-item>
         </div>
@@ -78,14 +79,8 @@
         <router-link to="/login" class="link">返回登录</router-link>
       </div>
 
-      <Verify
-        v-if="captchaEnabled"
-        ref="verify"
-        :captchaType="captchaType"
-        :imgSize="{ width: '400px', height: '200px' }"
-        mode="pop"
-        @success="handleRegister"
-      />
+      <Verify v-if="captchaEnabled" ref="verify" :captchaType="captchaType"
+        :imgSize="{ width: '400px', height: '200px' }" mode="pop" @success="handleRegister" />
     </div>
   </div>
 </template>
@@ -169,23 +164,23 @@ const handleSendCode = () => {
         clearInterval(timer)
       }
     }, 1000)
-  }).catch(() => {})
+  }).catch(() => { })
 }
 
 const handleNextStep = async () => {
-    if (!proxy.$refs.registerRef) return;
-    
-    // 仅校验第一步的关键字段
-    const fields = ['username', 'nickname', 'mobile', 'code']
-    try {
-        const valid = await proxy.$refs.registerRef.validateField(fields)
-        if (valid) {
-            currentStep.value = 2
-        }
-    } catch (error) {
-        // 校验失败，Element Plus 会自动显示红色报错文字，此处不需要额外处理
-        console.warn('Step 1 validation failed', error)
+  if (!proxy.$refs.registerRef) return;
+
+  // 仅校验第一步的关键字段
+  const fields = ['username', 'nickname', 'mobile', 'code']
+  try {
+    const valid = await proxy.$refs.registerRef.validateField(fields)
+    if (valid) {
+      currentStep.value = 2
     }
+  } catch (error) {
+    // 校验失败，Element Plus 会自动显示红色报错文字，此处不需要额外处理
+    console.warn('Step 1 validation failed', error)
+  }
 }
 
 function handleRegisterPre() {
@@ -333,7 +328,7 @@ function handleRegister(params) {
     input {
       font-size: 14px;
       color: #333;
-      width: 100%!important;
+      width: 100% !important;
 
       &::placeholder {
         color: #999999;
@@ -438,19 +433,19 @@ function handleRegister(params) {
   gap: 10px;
 
   .back-link-btn {
-      border: none;
-      background: none;
-      color: #999;
-      font-size: 12px;
-      padding: 0;
-      height: auto;
-      text-decoration: underline;
-      cursor: pointer;
-      margin-top: 5px;
+    border: none;
+    background: none;
+    color: #999;
+    font-size: 12px;
+    padding: 0;
+    height: auto;
+    text-decoration: underline;
+    cursor: pointer;
+    margin-top: 5px;
 
-      &:hover {
-          color: #00B3ED;
-      }
+    &:hover {
+      color: #00B3ED;
+    }
   }
 }
 

@@ -6,7 +6,7 @@
       <aside class="panel notice-panel">
         <div class="panel-header notice-header">
           <div>
-            <h3>业务风险公告</h3>
+            <h3>风险公告</h3>
             <p>显示最近5分钟风险公告</p>
           </div>
           <button class="text-action" type="button" @click="handleViewAllNotice">查看所有</button>
@@ -53,7 +53,7 @@
           <article class="report-card">
             <div class="report-brand">
               <span class="shield-mark"></span>
-              <strong>链安食检-农产品质量安全预警</strong>
+              <strong>壹拾智检-农产品质量安全预警</strong>
             </div>
             <div class="report-divider"></div>
             <h2>农产品风险日报：{{ dailyReport.code }}</h2>
@@ -69,7 +69,7 @@
           <article class="report-card report-stack">
             <div class="report-brand">
               <span class="shield-mark"></span>
-              <strong>链安食检-农产品质量安全预警</strong>
+              <strong>壹拾智检-农产品质量安全预警</strong>
             </div>
 
             <div class="mini-report">
@@ -102,12 +102,7 @@
 
     <section class="panel task-panel">
       <h3 class="section-title">待接收任务</h3>
-      <el-table
-        :data="taskData"
-        :border="true"
-        class="pending-table"
-        header-cell-class-name="workbench-table-header"
-      >
+      <el-table :data="taskData" :border="true" class="pending-table" header-cell-class-name="workbench-table-header">
         <el-table-column type="index" label="序号" width="60" align="center" />
         <el-table-column prop="no" label="任务编号" align="center" width="120" show-overflow-tooltip />
         <el-table-column prop="name" label="任务名称" align="center" min-width="170" show-overflow-tooltip />
@@ -127,14 +122,8 @@
       </el-table>
       <div class="pagination-row">
         <span>合计{{ taskTotal }}条</span>
-        <el-pagination
-          v-model:current-page="taskQueryParams.pageNo"
-          background
-          layout="prev, pager, next"
-          :page-size="taskQueryParams.pageSize"
-          :total="taskTotal"
-          @current-change="getTaskList"
-        />
+        <el-pagination v-model:current-page="taskQueryParams.pageNo" background layout="prev, pager, next"
+          :page-size="taskQueryParams.pageSize" :total="taskTotal" @current-change="getTaskList" />
       </div>
     </section>
 
@@ -142,18 +131,12 @@
       <div class="track-header">
         <h3 class="section-title">任务跟踪</h3>
         <div class="track-tabs">
-          <button
-            type="button"
-            :class="{ active: activeTaskType === 'executed' }"
-            @click="handleTrackTypeChange('executed')"
-          >
+          <button type="button" :class="{ active: activeTaskType === 'executed' }"
+            @click="handleTrackTypeChange('executed')">
             我执行的任务
           </button>
-          <button
-            type="button"
-            :class="{ active: activeTaskType === 'dispatched' }"
-            @click="handleTrackTypeChange('dispatched')"
-          >
+          <button type="button" :class="{ active: activeTaskType === 'dispatched' }"
+            @click="handleTrackTypeChange('dispatched')">
             我下发的任务
           </button>
         </div>
@@ -161,28 +144,13 @@
 
       <div class="track-filters">
         <el-select v-model="trackForm.planName" placeholder="选择方案名称" clearable class="track-filter">
-          <el-option
-            v-for="item in trackPlanOptions"
-            :key="item.value"
-            :label="item.label"
-            :value="item.value"
-          />
+          <el-option v-for="item in trackPlanOptions" :key="item.value" :label="item.label" :value="item.value" />
         </el-select>
         <el-select v-model="trackForm.taskName" placeholder="选择任务名称" clearable class="track-filter">
-          <el-option
-            v-for="item in trackTaskOptions"
-            :key="item.value"
-            :label="item.label"
-            :value="item.value"
-          />
+          <el-option v-for="item in trackTaskOptions" :key="item.value" :label="item.label" :value="item.value" />
         </el-select>
         <el-select v-model="trackForm.owner" placeholder="主管单位" clearable class="track-filter">
-          <el-option
-            v-for="item in trackOwnerOptions"
-            :key="item.value"
-            :label="item.label"
-            :value="item.value"
-          />
+          <el-option v-for="item in trackOwnerOptions" :key="item.value" :label="item.label" :value="item.value" />
         </el-select>
         <el-input v-model="trackForm.keyword" placeholder="输入任务名称" clearable class="track-input" />
         <el-button type="primary" class="track-query" @click="handleTrackQuery">查询</el-button>
@@ -190,12 +158,8 @@
 
       <div class="track-graph" v-loading="trackLoading">
         <div v-if="activeTrackNodes.length" class="track-stage">
-          <div
-            v-for="(node, index) in activeTrackNodes"
-            :key="node.name"
-            class="track-node-wrap"
-            :class="[`level-${index}`]"
-          >
+          <div v-for="(node, index) in activeTrackNodes" :key="node.name" class="track-node-wrap"
+            :class="[`level-${index}`]">
             <div class="track-line" v-if="index > 0"></div>
             <div class="track-node">
               <span>{{ node.name }}</span>
@@ -206,6 +170,21 @@
         <el-empty v-else description="暂无任务跟踪数据" :image-size="96" />
       </div>
     </section>
+
+    <!-- Report Dialog -->
+    <el-dialog v-model="reportDialogVisible" :title="currentReport?.name || '风险报告'" width="500px">
+      <div v-if="currentReport">
+        <div v-for="line in currentReport.lines" :key="line.label" style="margin-bottom: 12px;">
+          <strong style="display: inline-block; width: 120px; color: #666;">{{ line.label }}：</strong>
+          <span style="color: #333;">{{ line.value }}</span>
+        </div>
+      </div>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button type="primary" @click="reportDialogVisible = false">知道了</el-button>
+        </span>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -264,6 +243,9 @@ const trackLoading = ref(false)
 const trackTaskRows = ref<any[]>([])
 const trackTreeNodes = ref<TrackNode[]>([])
 const activeTaskType = ref<'executed' | 'dispatched'>('executed')
+
+const reportDialogVisible = ref(false)
+const currentReport = ref<typeof dailyReport.value>()
 
 const today = new Date()
 const reportForm = reactive({
@@ -554,7 +536,7 @@ const handleAcceptTask = async (row: TaskRow) => {
 }
 
 const handleViewAllNotice = () => {
-  router.push('/notify-message')
+  router.push('/user/notify-message')
 }
 
 const handleSubscribe = () => {
@@ -566,11 +548,8 @@ const handleReportQuery = () => {
 }
 
 const handleViewReport = (report: typeof dailyReport.value) => {
-  const content = report.lines.map((item) => `${item.label}：${item.value}`).join('<br/>')
-  ElMessageBox.alert(content, report.name, {
-    dangerouslyUseHTMLString: true,
-    confirmButtonText: '知道了'
-  })
+  currentReport.value = report
+  reportDialogVisible.value = true
 }
 
 const handleTrackQuery = () => {
@@ -625,7 +604,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   margin-bottom: 24px;
-  
+
   &::before {
     content: "";
     width: 4px;
@@ -641,6 +620,7 @@ onMounted(() => {
   display: flex;
   gap: 20px;
   margin-bottom: 20px;
+  margin-top: -20px;
 }
 
 .notice-panel {
@@ -656,12 +636,14 @@ onMounted(() => {
   justify-content: space-between;
   align-items: flex-end;
   margin-bottom: 20px;
+  margin-top: 4px;
 
-  > div {
+  >div {
     h3 {
       font-size: 16px;
       margin: 0 0 4px 0;
     }
+
     p {
       font-size: 12px;
       color: #999;
@@ -703,8 +685,11 @@ onMounted(() => {
   background: #ff4d4f;
   color: #fff;
   font-size: 10px;
-  padding: 2px 4px;
+  line-height: 14px;
+  padding: 0 4px;
   border-radius: 4px;
+  transform: scale(0.8);
+  transform-origin: top right;
 }
 
 .notice-badge {
@@ -715,11 +700,12 @@ onMounted(() => {
   justify-content: center;
   border-radius: 4px;
   font-size: 12px;
-  
+
   &.is-risk {
     background: #ffeceb;
     color: #ff4d4f;
   }
+
   &.is-warning {
     background: #fff5e6;
     color: #ff9900;
@@ -757,7 +743,7 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
-  
+
   h3 {
     font-size: 16px;
     margin: 0;
@@ -783,6 +769,7 @@ onMounted(() => {
   border: 1.5px solid #00B3ED;
   border-radius: 3px;
   position: relative;
+
   &::after {
     content: "";
     position: absolute;
@@ -844,11 +831,14 @@ onMounted(() => {
   clip-path: polygon(50% 0, 92% 18%, 86% 64%, 50% 100%, 14% 64%, 8% 18%);
 }
 
-.report-divider, .stack-divider {
-  display: none; /* keep it clean */
+.report-divider,
+.stack-divider {
+  display: none;
+  /* keep it clean */
 }
 
-.report-card h2, .mini-report h2 {
+.report-card h2,
+.mini-report h2 {
   font-size: 15px;
   margin: 0 0 16px 0;
   color: #111;
@@ -863,10 +853,12 @@ onMounted(() => {
     display: flex;
     font-size: 13px;
   }
+
   dt {
     width: 90px;
     color: #999;
   }
+
   dd {
     flex: 1;
     margin: 0;
@@ -887,13 +879,15 @@ onMounted(() => {
 
 .mini-report {
   margin-bottom: 24px;
+
   &:last-child {
     margin-bottom: 0;
   }
 }
 
 /* Task and Track Panel */
-.task-panel, .track-panel {
+.task-panel,
+.track-panel {
   background: #fff;
   border-radius: 8px;
   padding: 20px;
@@ -906,7 +900,7 @@ onMounted(() => {
   margin: 0 0 20px 0;
   display: flex;
   align-items: center;
-  
+
   &::before {
     content: "";
     width: 4px;
@@ -926,7 +920,9 @@ onMounted(() => {
 :deep(.el-table) {
   --el-table-border-color: transparent;
   --el-table-border: none;
-  &::before, &::after {
+
+  &::before,
+  &::after {
     display: none;
   }
 }
@@ -940,6 +936,7 @@ onMounted(() => {
 :deep(.el-table th.el-table__cell.is-leaf) {
   border-bottom: none;
 }
+
 :deep(.el-table td.el-table__cell) {
   border-bottom: 1px solid #f5f5f5;
 }
@@ -960,7 +957,7 @@ onMounted(() => {
   font-size: 14px;
 }
 
-.pagination-row > span {
+.pagination-row>span {
   margin-right: 16px;
 }
 
@@ -987,7 +984,7 @@ onMounted(() => {
     color: #666;
     cursor: pointer;
     padding-bottom: 4px;
-    
+
     &.active {
       color: #00B3ED;
       font-weight: bold;
@@ -1002,7 +999,8 @@ onMounted(() => {
   margin-bottom: 32px;
 }
 
-.track-filter, .track-input {
+.track-filter,
+.track-input {
   width: 160px;
 }
 
@@ -1059,7 +1057,7 @@ onMounted(() => {
   font-size: 14px;
   font-weight: bold;
   color: #00B3ED;
-  
+
   em {
     display: block;
     font-size: 12px;
@@ -1070,7 +1068,3 @@ onMounted(() => {
   }
 }
 </style>
-
-
-
-
