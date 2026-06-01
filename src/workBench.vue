@@ -156,16 +156,9 @@
         <el-button type="primary" class="track-query" @click="handleTrackQuery">查询</el-button>
       </div>
 
-      <div class="track-graph" v-loading="trackLoading">
-        <div v-if="activeTrackNodes.length" class="track-stage">
-          <div v-for="(node, index) in activeTrackNodes" :key="node.name" class="track-node-wrap"
-            :class="[`level-${index}`]">
-            <div class="track-line" v-if="index > 0"></div>
-            <div class="track-node">
-              <span>{{ node.name }}</span>
-              <em v-if="node.progress">{{ node.progress }}</em>
-            </div>
-          </div>
+      <div class="track-monitor-shell" v-loading="trackLoading">
+        <div class="track-monitor-card" v-if="trackTreeData.children.length">
+          <ProgressHistory :treeData="trackTreeData" />
         </div>
         <el-empty v-else description="暂无任务跟踪数据" :image-size="96" />
       </div>
@@ -192,6 +185,7 @@
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import ProgressHistory from '@/components/ProgressHistory/index.vue'
 import { getNoticePage } from '@/api/system/notice'
 import {
   acceptDetectionTask,
@@ -226,6 +220,8 @@ interface TaskRow {
 interface TrackNode {
   name: string
   progress?: string
+  warning?: boolean
+  children?: TrackNode[]
 }
 
 interface SelectOption {
@@ -342,7 +338,10 @@ const monthlyReport = computed(() => ({
   ]
 }))
 
-const activeTrackNodes = computed(() => trackTreeNodes.value)
+const trackTreeData = computed(() => ({
+  name: activeTaskType.value === 'executed' ? '我执行的任务' : '我下发的任务',
+  children: trackTreeNodes.value
+}))
 
 const makeOptions = (rows: any[], getValue: (row: any) => string | number | undefined, getLabel: (row: any) => string | undefined) => {
   const map = new Map<string | number, SelectOption>()
@@ -468,12 +467,18 @@ const getNodeProgress = (node: any) => {
   return `(${Number.isFinite(completed) ? completed : 0}/${total})`
 }
 
+const normalizeTrackNode = (node: any): TrackNode => ({
+  name: getNodeName(node),
+  progress: getNodeProgress(node),
+  warning: Number(node.status) === 2,
+  children: Array.isArray(node.children) ? node.children.map((child: any) => normalizeTrackNode(child)) : []
+})
+
 const buildTrackNodes = (tree: any[], fallbackRows: any[] = []) => {
-  const source = flattenTree(tree).length ? flattenTree(tree) : fallbackRows
-  return source.slice(0, 4).map((node) => ({
-    name: getNodeName(node),
-    progress: getNodeProgress(node)
-  }))
+  if (Array.isArray(tree) && tree.length) {
+    return tree.slice(0, 6).map((node: any) => normalizeTrackNode(node))
+  }
+  return fallbackRows.slice(0, 6).map((node: any) => normalizeTrackNode(node))
 }
 
 const getTaskTrackList = async () => {
@@ -664,6 +669,9 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  background: #f4f8fb;
+  border-radius: 8px;
+  padding: 20px;
 }
 
 .notice-item {
@@ -995,13 +1003,14 @@ onMounted(() => {
 
 .track-filters {
   display: flex;
+  flex-wrap: wrap;
   gap: 16px;
-  margin-bottom: 32px;
+  margin-bottom: 24px;
 }
 
 .track-filter,
 .track-input {
-  width: 160px;
+  width: 180px;
 }
 
 .track-query {
@@ -1011,60 +1020,50 @@ onMounted(() => {
   border-radius: 4px;
 }
 
-/* 任务跟踪 不！要！border！ */
-.track-graph {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow-x: auto;
-  min-height: 120px;
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
+.track-monitor-shell {
+  min-height: 260px;
 }
 
-.track-stage {
-  min-width: 700px;
-  width: 90%;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  position: relative;
+.track-monitor-card {
+  min-height: 260px;
+  padding: 20px 24px;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #FFFFFF 0%, #FAFCFF 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
 
-  &::before {
-    content: "";
-    position: absolute;
-    top: 50%;
-    left: 10px;
-    right: 10px;
-    height: 1px;
-    background: #e0e0e0;
-    z-index: 0;
+  :deep(.history-tree) {
+    padding: 8px 0 0;
+    min-width: 100%;
   }
-}
 
-.track-node-wrap {
-  position: relative;
-  z-index: 1;
-}
+  :deep(.root-node .node-text) {
+    font-size: 15px;
+    font-weight: 600;
+    color: #111827;
+  }
 
-.track-node {
-  background: transparent;
-  padding: 8px 16px;
-  /* NO BORDER - As explicitly requested */
-  border: none !important;
-  box-shadow: none !important;
-  font-size: 14px;
-  font-weight: bold;
-  color: #00B3ED;
+  :deep(.node-item .node-text) {
+    color: #374151;
+    font-weight: 500;
+  }
 
-  em {
-    display: block;
-    font-size: 12px;
-    color: #ff4d4f;
-    font-style: normal;
-    margin-top: 4px;
-    font-weight: normal;
+  :deep(.node-progress) {
+    color: #F59E0B;
+    font-weight: 600;
+  }
+
+  :deep(.node-progress.warning) {
+    color: #EF4444;
+  }
+
+  :deep(.node-dot) {
+    border-width: 2px;
+  }
+
+  :deep(.branch-line),
+  :deep(.tree-branch::before) {
+    background: #D1D5DB;
   }
 }
 </style>

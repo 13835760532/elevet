@@ -128,8 +128,20 @@
           show-word-limit
           @keydown.enter.exact.prevent="handleSend(inputText)"
         />
+        <div
+          class="voice-btn"
+          :class="{ active: isRecording, disabled: isTyping }"
+          :title="voiceButtonTitle"
+          @click="toggleVoiceInput"
+        >
+          <Icon :icon="isRecording ? 'ep:video-pause' : 'ep:microphone'" :size="20" />
+        </div>
         <div class="send-btn" :class="{ active: inputText.trim() && !isTyping }" @click="handleSend(inputText)">
           <Icon icon="ep:position" :size="20" />
+        </div>
+        <div v-if="voiceStatusText" class="voice-status" :class="{ recording: isRecording }">
+          <span class="voice-dot"></span>
+          {{ voiceStatusText }}
         </div>
       </div>
     </div>
@@ -137,7 +149,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, nextTick, onMounted } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import {
   VoiceAssistantApi,
@@ -149,6 +161,7 @@ import {
   type RiskTrendCompareRespVO,
   type VoiceAssistantAskRespVO
 } from '@/api/agri/voiceAssistant'
+import { XfyunRtasrRecognizer } from '@/api/agri/voiceAssistant/xfyunRtasr'
 
 defineOptions({ name: 'ChatAssistant' })
 
@@ -205,7 +218,15 @@ interface RenderedAnswer {
 const messages = ref<Message[]>([])
 const inputText = ref('')
 const isTyping = ref(false)
+const isRecording = ref(false)
+const voiceStatusText = ref('')
+const voiceRecognizer = ref<XfyunRtasrRecognizer | null>(null)
 const chatMainRef = ref<HTMLElement | null>(null)
+
+const voiceButtonTitle = computed(() => {
+  if (isTyping.value) return '小壹正在回答中'
+  return isRecording.value ? '停止语音输入' : '语音输入'
+})
 
 // --- 工具函数 ---
 const scrollToBottom = async () => {
@@ -436,9 +457,59 @@ const typeWriter = async (targetMsg: Message, text: string, prop: 'content' | 'c
   }
 }
 
+const stopVoiceInput = () => {
+  voiceRecognizer.value?.stop()
+  voiceRecognizer.value = null
+  isRecording.value = false
+  voiceStatusText.value = ''
+}
+
+const toggleVoiceInput = async () => {
+  if (isTyping.value) return
+
+  if (isRecording.value) {
+    stopVoiceInput()
+    return
+  }
+
+  if (!navigator.mediaDevices?.getUserMedia) {
+    ElMessage.warning('当前浏览器不支持麦克风采集')
+    return
+  }
+
+  voiceRecognizer.value = new XfyunRtasrRecognizer({
+    onText: (text) => {
+      inputText.value = text
+    },
+    onStatusChange: (status, message) => {
+      if (status === 'recording') {
+        isRecording.value = true
+      }
+      if (status === 'stopped' || status === 'error') {
+        isRecording.value = false
+      }
+      voiceStatusText.value = message || (status === 'recording' ? '正在听写，说完后点麦克风结束' : '')
+    },
+    onError: (message) => {
+      ElMessage.error(message)
+    }
+  })
+
+  try {
+    await voiceRecognizer.value.start()
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '语音输入启动失败'
+    isRecording.value = false
+    voiceStatusText.value = ''
+    voiceRecognizer.value = null
+    ElMessage.error(message)
+  }
+}
+
 // --- 核心交互逻辑 ---
 const handleSend = async (text: string, options: { appendUser?: boolean } = {}) => {
   if (!text || !text.trim() || isTyping.value) return
+  stopVoiceInput()
   
   const query = text.trim()
   inputText.value = ''
@@ -518,6 +589,10 @@ const handleRegenerate = (id: string) => {
 
 onMounted(() => {
   refreshRecommends()
+})
+
+onBeforeUnmount(() => {
+  stopVoiceInput()
 })
 </script>
 
@@ -835,7 +910,7 @@ onMounted(() => {
     :deep(.el-textarea__inner) {
       border: none;
       box-shadow: none;
-      padding: 16px 50px 16px 16px;
+      padding: 16px 92px 16px 16px;
       font-size: 14px;
       background: transparent;
       
@@ -850,9 +925,9 @@ onMounted(() => {
       background: transparent;
     }
 
+    .voice-btn,
     .send-btn {
       position: absolute;
-      right: 12px;
       bottom: 12px;
       width: 32px;
       height: 32px;
@@ -863,6 +938,35 @@ onMounted(() => {
       color: #a8abb2;
       cursor: not-allowed;
       transition: all 0.3s;
+    }
+
+    .voice-btn {
+      right: 52px;
+      cursor: pointer;
+
+      &:hover {
+        color: #00B3ED;
+        background: #f0faff;
+      }
+
+      &.active {
+        color: #fff;
+        background: #f56c6c;
+
+        &:hover {
+          background: #e64b4b;
+        }
+      }
+
+      &.disabled {
+        color: #c0c4cc;
+        background: transparent;
+        cursor: not-allowed;
+      }
+    }
+
+    .send-btn {
+      right: 12px;
 
       &.active {
         color: #fff;
@@ -873,6 +977,28 @@ onMounted(() => {
           background: #0099cc;
         }
       }
+    }
+
+    .voice-status {
+      position: absolute;
+      left: 16px;
+      bottom: -28px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: #909399;
+      font-size: 12px;
+
+      &.recording {
+        color: #f56c6c;
+      }
+    }
+
+    .voice-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
     }
   }
 }

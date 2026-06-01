@@ -32,6 +32,9 @@ interface ImportMetaEnv {
   readonly VITE_APP_API_ENCRYPT_ALGORITHM: string
   readonly VITE_APP_API_ENCRYPT_REQUEST_KEY: string
   readonly VITE_APP_API_ENCRYPT_RESPONSE_KEY: string
+  readonly VITE_XFYUN_RTASR_APP_ID: string
+  readonly VITE_XFYUN_RTASR_API_KEY: string
+  readonly VITE_XFYUN_RTASR_SIGN_URL: string
 }
 
 declare global {
