@@ -237,6 +237,7 @@ const riskLoading = ref(false)
 const riskItems = ref<StaticRiskListVO[]>([])
 const trackLoading = ref(false)
 const trackTaskRows = ref<any[]>([])
+const trackOptionsRows = ref<any[]>([])
 const trackTreeNodes = ref<TrackNode[]>([])
 const activeTaskType = ref<'executed' | 'dispatched'>('executed')
 
@@ -357,7 +358,7 @@ const makeOptions = (rows: any[], getValue: (row: any) => string | number | unde
 
 const trackPlanOptions = computed(() =>
   makeOptions(
-    trackTaskRows.value,
+    trackOptionsRows.value,
     (row) => row.planId,
     (row) => row.planName || row.planInfo?.planName
   )
@@ -365,14 +366,14 @@ const trackPlanOptions = computed(() =>
 
 const trackTaskOptions = computed(() => {
   const rows = trackForm.planName
-    ? trackTaskRows.value.filter((row) => String(row.planId) === String(trackForm.planName))
-    : trackTaskRows.value
+    ? trackOptionsRows.value.filter((row) => String(row.planId) === String(trackForm.planName))
+    : trackOptionsRows.value
   return makeOptions(rows, (row) => row.id, (row) => row.taskName || row.taskCode)
 })
 
 const trackOwnerOptions = computed(() =>
   makeOptions(
-    trackTaskRows.value,
+    trackOptionsRows.value,
     (row) => row.planInfo?.issuerDeptName || row.issuerDeptName,
     (row) => row.planInfo?.issuerDeptName || row.issuerDeptName
   )
@@ -481,7 +482,7 @@ const buildTrackNodes = (tree: any[], fallbackRows: any[] = []) => {
   return fallbackRows.slice(0, 6).map((node: any) => normalizeTrackNode(node))
 }
 
-const getTaskTrackList = async () => {
+const getTaskTrackList = async (isInit = false) => {
   trackLoading.value = true
   try {
     const params: any = {
@@ -489,11 +490,26 @@ const getTaskTrackList = async () => {
       pageSize: 20,
       isAuto: false
     }
+    
+    // 如果是初始化（或重置条件），记录下拉选项数据
+    let optionRows: any[] = []
+    if (isInit) {
+      const res = await getDetectionTaskPage({ pageNo: 1, pageSize: 50, isAuto: false })
+      optionRows = res?.list || []
+      trackOptionsRows.value = optionRows
+    }
+
     if (trackForm.planName) params.planId = trackForm.planName
     if (trackForm.keyword) params.taskName = trackForm.keyword
 
     const res = await getDetectionTaskPage(params)
     let rows = res?.list || []
+    
+    // 如果没有初始化获取，而 options 还是空，则容错填入
+    if (!isInit && !trackOptionsRows.value.length) {
+      trackOptionsRows.value = rows
+    }
+
     if (trackForm.owner) {
       rows = rows.filter((row: any) =>
         String(row.planInfo?.issuerDeptName || row.issuerDeptName || '') === String(trackForm.owner)
@@ -558,12 +574,16 @@ const handleViewReport = (report: typeof dailyReport.value) => {
 }
 
 const handleTrackQuery = () => {
-  getTaskTrackList()
+  getTaskTrackList(false)
 }
 
 const handleTrackTypeChange = (type: 'executed' | 'dispatched') => {
   activeTaskType.value = type
-  getTaskTrackList()
+  trackForm.planName = ''
+  trackForm.taskName = ''
+  trackForm.owner = ''
+  trackForm.keyword = ''
+  getTaskTrackList(true)
 }
 
 watch(
@@ -582,7 +602,7 @@ onMounted(() => {
   getNoticeList()
   getRiskList()
   getTaskList()
-  getTaskTrackList()
+  getTaskTrackList(true)
 })
 </script>
 
