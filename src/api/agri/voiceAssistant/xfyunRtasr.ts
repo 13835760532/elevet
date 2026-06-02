@@ -34,7 +34,25 @@ interface RtasrResult {
   }
 }
 
-const getEnvValue = (key: keyof ImportMetaEnv) => import.meta.env[key] || ''
+const getEnvValue = (key: keyof ImportMetaEnv) => String(import.meta.env[key] || '').trim()
+
+const normalizeXfyunErrorMessage = (message: string) => {
+  const lowerMessage = message.toLowerCase()
+
+  if (lowerMessage.includes('no appid info') || lowerMessage.includes('illegal access')) {
+    return '科大讯飞鉴权失败，请检查实时转写的 APPID、API_KEY 是否正确，且该应用已开通实时语音转写服务'
+  }
+
+  if (lowerMessage.includes('no license') || lowerMessage.includes('10110')) {
+    return '科大讯飞实时语音转写服务未开通，请到讯飞控制台为该 APPID 开通实时转写权限'
+  }
+
+  if (lowerMessage.includes('illegal client_ip')) {
+    return '科大讯飞白名单校验失败，请检查控制台 IP 白名单配置'
+  }
+
+  return message
+}
 
 const createFrontendSignedUrl = () => {
   const appId = getEnvValue('VITE_XFYUN_RTASR_APP_ID')
@@ -56,7 +74,17 @@ const createFrontendSignedUrl = () => {
   const params = new URLSearchParams({
     appid: appId,
     ts,
-    signa
+    signa,
+    lang: 'cn'
+  })
+
+  console.info('[讯飞实时转写] 前端签名详情', {
+    mode: import.meta.env.MODE,
+    appId,
+    ts,
+    md5: baseString,
+    signa,
+    queryString: params.toString()
   })
 
   return `wss://${RTASR_HOST}${RTASR_PATH}?${params.toString()}`
@@ -294,7 +322,8 @@ export class XfyunRtasrRecognizer {
   }
 
   private handleError(error: unknown) {
-    const message = error instanceof Error ? error.message : '语音识别失败'
+    const rawMessage = error instanceof Error ? error.message : '语音识别失败'
+    const message = normalizeXfyunErrorMessage(rawMessage)
     this.updateStatus('error', message)
     this.options.onError?.(message)
     this.stopAudio()

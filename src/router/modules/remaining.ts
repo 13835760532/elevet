@@ -594,6 +594,20 @@ const remainingRouter: AppRouteRecordRaw[] = [
     ]
   },
   {
+    path: '/ai-assistant',
+    component: Layout,
+    name: 'AiAssistantRoot',
+    meta: { hidden: true },
+    children: [
+      {
+        path: '',
+        component: () => import('@/views/ai/ChatAssistant.vue'),
+        name: 'AiAssistant',
+        meta: { title: '小壹助手', activeMenu: '/ai-assistant' }
+      }
+    ]
+  },
+  {
     path: '/:pathMatch(.*)*',
     component: () => import('@/views/Error/404.vue'),
     name: '',
