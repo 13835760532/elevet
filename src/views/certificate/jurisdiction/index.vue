@@ -52,9 +52,6 @@
 
                 <!-- 搜索查询区 -->
                 <div class="query-card">
-                    <div class="card-header">
-                        <h2 class="card-title">辖区合格证查询</h2>
-                    </div>
 
                     <!-- 交互页签 -->
                     <div class="record-tabs">

@@ -3,7 +3,7 @@
     <!-- 检测方案指南 -->
     <div class="guide-card">
       <div class="card-header">
-        <h2 class="card-title">检测方案指南</h2>
+        <h2 class="card-title">工作方案指南</h2>
       </div>
       <div class="guide-steps">
         <div v-for="(step, index) in steps" :key="index" class="step-container">
@@ -26,9 +26,6 @@
 
     <!-- 检测方案查询 -->
     <div class="query-card">
-      <div class="card-header">
-        <h2 class="card-title">检测方案查询</h2>
-      </div>
       <div class="query-form-wrapper">
         <el-form :inline="true" :model="queryParams" class="custom-query-form custom-query-form-row"
           label-position="left">
@@ -38,7 +35,8 @@
           </el-form-item>
           <el-form-item label="">
             <el-select v-model="queryParams.targetCategory" placeholder="产品分类" class="custom-select" clearable>
-              <el-option v-for="dict in productCategoryOptions" :key="dict.value" :label="dict.label" :value="dict.value" />
+              <el-option v-for="dict in productCategoryOptions" :key="dict.value" :label="dict.label"
+                :value="dict.value" />
             </el-select>
           </el-form-item>
           <el-form-item label="">
@@ -139,8 +137,8 @@
       <!-- 分页区域 -->
       <div class="pagination-wrapper">
         <el-pagination v-model:current-page="pageParams.pageNo" v-model:page-size="pageParams.pageSize" :total="total"
-          background layout="total, sizes, prev, pager, next, jumper" class="custom-pagination"
-          @size-change="getList" @current-change="getList" />
+          background layout="total, sizes, prev, pager, next, jumper" class="custom-pagination" @size-change="getList"
+          @current-change="getList" />
       </div>
     </div>
   </div>
@@ -165,10 +163,10 @@ const selectedIds = ref([]) // 批量选中的 ID 列表
 
 const steps = [
   { id: '01', title: '方案创建', description: '创建工作方案(如年度、专项)' },
-  { id: '02', title: '任务拆分', description: '按承建机构拆分检测任务' },
+  { id: '02', title: '任务拆分', description: '承检' },
   { id: '03', title: '任务下达', description: '任务下达至承检机构' },
   { id: '04', title: '检测结果查看', description: '任务内检测结果查看' },
-  { id: '05', title: '方案进度跟踪', description: '任务执行进度跟踪统计' }
+  { id: '05', title: '方案进度跟踪', description: '任务执行进度统计' }
 ];
 
 // 查询参数（keyword 同时搜索方案编码和名称）
@@ -418,7 +416,6 @@ onMounted(() => {
 .query-form-wrapper {
   display: flex;
   flex-wrap: wrap;
-  margin-top: 18px;
 }
 
 /* 指南步骤样式 - 忠实还原设计图 */

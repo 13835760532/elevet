@@ -1,12 +1,26 @@
 <template>
   <div class="workbench-page">
-    <section class="workbench-title">我的工作台</section>
+    <div class="page-header">
+      <section class="workbench-title">我的工作台</section>
+      <div class="report-filter">
+        <el-select v-model="reportForm.year" class="filter-select is-year">
+          <el-option v-for="item in yearOptions" :key="item" :label="`${item}年`" :value="item" />
+        </el-select>
+        <el-select v-model="reportForm.month" class="filter-select">
+          <el-option v-for="item in monthOptions" :key="item" :label="`${item}月`" :value="item" />
+        </el-select>
+        <el-select v-model="reportForm.day" class="filter-select">
+          <el-option v-for="item in dayOptions" :key="item" :label="`${item}日`" :value="item" />
+        </el-select>
+        <el-button class="query-btn" @click="handleReportQuery">查询</el-button>
+      </div>
+    </div>
 
     <section class="workbench-hero">
       <aside class="panel notice-panel">
         <div class="panel-header notice-header">
           <div>
-            <h3>风险公告</h3>
+            <h3>通知公告</h3>
             <p>显示最近5分钟风险公告</p>
           </div>
           <button class="text-action" type="button" @click="handleViewAllNotice">查看所有</button>
@@ -34,19 +48,6 @@
             <span class="subscribe-icon"></span>
             订阅日报/月报
           </button>
-        </div>
-
-        <div class="panel report-filter">
-          <el-select v-model="reportForm.year" class="filter-select is-year">
-            <el-option v-for="item in yearOptions" :key="item" :label="`${item}年`" :value="item" />
-          </el-select>
-          <el-select v-model="reportForm.month" class="filter-select">
-            <el-option v-for="item in monthOptions" :key="item" :label="`${item}月`" :value="item" />
-          </el-select>
-          <el-select v-model="reportForm.day" class="filter-select">
-            <el-option v-for="item in dayOptions" :key="item" :label="`${item}日`" :value="item" />
-          </el-select>
-          <el-button class="query-btn" @click="handleReportQuery">查询</el-button>
         </div>
 
         <div class="report-grid" v-loading="riskLoading">
@@ -490,7 +491,7 @@ const getTaskTrackList = async (isInit = false) => {
       pageSize: 20,
       isAuto: false
     }
-    
+
     // 如果是初始化（或重置条件），记录下拉选项数据
     let optionRows: any[] = []
     if (isInit) {
@@ -504,7 +505,7 @@ const getTaskTrackList = async (isInit = false) => {
 
     const res = await getDetectionTaskPage(params)
     let rows = res?.list || []
-    
+
     // 如果没有初始化获取，而 options 还是空，则容错填入
     if (!isInit && !trackOptionsRows.value.length) {
       trackOptionsRows.value = rows
@@ -621,6 +622,13 @@ onMounted(() => {
   border-radius: 0;
 }
 
+.page-header {
+  display: flex;
+  align-items: center;
+  gap: 40px;
+  margin-bottom: 24px;
+}
+
 /* Page Title */
 .workbench-title {
   font-size: 20px;
@@ -628,7 +636,7 @@ onMounted(() => {
   color: #111;
   display: flex;
   align-items: center;
-  margin-bottom: 24px;
+  margin-bottom: 0;
 
   &::before {
     content: "";
@@ -645,23 +653,20 @@ onMounted(() => {
   display: flex;
   gap: 20px;
   margin-bottom: 20px;
-  margin-top: -20px;
 }
 
 .notice-panel {
   width: 360px;
   flex-shrink: 0;
-  background: #fff;
-  border-radius: 8px;
-  padding: 20px;
 }
 
 .notice-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
+  height: 42px;
+  margin-top: 0;
   margin-bottom: 20px;
-  margin-top: 4px;
 
   >div {
     h3 {
@@ -759,9 +764,6 @@ onMounted(() => {
 .warning-area {
   flex: 1;
   min-width: 0;
-  background: #fff;
-  border-radius: 8px;
-  padding: 20px;
   display: flex;
   flex-direction: column;
 }
@@ -770,6 +772,7 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  height: 42px;
   margin-bottom: 20px;
 
   h3 {
@@ -811,7 +814,6 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 24px;
 }
 
 .filter-select {
@@ -916,9 +918,6 @@ onMounted(() => {
 /* Task and Track Panel */
 .task-panel,
 .track-panel {
-  background: #fff;
-  border-radius: 8px;
-  padding: 20px;
   margin-bottom: 20px;
 }
 

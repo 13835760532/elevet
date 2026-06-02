@@ -16420,11 +16420,11 @@
           {
             "name": "type",
             "in": "query",
-            "description": "备案类型（字典：agri_filing_type）",
+            "description": "建档类型（字典：agri_filing_type）",
             "required": false,
             "schema": {
               "type": "string",
-              "description": "备案类型（字典：agri_filing_type）",
+              "description": "建档类型（字典：agri_filing_type）",
               "example": 2
             },
             "example": 2
@@ -16816,11 +16816,11 @@
           {
             "name": "type",
             "in": "query",
-            "description": "备案类型（字典：agri_filing_type）",
+            "description": "建档类型（字典：agri_filing_type）",
             "required": false,
             "schema": {
               "type": "string",
-              "description": "备案类型（字典：agri_filing_type）",
+              "description": "建档类型（字典：agri_filing_type）",
               "example": 2
             },
             "example": 2
@@ -29792,7 +29792,7 @@
           },
           "type": {
             "type": "integer",
-            "description": "备案类型（字典：agri_subject_type）",
+            "description": "建档类型（字典：agri_subject_type）",
             "format": "int32",
             "example": 2
           },
@@ -38222,7 +38222,7 @@
           },
           "type": {
             "type": "integer",
-            "description": "备案类型（字典：agri_subject_type）",
+            "description": "建档类型（字典：agri_subject_type）",
             "format": "int32",
             "example": 2
           },

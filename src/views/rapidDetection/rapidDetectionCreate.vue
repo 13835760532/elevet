@@ -6,7 +6,7 @@
             </PageHeader>
             <PageHeader v-else-if="currentStep == 4" title="检测报告" desc="对检测结果进行拍照上传判读后的结果" :showBack="true">
             </PageHeader>
-            <PageHeader v-else title="抽样检测" desc="请根据您的实际情况选择相应的备案类型，我们为企业和个人提供专业的备案服务，确保您的备案流程顺利进行。" :showBack="true">
+            <PageHeader v-else title="抽样检测" desc="请根据您的实际情况选择相应的建档类型，我们为企业和个人提供专业的备案服务，确保您的备案流程顺利进行。" :showBack="true">
             </PageHeader>
         </div>
 
@@ -91,8 +91,8 @@
                                 controls-position="right" :disabled="formState.linkProduct" />
                             <el-select v-model="formState.quantityUnit" placeholder="单位" style="width: 140px"
                                 :disabled="formState.linkProduct">
-                                <el-option v-for="unit in measurementUnitOptions" :key="unit.value"
-                                    :label="unit.label" :value="unit.value" />
+                                <el-option v-for="unit in measurementUnitOptions" :key="unit.value" :label="unit.label"
+                                    :value="unit.value" />
                             </el-select>
                         </div>
                     </el-form-item>
@@ -148,7 +148,7 @@
                                     <div class="grid-item">
                                         <div class="field-label">信用代码</div>
                                         <div class="field-value">{{ formState.selectedSubject.socialCreditCode || '--'
-                                        }}</div>
+                                            }}</div>
                                     </div>
                                     <div class="grid-item">
                                         <div class="field-label">主体类型</div>
@@ -158,9 +158,9 @@
                                         </div>
                                     </div>
                                     <div class="grid-item">
-                                        <div class="field-label">备案类型</div>
+                                        <div class="field-label">建档类型</div>
                                         <div class="field-value">{{ getFilingTypeLabel(formState.selectedSubject.type)
-                                        }}</div>
+                                            }}</div>
                                     </div>
                                     <div class="grid-item">
                                         <div class="field-label">联系人</div>
@@ -310,7 +310,7 @@
                             <span class="label">样品来源：</span>
                             <span class="value">{{ Array.isArray(formData.sample.sampleSource) ?
                                 formData.sample.sampleSource.join(', ') : (formData.sample.sampleSource || '--')
-                            }}</span>
+                                }}</span>
                         </div>
                         <div class="info-item">
                             <span class="label">样品名称：</span>

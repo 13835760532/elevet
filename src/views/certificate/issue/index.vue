@@ -10,10 +10,6 @@
 
         <!-- 查询卡 -->
         <div class="query-card">
-            <div class="card-header">
-
-                <h2 class="card-title">合格证开具查询</h2>
-            </div>
             <div class="query-form-wrapper">
                 <el-form :model="queryParams" :inline="true" class="custom-query-form custom-query-form-row"
                     label-position="left">

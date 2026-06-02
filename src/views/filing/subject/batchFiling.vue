@@ -1,30 +1,26 @@
 <template>
     <div class="page-container">
         <!-- 顶部标题区 -->
-        <PageHeader title="主体备案" desc="请先下载导入模版，将辖区内需要备案主体按照模版整理，并将整理后文档上传至本平台，完成待检主体备案。" />
+        <PageHeader title="主体建档" desc="请先下载导入模版，将辖区内需要建档主体按照模版整理，并将整理后文档上传至本平台，完成待检主体建档。" />
 
         <div class="content-card">
             <div class="card-action-bar">
                 <div class="action-left">
                     <div class="section-dot"></div>
-                    <span class="action-title">批量上传企业备案</span>
+                    <span class="action-title">批量上传企业建档</span>
                 </div>
                 <el-button class="btn-download" @click="handleDownloadTemplate" plain>
-                    <el-icon class="mr2"><Download /></el-icon>
+                    <el-icon class="mr2">
+                        <Download />
+                    </el-icon>
                     下载导入模版
                 </el-button>
             </div>
 
             <!-- 上传区域 -->
             <div class="upload-wrapper" v-loading="uploadLoading">
-                <el-upload 
-                    class="batch-upload" 
-                    drag 
-                    action="#" 
-                    :http-request="handleUpload"
-                    :show-file-list="false"
-                    accept=".xlsx, .xls"
-                >
+                <el-upload class="batch-upload" drag action="#" :http-request="handleUpload" :show-file-list="false"
+                    accept=".xlsx, .xls">
                     <div class="upload-content">
                         <div class="upload-icon-circle">
                             <el-icon class="el-icon--upload">
@@ -40,10 +36,6 @@
                         </div>
                     </div>
                 </el-upload>
-                
-                <div class="upload-options">
-                    <el-checkbox v-model="updateSupport">是否支持更新（如果主体名称已存在，则更新其信息）</el-checkbox>
-                </div>
             </div>
 
             <!-- 预览表格 -->
@@ -51,14 +43,15 @@
                 <div class="preview-header">
                     <div class="header-flex">
                         <div class="section-dot yellow"></div>
-                        <span class="preview-title">批量导入备案示例/预览</span>
+                        <span class="preview-title">批量导入建档示例/预览</span>
                     </div>
                 </div>
 
-                <div class="table-container">					
-                    <el-table ref="tableRef" :data="tableData" border class="preview-table" header-row-class-name="table-header">
+                <div class="table-container">
+                    <el-table ref="tableRef" :data="tableData" border class="preview-table"
+                        header-row-class-name="table-header">
                         <el-table-column prop="index" label="序号" width="60" align="center" />
-                        <el-table-column prop="recordType" label="备案类型" width="100" />
+                        <el-table-column prop="recordType" label="建档类型" width="100" />
                         <el-table-column prop="subjectName" label="主体名称" min-width="150" show-overflow-tooltip />
                         <el-table-column prop="subjectType" label="主体类型" width="100" align="center" />
                         <el-table-column prop="mainProduct" label="主营产品" width="100" align="center" />
@@ -102,7 +95,7 @@ const updateSupport = ref(false);
 const tableData = ref([
     {
         index: 1,
-        recordType: '企业备案',
+        recordType: '企业建档',
         subjectName: '小辉农场',
         subjectType: '生产',
         mainProduct: '苹果',
@@ -116,7 +109,7 @@ const tableData = ref([
     },
     {
         index: 2,
-        recordType: '企业备案',
+        recordType: '企业建档',
         subjectName: '小辉农场',
         subjectType: '加工',
         mainProduct: '西红柿',
@@ -130,7 +123,7 @@ const tableData = ref([
     },
     {
         index: 3,
-        recordType: '企业备案',
+        recordType: '企业建档',
         subjectName: '小辉农场',
         subjectType: '流通',
         mainProduct: '草莓',
@@ -144,7 +137,7 @@ const tableData = ref([
     },
     {
         index: 4,
-        recordType: '企业备案',
+        recordType: '企业建档',
         subjectName: '小辉农场',
         subjectType: '零售',
         mainProduct: '黄瓜',
@@ -160,8 +153,8 @@ const tableData = ref([
 
 const handleDownloadTemplate = async () => {
     try {
-       const res = await SubjectApi.getImportTemplate();
-       download.excel(res, '主体导入模板.xls');
+        const res = await SubjectApi.getImportTemplate();
+        download.excel(res, '主体导入模板.xls');
     } catch (error) {
         console.error('下载模版失败', error);
     }
@@ -171,14 +164,14 @@ const handleUpload = async (options: any) => {
     const { file } = options;
     uploadLoading.value = true;
     try {
-        const res = await SubjectApi.importSubject({ 
-            file, 
-            updateSupport: updateSupport.value 
+        const res = await SubjectApi.importSubject({
+            file,
+            updateSupport: updateSupport.value
         });
-        
+
         const { createNames, updateNames, failureNames } = res;
         const failureCount = Object.keys(failureNames).length;
-        
+
         let msg = `导入成功！新增 ${createNames.length} 条，更新 ${updateNames.length} 条。`;
         if (failureCount > 0) {
             msg += ` 失败 ${failureCount} 条。`;
@@ -191,7 +184,7 @@ const handleUpload = async (options: any) => {
         } else {
             message.success(msg);
         }
-        
+
     } catch (error) {
         console.error('上传失败', error);
     } finally {
@@ -218,11 +211,13 @@ $bg-light: #F8FAFC;
     background: #fff;
     border-radius: 12px;
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
-    padding:var(--page-container-padding);
+    padding: var(--page-container-padding);
     margin-bottom: 0px;
     flex: 1;
-    overflow-y: auto; /* 在此区域滚动 */
+    overflow-y: auto;
+    /* 在此区域滚动 */
     min-height: 0;
+
     &::-webkit-scrollbar {
         width: 0px;
     }
@@ -297,11 +292,14 @@ $bg-light: #F8FAFC;
         &:hover {
             border-color: $theme-color;
             background: rgba($theme-color, 0.02);
-            
+
             .upload-icon-circle {
                 transform: scale(1.1);
                 background: rgba($theme-color, 0.1);
-                .el-icon { color: $theme-color; }
+
+                .el-icon {
+                    color: $theme-color;
+                }
             }
         }
     }
@@ -317,7 +315,7 @@ $bg-light: #F8FAFC;
     justify-content: center;
     margin: 0 auto 24px;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
 
     .el-icon {
         font-size: 36px;
@@ -335,7 +333,10 @@ $bg-light: #F8FAFC;
     span {
         color: $theme-color;
         cursor: pointer;
-        &:hover { text-decoration: underline; }
+
+        &:hover {
+            text-decoration: underline;
+        }
     }
 }
 
@@ -344,8 +345,14 @@ $bg-light: #F8FAFC;
     font-size: 14px;
     line-height: 1.8;
 
-    p { margin: 4px 0; }
-    .format-tip { font-weight: 500; color: #475569; }
+    p {
+        margin: 4px 0;
+    }
+
+    .format-tip {
+        font-weight: 500;
+        color: #475569;
+    }
 }
 
 /* 预览表格区域 */

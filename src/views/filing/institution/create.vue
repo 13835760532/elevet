@@ -252,7 +252,7 @@ const clearNonPersonalCertificateFields = () => {
 };
 
 /**
- * 处理备案类型变化
+ * 处理建档类型变化
  */
 const handleTypeChange = (val) => {
     if (val === undefined || val === null || val === '') {

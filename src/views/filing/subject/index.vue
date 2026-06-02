@@ -9,9 +9,6 @@
 
         <!-- 主体建档查询 -->
         <div class="query-card">
-            <div class="card-header">
-                <h2 class="card-title">主体建档查询</h2>
-            </div>
             <div class="query-form-wrapper">
                 <el-form :inline="true" :model="queryParams" class="custom-query-form custom-query-form-row"
                     label-position="left">
@@ -20,7 +17,7 @@
                             class="custom-input w180" />
                     </el-form-item>
                     <el-form-item label="">
-                        <el-select v-model="queryParams.type" placeholder="备案类型" class="custom-select w130" clearable>
+                        <el-select v-model="queryParams.type" placeholder="建档类型" class="custom-select w130" clearable>
                             <el-option label="全部" value="" />
                             <el-option v-for="dict in filingTypeOptions" :key="dict.value" :label="dict.label"
                                 :value="dict.value" />
@@ -86,7 +83,7 @@
                                 scope.row.cityCode : ''}${scope.row.districtCode ? scope.row.districtCode : ''}` : '--' }}
                         </template>
                     </el-table-column>
-                    <el-table-column label="备案类型" prop="type" width="100" align="center">
+                    <el-table-column label="建档类型" prop="type" width="100" align="center">
                         <template #default="scope">
                             {{ scope.row.type !== undefined && scope.row.type !== null ?
                                 getFilingTypeLabel(scope.row.type) : '--' }}

@@ -65,10 +65,10 @@
                     <div class="detail-row">
                         <span class="label">*主体类型：</span>
                         <span class="value">{{ subjectInfo.category ? getCategoryLabel(subjectInfo.category) : '--'
-                        }}</span>
+                            }}</span>
                     </div>
                     <div class="detail-row">
-                        <span class="label">*备案类型：</span>
+                        <span class="label">*建档类型：</span>
                         <span class="value">{{ subjectInfo.type ? getFilingTypeLabel(subjectInfo.type) : '--' }}</span>
                     </div>
                     <div class="detail-row">
@@ -287,7 +287,6 @@ const handleBack = () => {
         width: 150px;
         padding: 12px 20px;
         font-size: 14px;
-        font-weight: 600;
         color: #333;
         text-align: right;
     }

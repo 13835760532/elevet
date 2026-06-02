@@ -9,9 +9,6 @@
 
         <!-- 自主检测查询 -->
         <div class="query-card" style="flex: 1;">
-            <div class="card-header">
-                <h2 class="card-title">自主检测查询</h2>
-            </div>
             <div class="query-form-wrapper">
                 <el-form :inline="true" :model="queryParams" class="custom-query-form custom-query-form-row"
                     label-position="left">

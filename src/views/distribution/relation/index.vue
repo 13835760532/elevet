@@ -9,9 +9,6 @@
 
     <!-- 查询表单 -->
     <div class="query-card">
-      <div class="card-header">
-        <h2 class="card-title">分发关系查询</h2>
-      </div>
       <div class="query-form-wrapper">
         <el-form :inline="true" :model="queryParams" class="custom-query-form custom-query-form-row"
           label-position="left">

@@ -110,7 +110,7 @@
                             <div class="info-grid">
                                 <div class="info-item">
                                     <span class="label">主体名称</span>
-                                    <span class="value semibold">{{ currentSubject.name || '--' }}</span>
+                                    <span class="value">{{ currentSubject.name || '--' }}</span>
                                 </div>
                                 <div class="info-item">
                                     <span class="label">信用代码</span>
@@ -121,11 +121,11 @@
                                     <span class="label">主体类型</span>
                                     <span class="value"><el-tag size="small" effect="plain"
                                             v-if="currentSubject.category">{{
-                                            getCategoryLabel(currentSubject.category) }}</el-tag><span
+                                                getCategoryLabel(currentSubject.category) }}</el-tag><span
                                             v-else>--</span></span>
                                 </div>
                                 <div class="info-item">
-                                    <span class="label">备案类型</span>
+                                    <span class="label">建档类型</span>
                                     <span class="value">{{ currentSubject.type ? getFilingTypeLabel(currentSubject.type)
                                         : '--' }}</span>
                                 </div>
@@ -224,6 +224,7 @@ const productUnitOptions = usePreferredAgriMeasurementUnitOptions(
 
 const formRules = {
     productName: [{ required: true, message: '请输入产品名称', trigger: 'blur' }],
+    archiveDate: [{ required: true, message: '请选择建档时间', trigger: 'change' }],
     category: [{ required: true, message: '请选择产品类别', trigger: 'change' }],
     subjectId: [{ required: true, message: '请选择所属主体', trigger: 'change' }]
 };
@@ -654,6 +655,7 @@ $border-color: #E2E8F0;
     border-radius: 4px;
     padding: 24px;
     margin-top: 16px;
+    margin-left: 16px;
     background-image: radial-gradient(at 100% 0%, rgba($theme-color, 0.03) 0%, transparent 50%);
 
     .card-title {

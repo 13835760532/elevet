@@ -9,9 +9,6 @@
 
         <!-- 抽样检测查询 -->
         <div class="query-card">
-            <div class="card-header">
-                <h2 class="card-title">快速检测查询</h2>
-            </div>
             <div class="query-form-wrapper">
                 <el-form :model="queryParams" ref="queryRef" :inline="true"
                     class="custom-query-form custom-query-form-row rapid-task-query-form">

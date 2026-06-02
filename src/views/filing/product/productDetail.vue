@@ -7,7 +7,6 @@
             <div class="content-card">
                 <div class="card-header">
                     <span class="header-title">产品基本信息</span>
-                    <div class="dashed-line"></div>
                 </div>
 
                 <!-- 详情数据列表 - 产品信息 -->
@@ -60,9 +59,8 @@
                     </div>
                 </div>
 
-                <div class="card-header">
+                <div class="card-header mt-40">
                     <span class="header-title">所属主体信息</span>
-                    <div class="dashed-line"></div>
                 </div>
 
                 <!-- 详情数据列表 - 主体信息 -->
@@ -77,7 +75,7 @@
                         </div>
                     </div>
                     <div class="detail-row">
-                        <div class="label">*备案类型：</div>
+                        <div class="label">*建档类型：</div>
                         <div class="value">{{ subjectInfo.type ? getFilingTypeLabel(subjectInfo.type) : '--' }}</div>
                     </div>
                     <div class="detail-row">
@@ -279,32 +277,39 @@ watch(() => route.query.id, (newId) => {
 }
 
 .card-header {
-    margin-bottom: 30px;
+    margin-bottom: 20px;
     display: flex;
-    flex-direction: column;
-    align-items: flex-start;
+    align-items: center;
+
+    &.mt-40 {
+        margin-top: 40px;
+    }
 
     .header-title {
-        font-size: 22px;
+        font-size: 18px;
         font-weight: 600;
-        color: #333;
-        display: block;
-        margin-bottom: 15px;
+        color: #1F2937;
+        position: relative;
+        padding-left: 12px;
+        line-height: 1.4;
+        
+        &::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 16px;
+            background: #00B3ED;
+            border-radius: 2px;
+        }
     }
 }
 
-.dashed-line {
-    width: 100%;
-    height: 1px;
-    background-image: linear-gradient(to right, #ccc 50%, rgba(255, 255, 255, 0) 0%);
-    background-position: bottom;
-    background-size: 10px 1px;
-    background-repeat: repeat-x;
-}
-
 .detail-list {
-    /* 对应原型图中的蓝色边框效果 */
-    border-radius: 4px;
+    border-radius: 8px;
+    border: 1px solid #E2E8F0;
     overflow: hidden;
 
     &.mb-30 {
@@ -315,29 +320,38 @@ watch(() => route.query.id, (newId) => {
 .detail-row {
     display: flex;
     border-bottom: 1px solid #E5E7EB;
-    min-height: 50px;
+    min-height: 54px;
+    transition: background-color 0.2s ease;
 
-    &.no-border {
+    &:last-child, &.no-border {
         border-bottom: none;
     }
 
+    &:hover {
+        background-color: #F8FAFC;
+    }
+
     .label {
-        width: 140px;
-        padding: 15px 20px;
+        width: 160px;
+        padding: 16px 24px;
         font-size: 14px;
-        font-weight: 600;
-        color: #333;
+        color: #475569;
         text-align: right;
-        // background: rgba(243, 244, 246, 0.5); /* 模拟左侧背景，如果原型图有的话 */
+        background-color: #F8FAFC;
+        border-right: 1px solid #E2E8F0;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
     }
 
     .value {
         flex: 1;
-        padding: 15px 20px;
+        padding: 16px 24px;
         font-size: 14px;
-        color: #333;
+        color: #1E293B;
         display: flex;
         align-items: center;
+        line-height: 1.6;
     }
 }
 

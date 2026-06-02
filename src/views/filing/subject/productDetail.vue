@@ -4,177 +4,204 @@
 
         <div class="page-scrollable">
 
-        <!-- 详情卡片容器 -->
-        <div class="content-card">
-            <div class="card-header">
-                <span class="header-title">主体基本信息</span>
-                <div class="dashed-line"></div>
-            </div>
-
-            <!-- 详情数据列表 -->
-            <div class="detail-list">
-                <!-- 备案类型 -->
-                <div class="detail-row">
-                    <div class="label">*备案类型：</div>
-                    <div class="value">{{ subjectInfo.type ? getFilingTypeLabel(subjectInfo.type) : '--' }}</div>
+            <!-- 详情卡片容器 -->
+            <div class="content-card">
+                <div class="card-header">
+                    <span class="header-title">主体基本信息</span>
                 </div>
 
-                <!-- 主体名称 -->
-                <div class="detail-row">
-                    <div class="label">*主体名称：</div>
-                    <div class="value">{{ subjectInfo.name || '--' }}</div>
-                </div>
-
-                <!-- 主体类型 -->
-                <div class="detail-row">
-                    <div class="label">*主体类型：</div>
-                    <div class="value">{{ subjectInfo.category ? getCategoryLabel(subjectInfo.category) : '--' }}</div>
-                </div>
-
-                <!-- 主营产品 -->
-                <div class="detail-row">
-                    <div class="label">*主营产品：</div>
-                    <div class="value">{{ subjectInfo.mainProducts || '--' }}</div>
-                </div>
-
-                <!-- 所属地区 -->
-                <div class="detail-row">
-                    <div class="label">*所属地区：</div>
-                    <div class="value">{{ [subjectInfo.provinceCode, subjectInfo.cityCode, subjectInfo.districtCode].filter(Boolean).join('') || '--' }}</div>
-                </div>
-
-                <!-- 详细地址 -->
-                <div class="detail-row">
-                    <div class="label">*详细地址：</div>
-                    <div class="value">{{ subjectInfo.address || '--' }}</div>
-                </div>
-
-                <!-- 联系人 -->
-                <div class="detail-row">
-                    <div class="label">*联系人：</div>
-                    <div class="value">{{ subjectInfo.contactName || '--' }}</div>
-                </div>
-
-                <!-- 联系电话 -->
-                <div class="detail-row">
-                    <div class="label">*联系电话：</div>
-                    <div class="value">
-                        <span>{{ isRevealed ? sensitiveInfo.contactPhone : maskPhone(subjectInfo.contactPhone) }}</span>
-                        <el-tooltip content="核验身份后查看明文" placement="top" v-if="isOwner && !isRevealed">
-                             <el-icon class="view-icon ml8" @click="handleVerifyClick"><View /></el-icon>
-                        </el-tooltip>
+                <!-- 详情数据列表 -->
+                <div class="detail-list">
+                    <!-- 建档类型 -->
+                    <div class="detail-row">
+                        <div class="label">*建档类型：</div>
+                        <div class="value">{{ subjectInfo.type ? getFilingTypeLabel(subjectInfo.type) : '--' }}</div>
                     </div>
-                </div>
 
-                <!-- 生产规模 -->
-                <div class="detail-row">
-                    <div class="label">*生产规模：</div>
-                    <div class="value">{{ subjectInfo.productionScale ? (subjectInfo.productionScale + ' ' + getAgriUnitLabel(subjectInfo.productionScaleUnit)) : '--' }}</div>
-                </div>
+                    <!-- 主体名称 -->
+                    <div class="detail-row">
+                        <div class="label">*主体名称：</div>
+                        <div class="value">{{ subjectInfo.name || '--' }}</div>
+                    </div>
 
-                <!-- 营业执照 -->
-                <div class="detail-row" v-if="subjectInfo.type === 1">
-                    <div class="label">*营业执照：</div>
-                    <div class="value">
-                        <div class="img-preview-group">
-                             <div class="preview-box">
-                                <el-icon v-if="!subjectInfo.businessLicenseUrl">
-                                    <Picture />
+                    <!-- 主体类型 -->
+                    <div class="detail-row">
+                        <div class="label">*主体类型：</div>
+                        <div class="value">{{ subjectInfo.category ? getCategoryLabel(subjectInfo.category) : '--' }}
+                        </div>
+                    </div>
+
+                    <!-- 主营产品 -->
+                    <div class="detail-row">
+                        <div class="label">*主营产品：</div>
+                        <div class="value">{{ subjectInfo.mainProducts || '--' }}</div>
+                    </div>
+
+                    <!-- 所属地区 -->
+                    <div class="detail-row">
+                        <div class="label">*所属地区：</div>
+                        <div class="value">{{ [subjectInfo.provinceCode, subjectInfo.cityCode,
+                        subjectInfo.districtCode].filter(Boolean).join('') || '--' }}</div>
+                    </div>
+
+                    <!-- 详细地址 -->
+                    <div class="detail-row">
+                        <div class="label">*详细地址：</div>
+                        <div class="value">{{ subjectInfo.address || '--' }}</div>
+                    </div>
+
+                    <!-- 联系人 -->
+                    <div class="detail-row">
+                        <div class="label">*联系人：</div>
+                        <div class="value">{{ subjectInfo.contactName || '--' }}</div>
+                    </div>
+
+                    <!-- 联系电话 -->
+                    <div class="detail-row">
+                        <div class="label">*联系电话：</div>
+                        <div class="value">
+                            <span>{{ isRevealed ? sensitiveInfo.contactPhone : maskPhone(subjectInfo.contactPhone)
+                                }}</span>
+                            <el-tooltip content="核验身份后查看明文" placement="top" v-if="isOwner && !isRevealed">
+                                <el-icon class="view-icon ml8" @click="handleVerifyClick">
+                                    <View />
                                 </el-icon>
-                                <template v-else>
-                                    <el-image :src="subjectInfo.businessLicenseUrl" :preview-src-list="[subjectInfo.businessLicenseUrl]" class="preview-img" fit="cover" :preview-teleported="true" />
-                                </template>
-                            </div>
+                            </el-tooltip>
                         </div>
                     </div>
-                </div>
 
-                <!-- 信用代码 -->
-                <div class="detail-row" v-if="subjectInfo.type === 1">
-                    <div class="label">*信用代码：</div>
-                    <div class="value">
-                        <span>{{ isRevealed ? sensitiveInfo.socialCreditCode : maskCode(subjectInfo.socialCreditCode) }}</span>
+                    <!-- 生产规模 -->
+                    <div class="detail-row">
+                        <div class="label">*生产规模：</div>
+                        <div class="value">{{ subjectInfo.productionScale ? (subjectInfo.productionScale + ' ' +
+                            getAgriUnitLabel(subjectInfo.productionScaleUnit)) : '--' }}</div>
                     </div>
-                </div>
 
-                <!-- 身份证号 (仅个人) -->
-                <div class="detail-row" v-if="subjectInfo.type === 2">
-                    <div class="label">*身份证号：</div>
-                    <div class="value">
-                        <span>{{ isRevealed ? sensitiveInfo.idCard : maskCode(subjectInfo.idCard) }}</span>
-                    </div>
-                </div>
-
-                <!-- 身份证 -->
-                <div class="detail-row" v-if="subjectInfo.type === 2">
-                    <div class="label">身份证：</div>
-                    <div class="value">
-                        <div class="img-preview-group">
-                            <div class="id-card-boxes">
-                                 <div class="preview-box">
-                                    <el-icon v-if="!subjectInfo.idCardFrontUrl"><Postcard /></el-icon>
-                                    <template v-else>
-                                        <el-image :src="subjectInfo.idCardFrontUrl" :preview-src-list="[subjectInfo.idCardFrontUrl, subjectInfo.idCardBackUrl].filter(Boolean)" class="preview-img" fit="cover" :preview-teleported="true" />
-                                    </template>
-                                </div>
+                    <!-- 营业执照 -->
+                    <div class="detail-row" v-if="subjectInfo.type === 1">
+                        <div class="label">*营业执照：</div>
+                        <div class="value">
+                            <div class="img-preview-group">
                                 <div class="preview-box">
-                                    <el-icon v-if="!subjectInfo.idCardBackUrl"><Postcard /></el-icon>
+                                    <el-icon v-if="!subjectInfo.businessLicenseUrl">
+                                        <Picture />
+                                    </el-icon>
                                     <template v-else>
-                                        <el-image :src="subjectInfo.idCardBackUrl" :preview-src-list="[subjectInfo.idCardFrontUrl, subjectInfo.idCardBackUrl].filter(Boolean)" :initial-index="subjectInfo.idCardFrontUrl ? 1 : 0" class="preview-img" fit="cover" :preview-teleported="true" />
+                                        <el-image :src="subjectInfo.businessLicenseUrl"
+                                            :preview-src-list="[subjectInfo.businessLicenseUrl]" class="preview-img"
+                                            fit="cover" :preview-teleported="true" />
                                     </template>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- 企业资质 -->
-                <div class="detail-row" v-if="subjectInfo.type === 1">
-                    <div class="label">企业资质：</div>
-                    <div class="value">
-                        <div class="img-preview-group">
-                             <template v-if="subjectInfo.qualificationUrls && parseUrls(subjectInfo.qualificationUrls).length">
-                                <div class="preview-box" v-for="(url, index) in parseUrls(subjectInfo.qualificationUrls)" :key="index">
-                                     <el-image :src="url" :preview-src-list="parseUrls(subjectInfo.qualificationUrls)" :initial-index="index" class="preview-img" fit="cover" :preview-teleported="true" />
+                    <!-- 信用代码 -->
+                    <div class="detail-row" v-if="subjectInfo.type === 1">
+                        <div class="label">*信用代码：</div>
+                        <div class="value">
+                            <span>{{ isRevealed ? sensitiveInfo.socialCreditCode :
+                                maskCode(subjectInfo.socialCreditCode) }}</span>
+                        </div>
+                    </div>
+
+                    <!-- 身份证号 (仅个人) -->
+                    <div class="detail-row" v-if="subjectInfo.type === 2">
+                        <div class="label">*身份证号：</div>
+                        <div class="value">
+                            <span>{{ isRevealed ? sensitiveInfo.idCard : maskCode(subjectInfo.idCard) }}</span>
+                        </div>
+                    </div>
+
+                    <!-- 身份证 -->
+                    <div class="detail-row" v-if="subjectInfo.type === 2">
+                        <div class="label">身份证：</div>
+                        <div class="value">
+                            <div class="img-preview-group">
+                                <div class="id-card-boxes">
+                                    <div class="preview-box">
+                                        <el-icon v-if="!subjectInfo.idCardFrontUrl">
+                                            <Postcard />
+                                        </el-icon>
+                                        <template v-else>
+                                            <el-image :src="subjectInfo.idCardFrontUrl"
+                                                :preview-src-list="[subjectInfo.idCardFrontUrl, subjectInfo.idCardBackUrl].filter(Boolean)"
+                                                class="preview-img" fit="cover" :preview-teleported="true" />
+                                        </template>
+                                    </div>
+                                    <div class="preview-box">
+                                        <el-icon v-if="!subjectInfo.idCardBackUrl">
+                                            <Postcard />
+                                        </el-icon>
+                                        <template v-else>
+                                            <el-image :src="subjectInfo.idCardBackUrl"
+                                                :preview-src-list="[subjectInfo.idCardFrontUrl, subjectInfo.idCardBackUrl].filter(Boolean)"
+                                                :initial-index="subjectInfo.idCardFrontUrl ? 1 : 0" class="preview-img"
+                                                fit="cover" :preview-teleported="true" />
+                                        </template>
+                                    </div>
                                 </div>
-                            </template>
-                            <div class="preview-box" v-else>
-                                <el-icon><Picture /></el-icon>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- 企业介绍 -->
-                <div class="detail-row no-border" v-if="subjectInfo.type === 1">
-                    <div class="label">企业介绍：</div>
-                    <div class="value" v-if="subjectInfo.introduction" v-html="subjectInfo.introduction"></div>
-                    <div class="value" v-else>--</div>
+                    <!-- 企业资质 -->
+                    <div class="detail-row" v-if="subjectInfo.type === 1">
+                        <div class="label">企业资质：</div>
+                        <div class="value">
+                            <div class="img-preview-group">
+                                <template
+                                    v-if="subjectInfo.qualificationUrls && parseUrls(subjectInfo.qualificationUrls).length">
+                                    <div class="preview-box"
+                                        v-for="(url, index) in parseUrls(subjectInfo.qualificationUrls)" :key="index">
+                                        <el-image :src="url"
+                                            :preview-src-list="parseUrls(subjectInfo.qualificationUrls)"
+                                            :initial-index="index" class="preview-img" fit="cover"
+                                            :preview-teleported="true" />
+                                    </div>
+                                </template>
+                                <div class="preview-box" v-else>
+                                    <el-icon>
+                                        <Picture />
+                                    </el-icon>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 企业介绍 -->
+                    <div class="detail-row no-border" v-if="subjectInfo.type === 1">
+                        <div class="label">企业介绍：</div>
+                        <div class="value" v-if="subjectInfo.introduction" v-html="subjectInfo.introduction"></div>
+                        <div class="value" v-else>--</div>
+                    </div>
                 </div>
-            </div>
             </div>
         </div>
 
         <!-- 敏感信息核验查看弹窗 -->
-        <el-dialog v-model="verifyVisible" title="身份核验" width="440px" append-to-body destroy-on-close class="verify-dialog">
+        <el-dialog v-model="verifyVisible" title="身份核验" width="440px" append-to-body destroy-on-close
+            class="verify-dialog">
             <el-form :model="verifyForm" :rules="verifyRules" ref="verifyFormRef" label-width="90px">
                 <div class="verify-tip mb20">
-                    <el-icon class="mr4"><InfoFilled /></el-icon>
+                    <el-icon class="mr4">
+                        <InfoFilled />
+                    </el-icon>
                     请输入当前登录账号的密码以查看敏感信息
                 </div>
                 <el-form-item label="用户名" prop="username">
                     <el-input v-model="verifyForm.username" disabled />
                 </el-form-item>
                 <el-form-item label="登录密码" prop="password">
-                    <el-input v-model="verifyForm.password" type="password" show-password placeholder="请输入登录密码" 
-                        ref="passwordInputRef"
-                        @keyup.enter="submitVerify" />
+                    <el-input v-model="verifyForm.password" type="password" show-password placeholder="请输入登录密码"
+                        ref="passwordInputRef" @keyup.enter="submitVerify" />
                 </el-form-item>
             </el-form>
             <template #footer>
                 <div class="dialog-footer">
                     <el-button @click="verifyVisible = false" round>取消</el-button>
-                    <el-button type="primary" :loading="verifying" @click="submitVerify" round class="submit-btn">确定并查看</el-button>
+                    <el-button type="primary" :loading="verifying" @click="submitVerify" round
+                        class="submit-btn">确定并查看</el-button>
                 </div>
             </template>
         </el-dialog>
@@ -336,61 +363,73 @@ const maskCode = (code) => {
 }
 
 .card-header {
-    margin-bottom: 30px;
+    margin-bottom: 20px;
     display: flex;
-    flex-direction: column;
-    align-items: flex-start;
+    align-items: center;
 
     .header-title {
-        font-size: 22px;
+        font-size: 18px;
         font-weight: 600;
-        color: #333;
-        display: block;
-        margin-bottom: 15px;
+        color: #1F2937;
+        position: relative;
+        padding-left: 12px;
+        line-height: 1.4;
+        
+        &::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 16px;
+            background: #00B3ED;
+            border-radius: 2px;
+        }
     }
 }
 
-.dashed-line {
-    width: 100%;
-    height: 1px;
-    background-image: linear-gradient(to right, #ccc 50%, rgba(255, 255, 255, 0) 0%);
-    background-position: bottom;
-    background-size: 10px 1px;
-    background-repeat: repeat-x;
-}
-
 .detail-list {
-    /* 对应原型图中的蓝色边框效果 */
-    border-radius: 4px;
+    border-radius: 8px;
+    border: 1px solid #E2E8F0;
     overflow: hidden;
 }
 
 .detail-row {
     display: flex;
     border-bottom: 1px solid #E5E7EB;
-    min-height: 50px;
+    min-height: 54px;
+    transition: background-color 0.2s ease;
 
-    &.no-border {
+    &:last-child, &.no-border {
         border-bottom: none;
     }
 
+    &:hover {
+        background-color: #F8FAFC;
+    }
+
     .label {
-        width: 140px;
-        padding: 15px 20px;
+        width: 160px;
+        padding: 16px 24px;
         font-size: 14px;
-        font-weight: 600;
-        color: #333;
+        color: #475569;
         text-align: right;
-        // background: rgba(243, 244, 246, 0.5); /* 模拟左侧背景，如果原型图有的话 */
+        background-color: #F8FAFC;
+        border-right: 1px solid #E2E8F0;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
     }
 
     .value {
         flex: 1;
-        padding: 15px 20px;
+        padding: 16px 24px;
         font-size: 14px;
-        color: #333;
+        color: #1E293B;
         display: flex;
         align-items: center;
+        line-height: 1.6;
     }
 }
 
@@ -451,17 +490,28 @@ const maskCode = (code) => {
     cursor: pointer;
     color: #94A3B8;
     transition: all 0.2s;
-    
+
     &:hover {
         color: #00B3ED;
         transform: scale(1.1);
     }
 }
 
-.ml8 { margin-left: 8px; }
-.mr4 { margin-right: 4px; }
-.mb16 { margin-bottom: 16px; }
-.mb20 { margin-bottom: 20px; }
+.ml8 {
+    margin-left: 8px;
+}
+
+.mr4 {
+    margin-right: 4px;
+}
+
+.mb16 {
+    margin-bottom: 16px;
+}
+
+.mb20 {
+    margin-bottom: 20px;
+}
 
 .verify-tip {
     font-size: 13px;
@@ -483,12 +533,12 @@ const maskCode = (code) => {
 /* 弹窗样式优化 */
 :deep(.verify-dialog) {
     border-radius: 12px;
-    
+
     .el-dialog__header {
         margin-right: 0;
         padding: 20px 24px;
         border-bottom: 1px solid #F1F5F9;
-        
+
         .el-dialog__title {
             font-size: 18px;
             font-weight: 700;
@@ -503,7 +553,7 @@ const maskCode = (code) => {
         padding: 16px 24px 24px;
         border-top: 1px solid #F1F5F9;
     }
-    
+
     .el-form-item__label {
         font-weight: 500;
         color: #64748B;
@@ -514,7 +564,7 @@ const maskCode = (code) => {
         padding-right: 24px;
         background-color: #00B3ED;
         border-color: #00B3ED;
-        
+
         &:hover {
             opacity: 0.9;
             background-color: #00B3ED;

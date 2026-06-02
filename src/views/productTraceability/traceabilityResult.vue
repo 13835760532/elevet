@@ -2,9 +2,6 @@
     <div class="app-container result-container">
         <div class="main-card">
             <!-- Header -->
-            <div class="page-header">
-                <div class="title">农产品溯源查询</div>
-            </div>
 
             <!-- Search Section -->
             <div class="search-section">

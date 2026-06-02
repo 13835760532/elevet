@@ -2,9 +2,6 @@
   <div class="table-container" v-loading="loading">
     <!-- 机构查询卡片 -->
     <div class="query-card">
-      <div class="card-header">
-        <h2 class="card-title">机构查询</h2>
-      </div>
 
       <!-- 查询表单区域 -->
       <div class="query-form-wrapper">

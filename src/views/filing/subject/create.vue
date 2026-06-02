@@ -16,9 +16,9 @@
                 </div>
 
                 <el-form ref="formRef" :model="formData" :rules="formRules" label-width="120px" class="product-form">
-                    <!-- 备案类型 -->
-                    <el-form-item label="备案类型" prop="type" required>
-                        <el-select v-model="formData.type" placeholder="请选择备案类型" class="full-width"
+                    <!-- 建档类型 -->
+                    <el-form-item label="建档类型" prop="type" required>
+                        <el-select v-model="formData.type" placeholder="请选择建档类型" class="full-width"
                             @change="handleTypeChange">
                             <el-option v-for="dict in filingTypeOptions" :key="dict.value" :label="dict.label"
                                 :value="dict.value" />
@@ -255,7 +255,7 @@ const clearNonPersonalCertificateFields = () => {
 };
 
 /**
- * 处理备案类型变化
+ * 处理建档类型变化
  */
 const handleTypeChange = (val) => {
     if (Number(val) === PERSONAL_FILING_TYPE) {
@@ -268,7 +268,7 @@ const handleTypeChange = (val) => {
 };
 
 const formRules = {
-    type: [{ required: true, message: '请选择备案类型', trigger: 'change' }],
+    type: [{ required: true, message: '请选择建档类型', trigger: 'change' }],
     name: [{ required: true, message: '请输入主体名称', trigger: 'blur' }],
     contactName: [{ required: true, message: '请输入联系人', trigger: 'blur' }],
     contactPhone: [{ required: true, message: '请输入联系电话', trigger: 'blur' }]

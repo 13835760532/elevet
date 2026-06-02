@@ -5,8 +5,8 @@
 
             <el-form ref="filingFormRef" :model="form" :rules="rules" label-position="left" label-width="120px"
                 class="custom-form">
-                <!-- 备案类型 -->
-                <el-form-item label="备案类型" prop="filingType" required>
+                <!-- 建档类型 -->
+                <el-form-item label="建档类型" prop="filingType" required>
                     <el-radio-group v-model="form.filingType" class="custom-radio-group">
                         <el-radio label="enterprise">企业档案</el-radio>
                         <el-radio label="individual">个人档案</el-radio>

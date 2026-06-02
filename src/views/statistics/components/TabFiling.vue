@@ -1,11 +1,7 @@
 <template>
   <div class="stat-content">
     <!-- 数据范围筛选 -->
-    <StatisticsRangeFilter
-      v-model:range-type="dateRangeType"
-      v-model:date-range="dateRange"
-      description="建档备案统计周期"
-    >
+    <StatisticsRangeFilter v-model:range-type="dateRangeType" v-model:date-range="dateRange" description="建档备案统计周期">
       <template #extra>
         <el-select v-model="region" placeholder="省/市/县" clearable>
           <el-option label="北京市" value="beijing" />
@@ -38,11 +34,11 @@
     <!-- 主体建档 -->
     <div class="card-section">
       <div class="section-title">主体建档</div>
-      
+
       <!-- 第二层筛选 -->
       <div class="result-filters">
         <el-input v-model="filtersSubject.name" placeholder="主体名称" class="filter-item input-item" />
-        <el-select v-model="filtersSubject.filingType" placeholder="备案类型" class="filter-item"></el-select>
+        <el-select v-model="filtersSubject.filingType" placeholder="建档类型" class="filter-item"></el-select>
         <el-select v-model="filtersSubject.subjectType" placeholder="主体类型" class="filter-item"></el-select>
         <el-select v-model="filtersSubject.region" placeholder="所属地区" class="filter-item"></el-select>
         <el-button type="primary" class="export-btn">导出</el-button>
@@ -60,7 +56,9 @@
           <div class="svg-wrapper">
             <svg viewBox="0 0 1000 300" preserveAspectRatio="none" style="width: 100%; height: 300px;">
               <!-- purple area only -->
-              <path d="M0,250 C100,200 200,150 250,50 C300,60 400,150 500,200 C600,180 700,220 800,220 C900,250 1000,220 L1000,300 L0,300 Z" fill="rgba(163, 149, 255, 0.2)" stroke="#8D76FF" stroke-width="2"></path>
+              <path
+                d="M0,250 C100,200 200,150 250,50 C300,60 400,150 500,200 C600,180 700,220 800,220 C900,250 1000,220 L1000,300 L0,300 Z"
+                fill="rgba(163, 149, 255, 0.2)" stroke="#8D76FF" stroke-width="2"></path>
               <!-- Add data points markers -->
               <circle cx="0" cy="250" r="3" fill="#fff" stroke="#8D76FF" stroke-width="1.5" />
               <circle cx="150" cy="180" r="3" fill="#fff" stroke="#8D76FF" stroke-width="1.5" />
@@ -89,14 +87,14 @@
           <el-table-column type="index" label="序号" width="60" align="center" />
           <el-table-column prop="code" label="主体代码 (企业信用代码/身份证)" align="center" min-width="180" show-overflow-tooltip />
           <el-table-column prop="name" label="主体名称" align="center" min-width="120" />
-          <el-table-column prop="filingType" label="备案类型" align="center" width="120" />
+          <el-table-column prop="filingType" label="建档类型" align="center" width="120" />
           <el-table-column prop="subjectType" label="主体类型" align="center" width="100" />
           <el-table-column prop="mainProduct" label="主营产品" align="center" min-width="140" show-overflow-tooltip />
           <el-table-column prop="region" label="所属地区" align="center" min-width="160" show-overflow-tooltip />
           <el-table-column prop="createTime" label="创建时间" align="center" width="120" />
           <el-table-column prop="createOrg" label="创建机构" align="center" min-width="140" show-overflow-tooltip />
         </el-table>
-        
+
         <div class="pagination-container">
           <div class="total-text">合计：1891条</div>
           <el-pagination background layout="prev, pager, next" :total="1891" :page-size="10" />
@@ -107,7 +105,7 @@
     <!-- 产品建档 -->
     <div class="card-section">
       <div class="section-title">产品建档</div>
-      
+
       <!-- 图表区域 mock -->
       <div class="chart-area-wrapper">
         <div class="chart-header">
@@ -120,7 +118,9 @@
           <div class="svg-wrapper">
             <svg viewBox="0 0 1000 300" preserveAspectRatio="none" style="width: 100%; height: 300px;">
               <!-- purple area only -->
-              <path d="M0,250 C100,200 200,150 250,50 C300,60 400,150 500,200 C600,180 700,220 800,220 C900,250 1000,220 L1000,300 L0,300 Z" fill="rgba(163, 149, 255, 0.2)" stroke="#8D76FF" stroke-width="2"></path>
+              <path
+                d="M0,250 C100,200 200,150 250,50 C300,60 400,150 500,200 C600,180 700,220 800,220 C900,250 1000,220 L1000,300 L0,300 Z"
+                fill="rgba(163, 149, 255, 0.2)" stroke="#8D76FF" stroke-width="2"></path>
               <!-- Add data points markers -->
               <circle cx="0" cy="250" r="3" fill="#fff" stroke="#8D76FF" stroke-width="1.5" />
               <circle cx="150" cy="180" r="3" fill="#fff" stroke="#8D76FF" stroke-width="1.5" />
@@ -156,7 +156,7 @@
           <el-table-column prop="filingDate" label="建档日期" align="center" width="120" />
           <el-table-column prop="createOrg" label="创建机构" align="center" min-width="140" show-overflow-tooltip />
         </el-table>
-        
+
       </div>
     </div>
 
@@ -255,7 +255,7 @@ const tableDataProduct = ref([
     display: flex;
     align-items: baseline;
     gap: 4px;
-    
+
     .unit {
       font-size: 16px;
       font-weight: normal;
@@ -279,15 +279,15 @@ const tableDataProduct = ref([
   align-items: center;
   gap: 12px;
   margin-bottom: 30px;
-  
+
   .filter-item {
     width: 140px;
   }
-  
+
   .input-item {
     width: 180px;
   }
-  
+
   .export-btn {
     background-color: #00B3ED;
     border-color: #00B3ED;
@@ -306,7 +306,7 @@ const tableDataProduct = ref([
   align-items: center;
   position: relative;
   margin-bottom: 20px;
-  
+
   .chart-y-title {
     position: absolute;
     left: 0;
@@ -349,7 +349,7 @@ const tableDataProduct = ref([
   flex-direction: column;
   justify-content: space-between;
   pointer-events: none;
-  
+
   .grid-line {
     width: 100%;
     height: 1px;
@@ -369,7 +369,7 @@ const tableDataProduct = ref([
 /* 表格区域 */
 .table-container {
   margin-top: 10px;
-  
+
   ::v-deep(.custom-header) {
     background-color: #f5f7fa !important;
     color: #333;
@@ -384,7 +384,7 @@ const tableDataProduct = ref([
   justify-content: space-between;
   align-items: center;
   margin-top: 20px;
-  
+
   .total-text {
     font-size: 14px;
     color: #333;
