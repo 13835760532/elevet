@@ -64,7 +64,7 @@
                 </div>
                 <div class="action-right">
                     <el-button @click="handleExport">导出</el-button>
-                    <el-button @click="handleSetRule">设置数据上报规则</el-button>
+                    <el-button @click="handleSetRule">设置数据授权规则</el-button>
                 </div>
             </div>
             <p class="import-tip"></p>
@@ -77,13 +77,15 @@
                         <el-table-column label="样品编号" prop="sampleCode" width="130" align="center" />
                         <el-table-column label="样品名称" prop="productName" width="80" align="center" />
                         <el-table-column label="样品来源" prop="samplingLocation" width="100" align="center" />
-                        <el-table-column label="产品分类" prop="productCategory" width="80" align="center">
+                        <el-table-column label="产品分类" prop="productCategory" min-width="100" align="center"
+                            show-overflow-tooltip>
                             <template #default="scope">
                                 {{ getCategoryLabel(scope.row.productCategory) == '--' ? scope.row.productCategory :
                                     getCategoryLabel(scope.row.productCategory) }}
                             </template>
                         </el-table-column>
-                        <el-table-column label="抽检地区" prop="detectionArea" width="100" align="center" />
+                        <el-table-column label="抽检地区" prop="detectionArea" min-width="110" align="center"
+                            show-overflow-tooltip />
                         <el-table-column label="检测项目" prop="aiRecognitionResult" min-width="120" align="center"
                             show-overflow-tooltip>
                             <template #default="scope">
@@ -116,7 +118,7 @@
                                         :type="scope.row.overallResult === 0 ? 'success' : (scope.row.overallResult === 1 ? 'danger' : 'warning')"
                                         size="small" effect="light">
                                         {{ scope.row.overallResult === 0 ? '阴性' : (scope.row.overallResult === 1 ? '阳性'
-                                        : '结果异常') }}
+                                            : '结果异常') }}
                                     </el-tag>
                                 </template>
                                 <span v-else>--</span>
@@ -159,26 +161,19 @@
                 <div class="dialog-header">
                     <div class="title-with-accent">
                         <span class="accent-bar"></span>
-                        <h3 class="dialog-title">自主检测数据上报规则</h3>
+                        <h3 class="dialog-title">设置数据授权规则</h3>
                     </div>
-                    <p class="dialog-desc">设定自主检测结果的公开范围与生效时间段</p>
+                    <p class="dialog-desc">检测结果授权政府查询设置</p>
                 </div>
             </template>
 
             <div class="rule-form">
                 <div class="form-item">
-                    <label class="form-label">检测结果面向政府公开</label>
+                    <label class="form-label">检测结果是否面向政府公开</label>
                     <el-radio-group v-model="ruleForm.isPublic">
                         <el-radio :value="true">是</el-radio>
                         <el-radio :value="false">否</el-radio>
                     </el-radio-group>
-                </div>
-
-                <div class="form-item" v-if="ruleForm.isPublic">
-                    <label class="form-label">公开时间</label>
-                    <el-date-picker v-model="ruleForm.dateRange" type="daterange" range-separator="至"
-                        start-placeholder="开始日期" end-placeholder="结束日期" value-format="YYYY-MM-DD"
-                        class="date-range-picker" />
                 </div>
             </div>
 
@@ -350,8 +345,8 @@ const handleSaveRule = async () => {
         const submitData = {
             id: ruleForm.id,
             enabled: ruleForm.isPublic,
-            startTime: ruleForm.dateRange?.[0] ? ruleForm.dateRange[0] + ' 00:00:00' : undefined,
-            endTime: ruleForm.dateRange?.[1] ? ruleForm.dateRange[1] + ' 23:59:59' : undefined
+            startTime: undefined,
+            endTime: undefined
         };
         if (ruleForm.id) {
             await SelfDetectionReportRuleApi.updateSelfDetectionReportRule(submitData);
@@ -398,11 +393,16 @@ const handleView = (row) => {
     router.push('/rapidDetection/taskResult?id=' + row.id);
 };
 
-const handleRetest = (row) => {
-    router.push({
-        path: '/rapidDetection/create',
-        query: { id: row.id, action: 'recheck' }
-    });
+const handleRetest = async (row) => {
+    try {
+        await message.confirm('确认对该检测记录发起复检？复检仅支持一次。');
+        router.push({
+            path: '/rapidDetection/create',
+            query: { id: row.id, action: 'recheck' }
+        });
+    } catch (e) {
+        // 用户取消操作
+    }
 };
 
 onMounted(() => {

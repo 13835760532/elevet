@@ -291,7 +291,7 @@ const activeTab = ref('produce');
 const certificateStatusOptions = [
     { label: '未开具', value: 0 },
     { label: '已开具', value: 1 },
-    { label: '作废', value: 2 }
+    { label: '已作废', value: 2 }
 ];
 
 // 表格数据

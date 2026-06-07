@@ -50,7 +50,7 @@
                     </el-form-item>
 
                     <el-form-item label="" prop="area">
-                        <AreaCascader v-model="queryParams.area" placeholder="监测区域"
+                        <AreaCascader v-model="queryParams.area" placeholder="抽检地区"
                             class="rapid-task-query-field rapid-task-query-field--select" />
                     </el-form-item>
 
@@ -78,7 +78,7 @@
                         <el-table-column label="任务编号" prop="taskNo" align="center" width="120" />
                         <el-table-column label="任务名称" prop="taskName" align="center" min-width="200"
                             show-overflow-tooltip />
-                        <el-table-column label="监测区域" prop="area" align="center" width="100" />
+                        <el-table-column label="抽检地区" prop="area" align="center" width="100" />
                         <el-table-column label="任务分发单位" prop="dept" align="center" min-width="150" />
                         <el-table-column label="所属方案" prop="planName" align="center" min-width="180"
                             show-overflow-tooltip />

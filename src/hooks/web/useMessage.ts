@@ -84,11 +84,12 @@ export const useMessage = () => {
       )
     },
     // 提交内容
-    prompt(content: string, tip: string) {
+    prompt(content: string, tip: string, options?: any) {
       return ElMessageBox.prompt(content, tip, {
         confirmButtonText: t('common.ok'),
         cancelButtonText: t('common.cancel'),
-        type: 'warning'
+        type: 'warning',
+        ...options
       })
     }
   }

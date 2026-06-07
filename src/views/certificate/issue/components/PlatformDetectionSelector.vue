@@ -578,7 +578,7 @@ const handleTabRemove = (targetName) => {
   
   :deep(.el-tabs__item) {
     font-size: 15px;
-    color: #8D6E63;
+    color: #64748B;
     font-weight: 500;
     height: 42px;
     line-height: 42px;
@@ -588,29 +588,29 @@ const handleTabRemove = (targetName) => {
     margin-right: 4px;
 
     &.is-active {
-      color: #3E2723;
-      background: #FFF9F2;
+      color: #00B3ED;
+      background: #f4f8fb;
       font-weight: 700;
-      border: 1px solid #EED8C1;
-      border-bottom: 2px solid #FFF9F2;
+      border: 1px solid #d0dfed;
+      border-bottom: 2px solid #f4f8fb;
     }
-    &:hover:not(.is-active) { color: #D98E4B; }
+    &:hover:not(.is-active) { color: #00B3ED; }
   }
 }
 
 .active-detail-pane {
-  background: #FFF9F2;
-  border: 1px solid #EED8C1;
+  background: #f4f8fb;
+  border: 1px solid #d0dfed;
   border-radius: 0 12px 12px 12px;
   padding: 24px;
-  box-shadow: 0 4px 20px rgba(217, 142, 75, 0.05);
+  box-shadow: 0 4px 20px rgba(0, 179, 237, 0.03);
 }
 
 .info-module {
   .module-title {
     font-size: 16px;
     font-weight: 700;
-    color: #4E342E;
+    color: #0F172A;
     margin: 0 0 16px 0;
     display: flex;
     align-items: center;
@@ -619,7 +619,7 @@ const handleTabRemove = (targetName) => {
       content: '';
       width: 4px;
       height: 18px;
-      background: #D98E4B;
+      background: #00B3ED;
       margin-right: 10px;
       border-radius: 2px;
     }
@@ -628,13 +628,13 @@ const handleTabRemove = (targetName) => {
 
 .property-table {
   background: #fff;
-  border: 1px solid #EED8C1;
+  border: 1px solid #d0dfed;
   border-radius: 6px;
   overflow: hidden;
 
   .property-row {
     display: flex;
-    border-bottom: 1px solid #F5E6D7;
+    border-bottom: 1px solid #e2e8f0;
     &:last-child {
       border-bottom: none;
     }
@@ -642,10 +642,10 @@ const handleTabRemove = (targetName) => {
     .property-label {
       width: 150px;
       padding: 12px 20px;
-      background: #FAF6F2;
-      color: #6D4C41;
+      background: #eef3f8;
+      color: #475569;
       font-size: 14px;
-      border-right: 1px solid #F5E6D7;
+      border-right: 1px solid #e2e8f0;
       text-align: right;
       font-weight: 500;
     }
@@ -653,7 +653,7 @@ const handleTabRemove = (targetName) => {
     .property-value {
       flex: 1;
       padding: 12px 20px;
-      color: #3E2723;
+      color: #1e293b;
       font-size: 15px;
       background: #fff;
     }
@@ -662,16 +662,16 @@ const handleTabRemove = (targetName) => {
 
 .result-list-table {
   background: #fff;
-  border: 1px solid #EED8C1;
+  border: 1px solid #d0dfed;
   border-radius: 6px;
   overflow: hidden;
 
   .result-thead {
     display: flex;
-    background: #FAF6F2;
-    border-bottom: 1px solid #F5E6D7;
+    background: #eef3f8;
+    border-bottom: 1px solid #e2e8f0;
     padding: 12px 20px;
-    color: #6D4C41;
+    color: #475569;
     font-size: 14px;
     font-weight: 700;
 
@@ -684,27 +684,27 @@ const handleTabRemove = (targetName) => {
 
   .result-trow {
     display: flex;
-    border-bottom: 1px solid #F5E6D7;
+    border-bottom: 1px solid #e2e8f0;
     padding: 12px 20px;
     align-items: center;
     font-size: 14px;
-    color: #3E2723;
+    color: #1e293b;
     transition: background 0.2s;
 
     &:last-child { border-bottom: none; }
-    &:hover { background: #FFFCF9; }
+    &:hover { background: #f8fafc; }
 
-    .col-idx { width: 60px; color: #A1887F; font-family: monospace; }
+    .col-idx { width: 60px; color: #64748B; font-family: monospace; }
     .col-name { flex: 1; font-weight: 500; }
-    .col-value { flex: 1; text-align: center; color: #6D4C41; }
-    .col-conc { flex: 1; text-align: center; color: #6D4C41; }
+    .col-value { flex: 1; text-align: center; color: #475569; }
+    .col-conc { flex: 1; text-align: center; color: #475569; }
     .col-status { flex: 1; text-align: center; }
   }
 
   .result-empty {
     padding: 40px;
     text-align: center;
-    color: #A1887F;
+    color: #64748B;
     font-size: 14px;
   }
 }

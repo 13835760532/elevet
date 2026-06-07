@@ -60,7 +60,7 @@
                     </el-form-item>
 
                     <!-- 样品编号 -->
-                    <el-form-item label="记录编码" prop="recordCode">
+                    <el-form-item label="样品编码" prop="recordCode">
                         <el-input :disabled="true" placeholder="系统自动生成" />
                     </el-form-item>
 
@@ -148,7 +148,7 @@
                                     <div class="grid-item">
                                         <div class="field-label">信用代码</div>
                                         <div class="field-value">{{ formState.selectedSubject.socialCreditCode || '--'
-                                            }}</div>
+                                        }}</div>
                                     </div>
                                     <div class="grid-item">
                                         <div class="field-label">主体类型</div>
@@ -160,7 +160,7 @@
                                     <div class="grid-item">
                                         <div class="field-label">建档类型</div>
                                         <div class="field-value">{{ getFilingTypeLabel(formState.selectedSubject.type)
-                                            }}</div>
+                                        }}</div>
                                     </div>
                                     <div class="grid-item">
                                         <div class="field-label">联系人</div>
@@ -286,7 +286,7 @@
 
                 <div v-if="formData.overallResult !== undefined || formData.aiRecognitionResultText"
                     class="ai-result-panel">
-                    <p><strong>AI 识别建议：</strong> {{ formData.aiRecognitionResultText || '正在处理结果' }}</p>
+                    <!-- <p><strong>AI 识别建议：</strong> {{ formData.aiRecognitionResultText || '正在处理结果' }}</p> -->
                     <div v-if="formState.aiDetailResults && formState.aiDetailResults.length" class="result-list">
                         <el-tag v-for="(res, idx) in formState.aiDetailResults" :key="idx"
                             :type="res.status.includes('阳') ? 'danger' : 'success'"
@@ -333,7 +333,7 @@
                             <span class="label">样品来源：</span>
                             <span class="value">{{ Array.isArray(formData.sample.sampleSource) ?
                                 formData.sample.sampleSource.join(', ') : (formData.sample.sampleSource || '--')
-                                }}</span>
+                            }}</span>
                         </div>
                         <div class="info-item">
                             <span class="label">样品状态：</span>
@@ -594,7 +594,7 @@ const initDeptInfo = async () => {
 }
 
 const formRules = {
-    recordCode: [{ required: true, message: '请输入记录编码', trigger: 'blur' }],
+    recordCode: [{ required: true, message: '请输入样品编码', trigger: 'blur' }],
     'sample.sampleName': [{ required: true, message: '请输入样品名称', trigger: 'blur' }],
     'sample.productionArea': [{ required: true, message: '请选择样品产地', trigger: 'change' }],
     'sample.sampleQuantity': [{ required: true, message: '请输入数量', trigger: 'blur' }],

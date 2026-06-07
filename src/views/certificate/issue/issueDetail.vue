@@ -10,6 +10,17 @@
                     <el-checkbox v-model="isSelected1" @change="handleSelect1">打印此联</el-checkbox>
                 </div>
 
+                <!-- 作废状态横幅：作废后只读查看，不可恢复 -->
+                <div v-if="certificate?.status === 2" class="void-banner no-print">
+                    <el-icon class="void-icon"><WarningFilled /></el-icon>
+                    <div class="void-info">
+                        <span class="void-label">该合格证已作废，不可恢复</span>
+                        <span v-if="certificate?.voidReason" class="void-reason">
+                            作废原因：{{ certificate.voidReason }}
+                        </span>
+                    </div>
+                </div>
+
                 <div class="cert-display-box" v-loading="loading">
                     <!-- 合格证票据样式 (左侧) -->
                     <div class="cert-ticket">
@@ -431,7 +442,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
 import { useRoute } from 'vue-router';
-import { Picture } from '@element-plus/icons-vue';
+import { Picture, WarningFilled } from '@element-plus/icons-vue';
 import { useMessage } from '@/hooks/web/useMessage';
 import * as CertificateApi from '@/api/agri/certificate';
 import * as DetectionReportApi from '@/api/agri/detectionReport';
@@ -1694,5 +1705,44 @@ const handlePrint = async (prepared?: string | null) => {
 .preview-placeholder {
     color: #666;
     font-size: 14px;
+}
+
+/* 作废状态横幅 */
+.void-banner {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 18px;
+    margin-bottom: 16px;
+    background: linear-gradient(135deg, #fff1f0 0%, #fff5f5 100%);
+    border: 1px solid #ffa39e;
+    border-left: 4px solid #ff4d4f;
+    border-radius: 8px;
+
+    .void-icon {
+        font-size: 22px;
+        color: #ff4d4f;
+        flex-shrink: 0;
+        margin-top: 1px;
+    }
+
+    .void-info {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .void-label {
+        font-size: 15px;
+        font-weight: 700;
+        color: #cf1322;
+        letter-spacing: 0.01em;
+    }
+
+    .void-reason {
+        font-size: 13px;
+        color: #820014;
+        line-height: 1.6;
+    }
 }
 </style>

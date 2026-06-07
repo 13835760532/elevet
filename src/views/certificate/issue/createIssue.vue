@@ -71,22 +71,18 @@
                 <el-form :model="formData" label-position="top" class="creation-form">
                     <!-- 产品档案信息 -->
                     <div class="form-section">
-                        <h3 class="section-title">产品档案信息</h3>
+                        <h3 class="section-title">产品信息</h3>
 
-                        <div class="form-row">
-                            <el-form-item label="是否关联农产品档案" class="form-col full">
-                                <el-radio-group v-model="formData.linkProfile">
-                                    <el-radio label="no">否</el-radio>
-                                    <el-radio label="yes">是</el-radio>
-                                </el-radio-group>
-                            </el-form-item>
-                        </div>
-
-                        <div v-if="formData.linkProfile === 'yes'" class="form-row">
-                            <el-form-item class="form-col full">
+                        <div class="archive-relation-row">
+                            <div class="relation-label">是否关联农产品档案</div>
+                            <el-radio-group v-model="formData.linkProfile" class="relation-radio">
+                                <el-radio label="no">否</el-radio>
+                                <el-radio label="yes">是</el-radio>
+                            </el-radio-group>
+                            <div class="relation-search" v-if="formData.linkProfile === 'yes'">
                                 <el-select v-model="formData.searchProfile" filterable remote reserve-keyword
-                                    placeholder="查询产品名称 or 编号，完成产品档案管理" class="search-input" style="width: 100%"
-                                    :remote-method="searchProduct" :loading="productLoading"
+                                    placeholder="查询产品名称 or 编号，完成产品档案管理" class="search-input full-width"
+                                    style="width: 100%" :remote-method="searchProduct" :loading="productLoading"
                                     @change="handleProductSelect">
                                     <template #prefix>
                                         <el-icon>
@@ -96,7 +92,7 @@
                                     <el-option v-for="item in productOptions" :key="item.id"
                                         :label="`${item.productName} (${item.productCode})`" :value="item.id" />
                                 </el-select>
-                            </el-form-item>
+                            </div>
                         </div>
 
                         <div class="divider"></div>
@@ -167,7 +163,7 @@
                     <!-- 生产经营企业 -->
                     <div class="form-section">
                         <h3 class="section-title"><span class="required-mark">*</span>生产经营企业（主体名称）</h3>
-                        <p class="section-tip">*从生产档案中选择，或直接搜索到企业，支持多项建档</p>
+                        <p class="section-tip" v-if="!selectedSubjectDetail">*从生产档案中选择，或直接搜索到企业，支持多项建档</p>
 
                         <div class="entity-selector">
                             <el-select v-model="formData.subjectId" placeholder="搜索企业名称或信用代码查询主体" class="full-width"
@@ -180,14 +176,66 @@
                                 <el-option v-for="item in entityOptions" :key="item.id" :label="item.name"
                                     :value="item.id" />
                             </el-select>
-                            <div class="entity-info-card">
-                                <div class="info-line">主体名称: {{ formData.entity || '-' }}</div>
-                                <div class="info-line">注册城市: {{ formData.registeredCity || '-' }}</div>
-                                <div class="info-actions">
-                                    <el-button class="theme-default-btn">关闭</el-button>
-                                    <el-button type="primary" class="theme-primary-btn"
-                                        @click="showSubjectDrawer = true">主体建档</el-button>
+                            <div v-if="selectedSubjectDetail" class="subject-detail-card">
+                                <div class="card-title">
+                                    <div class="title-left">
+                                        <el-icon class="title-icon">
+                                            <OfficeBuilding />
+                                        </el-icon>
+                                        <span>主体详细信息</span>
+                                    </div>
+                                    <div class="info-actions">
+                                        <el-button class="theme-default-btn" @click="handleClearEntity">关闭</el-button>
+                                        <el-button type="primary" class="theme-primary-btn"
+                                            @click="showSubjectDrawer = true">主体建档</el-button>
+                                    </div>
                                 </div>
+                                <div class="detail-grid">
+                                    <div class="grid-item">
+                                        <div class="field-label">主体名称</div>
+                                        <div class="field-value">{{ selectedSubjectDetail.name || '--' }}</div>
+                                    </div>
+                                    <div class="grid-item">
+                                        <div class="field-label">信用代码</div>
+                                        <div class="field-value">{{ selectedSubjectDetail.socialCreditCode || '--' }}
+                                        </div>
+                                    </div>
+                                    <div class="grid-item">
+                                        <div class="field-label">主体类型</div>
+                                        <div class="field-value">
+                                            <span class="category-tag" v-if="selectedSubjectDetail.category">{{
+                                                getSubjectCategoryLabel(selectedSubjectDetail.category) }}</span>
+                                            <span v-else>--</span>
+                                        </div>
+                                    </div>
+                                    <div class="grid-item">
+                                        <div class="field-label">建档类型</div>
+                                        <div class="field-value">{{ getFilingTypeLabel(selectedSubjectDetail.type) ||
+                                            '--' }}</div>
+                                    </div>
+                                    <div class="grid-item">
+                                        <div class="field-label">联系人</div>
+                                        <div class="field-value">{{ selectedSubjectDetail.contactName || '--' }}</div>
+                                    </div>
+                                    <div class="grid-item">
+                                        <div class="field-label">联系电话</div>
+                                        <div class="field-value">{{ selectedSubjectDetail.contactPhone || '--' }}</div>
+                                    </div>
+                                    <div class="grid-item full-row">
+                                        <div class="field-label">所属地区及详细地址</div>
+                                        <div class="field-value">
+                                            {{ selectedSubjectDetail.provinceCode || '' }}{{
+                                                selectedSubjectDetail.cityCode || '' }}{{
+                                                selectedSubjectDetail.districtCode || '' }} {{
+                                                selectedSubjectDetail.address || '' }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div v-else class="entity-info-card-empty">
+                                <span class="empty-tip">*如果未找到相关生产主体，请先创建主体档案：</span>
+                                <el-button type="primary" class="theme-primary-btn mini-btn"
+                                    @click="showSubjectDrawer = true">主体建档</el-button>
                             </div>
                         </div>
                     </div>
@@ -195,13 +243,13 @@
                     <!-- 主体建档侧滑 -->
                     <SubjectFormDrawer v-model="showSubjectDrawer" @success="handleSubjectCreateSuccess" />
 
-                    <div class="divider"></div>
+                    <div class="divider compact"></div>
 
                     <!-- 关联上游合格证 -->
-                    <div class="form-section">
+                    <div class="form-section" :class="{ 'no-margin': formData.linkUpstream === 'no' }">
                         <div class="section-header-row">
-                            <h3 class="section-title no-margin">关联上游合格证</h3>
-                            <el-radio-group v-model="formData.linkUpstream" style="margin-top: -14px;">
+                            <h3 class="section-title no-margin" style="margin-bottom: 0;">关联上游合格证</h3>
+                            <el-radio-group v-model="formData.linkUpstream">
                                 <el-radio label="yes">是</el-radio>
                                 <el-radio label="no">否</el-radio>
                             </el-radio-group>
@@ -287,8 +335,9 @@
                     </div>
 
                     <!-- 基本信息预览 -->
+                    <div class="divider compact"></div>
                     <div class="basic-info-preview">
-                        <h3 class="preview-title">基本信息</h3>
+                        <h3 class="preview-title">待开具合格证-产品信息预览</h3>
                         <div class="info-grid">
                             <div class="info-row"><span class="label">产品名称</span><span class="value">{{
                                 formData.productName || '--'
@@ -314,7 +363,7 @@
                                 formatDate(formData.createDate) || '--'
                                     }}</span></div>
                         </div>
-                        <p class="info-tip">*电子合格证须现查询快检阅读电子智慧平台多数据</p>
+                        <p class="info-tip">*电子合格证由链安食检数智服务平台承载展示</p>
                     </div>
 
 
@@ -360,10 +409,13 @@
                         </el-checkbox-group>
                     </el-form-item>
 
+                    <div class="divider"></div>
+
                     <div class="association-grid">
                         <!-- 左侧：第三方结果 -->
                         <div class="assoc-col">
-                            <h3 class="col-title">关联样品检测结果{{ formData.thirdPartyType === 'third' ? '第三方' : '本平台' }}
+                            <h3 class="col-title">关联样品检测结果
+                                <!-- {{ formData.thirdPartyType === 'third' ? '第三方' : '本平台' }} -->
                             </h3>
                             <div class="col-content-box">
                                 <el-select v-model="formData.thirdPartyType" placeholder="第三方检测结果" class="full-width">
@@ -458,7 +510,7 @@
                         <h2 class="cert-subtitle">承诺事项：</h2>
                         <div class="cert-declaration-list">
                             <p v-for="(line, idx) in computedCommitment" :key="idx" class="declaration-line">• {{ line
-                            }}</p>
+                                }}</p>
                         </div>
 
                         <div class="cert-middle-section">
@@ -516,14 +568,10 @@
 
                         <div class="divider no-print"></div>
 
-                        <div class="image-section no-print">
+                        <div v-if="formData.productImageUrl" class="image-section no-print">
                             <h3 class="info-title">产品图片</h3>
                             <div class="image-preview-box">
-                                <img v-if="formData.productImageUrl" :src="formData.productImageUrl"
-                                    class="cert-product-img" alt="产品图片" />
-                                <el-icon v-else class="placeholder-icon">
-                                    <Picture />
-                                </el-icon>
+                                <img :src="formData.productImageUrl" class="cert-product-img" alt="产品图片" />
                             </div>
                         </div>
                     </div>
@@ -570,7 +618,7 @@
 <script setup>
 import { reactive, computed, onMounted, onUnmounted, ref, nextTick, watch } from 'vue';
 import { useRouter, useRoute, onBeforeRouteLeave } from 'vue-router';
-import { Search, Picture, Check, ArrowRight, Plus, CircleCheck, Document } from '@element-plus/icons-vue';
+import { Search, Picture, Check, ArrowRight, Plus, CircleCheck, Document, OfficeBuilding } from '@element-plus/icons-vue';
 import { useCertificateStore } from '@/store/modules/certificate';
 import PageBack from '@/components/PageBack/index.vue';
 import * as CertificateApi from '@/api/agri/certificate';
@@ -596,6 +644,7 @@ const handlePreviewPdf = (url) => {
 
 import * as DetectionRecordApi from '@/api/agri/detectionRecord';
 import { useMessage } from '@/hooks/web/useMessage';
+import { useDict } from '@/hooks/web/useDict';
 import { DICT_TYPE, getIntDictOptions, getDictOptions, getDictLabel } from '@/utils/dict';
 import { formatDate } from '@/utils/formatTime';
 import html2canvas from 'html2canvas';
@@ -615,6 +664,8 @@ import {
 const router = useRouter();
 const route = useRoute();
 const message = useMessage();
+const { getLabel: getFilingTypeLabel } = useDict('agri_filing_type', 'int');
+const { getLabel: getSubjectCategoryLabel } = useDict('agri_subject_category', 'str');
 const certStore = useCertificateStore();
 const PRINTER_NAME_PREFIX = 'YSH';
 const PRINTER_SERVICE_UUIDS = [
@@ -968,6 +1019,38 @@ const onUpstreamFileChange = async (fileObj) => {
     }
 };
 
+const selectedSubjectDetail = ref(null);
+
+watch(
+    () => formData.subjectId,
+    async (newVal) => {
+        if (newVal) {
+            try {
+                const res = await SubjectApi.getSubject(newVal);
+                selectedSubjectDetail.value = res;
+                if (res) {
+                    formData.contactPhone = res.contactPhone || '';
+                    formData.entity = res.name || '';
+                }
+            } catch (error) {
+                console.error('获取主体详情失败', error);
+                selectedSubjectDetail.value = null;
+            }
+        } else {
+            selectedSubjectDetail.value = null;
+        }
+    },
+    { immediate: true }
+);
+
+const handleClearEntity = () => {
+    formData.subjectId = undefined;
+    formData.entity = '';
+    formData.legalPerson = '';
+    formData.registeredCity = '';
+    selectedSubjectDetail.value = null;
+};
+
 const handleEntityChange = (val) => {
     const selected = entityOptions.value.find(item => item.id === val);
     if (selected) {
@@ -1190,6 +1273,7 @@ const handleSubjectCreateSuccess = async (newId) => {
         formData.entity = subject.name;
         formData.legalPerson = subject.legalPerson || '';
         formData.registeredCity = subject.cityCode || '青岛市';
+        formData.contactPhone = subject.contactPhone || '';
         entityOptions.value = [subject];
     } catch (err) {
         console.error('获取新主体信息失败', err);
@@ -1837,13 +1921,99 @@ const handlePrint = async (prepared) => {
 
 /* 表单结构 */
 .form-section {
-    margin-bottom: 20px;
+    margin-bottom: 16px;
+
+    .subject-detail-card {
+        margin-top: 16px;
+        background: #F8FAFD;
+        border: 1px solid #E2E8F0;
+        border-radius: 12px;
+        padding: 24px;
+
+        .card-title {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 16px;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin-bottom: 24px;
+
+            .title-left {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+
+            .title-icon {
+                color: #00B3ED;
+                font-size: 20px;
+            }
+
+            .info-actions {
+                display: flex;
+                gap: 12px;
+            }
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px 20px;
+
+            .grid-item {
+                &.full-row {
+                    grid-column: span 3;
+                }
+
+                .field-label {
+                    font-size: 13px;
+                    color: #64748B;
+                    margin-bottom: 8px;
+                }
+
+                .field-value {
+                    font-size: 16px;
+                    color: #1e293b;
+                    font-weight: 500;
+                }
+
+                .category-tag {
+                    display: inline-block;
+                    padding: 2px 10px;
+                    background: #fff;
+                    border: 1px solid #00B3ED;
+                    color: #00B3ED;
+                    border-radius: 4px;
+                    font-size: 12px;
+                    line-height: 1.4;
+                }
+            }
+        }
+    }
+
+    .entity-info-card-empty {
+        margin-top: 12px;
+        padding: 16px;
+        background: #F9FAFB;
+        border: 1px dashed #D1D5DB;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        .empty-tip {
+            font-size: 13px;
+            color: #64748B;
+        }
+    }
 
     .preview-title,
     .section-title {
         font-size: 16px;
         font-weight: 700;
         color: #333;
+        margin-top: 0;
         margin-bottom: 16px;
     }
 
@@ -1914,7 +2084,41 @@ const handlePrint = async (prepared) => {
 .divider {
     height: 1px;
     border-bottom: 1px dashed #D1D5DB;
-    margin: 24px 0;
+    margin: 32px 0;
+
+    &.compact {
+        margin: 32px 0;
+    }
+}
+
+.search-input {
+    width: 100% !important;
+}
+
+.archive-relation-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
+
+    .relation-label {
+        font-size: 14px;
+        color: #606266;
+        font-weight: 700;
+        flex-shrink: 0;
+    }
+
+    .relation-radio {
+        margin-right: 8px;
+        flex-shrink: 0;
+        margin-bottom: 0 !important;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .relation-search {
+        flex: 1;
+    }
 }
 
 .search-row {
@@ -2007,12 +2211,13 @@ const handlePrint = async (prepared) => {
 
 /* 基本信息预览 */
 .basic-info-preview {
-    margin: 12px 0;
+    margin: 32px 0 12px 0;
 
     .preview-title {
         font-size: 16px;
         font-weight: 700;
         color: #333;
+        margin-top: 0;
         margin-bottom: 16px;
     }
 
@@ -2190,7 +2395,7 @@ const handlePrint = async (prepared) => {
     }
 
     .col-content-box {
-        background: #FDF5E6;
+        background: #f4f8fb;
         padding: 20px;
         border-radius: 8px;
         min-height: 400px;
@@ -2411,6 +2616,19 @@ const handlePrint = async (prepared) => {
     border-radius: 8px;
     width: 100%;
     margin: 0 auto;
+
+    .info-section {
+        margin-top: 24px;
+
+        .info-title {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            /* 增加标题与下方表格的间距 */
+            color: #333;
+            text-align: left;
+        }
+    }
 
     // 核心：截图时刻激发的类，强制窄屏大字
     &.printing-active {

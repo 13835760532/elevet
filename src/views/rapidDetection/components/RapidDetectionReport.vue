@@ -212,7 +212,7 @@ defineExpose({
 
     .report-header {
         text-align: center;
-        margin-bottom: 120px;
+        margin-bottom: 240px;
         h1 {
             font-size: 28px;
             font-weight: 700;
@@ -245,10 +245,10 @@ defineExpose({
         .org-container {
             text-align: center;
             .org-line {
-                font-size: 18px;
+                font-size: 16px;
                 font-weight: 500;
-                padding: 0 10px 8px;
-                border-bottom: 1.5px solid #333;
+                padding: 0 10px;
+                border-bottom: none;
                 display: inline-flex;
                 align-items: center;
                 gap: 10px;

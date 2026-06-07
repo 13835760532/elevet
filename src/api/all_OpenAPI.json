@@ -30301,7 +30301,7 @@
           },
           "recordCode": {
             "type": "string",
-            "description": "记录编码"
+            "description": "样品编码"
           },
           "sampleId": {
             "type": "integer",
@@ -39512,7 +39512,7 @@
           },
           "recordCode": {
             "type": "string",
-            "description": "记录编码"
+            "description": "样品编码"
           },
           "planId": {
             "type": "integer",

@@ -117,11 +117,15 @@
                                         style="width: 200px!important" clearable />
                                 </el-form-item>
                                 <el-form-item label="">
-                                    <el-select v-model="queryParams.unit" placeholder="检测机构" style="width: 150px;"
-                                        clearable>
-                                        <el-option v-for="(name, id) in deptMap" :key="id" :label="name" :value="id" />
+                                    <el-select v-model="queryParams.deptType" placeholder="机构类型" style="width: 150px;"
+                                        clearable @change="handleDeptTypeChange">
+                                        <el-option label="监管机构" :value="1" />
+                                        <el-option label="检测机构" :value="2" />
+                                        <el-option label="生产经营企业" :value="3" />
+                                        <el-option label="平台运营机构" :value="4" />
                                     </el-select>
                                 </el-form-item>
+
                                 <el-form-item label="">
                                     <el-select v-model="queryParams.status" placeholder="任务状态" style="width: 150px;"
                                         class="w120" clearable>
@@ -185,7 +189,7 @@
                                     <div class="completion-rate-cell">
                                         <span class="rate-pct">{{ scope.row.percentage }}%</span>
                                         <span class="rate-counts">({{ scope.row.completed }}/{{ scope.row.total
-                                            }})</span>
+                                        }})</span>
                                     </div>
                                 </template>
                             </el-table-column>
@@ -294,12 +298,20 @@ const taskList = ref([]);
 const taskOptions = ref([]);
 const total = ref(0);
 
+const deptList = ref([]);
+const deptTypeMap = ref({});
+const deptNameTypeMap = ref({});
+
 const queryParams = reactive({
     task: '',
-    unit: '',
+    deptType: undefined,
     status: '',
     dateRange: []
 });
+
+const handleDeptTypeChange = () => {
+    applyFilters();
+};
 
 const pageParams = reactive({
     pageNum: 1,
@@ -475,6 +487,7 @@ const loadTaskList = async (id) => {
                 parentId: t.parentId,
                 taskNo: t.taskCode,
                 taskName: t.taskName,
+                assignDeptId: t.assignDeptId,
                 dept: t.assignDeptName || getDeptLabel(t.assignDeptId),
                 region: t.detectionArea || '--',
                 varieties: t.detectionVarieties || '--',
@@ -535,11 +548,20 @@ onMounted(async () => {
         // 先加载部门字典数据
         try {
             const depts = await DeptApi.getSimpleDeptList();
+            deptList.value = depts || [];
             const map = {};
+            const typeMap = {};
+            const nameTypeMap = {};
             depts.forEach(d => {
                 map[d.id] = d.name;
+                if (d.deptType !== undefined && d.deptType !== null) {
+                    typeMap[d.id] = d.deptType;
+                    nameTypeMap[d.name] = d.deptType;
+                }
             });
             deptMap.value = map;
+            deptTypeMap.value = typeMap;
+            deptNameTypeMap.value = nameTypeMap;
         } catch (e) {
             console.warn('获取部门列表失败', e);
         }
@@ -650,7 +672,7 @@ const handleQuery = () => {
 
 const handleReset = () => {
     queryParams.task = '';
-    queryParams.unit = '';
+    queryParams.deptType = undefined;
     queryParams.status = '';
     queryParams.dateRange = [];
     applyFilters();
@@ -667,8 +689,13 @@ const applyFilters = () => {
         );
     }
 
-    if (queryParams.unit) {
-        filtered = filtered.filter(t => String(t.dept).includes(getDeptLabel(queryParams.unit)));
+    if (queryParams.deptType !== undefined && queryParams.deptType !== null && queryParams.deptType !== '') {
+        filtered = filtered.filter(t => {
+            const typeById = deptTypeMap.value[t.assignDeptId];
+            const typeByName = deptNameTypeMap.value[t.dept];
+            const targetType = typeById !== undefined ? typeById : typeByName;
+            return targetType === queryParams.deptType;
+        });
     }
 
     if (queryParams.status) {

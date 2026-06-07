@@ -47,69 +47,79 @@
                 <div class="association-grid">
                     <!-- 左侧：第三方结果 -->
                     <div class="assoc-col">
-                        <h3 class="col-title">关联样品检测结果 {{ formData.thirdPartyType === 'third' ? '第三方' : '平台' }}</h3>
+                        <h3 class="col-title">关联样品检测结果
+                            <!-- {{ formData.thirdPartyType === 'third' ? '第三方' : '平台' }} -->
+                        </h3>
                         <div class="col-content-box">
                             <el-select v-model="formData.thirdPartyType" placeholder="第三方检测结果" class="full-width">
                                 <el-option label="第三方检测结果" value="third" />
-                                      <el-option label="本平台检测结果" value="platform" />
+                                <el-option label="本平台检测结果" value="platform" />
                             </el-select>
-                            <template v-if="formData.thirdPartyType === 'third'">    
+                            <template v-if="formData.thirdPartyType === 'third'">
 
-                                 <UploadImg v-model="formData.thirdPartyReportUrl" :limit="1" height="200px" />
-                                  <div class="upload-tip">上传检测报告/检测结果</div>
+                                <UploadImg v-model="formData.thirdPartyReportUrl" :limit="1" height="200px" />
+                                <div class="upload-tip">上传检测报告/检测结果</div>
                             </template>
 
                             <template v-else>
-     <div class="search-row">
-                                <el-select v-model="formData.platformRecordId" filterable remote :remote-method="searchPlatformRecords"
-                                    placeholder="查询样品检测结果完成关联" class="flex-input" :loading="searchLoading">
-                                    <el-option v-for="item in recordOptions" :key="item.id" :label="item.recordCode" :value="item.id">
-                                        <span>{{ item.recordCode }} ({{ item.subjectName }})</span>
-                                    </el-option>
-                                </el-select>
-                                <el-button type="primary" class="link-btn" @click="handleLinkRecord" :loading="linkLoading">关联</el-button>
-                            </div>
-
-                            <div class="results-preview" v-if="currentRecord">
-                                <h4 class="preview-title">检测结果预览</h4>
-
-                                <div class="kv-grid">
-                                    <div class="kv-row"><span class="label">样品编号：</span><span class="val">{{ currentRecord.recordCode }}</span></div>
-                                    <div class="kv-row"><span class="label">样品名称：</span><span class="val">{{ currentRecord.subjectName }}</span></div>
-                                    <div class="kv-row"><span class="label">检测人员：</span><span class="val">{{ currentRecord.detector }}</span></div>
-                                    <div class="kv-row"><span class="label">检测日期：</span><span class="val">{{ currentRecord.detectionDate }}</span></div>
+                                <div class="search-row">
+                                    <el-select v-model="formData.platformRecordId" filterable remote
+                                        :remote-method="searchPlatformRecords" placeholder="查询样品检测结果完成关联"
+                                        class="flex-input" :loading="searchLoading">
+                                        <el-option v-for="item in recordOptions" :key="item.id" :label="item.recordCode"
+                                            :value="item.id">
+                                            <span>{{ item.recordCode }} ({{ item.subjectName }})</span>
+                                        </el-option>
+                                    </el-select>
+                                    <el-button type="primary" class="link-btn" @click="handleLinkRecord"
+                                        :loading="linkLoading">关联</el-button>
                                 </div>
 
-                                <table class="nested-table">
-                                    <thead>
-                                        <tr>
-                                            <th>通道</th>
-                                            <th>检测项目</th>
-                                            <th>检测结果</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr v-for="(item, index) in detectionItems" :key="index">
-                                            <td>{{ index + 1 }}</td>
-                                            <td>{{ item.detectionItem }}</td>
-                                            <td>
-                                                <el-tag :type="item.result === 1 ? 'success' : 'danger'" size="small">
-                                                    {{ item.result === 1 ? '阴性' : '阳性' }}
-                                                </el-tag>
-                                            </td>
-                                        </tr>
-                                        <tr v-if="detectionItems.length === 0">
-                                            <td colspan="3" class="text-center">无检测细项</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                            <div v-else class="preview-empty">
-                                <el-empty description="请先搜索并选择检测记录进行关联" :image-size="80" />
-                            </div>
+                                <div class="results-preview" v-if="currentRecord">
+                                    <h4 class="preview-title">检测结果预览</h4>
+
+                                    <div class="kv-grid">
+                                        <div class="kv-row"><span class="label">样品编号：</span><span class="val">{{
+                                            currentRecord.recordCode }}</span></div>
+                                        <div class="kv-row"><span class="label">样品名称：</span><span class="val">{{
+                                            currentRecord.subjectName }}</span></div>
+                                        <div class="kv-row"><span class="label">检测人员：</span><span class="val">{{
+                                            currentRecord.detector }}</span></div>
+                                        <div class="kv-row"><span class="label">检测日期：</span><span class="val">{{
+                                            currentRecord.detectionDate }}</span></div>
+                                    </div>
+
+                                    <table class="nested-table">
+                                        <thead>
+                                            <tr>
+                                                <th>通道</th>
+                                                <th>检测项目</th>
+                                                <th>检测结果</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr v-for="(item, index) in detectionItems" :key="index">
+                                                <td>{{ index + 1 }}</td>
+                                                <td>{{ item.detectionItem }}</td>
+                                                <td>
+                                                    <el-tag :type="item.result === 1 ? 'success' : 'danger'"
+                                                        size="small">
+                                                        {{ item.result === 1 ? '阴性' : '阳性' }}
+                                                    </el-tag>
+                                                </td>
+                                            </tr>
+                                            <tr v-if="detectionItems.length === 0">
+                                                <td colspan="3" class="text-center">无检测细项</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div v-else class="preview-empty">
+                                    <el-empty description="请先搜索并选择检测记录进行关联" :image-size="80" />
+                                </div>
                             </template>
 
-                     
+
                         </div>
                     </div>
                 </div>
@@ -198,7 +208,7 @@ const handleLinkRecord = async () => {
     try {
         const record = await DetectionRecordApi.getDetectionRecord(formData.platformRecordId);
         currentRecord.value = record;
-        
+
         // 获取检测细项
         const items = await DetectionResultItemApi.getDetectionResultItemPage({
             recordId: formData.platformRecordId,
@@ -220,7 +230,7 @@ onMounted(() => {
     certStore.setStep(2);
     // 从 store 中合并已有的 issueInfo
     Object.assign(formData, certStore.issueInfo);
-    
+
     // 如果有已选中的 ID，尝试加载它
     if (formData.platformRecordId) {
         handleLinkRecord();
@@ -404,7 +414,7 @@ const handleGenerate = () => {
     }
 
     .col-content-box {
-        background: #FDF5E6;
+        background: #f4f8fb;
         /* 米色背景 */
         padding: 20px;
         border-radius: 4px;

@@ -40,7 +40,7 @@
                         <el-select v-model="queryParams.status" placeholder="开具状态" clearable class="custom-select">
                             <el-option label="未开具" :value="0" />
                             <el-option label="已开具" :value="1" />
-                            <el-option label="作废" :value="2" />
+                            <el-option label="已作废" :value="2" />
                         </el-select>
                     </el-form-item>
                     <el-form-item label="" prop="province">
@@ -93,16 +93,18 @@
                             <span class="type-tag"
                                 :class="scope.row.certificateType === 1 ? 'producer' : (scope.row.certificateType === 2 ? 'buyer' : 'seller')">
                                 {{ scope.row.certificateType === 1 ? '生产者' : (scope.row.certificateType === 2 ? '收购者' :
-                                '批发市场') }}
+                                    '批发市场') }}
                             </span>
                         </template>
                     </el-table-column>
                     <el-table-column label="产品名称" prop="productName" width="110" align="center" />
-                    <el-table-column label="产品类别" prop="productCategory" width="160" align="center" show-overflow-tooltip>
+                    <el-table-column label="产品类别" prop="productCategory" width="160" align="center"
+                        show-overflow-tooltip>
                         <template #default="scope">
                             <el-tag v-if="scope.row.productCategory" effect="light" type="primary">
-                                {{ productCategoryOptions.find(item => item.value === scope.row.productCategory)?.label ||
-                                    scope.row.productCategory }}
+                                {{productCategoryOptions.find(item => item.value === scope.row.productCategory)?.label
+                                    ||
+                                    scope.row.productCategory}}
                             </el-tag>
                             <span v-else>--</span>
                         </template>
@@ -137,9 +139,17 @@
                     </el-table-column>
                     <el-table-column label="开具状态" prop="status" width="100" align="center">
                         <template #default="{ row }">
-                            <el-tag :type="row.status === 1 ? 'success' : (row.status === 0 ? 'warning' : 'danger')"
+                            <!-- 已作废时：悬停 tooltip 显示作废原因 -->
+                            <el-tooltip v-if="row.status === 2 && row.voidReason" :content="'作废原因：' + row.voidReason"
+                                placement="top" effect="dark">
+                                <el-tag type="danger" size="small" style="cursor: default;">
+                                    已作废
+                                </el-tag>
+                            </el-tooltip>
+                            <el-tag v-else
+                                :type="row.status === 1 ? 'success' : (row.status === 0 ? 'warning' : 'danger')"
                                 size="small">
-                                {{ row.status === 1 ? '已开具' : (row.status === 0 ? '未开具' : '作废') }}
+                                {{ row.status === 1 ? '已开具' : (row.status === 0 ? '未开具' : '已作废') }}
                             </el-tag>
                         </template>
                     </el-table-column>
@@ -157,7 +167,15 @@
                                     <span class="table-delete-operate" @click="handleInvalidate(scope.row)">作废</span>
                                 </template>
                                 <template v-else-if="scope.row.status === 2">
-                                    <span class="table-view-operate disabled">详情</span>
+                                    <!-- 作废后仍可查看详情，不可恢复 -->
+                                    <span class="table-view-operate" @click="handleView(scope.row)">详情</span>
+                                    <!-- 作废原因 tooltip icon -->
+                                    <el-tooltip v-if="scope.row.voidReason" :content="'作废原因：' + scope.row.voidReason"
+                                        placement="top" effect="dark">
+                                        <el-icon class="void-reason-icon">
+                                            <InfoFilled />
+                                        </el-icon>
+                                    </el-tooltip>
                                 </template>
                             </div>
                         </template>
@@ -178,7 +196,7 @@
 <script setup lang="ts">
 import { reactive, ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { Edit, Search } from '@element-plus/icons-vue';
+import { Edit, Search, InfoFilled } from '@element-plus/icons-vue';
 import { useMessage } from '@/hooks/web/useMessage';
 import download from '@/utils/download';
 import { dateFormatter2 } from '@/utils/formatTime';
@@ -335,7 +353,9 @@ const handleDelete = async (row: any) => {
 
 const handleInvalidate = async (row: any) => {
     try {
-        const result = await message.prompt('请输入作废原因', '作废确认');
+        const result = await message.prompt('请输入作废原因 (作废后无法恢复)', '作废确认', {
+            confirmButtonText: '确定作废'
+        });
         if (!result.value || result.value.trim() === '') {
             message.warning('作废原因不能为空');
             return;
@@ -391,6 +411,7 @@ const handleCurrentChange = (val: number) => {
 .table-operate-action-btns {
     display: flex;
     justify-content: center;
+    align-items: center;
     gap: 12px;
 
     span {
@@ -429,6 +450,20 @@ const handleCurrentChange = (val: number) => {
 
     span {
         font-family: monospace;
+    }
+}
+
+/* 已作废操作列：作废原因 tooltip icon */
+.void-reason-icon {
+    display: inline-flex;
+    align-items: center;
+    font-size: 15px;
+    color: #faad14;
+    cursor: pointer;
+    transition: color 0.2s;
+
+    &:hover {
+        color: #d48806;
     }
 }
 </style>
