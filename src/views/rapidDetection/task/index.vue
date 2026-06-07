@@ -44,7 +44,7 @@
                     <el-form-item label="" prop="status">
                         <el-select v-model="queryParams.status" placeholder="任务状态" clearable
                             class="rapid-task-query-field rapid-task-query-field--select">
-                            <el-option v-for="dict in taskStatusOptions" :key="dict.value" :label="dict.label"
+                            <el-option v-for="dict in filteredTaskStatusOptions" :key="dict.value" :label="dict.label"
                                 :value="dict.value" />
                         </el-select>
                     </el-form-item>
@@ -135,6 +135,11 @@ import download from '@/utils/download'
 
 const router = useRouter()
 const { options: taskStatusOptions } = useDict('agri_task_status', 'int')
+
+// 过滤掉已撤回(4)状态
+const filteredTaskStatusOptions = computed(() => {
+    return (taskStatusOptions.value || []).filter((item) => Number(item.value) !== 4)
+})
 
 const activeTab = ref('task')
 const dateRange = ref([])

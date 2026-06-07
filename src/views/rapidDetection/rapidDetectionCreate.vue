@@ -187,7 +187,7 @@
                     </el-form-item>
 
                     <!-- 检测结果面向政府公开 -->
-                    <el-form-item label="检测结果面向政府公开">
+                    <el-form-item label="本条检测结果是否面向政府公开">
                         <el-radio-group v-model="formData.publicFlag">
                             <el-radio :value="true">是</el-radio>
                             <el-radio :value="false">否</el-radio>
@@ -252,6 +252,13 @@
                         </el-select>
                     </el-form-item>
 
+                    <el-form-item label="检测方法">
+                        <el-select v-model="formData.detectionMethod" placeholder="请选择检测方法" style="width: 100%">
+                            <el-option label="胶体金检测法" value="胶体金检测法" />
+                            <el-option label="酶抑制法" value="酶抑制法" />
+                        </el-select>
+                    </el-form-item>
+
                     <el-form-item label="检测照片上传">
                         <div class="upload-container">
                             <!-- 使用 el-upload 以获得原始 File 对象以便调用 AI 接口 -->
@@ -307,12 +314,6 @@
                             <span class="value">{{ formData.sample.sampleCode }}</span>
                         </div>
                         <div class="info-item">
-                            <span class="label">样品来源：</span>
-                            <span class="value">{{ Array.isArray(formData.sample.sampleSource) ?
-                                formData.sample.sampleSource.join(', ') : (formData.sample.sampleSource || '--')
-                                }}</span>
-                        </div>
-                        <div class="info-item">
                             <span class="label">样品名称：</span>
                             <span class="value">{{ formData.sample.sampleName }}</span>
                         </div>
@@ -327,6 +328,12 @@
                         <div class="info-item">
                             <span class="label">生产主体：</span>
                             <span class="value">{{ formState.selectedSubject?.name || '--' }}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">样品来源：</span>
+                            <span class="value">{{ Array.isArray(formData.sample.sampleSource) ?
+                                formData.sample.sampleSource.join(', ') : (formData.sample.sampleSource || '--')
+                                }}</span>
                         </div>
                         <div class="info-item">
                             <span class="label">样品状态：</span>
@@ -549,7 +556,7 @@ const formData = reactive({
     detector: userStore.user.nickname || '管理员',
     detectionArea: '',
     detectionLocation: '',
-    detectionMethod: '酶抑制法',
+    detectionMethod: '胶体金检测法',
     detectStandard: 'GB/T 5009.199-2003',
     testPaperImageUrl: '',
     aiRecognitionResult: '',
@@ -1134,6 +1141,7 @@ onMounted(async () => {
         color: #333;
         font-size: 14px;
         padding-bottom: 8px;
+        white-space: nowrap;
 
         // 自定义星号样式
         &::before {

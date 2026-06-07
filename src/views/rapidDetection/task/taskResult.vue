@@ -1,19 +1,17 @@
 <template>
     <div class="table-container">
         <div class="header-fixed-container">
-            <PageHeader title="检测详情" desc="对检测结果进行拍照上传判读后的结果" />
+            <PageHeader title="检测详情" desc="样品检测报告，展示样品信息和检测结果" />
         </div>
-        
+
         <!-- 卡片内容区域 -->
         <div class="content-card">
             <!-- 样品检测信息 -->
             <div class="section-header">
                 <h3 class="section-title">样品检测信息</h3>
-                <div 
-                    v-if="recordData && recordData.overallResult !== null && recordData.overallResult !== undefined" 
-                    class="stamp" 
-                    :class="{ 'stamp-fail': recordData.overallResult === 1 || recordData.overallResult === 2 }"
-                >
+                <div v-if="recordData && recordData.overallResult !== null && recordData.overallResult !== undefined"
+                    class="stamp"
+                    :class="{ 'stamp-fail': recordData.overallResult === 1 || recordData.overallResult === 2 }">
                     {{ recordData.overallResult === 2 ? '结果异常' : (isQualified ? '阴性' : '阳性') }}
                 </div>
             </div>
@@ -50,7 +48,7 @@
                 <div class="info-row">
                     <span class="label">检测人员</span>
                     <span class="value">{{ sampleInfo.tester }}</span>
-                </div>  
+                </div>
                 <div class="info-row">
                     <span class="label">检测日期</span>
                     <span class="value">{{ sampleInfo.testDate }}</span>
@@ -62,12 +60,8 @@
                 <div class="info-row photo-row">
                     <span class="label">检测照片</span>
                     <div class="photo-preview-group">
-                        <el-image 
-                            :src="sampleInfo.photo" 
-                            fit="cover" 
-                            :preview-src-list="[sampleInfo.photo]" 
-                            preview-teleported
-                        />
+                        <el-image :src="sampleInfo.photo" fit="cover" :preview-src-list="[sampleInfo.photo]"
+                            preview-teleported />
                         <span class="photo-tip">点击查看大图</span>
                     </div>
                 </div>
@@ -78,28 +72,28 @@
                 <h3 class="section-title">检测结果详情</h3>
             </div>
             <div class="result-table-wrapper">
-                <el-table :data="resultList" class="result-table" :header-cell-style="{ background: '#F8FAFC', color: '#475569', fontWeight: '600' }">
+                <el-table :data="resultList" class="result-table"
+                    :header-cell-style="{ background: '#F8FAFC', color: '#475569', fontWeight: '600' }">
                     <el-table-column label="通道" prop="channel" width="80" align="center" />
                     <el-table-column label="检测项目" prop="item" min-width="200" align="center" show-overflow-tooltip />
                     <el-table-column label="检测值（T/C值）" prop="tcValue" width="180" align="center">
                         <template #default="scope">
-                            {{ typeof scope.row.tcValue === 'number' ? scope.row.tcValue.toFixed(4) : scope.row.tcValue }}
+                            {{ typeof scope.row.tcValue === 'number' ? scope.row.tcValue.toFixed(4) : scope.row.tcValue
+                            }}
                         </template>
                     </el-table-column>
                     <el-table-column label="浓度值(单位:ppb)" prop="concentration" width="160" align="center" />
                     <el-table-column label="检测时间" prop="detectionDate" width="160" align="center">
                         <template #default="scope">
-                            {{ scope.row.detectionDate ? formatDate(scope.row.detectionDate, 'YYYY-MM-DD HH:mm:ss') : '--' }}
+                            {{ scope.row.detectionDate ? formatDate(scope.row.detectionDate, 'YYYY-MM-DD HH:mm:ss') :
+                            '--' }}
                         </template>
                     </el-table-column>
                     <el-table-column label="检测结果" prop="result" width="140" align="center">
                         <template #default="scope">
-                            <el-tag 
+                            <el-tag
                                 :type="(scope.row.result === '阴性' || scope.row.result === '未检出' || scope.row.result === '合格') ? 'success' : 'danger'"
-                                effect="dark"
-                                size="small"
-                                class="result-tag"
-                            >
+                                effect="dark" size="small" class="result-tag">
                                 {{ scope.row.result }}
                             </el-tag>
                         </template>
@@ -114,12 +108,8 @@
             </div>
             <div class="report-section">
                 <div class="report-preview" @click="handlePreviewReport">
-                    <RapidDetectionReport 
-                        class="hidden-report-for-preview"
-                        :data="formattedData" 
-                        :results="formattedResults"
-                        :editable="false"
-                    />
+                    <RapidDetectionReport class="hidden-report-for-preview" :data="formattedData"
+                        :results="formattedResults" :editable="false" />
                 </div>
                 <div v-if="recordData" class="report-actions">
                     <el-button type="primary" class="action-btn" @click="handlePreviewReport">报告预览</el-button>
@@ -129,28 +119,14 @@
 
             <!-- 下载专用隐藏实例（完全无缩放，确保导出正常） -->
             <div style="position: absolute; left: -9999px; top: 0; width: 210mm; height: auto; pointer-events: none;">
-                <RapidDetectionReport 
-                    ref="reportComponentRef"
-                    :data="formattedData" 
-                    :results="formattedResults"
-                    :editable="false"
-                />
+                <RapidDetectionReport ref="reportComponentRef" :data="formattedData" :results="formattedResults"
+                    :editable="false" />
             </div>
 
             <!-- 报告预览弹窗 -->
-            <el-dialog
-                v-model="reportDialogVisible"
-                title="检测报告预览"
-                width="1000px"
-                class="report-dialog"
-                align-center
-            >
+            <el-dialog v-model="reportDialogVisible" title="检测报告预览" width="1000px" class="report-dialog" align-center>
                 <div class="report-dialog-content">
-                    <RapidDetectionReport 
-                        :data="formattedData" 
-                        :results="formattedResults" 
-                        :editable="false"
-                    />
+                    <RapidDetectionReport :data="formattedData" :results="formattedResults" :editable="false" />
                 </div>
                 <template #footer>
                     <div class="dialog-footer">
@@ -191,7 +167,7 @@ const sampleInfo = ref({
     source: '--',
     sampleName: '--',
     origin: '--',
-    quantity: '--', 
+    quantity: '--',
     checkArea: '--',
     producer: '--',
     region: '--',
@@ -241,7 +217,7 @@ const formattedResults = computed(() => {
         } else if (statusText?.includes('异常')) {
             statusText = '异常';
         }
-        
+
         return {
             cardChannel: item.channel,
             codeName: item.item,
@@ -265,10 +241,10 @@ const initData = async () => {
             getDetectionRecord(id),
             // getDetectionReportByRecordId(id).catch(() => null)
         ]);
-        
+
         recordData.value = res;
         //reportData.value = reportRes;
-        
+
         // 映射样品信息
         sampleInfo.value = {
             sampleNo: res.sampleCode || res.recordCode || '--',
@@ -276,11 +252,11 @@ const initData = async () => {
             sampleName: res.productName || '--',
             origin: res.detectionArea || '--',
             sampleArea: res.sampleArea || '--',
-            quantity: '--', 
+            quantity: '--',
             checkArea: res.detectionArea || '--',
             producer: res.subjectName || '--',
             region: res.detectionArea || '--',
-            testOrg: res.sourceType === 'PLAN_TASK' ? '检测服务中心' : '自主录入', 
+            testOrg: res.sourceType === 'PLAN_TASK' ? '检测服务中心' : '自主录入',
             tester: res.detector || '--',
             testDate: res.createTime ? formatDate(res.createTime, 'YYYY-MM-DD') : '--',
             photo: res.testPaperImageUrl || '',
@@ -308,7 +284,7 @@ const initData = async () => {
                 console.error('解析AI结果失败', e);
             }
         }
-        
+
         reportImage.value = res.testPaperImageUrl;
     } catch (e) {
         console.error('获取详情失败', e);
@@ -508,7 +484,8 @@ const handleDownloadReport = () => {
     .el-table__row {
         height: 60px;
         transition: all 0.2s;
-        &:hover > td {
+
+        &:hover>td {
             background-color: #F8FAFC !important;
         }
     }
@@ -532,6 +509,7 @@ const handleDownloadReport = () => {
         border-radius: 6px;
         cursor: pointer;
         transition: all 0.2s;
+
         &:hover {
             border-color: #00B3ED;
             opacity: 0.9;
@@ -559,7 +537,8 @@ const handleDownloadReport = () => {
     width: 270px;
     height: auto;
     min-height: 382px;
-    max-height: 500px; /* 限制预览图的最大高度 */
+    max-height: 500px;
+    /* 限制预览图的最大高度 */
     border: 1px solid #E5E7EB;
     border-radius: 8px;
     overflow-y: auto;
@@ -570,7 +549,8 @@ const handleDownloadReport = () => {
     cursor: pointer;
     transition: all 0.3s;
     background: #f8fafc;
-    padding: 0; /* 移除外层内边距以贴合边缘 */
+    padding: 0;
+    /* 移除外层内边距以贴合边缘 */
 
     &:hover {
         transform: translateY(-5px);
@@ -584,7 +564,8 @@ const handleDownloadReport = () => {
         pointer-events: none;
         box-shadow: none;
         margin: 0;
-        padding-top: 5mm !important; /* 大幅压缩顶部空白 */
+        padding-top: 5mm !important;
+        /* 大幅压缩顶部空白 */
     }
 }
 
@@ -609,11 +590,13 @@ const handleDownloadReport = () => {
     justify-content: center;
     max-height: 75vh;
     overflow-y: auto;
+
     .el-dialog__body {
         padding-bottom: 40px;
     }
-    .report-paper{
-        box-shadow: none!important;
+
+    .report-paper {
+        box-shadow: none !important;
         margin-bottom: 30px;
     }
 }

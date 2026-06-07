@@ -53,7 +53,7 @@
                     </div>
                     <div class="detail-row">
                         <div class="label">*批次规模：</div>
-                        <div class="value">{{ productInfo.productSpec ? productInfo.productSpec + ' ' +
+                        <div class="value">{{ productInfo.productSpec ? productInfo.productSpec +
                             getAgriUnitLabel(productInfo.productUnit) :
                             '--' }}</div>
                     </div>

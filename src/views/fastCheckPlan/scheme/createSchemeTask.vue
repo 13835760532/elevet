@@ -44,47 +44,35 @@
                 <!-- 步骤1: 选择任务承担单位 -->
                 <div class="step-section">
                     <h4 class="step-title">1、选择任务承担单位</h4>
-                    <el-form label-width="80px" label-position="right">
-                        <el-row :gutter="16" style="margin-bottom: 20px;">
-                            <el-col :span="8">
-                                <el-form-item label="分发体系" style="margin-bottom: 0; align-items: center;">
-                                    <el-select v-model="taskForm.systemType" placeholder="请选择分发体系" class="full-width">
-                                        <el-option label="行政管理体系" :value="1" />
-                                    </el-select>
-                                </el-form-item>
-                            </el-col>
+                    <el-form label-width="80px" label-position="right" class="filter-form-inline">
+                        <el-form-item label="所属区域" style="margin-bottom: 0; align-items: center">
+                            <AreaCascader class="filter-select" v-model="areaPath" placeholder="请选择所属地区" checkStrictly
+                                @select="
+                                    (val) => {
+                                        taskForm.province = val.province
+                                        taskForm.city = val.city
+                                        taskForm.district = val.district
+                                        taskForm.provinceCode = val.provinceCode
+                                        taskForm.cityCode = val.cityCode
+                                        taskForm.districtCode = val.districtCode
+                                        loadOrgOptions()
+                                    }
+                                " />
+                        </el-form-item>
 
-                            <el-col :span="8">
-                                <el-form-item label="单位类型" style="margin-bottom: 0; align-items: center;">
-                                    <el-select v-model="taskForm.deptType" placeholder="请选择单位类型" class="full-width"
-                                        :disabled="false" clearable @change="loadOrgOptions">
-                                        <el-option label="监管机构" :value="1" />
-                                        <el-option label="检测机构" :value="2" />
-                                        <el-option label="企业" :value="3" />
-                                        <el-option label="运营机构" :value="4" />
-                                    </el-select>
-                                </el-form-item>
-                            </el-col>
-
-                            <el-col :span="8">
-                                <el-form-item label="所属区域" style="margin-bottom: 0; align-items: center;">
-                                    <AreaCascader class="full-width" v-model="areaPath" placeholder="请选择所属地区"
-                                        checkStrictly @select="(val) => {
-                                            taskForm.province = val.province;
-                                            taskForm.city = val.city;
-                                            taskForm.district = val.district;
-                                            taskForm.provinceCode = val.provinceCode;
-                                            taskForm.cityCode = val.cityCode;
-                                            taskForm.districtCode = val.districtCode;
-                                            loadOrgOptions();
-                                        }" />
-                                </el-form-item>
-                            </el-col>
-                        </el-row>
+                        <el-form-item label="单位类型" style="margin-bottom: 0; align-items: center; margin-left: 24px">
+                            <el-select v-model="taskForm.deptType" placeholder="请选择单位类型" class="filter-select"
+                                :disabled="false" clearable @change="loadOrgOptions">
+                                <el-option label="监管机构" :value="1" />
+                                <el-option label="检测机构" :value="2" />
+                                <el-option label="生产经营企业" :value="3" />
+                                <el-option label="平台运营机构" :value="4" />
+                            </el-select>
+                        </el-form-item>
                     </el-form>
 
                     <div class="search-box">
-                        <el-input v-model="searchKeyword" placeholder="输入任务机构或被检人员或检测单位" class="search-input"
+                        <el-input v-model="searchKeyword" placeholder="输入机构名称" class="search-input"
                             @keyup.enter="loadOrgOptions">
                             <template #suffix>
                                 <el-icon class="search-icon" @click="loadOrgOptions">
@@ -119,7 +107,11 @@
                                 :disabled="taskForm.distributionType === 'manual'" class="quantity-input"
                                 :class="{ 'error-input': isExceedLimit }" />
                             <span class="warning-text" :class="{ 'error-text': isExceedLimit }">
-                                {{ isExceedLimit ? `超出可用总量（剩余可用：${schemeInfo.sampleCount}）` : '取值规则方案检测总量-已分发量' }}
+                                {{
+                                    isExceedLimit
+                                        ? `超出可用总量（剩余可用：${schemeInfo.sampleCount}）`
+                                : '取值规则方案检测总量-已分发量'
+                                }}
                             </span>
                         </div>
                         <div class="config-row">
@@ -153,27 +145,25 @@
                 </div>
             </div>
         </div>
-
-
     </div>
 </template>
 
 <script setup>
-import { ref, reactive, watch, computed, onMounted } from 'vue';
-import { useRouter, useRoute } from 'vue-router';
-import { useDebounceFn } from '@vueuse/core';
-import { Search } from '@element-plus/icons-vue';
-import { ElMessage } from 'element-plus';
-import DetectionRequirementSection from '@/components/DetectionRequirementSection/index.vue';
-import AreaCascader from '@/components/AreaCascader/index.vue';
-import * as DetectionPlanApi from '@/api/agri/detectionPlan/index';
-import * as OrganizationApi from '@/api/agri/organization/index';
-import * as DistRelationApi from '@/api/agri/dist-relation/index';
-import { useDict, DICT_TYPE } from '@/hooks/web/useDict';
+import { ref, reactive, watch, computed, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { useDebounceFn } from '@vueuse/core'
+import { Search } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
+import DetectionRequirementSection from '@/components/DetectionRequirementSection/index.vue'
+import AreaCascader from '@/components/AreaCascader/index.vue'
+import * as DetectionPlanApi from '@/api/agri/detectionPlan/index'
+import * as OrganizationApi from '@/api/agri/organization/index'
+import * as DistRelationApi from '@/api/agri/dist-relation/index'
+import { useDict, DICT_TYPE } from '@/hooks/web/useDict'
 
-const router = useRouter();
-const route = useRoute();
-const planId = Number(route.query.id) || 1;
+const router = useRouter()
+const route = useRoute()
+const planId = Number(route.query.id) || 1
 
 const schemeInfo = reactive({
     no: '',
@@ -183,7 +173,7 @@ const schemeInfo = reactive({
     category: '--',
     executionTime: '--',
     sampleCount: 0
-});
+})
 
 // 使用字典
 const { getLabel: getPlanTypeLabel } = useDict(DICT_TYPE.AGRI_PLAN_TYPE, 'int')
@@ -224,40 +214,40 @@ const taskForm = reactive({
     distributionType: 'average',
     startDate: '',
     endDate: ''
-});
+})
 
 const isExceedLimit = computed(() => {
-    return Number(taskForm.quantity) > Number(schemeInfo.sampleCount);
-});
+    return Number(taskForm.quantity) > Number(schemeInfo.sampleCount)
+})
 
-const areaPath = ref([]);
+const areaPath = ref([])
 
-const searchKeyword = ref('');
-const selectedOrgs = ref([]);
-const orgLoading = ref(false);
-const checkAll = ref(false);
-const isIndeterminate = ref(false);
-const orgOptions = ref([]);
+const searchKeyword = ref('')
+const selectedOrgs = ref([])
+const orgLoading = ref(false)
+const checkAll = ref(false)
+const isIndeterminate = ref(false)
+const orgOptions = ref([])
 const orgMapById = computed(() => {
-    const map = new Map();
-    orgOptions.value.forEach((org) => map.set(org.id, org));
-    return map;
-});
+    const map = new Map()
+    orgOptions.value.forEach((org) => map.set(org.id, org))
+    return map
+})
 
 const selectedOrgOptions = computed(() => {
-    return selectedOrgs.value.map(id => orgMapById.value.get(id)).filter(Boolean);
-});
+    return selectedOrgs.value.map((id) => orgMapById.value.get(id)).filter(Boolean)
+})
 
 const reconcileSelectionState = () => {
-    const currentIds = new Set(orgOptions.value.map((item) => item.id));
-    selectedOrgs.value = selectedOrgs.value.filter((id) => currentIds.has(id));
-    const checkedCount = selectedOrgs.value.length;
-    checkAll.value = checkedCount > 0 && checkedCount === orgOptions.value.length;
-    isIndeterminate.value = checkedCount > 0 && checkedCount < orgOptions.value.length;
-};
+    const currentIds = new Set(orgOptions.value.map((item) => item.id))
+    selectedOrgs.value = selectedOrgs.value.filter((id) => currentIds.has(id))
+    const checkedCount = selectedOrgs.value.length
+    checkAll.value = checkedCount > 0 && checkedCount === orgOptions.value.length
+    isIndeterminate.value = checkedCount > 0 && checkedCount < orgOptions.value.length
+}
 
 const loadOrgOptions = async () => {
-    orgLoading.value = true;
+    orgLoading.value = true
     try {
         const params = {
             keyword: searchKeyword.value?.trim(),
@@ -266,8 +256,8 @@ const loadOrgOptions = async () => {
             provinceCode: taskForm.provinceCode,
             cityCode: taskForm.cityCode,
             districtCode: taskForm.districtCode
-        };
-        const response = await DistRelationApi.getAssignableTargets(params);
+        }
+        const response = await DistRelationApi.getAssignableTargets(params)
         orgOptions.value = (response || []).map((item) => ({
             id: item.targetId,
             name: item.targetName,
@@ -275,60 +265,66 @@ const loadOrgOptions = async () => {
             contactName: item.contactName,
             contactPhone: item.contactPhone,
             address: '' // 新接口暂无 address 字段，设为空字符串
-        }));
-        reconcileSelectionState();
+        }))
+        reconcileSelectionState()
     } catch (error) {
-        console.error('加载可分配机构失败:', error);
-        ElMessage.error('加载可分配机构失败');
+        console.error('加载可分配机构失败:', error)
+        ElMessage.error('加载可分配机构失败')
     } finally {
-        orgLoading.value = false;
+        orgLoading.value = false
     }
-};
+}
 
 const applyOrgFilter = () => {
-    loadOrgOptions();
-};
+    loadOrgOptions()
+}
 
 const handleCheckAllChange = (val) => {
-    selectedOrgs.value = val ? orgOptions.value.map(org => org.id) : [];
-    isIndeterminate.value = false;
-};
+    selectedOrgs.value = val ? orgOptions.value.map((org) => org.id) : []
+    isIndeterminate.value = false
+}
 
 const handleCheckedOrgsChange = (value) => {
-    const checkedCount = value.length;
-    checkAll.value = checkedCount === orgOptions.value.length;
-    isIndeterminate.value = checkedCount > 0 && checkedCount < orgOptions.value.length;
-};
+    const checkedCount = value.length
+    checkAll.value = checkedCount === orgOptions.value.length
+    isIndeterminate.value = checkedCount > 0 && checkedCount < orgOptions.value.length
+}
 
 const buildDefaultExecutionTime = () => {
-    if (!taskForm.startDate || !taskForm.endDate) return '待设置';
+    if (!taskForm.startDate || !taskForm.endDate) return '待设置'
     try {
-        const s = typeof taskForm.startDate === 'string' ? taskForm.startDate.slice(0, 10) : new Date(taskForm.startDate).toISOString().slice(0, 10);
-        const e = typeof taskForm.endDate === 'string' ? taskForm.endDate.slice(0, 10) : new Date(taskForm.endDate).toISOString().slice(0, 10);
-        return `${s}～${e}`;
+        const s =
+            typeof taskForm.startDate === 'string'
+                ? taskForm.startDate.slice(0, 10)
+                : new Date(taskForm.startDate).toISOString().slice(0, 10)
+        const e =
+            typeof taskForm.endDate === 'string'
+                ? taskForm.endDate.slice(0, 10)
+                : new Date(taskForm.endDate).toISOString().slice(0, 10)
+        return `${s}～${e}`
     } catch (e) {
-        return `${taskForm.startDate}～${taskForm.endDate}`;
+        return `${taskForm.startDate}～${taskForm.endDate}`
     }
-};
+}
 
 const buildDefaultDetectionArea = () => {
-    return [taskForm.province, taskForm.city, taskForm.district].filter(Boolean).join('');
-};
+    return [taskForm.province, taskForm.city, taskForm.district].filter(Boolean).join('')
+}
 
 const buildTaskRowsBySelectedOrgs = () => {
-    const orgIds = selectedOrgs.value || [];
-    if (!orgIds.length) return [];
+    const orgIds = selectedOrgs.value || []
+    if (!orgIds.length) return []
 
-    const total = Number(taskForm.quantity) || 0;
-    const isAverage = taskForm.distributionType === 'average';
-    const avg = isAverage && orgIds.length ? Math.floor(total / orgIds.length) : 0;
-    const remain = isAverage && orgIds.length ? total % orgIds.length : 0;
-    const executionTime = buildDefaultExecutionTime();
-    const region = buildDefaultDetectionArea() || '待设置';
+    const total = Number(taskForm.quantity) || 0
+    const isAverage = taskForm.distributionType === 'average'
+    const avg = isAverage && orgIds.length ? Math.floor(total / orgIds.length) : 0
+    const remain = isAverage && orgIds.length ? total % orgIds.length : 0
+    const executionTime = buildDefaultExecutionTime()
+    const region = buildDefaultDetectionArea() || '待设置'
 
     return orgIds.map((orgId, index) => {
-        const org = orgMapById.value.get(orgId);
-        const quantity = isAverage ? avg + (index < remain ? 1 : 0) : total;
+        const org = orgMapById.value.get(orgId)
+        const quantity = isAverage ? avg + (index < remain ? 1 : 0) : total
         return {
             deptId: orgId,
             subjectId: orgId,
@@ -338,60 +334,60 @@ const buildTaskRowsBySelectedOrgs = () => {
             executionTime,
             varieties: '待设置',
             items: '待设置'
-        };
-    });
-};
+        }
+    })
+}
 
 const resolveDeptId = (item) => {
-    if (item.deptId) return Number(item.deptId);
+    if (item.deptId) return Number(item.deptId)
     if (item.dept) {
-        const matched = orgOptions.value.find((org) => org.name === item.dept);
-        if (matched?.id) return Number(matched.id);
+        const matched = orgOptions.value.find((org) => org.name === item.dept)
+        if (matched?.id) return Number(matched.id)
     }
-    return Number(selectedOrgs.value[0]) || 0;
-};
+    return Number(selectedOrgs.value[0]) || 0
+}
 
-let searchTimer = null;
+let searchTimer = null
 watch(
     () => searchKeyword.value,
     () => {
-        if (searchTimer) clearTimeout(searchTimer);
+        if (searchTimer) clearTimeout(searchTimer)
         searchTimer = setTimeout(() => {
-            applyOrgFilter();
-        }, 300);
+            applyOrgFilter()
+        }, 300)
     }
-);
+)
 
 watch(
     () => areaPath.value,
     (val) => {
         if (!val || val.length === 0) {
-            taskForm.provinceCode = '';
-            taskForm.cityCode = '';
-            taskForm.districtCode = '';
-            taskForm.province = '';
-            taskForm.city = '';
-            taskForm.district = '';
-            loadOrgOptions();
+            taskForm.provinceCode = ''
+            taskForm.cityCode = ''
+            taskForm.districtCode = ''
+            taskForm.province = ''
+            taskForm.city = ''
+            taskForm.district = ''
+            loadOrgOptions()
         }
     },
     { deep: true }
-);
+)
 
-const taskList = ref([]);
+const taskList = ref([])
 
 // 核心修复：监听选中机构变化，实时同步任务列表行
 watch(
     () => selectedOrgs.value,
     (newIds) => {
-        const currentList = [...taskList.value];
+        const currentList = [...taskList.value]
         // 移除不再选中的机构
-        const filteredList = currentList.filter(item => newIds.includes(item.deptId));
+        const filteredList = currentList.filter((item) => newIds.includes(item.deptId))
 
         // 添加新选中的机构
-        newIds.forEach(id => {
-            if (!filteredList.find(item => item.deptId === id)) {
-                const org = orgMapById.value.get(id);
+        newIds.forEach((id) => {
+            if (!filteredList.find((item) => item.deptId === id)) {
+                const org = orgMapById.value.get(id)
                 filteredList.push({
                     deptId: id,
                     subjectId: id,
@@ -401,25 +397,25 @@ watch(
                     executionTime: buildDefaultExecutionTime(),
                     varieties: '待设置',
                     items: '待设置'
-                });
+                })
             }
-        });
-        taskList.value = filteredList;
+        })
+        taskList.value = filteredList
     },
     { deep: true }
-);
+)
 
 // 监听任务列表变化，手动分配时同步汇总检测总量
 watch(
     taskList,
     (newVal) => {
         if (taskForm.distributionType === 'manual') {
-            const total = (newVal || []).reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
-            taskForm.quantity = total > 0 ? total : 0;
+            const total = (newVal || []).reduce((sum, item) => sum + (Number(item.quantity) || 0), 0)
+            taskForm.quantity = total > 0 ? total : 0
         }
     },
     { deep: true, immediate: true }
-);
+)
 
 // 切换分配方式时的处理
 watch(
@@ -427,87 +423,92 @@ watch(
     (val) => {
         if (val === 'manual') {
             // 切换到手动时，根据当前列表重新计算总量
-            const total = taskList.value.reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
-            taskForm.quantity = total;
+            const total = taskList.value.reduce((sum, item) => sum + (Number(item.quantity) || 0), 0)
+            taskForm.quantity = total
         } else {
             // 切换回平均分配时，通常恢复为原始可用总量
-            taskForm.quantity = schemeInfo.sampleCount || 0;
+            taskForm.quantity = schemeInfo.sampleCount || 0
         }
     }
-);
+)
 
 const handleCancel = () => {
-    router.back();
-};
+    router.back()
+}
 
 /** 提交并下发任务 */
 const handleSubmit = useDebounceFn(async () => {
     if (selectedOrgs.value.length === 0 && taskList.value.length === 0) {
-        ElMessage.warning('请选择任务承担单位');
-        return;
+        ElMessage.warning('请选择任务承担单位')
+        return
     }
 
-    const rows = taskList.value.length ? taskList.value : buildTaskRowsBySelectedOrgs();
+    const rows = taskList.value.length ? taskList.value : buildTaskRowsBySelectedOrgs()
 
     if (!rows.length) {
-        ElMessage.warning('请先在第3步配置任务拆分');
-        return;
+        ElMessage.warning('请先在第3步配置任务拆分')
+        return
     }
 
     if (isExceedLimit.value) {
-        ElMessage.error(`任务检测总量 (${taskForm.quantity}) 不能超过总任务量 (${schemeInfo.sampleCount})`);
-        return;
+        ElMessage.error(
+            `任务检测总量 (${taskForm.quantity}) 不能超过总任务量 (${schemeInfo.sampleCount})`
+        )
+        return
     }
 
-    const taskSplits = rows.map(item => {
-        let startDate = undefined;
-        let endDate = undefined;
+    const taskSplits = rows
+        .map((item) => {
+            let startDate = undefined
+            let endDate = undefined
 
-        if (item.executionTime && item.executionTime !== '待设置') {
-            const times = item.executionTime.split('～');
-            if (times.length === 2) {
-                startDate = times[0].trim();
-                endDate = times[1].trim();
+            if (item.executionTime && item.executionTime !== '待设置') {
+                const times = item.executionTime.split('～')
+                if (times.length === 2) {
+                    startDate = times[0].trim()
+                    endDate = times[1].trim()
+                }
             }
-        }
 
-        const assignDeptId = resolveDeptId(item);
-        const sampleCount = Number(item.quantity) || 0;
-        return {
-            assignDeptId,
-            sampleCount,
-            subjectId: Number(item.subjectId) || assignDeptId,
-            taskType: 1,
-            detectionVarieties: item.varieties !== '待设置' ? item.varieties : undefined,
-            detectionItems: item.items !== '待设置' ? item.items : undefined,
-            detectionArea: item.region !== '待设置' ? item.region : (buildDefaultDetectionArea() || undefined),
-            startDate: startDate || taskForm.startDate || undefined,
-            endDate: endDate || taskForm.endDate || undefined
-        };
-    }).filter(item => item.assignDeptId && item.sampleCount > 0);
+            const assignDeptId = resolveDeptId(item)
+            const sampleCount = Number(item.quantity) || 0
+            return {
+                assignDeptId,
+                sampleCount,
+                subjectId: Number(item.subjectId) || assignDeptId,
+                taskType: 1,
+                detectionVarieties: item.varieties !== '待设置' ? item.varieties : undefined,
+                detectionItems: item.items !== '待设置' ? item.items : undefined,
+                detectionArea:
+                    item.region !== '待设置' ? item.region : buildDefaultDetectionArea() || undefined,
+                startDate: startDate || taskForm.startDate || undefined,
+                endDate: endDate || taskForm.endDate || undefined
+            }
+        })
+        .filter((item) => item.assignDeptId && item.sampleCount > 0)
 
     if (!taskSplits.length) {
-        ElMessage.warning('任务拆分数据不完整，请检查承担单位和检测数量');
-        return;
+        ElMessage.warning('任务拆分数据不完整，请检查承担单位和检测数量')
+        return
     }
 
     const payload = {
         planId: planId,
         taskSplits
-    };
+    }
 
     try {
-        await DetectionPlanApi.splitPlanTasks(payload);
+        await DetectionPlanApi.splitPlanTasks(payload)
 
-        ElMessage.success('任务创建及下发成功');
+        ElMessage.success('任务创建及下发成功')
         setTimeout(() => {
-            router.back();
-        }, 1500);
+            router.back()
+        }, 1500)
     } catch (error) {
-        console.error('任务下发失败', error);
-        ElMessage.error('任务下发失败');
+        console.error('任务下发失败', error)
+        ElMessage.error('任务下发失败')
     }
-}, 300);
+}, 300)
 
 // 页面初始化
 onMounted(() => {
@@ -532,7 +533,6 @@ onMounted(() => {
     flex-direction: column;
     gap: 20px;
 }
-
 
 /* 方案信息卡片 */
 .scheme-info-card {
@@ -606,6 +606,16 @@ onMounted(() => {
     width: 100%;
 }
 
+.filter-form-inline {
+    display: flex;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+
+.filter-select {
+    width: 220px !important;
+}
+
 /* 搜索框 */
 .search-box {
     margin-top: 16px;
@@ -614,7 +624,7 @@ onMounted(() => {
         max-width: 600px;
 
         :deep(.el-input__wrapper) {
-            background: #F9FAFB;
+            background: #f9fafb;
         }
     }
 
@@ -628,7 +638,7 @@ onMounted(() => {
 .org-list {
     margin-top: 16px;
     padding: 16px;
-    background: #F9FAFB;
+    background: #f9fafb;
     border-radius: 8px;
 
     .org-item {
@@ -638,7 +648,7 @@ onMounted(() => {
     .check-all-item {
         padding-bottom: 12px;
         margin-bottom: 12px;
-        border-bottom: 1px solid #E5E7EB;
+        border-bottom: 1px solid #e5e7eb;
     }
 }
 
@@ -667,7 +677,7 @@ onMounted(() => {
 
     .warning-text {
         font-size: 13px;
-        color: #F59E0B;
+        color: #f59e0b;
     }
 }
 
@@ -686,8 +696,6 @@ onMounted(() => {
     }
 }
 
-
-
 /* 底部按钮 */
 .footer-actions {
     display: flex;
@@ -695,7 +703,7 @@ onMounted(() => {
     gap: 20px;
     margin-top: 40px;
     padding-top: 30px;
-    border-top: 1px dashed #D1D5DB;
+    border-top: 1px dashed #d1d5db;
 
     .el-button {
         min-width: 140px;
@@ -706,13 +714,13 @@ onMounted(() => {
 
     .btn-cancel {
         background: #fff;
-        border-color: #D1D5DB;
+        border-color: #d1d5db;
         color: #333;
     }
 
     .btn-submit {
-        background: #00B3ED;
-        border-color: #00B3ED;
+        background: #00b3ed;
+        border-color: #00b3ed;
     }
 }
 

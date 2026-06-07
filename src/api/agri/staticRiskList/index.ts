@@ -14,6 +14,13 @@ export interface StaticRiskListPageReqVO {
   foodCategory?: string
   foodSubcategory?: string
   foodType?: string
+  timeType?: string
+  province?: string
+  city?: string
+  district?: string
+  provinceCode?: string
+  cityCode?: string
+  districtCode?: string
   pageNo: number
   pageSize: number
 }

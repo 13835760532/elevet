@@ -180,7 +180,7 @@
                             <el-table-column label="检测项目" prop="items" min-width="150" align="center"
                                 show-overflow-tooltip />
                             <el-table-column label="执行时间" prop="timeRange" width="200" align="center" />
-                            <el-table-column label="任务完成率 (已完成样品数/总样品数)" width="220" align="center">
+                            <el-table-column label="任务完成率 (已完成样品数/总样品数)" width="250" align="center">
                                 <template #default="scope">
                                     <div class="completion-rate-cell">
                                         <span class="rate-pct">{{ scope.row.percentage }}%</span>

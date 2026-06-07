@@ -72,7 +72,12 @@
                             <span v-else>--</span>
                         </template>
                     </el-table-column>
-                    <el-table-column label="规格" prop="productSpec" min-width="100" align="center" />
+                    <el-table-column label="规格" prop="productSpec" min-width="100" align="center">
+                        <template #default="scope">
+                            <span>{{ scope.row.productSpec ? scope.row.productSpec +
+                                getAgriUnitLabel(scope.row.productUnit) : '--' }}</span>
+                        </template>
+                    </el-table-column>
                     <el-table-column label="产地" prop="productionArea" min-width="120" show-overflow-tooltip />
                     <el-table-column label="建档日期" prop="archiveDate" width="160" align="center"
                         :formatter="dateFormatter2" />
@@ -109,6 +114,7 @@ import { dateFormatter, dateFormatter2 } from '@/utils/formatTime';
 import AreaCascader from '@/components/AreaCascader/index.vue';
 import { useTableHeight } from '@/hooks/web/useTableHeight';
 import { useDict } from '@/hooks/web/useDict';
+import { getAgriUnitLabel } from '@/utils/agriUnit';
 
 defineOptions({
     name: 'ProductArchiveIndex'

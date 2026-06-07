@@ -33,10 +33,6 @@
           <span class="f-value">{{ data.sample?.sampleCode }}</span>
         </div>
         <div class="f-row">
-          <span class="f-label">样品来源：</span>
-          <span class="f-value">{{ Array.isArray(data.sample?.sampleSource) ? data.sample.sampleSource.join(', ') : data.sample?.sampleSource }}</span>
-        </div>
-        <div class="f-row">
           <span class="f-label">样品名称：</span>
           <span class="f-value">{{ data.sample?.sampleName }}</span>
         </div>
@@ -51,6 +47,10 @@
         <div class="f-row">
           <span class="f-label">生产主体：</span>
           <span class="f-value">{{ data.subjectName || '--' }}</span>
+        </div>
+        <div class="f-row">
+          <span class="f-label">样品来源：</span>
+          <span class="f-value">{{ Array.isArray(data.sample?.sampleSource) ? data.sample.sampleSource.join(', ') : data.sample?.sampleSource }}</span>
         </div>
         <div class="f-row">
           <span class="f-label">样品状态：</span>
@@ -212,7 +212,7 @@ defineExpose({
 
     .report-header {
         text-align: center;
-        margin-bottom: 60px;
+        margin-bottom: 120px;
         h1 {
             font-size: 28px;
             font-weight: 700;

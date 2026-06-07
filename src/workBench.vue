@@ -658,6 +658,8 @@ onMounted(() => {
 .notice-panel {
   width: 360px;
   flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .notice-header {
@@ -697,6 +699,7 @@ onMounted(() => {
   background: #f4f8fb;
   border-radius: 8px;
   padding: 20px;
+  flex: 1; /* 使公告列表高度拉伸，与右侧预警区域高度对齐 */
 }
 
 .notice-item {
@@ -833,6 +836,7 @@ onMounted(() => {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 20px;
+  flex: 1; /* 使网格填满父容器高度 */
 }
 
 .report-card {
@@ -842,6 +846,8 @@ onMounted(() => {
   /* NO BORDER, NO SHADOW */
   border: none !important;
   box-shadow: none !important;
+  display: flex;
+  flex-direction: column; /* 使用flex布局以实现内部元素的高度对齐 */
 }
 
 .report-brand {
@@ -878,6 +884,7 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  flex: 1; /* 填满剩余高度，将底部的“查看”按钮推至最下方 */
 
   div {
     display: flex;
@@ -909,6 +916,9 @@ onMounted(() => {
 
 .mini-report {
   margin-bottom: 24px;
+  flex: 1;
+  display: flex;
+  flex-direction: column; /* 使内部元素可用 flex 对齐 */
 
   &:last-child {
     margin-bottom: 0;
