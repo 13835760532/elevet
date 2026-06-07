@@ -136,12 +136,24 @@
         >
           <Icon :icon="isRecording ? 'ep:video-pause' : 'ep:microphone'" :size="20" />
         </div>
+        <div
+          class="voice-btn wake-btn"
+          :class="{ active: isWakeWordEnabled, disabled: isTyping || !wakeWordRuntimeAvailable }"
+          :title="wakeWordButtonTitle"
+          @click="toggleWakeWord"
+        >
+          <Icon :icon="isWakeWordEnabled ? 'ep:bell-filled' : 'ep:bell'" :size="20" />
+        </div>
         <div class="send-btn" :class="{ active: inputText.trim() && !isTyping }" @click="handleSend(inputText)">
           <Icon icon="ep:position" :size="20" />
         </div>
         <div v-if="voiceStatusText" class="voice-status" :class="{ recording: isRecording }">
           <span class="voice-dot"></span>
           {{ voiceStatusText }}
+        </div>
+        <div class="wake-debug-chip" :class="{ unsupported: !wakeWordRuntimeAvailable }">
+          唤起状态：{{ wakeWordRuntimeAvailable ? wakeWordStatus : 'unsupported' }}
+          <span v-if="wakeWordTranscript"> | 识别：{{ wakeWordTranscript }}</span>
         </div>
       </div>
     </div>
@@ -161,7 +173,14 @@ import {
   type RiskTrendCompareRespVO,
   type VoiceAssistantAskRespVO
 } from '@/api/agri/voiceAssistant'
+import { BrowserSpeechRecognizer } from '@/api/agri/voiceAssistant/browserSpeechRecognition'
 import { XfyunRtasrRecognizer } from '@/api/agri/voiceAssistant/xfyunRtasr'
+import { BrowserWakeWordEngine, DEFAULT_WAKE_WORDS } from '@/api/agri/voiceAssistant/wakeWord/browserWakeWord'
+import type { WakeWordEngine, WakeWordStatus } from '@/api/agri/voiceAssistant/wakeWord/types'
+import {
+  shouldResumeWakeWordAfterDetection,
+  shouldResumeWakeWordAfterVoiceStop
+} from './wakeWordRecovery'
 
 defineOptions({ name: 'ChatAssistant' })
 
@@ -219,13 +238,25 @@ const messages = ref<Message[]>([])
 const inputText = ref('')
 const isTyping = ref(false)
 const isRecording = ref(false)
+const isWakeWordEnabled = ref(false)
 const voiceStatusText = ref('')
 const voiceRecognizer = ref<XfyunRtasrRecognizer | null>(null)
+const wakeWordEngine = ref<WakeWordEngine | null>(null)
+const wakeWordStatus = ref<WakeWordStatus>('idle')
+const wakeWordTranscript = ref('')
+const wakeWordSessionToken = ref(0)
 const chatMainRef = ref<HTMLElement | null>(null)
+const wakeWordRuntimeAvailable = BrowserSpeechRecognizer.isSupported()
 
 const voiceButtonTitle = computed(() => {
   if (isTyping.value) return '小壹正在回答中'
   return isRecording.value ? '停止语音输入' : '语音输入'
+})
+
+const wakeWordButtonTitle = computed(() => {
+  if (isTyping.value) return '小壹正在回答中'
+  if (!wakeWordRuntimeAvailable) return '当前浏览器不支持本地唤起'
+  return isWakeWordEnabled.value ? '关闭唤醒模式' : '启用唤醒模式'
 })
 
 // --- 工具函数 ---
@@ -461,7 +492,11 @@ const stopVoiceInput = () => {
   voiceRecognizer.value?.stop()
   voiceRecognizer.value = null
   isRecording.value = false
-  voiceStatusText.value = ''
+  if (isWakeWordEnabled.value) {
+    voiceStatusText.value = '正在等待唤醒词'
+  } else {
+    voiceStatusText.value = ''
+  }
 }
 
 const toggleVoiceInput = async () => {
@@ -487,6 +522,24 @@ const toggleVoiceInput = async () => {
       }
       if (status === 'stopped' || status === 'error') {
         isRecording.value = false
+        voiceRecognizer.value = null
+        if (isWakeWordEnabled.value && status !== 'error' && !isTyping.value) {
+          voiceStatusText.value = '正在等待唤醒词'
+          window.setTimeout(() => {
+            if (shouldResumeWakeWordAfterVoiceStop({
+              isWakeWordEnabled: isWakeWordEnabled.value,
+              hasWakeWordEngine: Boolean(wakeWordEngine.value),
+              hasVoiceRecognizer: Boolean(voiceRecognizer.value),
+              isTyping: isTyping.value,
+              isRecording: isRecording.value,
+              sessionToken,
+              currentSessionToken: wakeWordSessionToken.value
+            })) {
+              void startWakeWord()
+            }
+          }, 1200)
+          return
+        }
       }
       voiceStatusText.value = message || (status === 'recording' ? '正在听写，说完后点麦克风结束' : '')
     },
@@ -504,6 +557,114 @@ const toggleVoiceInput = async () => {
     voiceRecognizer.value = null
     ElMessage.error(message)
   }
+}
+
+const updateWakeWordStatusText = (status: WakeWordStatus, message?: string) => {
+  wakeWordStatus.value = status
+  if (isRecording.value && status !== 'error') return
+  voiceStatusText.value = message || (isWakeWordEnabled.value ? '正在等待唤醒词' : '')
+}
+
+const stopWakeWord = () => {
+  wakeWordSessionToken.value += 1
+  wakeWordEngine.value?.destroy()
+  wakeWordEngine.value = null
+  isWakeWordEnabled.value = false
+  wakeWordStatus.value = 'stopped'
+  wakeWordTranscript.value = ''
+  if (!isRecording.value) {
+    voiceStatusText.value = ''
+  }
+}
+
+const startWakeWord = async () => {
+  if (isTyping.value || wakeWordEngine.value) return
+
+  if (!navigator.mediaDevices?.getUserMedia) {
+    ElMessage.warning('当前浏览器不支持麦克风采集')
+    return
+  }
+
+  const sessionToken = ++wakeWordSessionToken.value
+  const engine = new BrowserWakeWordEngine({
+    keywords: DEFAULT_WAKE_WORDS,
+    onStatusChange: (status, message) => {
+      if (status === 'listening') {
+        isWakeWordEnabled.value = true
+      }
+      if (status === 'error') {
+        isWakeWordEnabled.value = false
+        wakeWordEngine.value = null
+      }
+      if (status === 'stopped' && wakeWordEngine.value === engine) {
+        wakeWordEngine.value = null
+      }
+      updateWakeWordStatusText(status, message)
+    },
+    onTranscript: (text) => {
+      wakeWordTranscript.value = text
+    },
+    onDetected: async () => {
+      if (isTyping.value || isRecording.value) return
+      updateWakeWordStatusText('detected', '已检测到唤醒词，正在开始听写')
+      engine.stop()
+      if (wakeWordEngine.value === engine) {
+        wakeWordEngine.value = null
+      }
+      try {
+        await toggleVoiceInput()
+      } finally {
+        if (isWakeWordEnabled.value) {
+          window.setTimeout(() => {
+            if (shouldResumeWakeWordAfterDetection({
+              isWakeWordEnabled: isWakeWordEnabled.value,
+              hasWakeWordEngine: Boolean(wakeWordEngine.value),
+              hasVoiceRecognizer: Boolean(voiceRecognizer.value),
+              isTyping: isTyping.value,
+              isRecording: isRecording.value,
+              sessionToken,
+              currentSessionToken: wakeWordSessionToken.value
+            })) {
+              void startWakeWord()
+            }
+          }, 1500)
+        }
+      }
+    },
+    onError: (message) => {
+      ElMessage.error(message)
+    }
+  })
+
+  wakeWordEngine.value = engine
+
+  try {
+    await engine.start()
+  } catch (error) {
+    wakeWordEngine.value = null
+    isWakeWordEnabled.value = false
+    const message = error instanceof Error ? error.message : '唤醒模式启动失败'
+    voiceStatusText.value = ''
+    ElMessage.error(message)
+  }
+}
+
+const toggleWakeWord = async () => {
+  if (isTyping.value) return
+
+  if (!wakeWordRuntimeAvailable) {
+    isWakeWordEnabled.value = false
+    voiceStatusText.value = ''
+    ElMessage.warning('当前浏览器不支持本地唤起，请先使用麦克风按钮进行语音输入')
+    return
+  }
+
+  if (isWakeWordEnabled.value) {
+    stopWakeWord()
+    return
+  }
+
+  await startWakeWord()
 }
 
 // --- 核心交互逻辑 ---
@@ -593,6 +754,8 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   stopVoiceInput()
+  wakeWordEngine.value?.destroy()
+  wakeWordEngine.value = null
 })
 </script>
 
@@ -910,7 +1073,7 @@ onBeforeUnmount(() => {
     :deep(.el-textarea__inner) {
       border: none;
       box-shadow: none;
-      padding: 16px 92px 16px 16px;
+      padding: 16px 132px 16px 16px;
       font-size: 14px;
       background: transparent;
       
@@ -941,7 +1104,7 @@ onBeforeUnmount(() => {
     }
 
     .voice-btn {
-      right: 52px;
+      right: 92px;
       cursor: pointer;
 
       &:hover {
@@ -963,6 +1126,10 @@ onBeforeUnmount(() => {
         background: transparent;
         cursor: not-allowed;
       }
+    }
+
+    .wake-btn {
+      right: 52px;
     }
 
     .send-btn {
@@ -999,6 +1166,23 @@ onBeforeUnmount(() => {
       height: 6px;
       border-radius: 50%;
       background: currentColor;
+    }
+
+    .wake-debug-chip {
+      position: absolute;
+      right: 16px;
+      top: -28px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(0, 179, 237, 0.12);
+      color: #00b3ed;
+      font-size: 12px;
+      line-height: 20px;
+
+      &.unsupported {
+        background: rgba(245, 108, 108, 0.12);
+        color: #f56c6c;
+      }
     }
   }
 }

@@ -1,4 +1,5 @@
 import CryptoJS from 'crypto-js'
+import { sharedAudioBus, type AudioChunkListener } from './audioBus'
 
 const RTASR_HOST = 'rtasr.xfyun.cn'
 const RTASR_PATH = '/v1/ws'
@@ -168,18 +169,17 @@ const parseText = (message: MessageEvent) => {
     .trim()
 }
 
+export { normalizeXfyunErrorMessage }
+
 export class XfyunRtasrRecognizer {
   private options: RtasrRecognizerOptions
   private socket: WebSocket | null = null
-  private stream: MediaStream | null = null
-  private audioContext: AudioContext | null = null
-  private sourceNode: MediaStreamAudioSourceNode | null = null
-  private processorNode: ScriptProcessorNode | null = null
   private pendingAudio = new Uint8Array()
   private sendTimer: number | null = null
   private finalText = ''
   private lastPartialText = ''
   private stopped = false
+  private audioListener: AudioChunkListener | null = null
 
   constructor(options: RtasrRecognizerOptions = {}) {
     this.options = options
@@ -258,38 +258,20 @@ export class XfyunRtasrRecognizer {
   }
 
   private async startAudio() {
-    this.stream = await navigator.mediaDevices.getUserMedia({
-      audio: {
-        channelCount: 1,
-        echoCancellation: true,
-        noiseSuppression: true,
-        autoGainControl: true
-      }
-    })
+    await sharedAudioBus.acquire()
 
-    this.audioContext = new AudioContext()
-    this.sourceNode = this.audioContext.createMediaStreamSource(this.stream)
-    this.processorNode = this.audioContext.createScriptProcessor(4096, 1, 1)
-
-    this.processorNode.onaudioprocess = (event) => {
-      const channelData = event.inputBuffer.getChannelData(0)
-      const pcm = floatTo16BitPcm(downSampleBuffer(channelData, this.audioContext!.sampleRate))
+    this.audioListener = (chunk) => {
+      const pcm = floatTo16BitPcm(chunk)
       this.pendingAudio = concatUint8Array(this.pendingAudio, pcm)
     }
-
-    this.sourceNode.connect(this.processorNode)
-    this.processorNode.connect(this.audioContext.destination)
+    sharedAudioBus.addListener(this.audioListener)
   }
 
   private stopAudio() {
-    this.processorNode?.disconnect()
-    this.sourceNode?.disconnect()
-    this.processorNode = null
-    this.sourceNode = null
-    this.stream?.getTracks().forEach((track) => track.stop())
-    this.stream = null
-    this.audioContext?.close()
-    this.audioContext = null
+    if (this.audioListener) {
+      sharedAudioBus.removeListener(this.audioListener)
+      this.audioListener = null
+    }
   }
 
   private startSender() {

@@ -7,6 +7,16 @@ interface BrowserSpeechRecognizerOptions {
 }
 
 type SpeechRecognitionConstructor = new () => SpeechRecognition
+type BrowserSpeechErrorCode =
+  | 'aborted'
+  | 'audio-capture'
+  | 'bad-grammar'
+  | 'language-not-supported'
+  | 'network'
+  | 'no-speech'
+  | 'not-allowed'
+  | 'phrases-not-supported'
+  | 'service-not-allowed'
 
 declare global {
   interface Window {
@@ -20,7 +30,7 @@ const getSpeechRecognitionConstructor = (): SpeechRecognitionConstructor | null 
   return window.SpeechRecognition || window.webkitSpeechRecognition || null
 }
 
-const mapErrorMessage = (error?: string) => {
+const mapErrorMessage = (error?: BrowserSpeechErrorCode | string) => {
   switch (error) {
     case 'not-allowed':
     case 'service-not-allowed':
@@ -36,10 +46,33 @@ const mapErrorMessage = (error?: string) => {
   }
 }
 
+const shouldAutoRecover = (error?: BrowserSpeechErrorCode | string) => {
+  return error === 'no-speech' || error === 'aborted'
+}
+
+const ensureMicrophoneAccess = async () => {
+  if (!navigator.mediaDevices?.getUserMedia) {
+    throw new Error('当前浏览器不支持麦克风采集')
+  }
+
+  const stream = await navigator.mediaDevices.getUserMedia({
+    audio: {
+      channelCount: 1,
+      echoCancellation: true,
+      noiseSuppression: true,
+      autoGainControl: true
+    }
+  })
+
+  stream.getTracks().forEach((track) => track.stop())
+}
+
 export class BrowserSpeechRecognizer {
   private options: BrowserSpeechRecognizerOptions
   private recognition: SpeechRecognition | null = null
   private stopped = false
+  private restartTimer: number | null = null
+  private shouldRestart = true
 
   constructor(options: BrowserSpeechRecognizerOptions = {}) {
     this.options = options
@@ -56,7 +89,10 @@ export class BrowserSpeechRecognizer {
     }
 
     this.stopped = false
+    this.shouldRestart = true
     this.updateStatus('connecting', '正在启动浏览器语音识别')
+
+    await ensureMicrophoneAccess()
 
     const recognition = new Recognition()
     recognition.lang = 'zh-CN'
@@ -77,15 +113,33 @@ export class BrowserSpeechRecognizer {
     }
 
     recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+      this.recognition = null
+      if (shouldAutoRecover(event.error)) {
+        this.updateStatus('connecting', '未识别到语音，继续等待中')
+        return
+      }
+
+      this.shouldRestart = false
       const message = mapErrorMessage(event.error)
       this.updateStatus('error', message)
       this.options.onError?.(message)
-      this.recognition = null
     }
 
     recognition.onend = () => {
       this.recognition = null
-      this.updateStatus(this.stopped ? 'stopped' : 'error', this.stopped ? '' : '语音识别已结束')
+      if (this.stopped || !this.shouldRestart) {
+        this.updateStatus('stopped')
+        return
+      }
+
+      this.updateStatus('connecting', '正在恢复浏览器语音识别')
+      this.restartTimer = window.setTimeout(() => {
+        void this.start().catch((error) => {
+          const message = error instanceof Error ? error.message : '浏览器语音识别失败'
+          this.updateStatus('error', message)
+          this.options.onError?.(message)
+        })
+      }, 150)
     }
 
     this.recognition = recognition
@@ -94,6 +148,11 @@ export class BrowserSpeechRecognizer {
 
   stop() {
     this.stopped = true
+    this.shouldRestart = false
+    if (this.restartTimer) {
+      window.clearTimeout(this.restartTimer)
+      this.restartTimer = null
+    }
     this.updateStatus('stopping', '正在结束听写')
     this.recognition?.stop()
   }
@@ -102,3 +161,5 @@ export class BrowserSpeechRecognizer {
     this.options.onStatusChange?.(status, message)
   }
 }
+
+export { mapErrorMessage, shouldAutoRecover }
