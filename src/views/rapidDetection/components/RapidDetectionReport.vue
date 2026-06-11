@@ -23,8 +23,8 @@
 
     <!-- 详细报表区块 -->
     <div class="report-main-table">
-      <div v-if="overallStatusLabel" class="result-stamp" :class="overallStatusLabel">
-        {{ overallStatusLabel }}
+      <div v-if="stampImageSrc" class="result-stamp-img-container">
+        <img :src="stampImageSrc" class="status-stamp-img" />
       </div>
 
       <div class="field-list-grid">
@@ -110,6 +110,11 @@ import html2canvas from 'html2canvas';
 import { ElMessage, ElLoading } from 'element-plus';
 import { formatDate } from '@/utils/formatTime';
 
+import imgYinXing from '@/assets/imgs/status/阴性.png';
+import imgYangXing from '@/assets/imgs/status/阳性.png';
+import imgRuoYang from '@/assets/imgs/status/弱阳.png';
+import imgChuCuo from '@/assets/imgs/status/出错.png';
+
 const props = defineProps({
   data: {
     type: Object,
@@ -129,15 +134,21 @@ const reportRef = ref(null);
 
 const overallStatusValue = computed(() => {
     if (!props.results || props.results.length === 0) return '待检测';
-    const hasAbnormal = props.results.some(item => item.status?.includes('异常'));
-    if (hasAbnormal) return '异常';
-    const isPositive = props.results.some(item => item.status?.includes('阳') || item.status?.includes('不合格'));
-    return isPositive ? '阳性' : '阴性';
+    const hasAbnormal = props.results.some(item => item.status?.includes('异常') || item.status?.includes('出错'));
+    if (hasAbnormal) return '出错';
+    const hasYang = props.results.some(item => (item.status?.includes('阳') && !item.status?.includes('弱阳')) || item.status?.includes('不合格'));
+    if (hasYang) return '阳性';
+    const hasRuoYang = props.results.some(item => item.status?.includes('弱阳'));
+    if (hasRuoYang) return '弱阳';
+    return '阴性';
 });
 
-const overallStatusLabel = computed(() => {
-    if (overallStatusValue.value === '异常' || overallStatusValue.value === '待检测') return '';
-    return overallStatusValue.value === '阳性' ? '阳性' : '阴性';
+const stampImageSrc = computed(() => {
+    if (overallStatusValue.value === '出错') return imgChuCuo;
+    if (overallStatusValue.value === '阳性') return imgYangXing;
+    if (overallStatusValue.value === '弱阳') return imgRuoYang;
+    if (overallStatusValue.value === '阴性') return imgYinXing;
+    return '';
 });
 
 const handleDownload = async () => {
@@ -267,28 +278,22 @@ defineExpose({
         position: relative;
         padding-top: 20px;
 
-        .result-stamp {
-            width: 100px;
-            height: 100px;
-            border: 3px double #f56c6c;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            font-weight: 800;
-            color: #f56c6c;
-            transform: rotate(-20deg);
+        .result-stamp-img-container {
             position: absolute;
             right: 40px;
             top: -10px;
-            background: rgba(255, 255, 255, 0.9);
+            width: 100px;
+            height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             z-index: 10;
-            letter-spacing: 2px;
-            
-            &.阴性 {
-                border-color: #67c23a;
-                color: #67c23a;
+            pointer-events: none;
+
+            .status-stamp-img {
+                width: 100%;
+                height: 100%;
+                object-fit: contain;
             }
         }
 

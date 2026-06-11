@@ -1,17 +1,14 @@
 <template>
   <div class="table-container" v-loading="loading">
-    <!-- 检测任务指南 -->
+    <!-- 工作方案指南 -->
     <div class="guide-card">
       <div class="card-header">
-        <h2 class="card-title">检测任务指南</h2>
+        <h2 class="card-title">工作方案指南</h2>
       </div>
       <!-- 第一行: 方案创建 -> 任务拆分 -> 任务下达 -->
       <div class="guide-steps">
         <div v-for="(step, index) in stepsRow1" :key="'row1-' + index" class="step-container">
-          <div
-            class="step-wrapper"
-            :class="{ 'is-highlight': step.highlight, 'is-disabled': step.disabled }"
-          >
+          <div class="step-wrapper" :class="{ 'is-highlight': step.highlight, 'is-disabled': step.disabled }">
             <div class="step-icon">{{ step.id }}</div>
             <div class="step-content">
               <div class="step-title">{{ step.title }}</div>
@@ -19,19 +16,9 @@
             </div>
           </div>
           <div v-if="index < stepsRow1.length - 1" class="step-arrow">
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              class="arrow-svg"
-            >
-              <path
-                d="M5 12H19M19 12L13 6M19 12L13 18"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="arrow-svg">
+              <path d="M5 12H19M19 12L13 6M19 12L13 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round" />
             </svg>
           </div>
         </div>
@@ -41,49 +28,23 @@
     <!-- 快检任务查询 -->
     <div class="query-card">
       <div class="query-form-wrapper">
-        <el-form
-          :inline="true"
-          :model="queryParams"
-          class="custom-query-form custom-query-form-row"
-          label-position="left"
-        >
+        <el-form :inline="true" :model="queryParams" class="custom-query-form custom-query-form-row"
+          label-position="left">
           <el-form-item label="">
-            <el-input
-              :prefix-icon="Search"
-              v-model="queryParams.taskName"
-              placeholder="搜索任务名称或编号"
-              class="custom-input w220"
-              clearable
-              @keyup.enter="handleQuery"
-            />
+            <el-input :prefix-icon="Search" v-model="queryParams.taskName" placeholder="搜索任务名称或编号"
+              class="custom-input w220" clearable @keyup.enter="handleQuery" />
           </el-form-item>
           <el-form-item label="">
-            <el-select
-              v-model="queryParams.status"
-              placeholder="任务状态"
-              class="custom-select"
-              clearable
-              style="width: 140px"
-            >
-              <el-option
-                v-for="dict in filteredTaskStatusOptions"
-                :key="dict.value"
-                :label="dict.label"
-                :value="dict.value"
-              />
+            <el-select v-model="queryParams.status" placeholder="任务状态" class="custom-select" clearable
+              style="width: 140px">
+              <el-option v-for="dict in filteredTaskStatusOptions" :key="dict.value" :label="dict.label"
+                :value="dict.value" />
             </el-select>
           </el-form-item>
           <el-form-item label="">
-            <el-date-picker
-              style="width: 240px !important"
-              v-model="queryDateRange"
-              type="daterange"
-              range-separator="至"
-              start-placeholder="开始日期"
-              end-placeholder="结束日期"
-              value-format="YYYY-MM-DD"
-              @change="handleDateChange"
-            />
+            <el-date-picker style="width: 240px !important" v-model="queryDateRange" type="daterange"
+              range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期" value-format="YYYY-MM-DD"
+              @change="handleDateChange" />
           </el-form-item>
           <div class="query-btns">
             <el-button @click="handleReset" class="reset-btn">重置</el-button>
@@ -96,9 +57,7 @@
       <div class="table-actions">
         <div class="actions-left"> </div>
         <div class="actions-right">
-          <el-button @click="handleExport" class="export-btn" :loading="exportLoading"
-            >导出</el-button
-          >
+          <el-button @click="handleExport" class="export-btn" :loading="exportLoading">导出</el-button>
         </div>
       </div>
 
@@ -109,24 +68,13 @@
           <el-table-column label="任务编码" prop="taskCode" width="160" align="center" />
           <el-table-column label="任务名称" prop="taskName" min-width="180" show-overflow-tooltip />
           <el-table-column label="检测地区" prop="detectionArea" width="120" align="center" />
-          <el-table-column
-            label="检测品种"
-            prop="detectionVarieties"
-            min-width="120"
-            show-overflow-tooltip
-          />
+          <el-table-column label="检测品种" prop="detectionVarieties" min-width="120" show-overflow-tooltip />
           <el-table-column label="检测进度" width="180" align="center">
             <template #default="scope">
               <div class="progress-box">
-                <el-progress
-                  :percentage="scope.row.sampleCompletionRate || 0"
-                  :stroke-width="8"
-                  color="#00B3ED"
-                  :show-text="false"
-                />
-                <span class="progress-text"
-                  >{{ scope.row.sampleCompletedCount }}/{{ scope.row.sampleCount }}</span
-                >
+                <el-progress :percentage="scope.row.sampleCompletionRate || 0" :stroke-width="8" color="#00B3ED"
+                  :show-text="false" />
+                <span class="progress-text">{{ scope.row.sampleCompletedCount }}/{{ scope.row.sampleCount }}</span>
               </div>
             </template>
           </el-table-column>
@@ -155,22 +103,12 @@
                             WITHDRAWN(4, "已撤回") -->
             <template #default="scope">
               <div class="table-operate-action-btns">
-                <el-button
-                  link
-                  type="primary"
-                  @click="handleReceive(scope.row)"
-                  v-if="scope.row.status === 0"
-                  >接收</el-button
-                >
+                <el-button link type="primary" @click="handleReceive(scope.row)"
+                  v-if="scope.row.status === 0">接收</el-button>
                 <!-- <el-button link type="primary" @click="handleUrge(scope.row)"
                                     v-if="[1, 2].includes(+scope.row.status)">催办</el-button> -->
-                <el-button
-                  link
-                  type="primary"
-                  v-if="scope.row.status === 1"
-                  @click="handleCreateTask(scope.row)"
-                  >转派</el-button
-                >
+                <el-button link type="primary" v-if="scope.row.status === 1"
+                  @click="handleCreateTask(scope.row)">转派</el-button>
                 <el-button link type="primary" @click="handleView(scope.row)">查看</el-button>
               </div>
             </template>
@@ -180,16 +118,9 @@
 
       <!-- 分页区域 -->
       <div class="pagination-wrapper">
-        <el-pagination
-          v-model:current-page="queryParams.pageNo"
-          v-model:page-size="queryParams.pageSize"
-          :total="total"
-          background
-          layout="total, sizes, prev, pager, next, jumper"
-          class="custom-pagination"
-          @size-change="handleSizeChange"
-          @current-change="handleCurrentChange"
-        />
+        <el-pagination v-model:current-page="queryParams.pageNo" v-model:page-size="queryParams.pageSize" :total="total"
+          background layout="total, sizes, prev, pager, next, jumper" class="custom-pagination"
+          @size-change="handleSizeChange" @current-change="handleCurrentChange" />
       </div>
     </div>
   </div>
@@ -220,12 +151,12 @@ const filteredTaskStatusOptions = computed(() => {
 // 第一行步骤
 const stepsRow1 = [
   { id: '01', title: '方案创建', description: '创建工作方案(如年度、专项)', disabled: true },
-  { id: '02', title: '任务拆分', description: '按承建机构拆分检测任务', disabled: true },
+  { id: '02', title: '任务拆分', description: '承检', disabled: true },
   { id: '03', title: '任务下达', description: '任务下达至承检机构', disabled: true },
   { id: '04', title: '任务接收', description: '承检机构接收任务', highlight: true },
   { id: '05', title: '任务转派（按需拆分）', description: '按需向下转派或拆分任务' },
   { id: '06', title: '检测结果查看', description: '任务内检测结果查看' },
-  { id: '07', title: '任务进度监控', description: '任务执行进度跟踪统计' }
+  { id: '07', title: '任务进度监控', description: '任务执行进度统计' }
 ]
 
 const loading = ref(false)

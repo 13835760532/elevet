@@ -9,7 +9,7 @@
         <div class="section-header">
           <span class="header-title">样品基本信息</span>
           <div class="stamp-container">
-            <div class="stamp" :class="statusClass">{{ statusText }}</div>
+            <img v-if="stampImageSrc" :src="stampImageSrc" class="status-stamp-img" />
           </div>
         </div>
         <div class="info-list">
@@ -167,6 +167,11 @@ import { useRouter, useRoute } from 'vue-router';
 import { ArrowDown } from '@element-plus/icons-vue';
 import * as DetectionTaskApi from '@/api/agri/detectionTask/index';
 
+import imgYinXing from '@/assets/imgs/status/阴性.png';
+import imgYangXing from '@/assets/imgs/status/阳性.png';
+import imgRuoYang from '@/assets/imgs/status/弱阳.png';
+import imgChuCuo from '@/assets/imgs/status/出错.png';
+
 const router = useRouter();
 const route = useRoute();
 const id = route.query.id;
@@ -199,16 +204,21 @@ const detailData = reactive({
   reportUrl: ''
 });
 
-const statusText = computed(() => {
-  if (detailData.resultStatus === '阳性') return '不合格';
-  if (detailData.resultStatus === '阴性') return '合格';
-  return '--';
-});
+
 
 const statusClass = computed(() => {
-  if (detailData.resultStatus === '阳性') return 'is-danger';
+  if (detailData.resultStatus === '阳性' || detailData.resultStatus === '异常' || detailData.resultStatus === '出错') return 'is-danger';
+  if (detailData.resultStatus === '弱阳') return 'is-warning';
   if (detailData.resultStatus === '阴性') return 'is-success';
   return '';
+});
+
+const stampImageSrc = computed(() => {
+    if (detailData.resultStatus === '阳性') return imgYangXing;
+    if (detailData.resultStatus === '弱阳') return imgRuoYang;
+    if (detailData.resultStatus === '阴性') return imgYinXing;
+    if (detailData.resultStatus === '异常' || detailData.resultStatus === '出错') return imgChuCuo;
+    return '';
 });
 
 /** 获取详情 */
@@ -432,40 +442,20 @@ const handleContinue = () => {
 /* 印章样式 */
 .stamp-container {
   position: absolute;
-  right: -10px;
+  right: 0px;
   top: -15px;
+  width: 90px;
+  height: 90px;
   z-index: 10;
-}
-
-.stamp {
-  width: 72px;
-  height: 72px;
-  border: 2px solid currentColor;
-  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
-  font-weight: bold;
-  transform: rotate(-15deg);
-  opacity: 0.7;
   pointer-events: none;
 
-  &::after {
-    content: '';
-    position: absolute;
-    width: 85%;
-    height: 85%;
-    border: 1px solid currentColor;
-    border-radius: 50%;
-  }
-
-  &.is-danger {
-    color: #f5222d;
-  }
-
-  &.is-success {
-    color: var(--el-color-success);
+  .status-stamp-img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
   }
 }
 

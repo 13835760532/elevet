@@ -6,22 +6,20 @@
             <div class="hero-body">
                 <div class="brand-badge">全程溯源 · 质量护航</div>
                 <h1 class="hero-title">每一份生机，皆可追本溯源</h1>
-                <p class="hero-subtitle">全程数字追溯，守护每一份健康承诺</p>
-                
+                <p class="hero-subtitle">全程数字追溯，守护每一份质量承诺</p>
+
                 <div class="search-portal">
                     <div class="search-inner">
-                        <el-input 
-                            v-model="searchCode" 
-                            placeholder="请输入 20 位电子合格证编号开启追溯" 
-                            class="portal-input"
-                            @keyup.enter="handleSearch"
-                        >
+                        <el-input v-model="searchCode" placeholder="请输入合格证编号开启追溯" class="portal-input"
+                            @keyup.enter="handleSearch">
                             <template #prefix>
-                                <el-icon class="search-icon"><Search /></el-icon>
+                                <el-icon class="search-icon">
+                                    <Search />
+                                </el-icon>
                             </template>
                         </el-input>
                         <el-button type="primary" class="portal-btn" @click="handleSearch">
-                            探索档案
+                            探索
                         </el-button>
                     </div>
                 </div>
@@ -36,7 +34,7 @@
                     <h2 class="section-title">基本信息</h2>
                     <div class="title-accent"></div>
                 </div>
-                
+
                 <div class="cert-code-row">
                     合格证编号：<span>{{ traceData.certificate?.certificateCode }}</span>
                 </div>
@@ -45,14 +43,39 @@
                     <!-- 左侧：详情表格 -->
                     <div class="info-table-box">
                         <table class="proto-table">
-                            <tr><td class="label">出证类型</td><td class="value">{{ getCertTypeLabel(traceData.certificate?.certificateType) }}</td></tr>
-                            <tr><td class="label">样品名称</td><td class="value">{{ traceData.certificate?.productName }}</td></tr>
-                            <tr><td class="label">重量/数量</td><td class="value">{{ traceData.certificate?.quantity }} ({{ getAgriUnitLabel(traceData.certificate?.unit) }})</td></tr>
-                            <tr><td class="label">产品产地</td><td class="value">{{ traceData.certificate?.productionArea }}</td></tr>
-                            <tr><td class="label">生产经营主体</td><td class="value">{{ traceData.certificate?.subjectName }}</td></tr>
-                            <tr><td class="label">联系人</td><td class="value">{{ traceData.certificate?.contactName }}</td></tr>
-                            <tr><td class="label">联系电话</td><td class="value">{{ traceData.certificate?.contactPhone }}</td></tr>
-                            <tr><td class="label">开具日期</td><td class="value">{{ traceData.certificate?.issueDate }}</td></tr>
+                            <tr>
+                                <td class="label">出证类型</td>
+                                <td class="value">{{ getCertTypeLabel(traceData.certificate?.certificateType) }}</td>
+                            </tr>
+                            <tr>
+                                <td class="label">样品名称</td>
+                                <td class="value">{{ traceData.certificate?.productName }}</td>
+                            </tr>
+                            <tr>
+                                <td class="label">重量/数量</td>
+                                <td class="value">{{ traceData.certificate?.quantity }} ({{
+                                    getAgriUnitLabel(traceData.certificate?.unit) }})</td>
+                            </tr>
+                            <tr>
+                                <td class="label">产品产地</td>
+                                <td class="value">{{ traceData.certificate?.productionArea }}</td>
+                            </tr>
+                            <tr>
+                                <td class="label">生产经营主体</td>
+                                <td class="value">{{ traceData.certificate?.subjectName }}</td>
+                            </tr>
+                            <tr>
+                                <td class="label">联系人</td>
+                                <td class="value">{{ traceData.certificate?.contactName }}</td>
+                            </tr>
+                            <tr>
+                                <td class="label">联系电话</td>
+                                <td class="value">{{ traceData.certificate?.contactPhone }}</td>
+                            </tr>
+                            <tr>
+                                <td class="label">开具日期</td>
+                                <td class="value">{{ traceData.certificate?.issueDate }}</td>
+                            </tr>
                         </table>
                     </div>
 
@@ -78,7 +101,8 @@
                                 <div class="hg-fields-grid">
                                     <div class="f-row">品名：{{ traceData.certificate?.productName }}</div>
                                     <div class="f-row">日期：{{ traceData.certificate?.issueDate }}</div>
-                                    <div class="f-row">数量：{{ traceData.certificate?.quantity }}{{ getAgriUnitLabel(traceData.certificate?.unit) }}</div>
+                                    <div class="f-row">数量：{{ traceData.certificate?.quantity }}{{
+                                        getAgriUnitLabel(traceData.certificate?.unit) }}</div>
                                     <div class="f-row">产地：{{ traceData.certificate?.productionArea }}</div>
                                 </div>
                             </div>
@@ -100,7 +124,7 @@
                             <div class="date">{{ node.time.split(' ')[0] }}</div>
                             <div class="hour">{{ node.time.split(' ')[1] }}</div>
                         </div>
-                        
+
                         <!-- 轨道部分：双环点 -->
                         <div class="tl-rail">
                             <div class="tl-dot" :class="node.status">
@@ -114,30 +138,18 @@
                             <div class="node-header">
                                 <div class="node-id">{{ node.typeLabel }}编号：{{ node.code }}</div>
                                 <div class="node-actions">
-                                    <el-button 
-                                        v-if="node.type === 'certificate'" 
-                                        type="primary" 
-                                        size="small" 
+                                    <el-button v-if="node.type === 'certificate'" type="primary" size="small"
                                         class="theme-flat-btn"
-                                        @click="handleViewCert(node.originData)"
-                                    >查看合格证图片</el-button>
-                                    <el-button
-                                        v-if="node.type === 'certificate'"
-                                        type="primary"
-                                        size="small"
+                                        @click="handleViewCert(node.originData)">查看合格证图片</el-button>
+                                    <el-button v-if="node.type === 'certificate'" type="primary" size="small"
                                         class="theme-flat-btn"
-                                        @click="handleOpenPrintPreview(node.originData)"
-                                    >打印合格证</el-button>
-                                    <el-button 
-                                        v-if="node.type === 'report'" 
-                                        type="primary" 
-                                        size="small" 
+                                        @click="handleOpenPrintPreview(node.originData)">打印合格证</el-button>
+                                    <el-button v-if="node.type === 'report'" type="primary" size="small"
                                         class="theme-flat-btn"
-                                        @click="handleViewReport(node.originData)"
-                                    >查看检测报告</el-button>
+                                        @click="handleViewReport(node.originData)">查看检测报告</el-button>
                                 </div>
                             </div>
-                            
+
                             <div class="node-table-wrapper">
                                 <table class="proto-table mini">
                                     <tr v-for="(detail, dIdx) in node.details" :key="dIdx">
@@ -148,7 +160,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="tl-end">
                         <div class="end-dot"></div>
                         已到达追溯链起始点
@@ -161,24 +173,31 @@
         <div v-else-if="!loading" class="hero-footer-features">
             <div class="feature-grid">
                 <div class="feature-card">
-                    <div class="icon-box primary"><el-icon><Monitor /></el-icon></div>
+                    <div class="icon-box primary"><el-icon>
+                            <Monitor />
+                        </el-icon></div>
                     <h4>全链路数字化</h4>
-                    <p>生产、检测、流通全流程存档</p>
+                    <p>生产、流通、流通全流程赋能</p>
                 </div>
                 <div class="feature-card">
-                    <div class="icon-box success"><el-icon><Check /></el-icon></div>
+                    <div class="icon-box success"><el-icon>
+                            <Check />
+                        </el-icon></div>
                     <h4>权威认证保障</h4>
                     <p>监管部门溯源码，数据真实</p>
                 </div>
                 <div class="feature-card">
-                    <div class="icon-box warning"><el-icon><Connection /></el-icon></div>
+                    <div class="icon-box warning"><el-icon>
+                            <Connection />
+                        </el-icon></div>
                     <h4>多级向上追溯</h4>
                     <p>层层深挖，直击生产源头</p>
                 </div>
             </div>
         </div>
         <!-- 合格证预览弹窗 -->
-        <el-dialog v-model="showCertVisible" title="合格证预览" width="800px" append-to-body destroy-on-close class="cert-preview-dialog">
+        <el-dialog v-model="showCertVisible" title="合格证预览" width="800px" append-to-body destroy-on-close
+            class="cert-preview-dialog">
             <div class="cert-preview-container" v-if="activeCertData">
                 <div class="cert-ticket">
                     <div class="cert-header">
@@ -186,7 +205,8 @@
                     </div>
                     <div class="cert-body">
                         <h2 class="main-title">承诺事项</h2>
-                        <h3 class="sub-title">{{ activeCertData.commitmentContent || '（1）已按规定收取并保存该批次产品的承诺达标合格证或者其他质量安全合格证明；（2）未违规使用保鲜剂、防腐剂、添加剂等。（3）对承诺的真实性负责' }}</h3>
+                        <h3 class="sub-title">{{ activeCertData.commitmentContent ||
+                            '（1）已按规定收取并保存该批次产品的承诺达标合格证或者其他质量安全合格证明；（2）未违规使用保鲜剂、防腐剂、添加剂等。（3）对承诺的真实性负责' }}</h3>
                         <div class="middle-flex">
                             <div class="basis-info">
                                 <h4 class="small-title">承诺依据：</h4>
@@ -196,7 +216,8 @@
                                 </div>
                             </div>
                             <div class="qr-code">
-                                <Qrcode v-if="activeCertData.qrCode" :text="activeCertData.qrCode"  :options="{ errorCorrectionLevel: 'L' }" :width="80" />
+                                <Qrcode v-if="activeCertData.qrCode" :text="activeCertData.qrCode"
+                                    :options="{ errorCorrectionLevel: 'L' }" :width="80" />
                             </div>
                         </div>
                     </div>
@@ -204,12 +225,31 @@
                 <div class="cert-info-table">
                     <div class="table-title">基本信息</div>
                     <div class="mini-table">
-                        <div class="m-row"><div class="m-label">产品名称</div><div class="m-val">{{ activeCertData.productName }}</div></div>
-                        <div class="m-row"><div class="m-label">重量/数量</div><div class="m-val">{{ activeCertData.quantity }}{{ getAgriUnitLabel(activeCertData.unit) }}</div></div>
-                        <div class="m-row"><div class="m-label">产品产地</div><div class="m-val">{{ activeCertData.productionArea }}</div></div>
-                        <div class="m-row"><div class="m-label">承诺主体</div><div class="m-val">{{ activeCertData.subjectName }}</div></div>
-                        <div class="m-row"><div class="m-label">联系方式</div><div class="m-val">{{ activeCertData.contactPhone }}</div></div>
-                        <div class="m-row"><div class="m-label">开具日期</div><div class="m-val">{{ activeCertData.issueDate }}</div></div>
+                        <div class="m-row">
+                            <div class="m-label">产品名称</div>
+                            <div class="m-val">{{ activeCertData.productName }}</div>
+                        </div>
+                        <div class="m-row">
+                            <div class="m-label">重量/数量</div>
+                            <div class="m-val">{{ activeCertData.quantity }}{{ getAgriUnitLabel(activeCertData.unit) }}
+                            </div>
+                        </div>
+                        <div class="m-row">
+                            <div class="m-label">产品产地</div>
+                            <div class="m-val">{{ activeCertData.productionArea }}</div>
+                        </div>
+                        <div class="m-row">
+                            <div class="m-label">承诺主体</div>
+                            <div class="m-val">{{ activeCertData.subjectName }}</div>
+                        </div>
+                        <div class="m-row">
+                            <div class="m-label">联系方式</div>
+                            <div class="m-val">{{ activeCertData.contactPhone }}</div>
+                        </div>
+                        <div class="m-row">
+                            <div class="m-label">开具日期</div>
+                            <div class="m-val">{{ activeCertData.issueDate }}</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -218,21 +258,12 @@
         <!-- 检测报告预览弹窗 -->
         <el-dialog v-model="showReportVisible" title="检测报告预览" width="900px" append-to-body destroy-on-close>
             <div class="report-preview-wrap" v-if="activeReportData">
-                <RapidDetectionReport 
-                    :data="activeReportData" 
-                    :results="activeReportData.results || []" 
-                    :editable="false" 
-                />
+                <RapidDetectionReport :data="activeReportData" :results="activeReportData.results || []"
+                    :editable="false" />
             </div>
         </el-dialog>
 
-        <el-dialog
-            v-model="printPreviewVisible"
-            title="打印预览"
-            width="840px"
-            append-to-body
-            class="cert-print-dialog"
-        >
+        <el-dialog v-model="printPreviewVisible" title="打印预览" width="840px" append-to-body class="cert-print-dialog">
             <div class="preview-section-title">热敏打印效果预览</div>
             <div class="preview-wrapper print-effect-wrapper" v-loading="printEffectLoading">
                 <img v-if="printEffectPreviewSrc" :src="printEffectPreviewSrc" class="preview-img print-effect-img" />
@@ -243,12 +274,8 @@
                 <el-button plain class="bluetooth-btn" :loading="bluetoothConnecting" @click="connectBluetoothPrinter">
                     {{ bluetoothReady ? `已连接：${printerName}` : '连接蓝牙打印机' }}
                 </el-button>
-                <el-button
-                    type="primary"
-                    :loading="bluetoothPrinting"
-                    :disabled="!preparedPrintBytes || !bluetoothReady"
-                    @click="handlePrint(previewSrc)"
-                >
+                <el-button type="primary" :loading="bluetoothPrinting"
+                    :disabled="!preparedPrintBytes || !bluetoothReady" @click="handlePrint(previewSrc)">
                     蓝牙打印
                 </el-button>
             </template>
@@ -264,7 +291,8 @@
                     <h1 class="cert-title">承诺达标合格证</h1>
                     <h2 class="cert-subtitle">承诺事项：</h2>
                     <div class="cert-declaration-list">
-                        <p v-for="(line, idx) in printCommitmentLines" :key="`trace-print-${idx}`" class="declaration-line">
+                        <p v-for="(line, idx) in printCommitmentLines" :key="`trace-print-${idx}`"
+                            class="declaration-line">
                             • {{ line }}
                         </p>
                     </div>
@@ -273,14 +301,16 @@
                         <div class="cert-basis">
                             <h3 class="basis-title" style="margin-bottom: 12px;">承诺依据：</h3>
                             <div class="custom-basis-group">
-                                <div class="basis-item" v-for="item in selectedPrintBasisOptions" :key="`trace-print-basis-${item.value}`">
+                                <div class="basis-item" v-for="item in selectedPrintBasisOptions"
+                                    :key="`trace-print-basis-${item.value}`">
                                     <span class="basis-box checked">✔</span>
                                     <span class="basis-label">{{ item.label }}</span>
                                 </div>
                             </div>
                         </div>
                         <div class="qr-code-wrapper">
-                            <Qrcode v-if="printQrText" :options="{ errorCorrectionLevel: 'L' }" :text="printQrText" :width="132" />
+                            <Qrcode v-if="printQrText" :options="{ errorCorrectionLevel: 'L' }" :text="printQrText"
+                                :width="132" />
                         </div>
                     </div>
 
@@ -292,8 +322,9 @@
                                 <div class="value">{{ activePrintCertData.productName || '--' }}</div>
                             </div>
                             <div class="info-row">
-                            <div class="label">数量/重量</div>
-                            <div class="value">{{ activePrintCertData.quantity ?? '--' }} {{ getAgriUnitLabel(activePrintCertData.unit) }}</div>
+                                <div class="label">数量/重量</div>
+                                <div class="value">{{ activePrintCertData.quantity ?? '--' }} {{
+                                    getAgriUnitLabel(activePrintCertData.unit) }}</div>
                             </div>
                             <div class="info-row">
                                 <div class="label">产品产地</div>
@@ -304,13 +335,13 @@
                                 <div class="value">{{ activePrintCertData.subjectName || '--' }}</div>
                             </div>
                             <div class="info-row">
-                            <div class="label">联系方式</div>
-                            <div class="value">{{ activePrintCertData.contactPhone || '--' }}</div>
-                        </div>
-                        <div class="info-row">
-                            <div class="label">开具时间</div>
-                            <div class="value">{{ activePrintCertData.issueDate || '--' }}</div>
-                        </div>
+                                <div class="label">联系方式</div>
+                                <div class="value">{{ activePrintCertData.contactPhone || '--' }}</div>
+                            </div>
+                            <div class="info-row">
+                                <div class="label">开具时间</div>
+                                <div class="value">{{ activePrintCertData.issueDate || '--' }}</div>
+                            </div>
                         </div>
                     </div>
 
@@ -318,7 +349,8 @@
                     <div class="image-section no-print print-keep-space">
                         <h3 class="info-title">产品图片</h3>
                         <div class="image-preview-box">
-                            <img v-if="activePrintCertData.productImageUrl" :src="activePrintCertData.productImageUrl" class="cert-product-img" alt="产品图片" />
+                            <img v-if="activePrintCertData.productImageUrl" :src="activePrintCertData.productImageUrl"
+                                class="cert-product-img" alt="产品图片" />
                             <el-icon v-else class="placeholder-icon">
                                 <Picture />
                             </el-icon>
@@ -508,7 +540,7 @@ const parseBasisData = (val: any) => {
 const traceRecords = computed(() => {
     if (!traceData.value) return [];
     const records: any[] = [];
-    
+
     if (traceData.value.certificate) {
         records.push({
             time: traceData.value.certificate.issueDate || '2025-10-01 20:46',
@@ -529,7 +561,7 @@ const traceRecords = computed(() => {
 
     if (traceData.value.detectionReport) {
         records.push({
-            time: traceData.value.detectionReport.detectionDate || '2025-09-28 14:30', 
+            time: traceData.value.detectionReport.detectionDate || '2025-09-28 14:30',
             status: 'success',
             type: 'report',
             typeLabel: '检测结果',
@@ -557,7 +589,7 @@ const traceRecords = computed(() => {
             ]
         });
     }
-    
+
     return records;
 });
 
@@ -729,7 +761,7 @@ const handleSearch = async () => {
 onMounted(() => {
     const queryCode = route.query.code as string;
     if (queryCode) { searchCode.value = queryCode; handleSearch(); }
-    bluetoothPrinter.reconnectLastDevice().catch(() => {});
+    bluetoothPrinter.reconnectLastDevice().catch(() => { });
 });
 </script>
 
@@ -752,36 +784,72 @@ $green-hg: #558B2F;
     text-align: center;
     position: relative;
     border-bottom: 1px solid #e2e8f0;
-    
+
     .brand-badge {
         display: inline-block;
         background: rgba(0, 179, 237, 0.1);
         color: $theme-color;
-        padding: 6px 16px; border-radius: 50px;
-        font-size: 13px; font-weight: 700; margin-bottom: 24px; letter-spacing: 2px;
+        padding: 6px 16px;
+        border-radius: 50px;
+        font-size: 13px;
+        font-weight: 700;
+        margin-bottom: 24px;
+        letter-spacing: 2px;
     }
-    
-    .hero-title { font-size: 48px; font-weight: 800; color: $text-dark; margin-bottom: 16px; }
-    .hero-subtitle { font-size: 18px; color: $text-sub; margin-bottom: 48px; }
+
+    .hero-title {
+        font-size: 48px;
+        font-weight: 800;
+        color: $text-dark;
+        margin-bottom: 16px;
+    }
+
+    .hero-subtitle {
+        font-size: 18px;
+        color: $text-sub;
+        margin-bottom: 48px;
+    }
 }
 
 .search-portal {
     max-width: 680px;
     margin: 0 auto;
+
     .search-inner {
-        display: flex; background: #fff; padding: 6px; border-radius: 16px;
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08); border: 1px solid #e2e8f0;
-        
+        display: flex;
+        background: #fff;
+        padding: 6px;
+        border-radius: 16px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+        border: 1px solid #e2e8f0;
+
         :deep(.portal-input) {
             flex: 1;
-            .el-input__wrapper { box-shadow: none !important; padding-left: 20px; }
-            .el-input__inner { height: 52px; font-size: 17px; }
-            .search-icon { font-size: 20px; color: $theme-color; }
+
+            .el-input__wrapper {
+                box-shadow: none !important;
+                padding-left: 20px;
+            }
+
+            .el-input__inner {
+                height: 52px;
+                font-size: 17px;
+            }
+
+            .search-icon {
+                font-size: 20px;
+                color: $theme-color;
+            }
         }
-        
+
         .portal-btn {
-            height: 52px; padding: 0 36px; border-radius: 12px;
-            font-weight: 700; font-size: 16px; background: $theme-color; border: none;
+            height: 52px;
+            padding: 0 36px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 16px;
+            background: $theme-color;
+            border: none;
         }
     }
 }
@@ -796,83 +864,269 @@ $green-hg: #558B2F;
 }
 
 .section-container {
-    background: #fff; border-radius: 16px; padding: 32px;
-    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+    background: #fff;
+    border-radius: 16px;
+    padding: 32px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
     margin-bottom: 16px;
 }
 
 .section-title-wrapper {
-    position: relative; padding-bottom: 12px; margin-bottom: 24px;
-    .section-title { font-size: 22px; font-weight: 700; color: $text-dark; margin: 0; }
-    .title-accent { position: absolute; top: -10px; left: 0; width: 40px; height: 4px; background: $theme-color; border-radius: 2px; }
+    position: relative;
+    padding-bottom: 12px;
+    margin-bottom: 24px;
+
+    .section-title {
+        font-size: 22px;
+        font-weight: 700;
+        color: $text-dark;
+        margin: 0;
+    }
+
+    .title-accent {
+        position: absolute;
+        top: -10px;
+        left: 0;
+        width: 40px;
+        height: 4px;
+        background: $theme-color;
+        border-radius: 2px;
+    }
 }
 
 .cert-code-row {
-    font-size: 16px; color: $text-sub; margin-bottom: 24px;
-    span { color: $text-dark; font-weight: 700; font-family: monospace; margin-left: 8px; }
+    font-size: 16px;
+    color: $text-sub;
+    margin-bottom: 24px;
+
+    span {
+        color: $text-dark;
+        font-weight: 700;
+        font-family: monospace;
+        margin-left: 8px;
+    }
 }
 
-.basic-info-layout { display: flex; gap: 40px; border-top: 1px solid #f1f5f9; padding-top: 30px; }
+.basic-info-layout {
+    display: flex;
+    gap: 40px;
+    border-top: 1px solid #f1f5f9;
+    padding-top: 30px;
+}
 
 .proto-table {
-    width: 100%; border-collapse: collapse;
-    tr { border-bottom: 1px solid #f8fafc; &:last-child { border-bottom: none; } }
-    td {
-        padding: 12px 10px; font-size: 14px;
-        &.label { width: 150px; color: $text-sub; text-align: right; padding-right: 30px; }
-        &.value { color: $text-dark; font-weight: 600; }
+    width: 100%;
+    border-collapse: collapse;
+
+    tr {
+        border-bottom: 1px solid #f8fafc;
+
+        &:last-child {
+            border-bottom: none;
+        }
     }
-    &.mini { border: 1px solid #fbfcfe; td.label { width: 110px; padding-right: 20px; } }
+
+    td {
+        padding: 12px 10px;
+        font-size: 14px;
+
+        &.label {
+            width: 150px;
+            color: $text-sub;
+            text-align: right;
+            padding-right: 30px;
+        }
+
+        &.value {
+            color: $text-dark;
+            font-weight: 600;
+        }
+    }
+
+    &.mini {
+        border: 1px solid #fbfcfe;
+
+        td.label {
+            width: 110px;
+            padding-right: 20px;
+        }
+    }
 }
 
 /* 合格证图样 */
-.hg-card-preview { width: 440px; }
-.hg-border-box { border: 1.5px solid $green-hg; border-radius: 4px; display: flex; background: #fff; min-height: 240px; }
+.hg-card-preview {
+    width: 440px;
+}
+
+.hg-border-box {
+    border: 1.5px solid $green-hg;
+    border-radius: 4px;
+    display: flex;
+    background: #fff;
+    min-height: 240px;
+}
+
 .hg-side-title {
-    width: 44px; background: #f1f8e9; border-right: 1.5px solid $green-hg;
-    writing-mode: vertical-rl; display: flex; align-items: center; justify-content: center;
-    color: $green-hg; font-weight: 800; font-size: 18px; letter-spacing: 6px;
+    width: 44px;
+    background: #f1f8e9;
+    border-right: 1.5px solid $green-hg;
+    writing-mode: vertical-rl;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: $green-hg;
+    font-weight: 800;
+    font-size: 18px;
+    letter-spacing: 6px;
 }
-.hg-main-box { flex: 1; padding: 12px; position: relative; }
+
+.hg-main-box {
+    flex: 1;
+    padding: 12px;
+    position: relative;
+}
+
 .hg-promise-text {
-    font-size: 10px; color: #444; .promise-header { font-weight: 700; margin-bottom: 4px; }
-    .promise-items { line-height: 1.6; margin-bottom: 12px; }
+    font-size: 10px;
+    color: #444;
+
+    .promise-header {
+        font-weight: 700;
+        margin-bottom: 4px;
+    }
+
+    .promise-items {
+        line-height: 1.6;
+        margin-bottom: 12px;
+    }
 }
-.hg-fields-grid { font-size: 10px; .f-row { margin-bottom: 4px; color: #666; } }
-.hg-qr-box { position: absolute; top: 10px; right: 10px; font-size: 24px; color: #e5e7eb; }
+
+.hg-fields-grid {
+    font-size: 10px;
+
+    .f-row {
+        margin-bottom: 4px;
+        color: #666;
+    }
+}
+
+.hg-qr-box {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 24px;
+    color: #e5e7eb;
+}
 
 /* 优化后的时间轴样式：恢复 Prototype 位置同时保留视觉优化 */
-.opt-timeline { padding-left: 150px; margin-top: 40px; }
+.opt-timeline {
+    padding-left: 150px;
+    margin-top: 40px;
+}
 
-.tl-node { display: flex; gap: 40px; margin-bottom: 40px; position: relative; }
+.tl-node {
+    display: flex;
+    gap: 40px;
+    margin-bottom: 40px;
+    position: relative;
+}
 
 .tl-time {
-    width: 130px; position: absolute; left: -170px; text-align: right; top: 6px;
-    .date { font-size: 15px; font-weight: 800; color: $text-dark; margin-bottom: 4px; }
-    .hour { font-size: 12px; color: $text-sub; }
+    width: 130px;
+    position: absolute;
+    left: -170px;
+    text-align: right;
+    top: 6px;
+
+    .date {
+        font-size: 15px;
+        font-weight: 800;
+        color: $text-dark;
+        margin-bottom: 4px;
+    }
+
+    .hour {
+        font-size: 12px;
+        color: $text-sub;
+    }
 }
 
 .tl-rail {
-    width: 24px; position: relative; display: flex; flex-direction: column; align-items: center;
+    width: 24px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
     .tl-dot {
-        width: 20px; height: 20px; background: #fff; border-radius: 50%;
-        display: flex; align-items: center; justify-content: center; z-index: 10;
-        box-shadow: 0 0 0 4px #fff, 0 2px 8px rgba(0,0,0,0.1);
-        .dot-inner { width: 10px; height: 10px; border-radius: 50%; }
-        &.primary { border: 2px solid $theme-color; .dot-inner { background: $theme-color; } }
-        &.success { border: 2px solid #8bc34a; .dot-inner { background: #8bc34a; } }
+        width: 20px;
+        height: 20px;
+        background: #fff;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10;
+        box-shadow: 0 0 0 4px #fff, 0 2px 8px rgba(0, 0, 0, 0.1);
+
+        .dot-inner {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        &.primary {
+            border: 2px solid $theme-color;
+
+            .dot-inner {
+                background: $theme-color;
+            }
+        }
+
+        &.success {
+            border: 2px solid #8bc34a;
+
+            .dot-inner {
+                background: #8bc34a;
+            }
+        }
     }
-    .tl-line { position: absolute; top: 24px; bottom: -40px; width: 1.5px; background: #e2e8f0; }
+
+    .tl-line {
+        position: absolute;
+        top: 24px;
+        bottom: -40px;
+        width: 1.5px;
+        background: #e2e8f0;
+    }
 }
 
 .tl-main-card {
-    flex: 1; border: 1px solid #eef2f6; border-radius: 12px; overflow: hidden;
-    transition: all 0.2s; &:hover { border-color: $theme-color; box-shadow: 0 4px 12px rgba(0, 179, 237, 0.08); }
+    flex: 1;
+    border: 1px solid #eef2f6;
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 0.2s;
+
+    &:hover {
+        border-color: $theme-color;
+        box-shadow: 0 4px 12px rgba(0, 179, 237, 0.08);
+    }
 }
 
 .node-header {
-    background: #f8fafc; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center;
-    border-bottom: 1px solid #f1f5f9; .node-id { font-size: 16px; font-weight: 700; color: $text-dark; }
+    background: #f8fafc;
+    padding: 12px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #f1f5f9;
+
+    .node-id {
+        font-size: 16px;
+        font-weight: 700;
+        color: $text-dark;
+    }
 }
 
 .node-actions {
@@ -882,59 +1136,195 @@ $green-hg: #558B2F;
     flex-wrap: wrap;
 }
 
-.theme-flat-btn { background: $theme-color !important; border: none !important; font-weight: 600; }
+.theme-flat-btn {
+    background: $theme-color !important;
+    border: none !important;
+    font-weight: 600;
+}
 
-.node-table-wrapper { padding: 20px; }
+.node-table-wrapper {
+    padding: 20px;
+}
 
-.tl-end { display: flex; align-items: center; gap: 12px; margin-left: 7px; color: #cbd5e1; font-size: 12px; .end-dot { width: 10px; height: 10px; border-radius: 50%; background: #e2e8f0; } }
+.tl-end {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-left: 7px;
+    color: #cbd5e1;
+    font-size: 12px;
+
+    .end-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #e2e8f0;
+    }
+}
 
 /* 初始功能展示区 */
 .hero-footer-features {
-    max-width: 1100px; margin: 40px auto 60px; padding: 0 20px;
-    .feature-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; }
+    max-width: 1100px;
+    margin: 40px auto 60px;
+    padding: 0 20px;
+
+    .feature-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 30px;
+    }
+
     .feature-card {
-        background: #fff; border-radius: 20px; padding: 40px; text-align: center; border: 1px solid #e2e8f0;
+        background: #fff;
+        border-radius: 20px;
+        padding: 40px;
+        text-align: center;
+        border: 1px solid #e2e8f0;
+
         .icon-box {
-            width: 60px; height: 60px; border-radius: 16px; margin: 0 auto 24px;
-            display: flex; align-items: center; justify-content: center; font-size: 30px;
-            &.primary { background: #e0f2fe; color: $theme-color; }
-            &.success { background: #ecfdf5; color: #10b981; }
-            &.warning { background: #fff7ed; color: #f59e0b; }
+            width: 60px;
+            height: 60px;
+            border-radius: 16px;
+            margin: 0 auto 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+
+            &.primary {
+                background: #e0f2fe;
+                color: $theme-color;
+            }
+
+            &.success {
+                background: #ecfdf5;
+                color: #10b981;
+            }
+
+            &.warning {
+                background: #fff7ed;
+                color: #f59e0b;
+            }
         }
-        h4 { font-size: 18px; font-weight: 700; color: $text-dark; margin-bottom: 8px; }
-        p { font-size: 14px; color: $text-sub; }
+
+        h4 {
+            font-size: 18px;
+            font-weight: 700;
+            color: $text-dark;
+            margin-bottom: 8px;
+        }
+
+        p {
+            font-size: 14px;
+            color: $text-sub;
+        }
     }
 }
+
 /* 合格证预览弹窗样式 */
 .cert-preview-container {
-    display: flex; gap: 30px; align-items: flex-start; padding: 10px;
-    
+    display: flex;
+    gap: 30px;
+    align-items: flex-start;
+    padding: 10px;
+
     .cert-ticket {
-        flex: 1.2; border: 1.5px solid #558B2F; border-radius: 4px; padding: 20px;
-        .cert-header { margin-bottom: 20px; .cert-id-tag { background: #f1f8e9; color: #558B2F; font-size: 12px; padding: 4px 8px; border-radius: 2px; } }
-        .main-title { font-size: 24px; font-weight: 800; text-align: center; margin-bottom: 15px; }
-        .sub-title { font-size: 14px; font-weight: 600; line-height: 1.6; margin-bottom: 20px; }
-        .middle-flex { display: flex; justify-content: space-between; }
-        .small-title { font-size: 14px; font-weight: 700; margin-bottom: 10px; }
-        .basis-text-list { font-size: 12px; color: #666; div { margin-bottom: 4px; } }
+        flex: 1.2;
+        border: 1.5px solid #558B2F;
+        border-radius: 4px;
+        padding: 20px;
+
+        .cert-header {
+            margin-bottom: 20px;
+
+            .cert-id-tag {
+                background: #f1f8e9;
+                color: #558B2F;
+                font-size: 12px;
+                padding: 4px 8px;
+                border-radius: 2px;
+            }
+        }
+
+        .main-title {
+            font-size: 24px;
+            font-weight: 800;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .sub-title {
+            font-size: 14px;
+            font-weight: 600;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .middle-flex {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .small-title {
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .basis-text-list {
+            font-size: 12px;
+            color: #666;
+
+            div {
+                margin-bottom: 4px;
+            }
+        }
     }
-    
+
     .cert-info-table {
         flex: 1;
-        .table-title { font-size: 16px; font-weight: 700; margin-bottom: 15px; }
+
+        .table-title {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+
         .mini-table {
             border: 1px solid #eee;
+
             .m-row {
-                display: flex; border-bottom: 1px solid #eee; &:last-child { border-bottom: none; }
-                .m-label { width: 100px; background: #fafafa; padding: 12px; font-size: 13px; font-weight: 600; border-right: 1px solid #eee; }
-                .m-val { flex: 1; padding: 12px; font-size: 13px; }
+                display: flex;
+                border-bottom: 1px solid #eee;
+
+                &:last-child {
+                    border-bottom: none;
+                }
+
+                .m-label {
+                    width: 100px;
+                    background: #fafafa;
+                    padding: 12px;
+                    font-size: 13px;
+                    font-weight: 600;
+                    border-right: 1px solid #eee;
+                }
+
+                .m-val {
+                    flex: 1;
+                    padding: 12px;
+                    font-size: 13px;
+                }
             }
         }
     }
 }
 
 .report-preview-wrap {
-    height: 70vh; overflow-y: auto; background: #f5f5f5; padding: 20px;
+    height: 70vh;
+    overflow-y: auto;
+    background: #f5f5f5;
+    padding: 20px;
 }
 
 .bluetooth-btn {
@@ -1012,6 +1402,7 @@ $green-hg: #558B2F;
             margin-top: 0 !important;
             margin-bottom: 12px !important;
             overflow: visible !important;
+
             .cert-no-tag {
                 font-size: 31px !important; // 放大 1.3 倍
                 font-weight: 800 !important;
@@ -1033,6 +1424,7 @@ $green-hg: #558B2F;
         .cert-declaration-list {
             text-align: left !important;
             margin: 8px 0 !important;
+
             .declaration-line {
                 font-size: 21px !important; // 放大 1.3 倍
                 margin: 4px 0 !important;
@@ -1046,6 +1438,7 @@ $green-hg: #558B2F;
             margin-top: 12px !important;
             padding-top: 8px !important;
             border-top: 1px dashed #000 !important;
+
             .info-title {
                 font-size: 23px !important; // 18 * 1.3
                 margin-bottom: 6px !important;
@@ -1055,9 +1448,11 @@ $green-hg: #558B2F;
 
         .info-table {
             border: none !important;
+
             .info-row {
                 border: none !important;
                 display: flex !important;
+
                 .label,
                 .value {
                     font-size: 23px !important; // 放大 1.3 倍
@@ -1067,6 +1462,7 @@ $green-hg: #558B2F;
                     box-shadow: none !important;
                     color: #000 !important;
                 }
+
                 .label {
                     width: 130px !important;
                 }
@@ -1075,9 +1471,11 @@ $green-hg: #558B2F;
 
         .image-section {
             margin-top: 12px !important;
+
             .info-title {
                 margin-bottom: 8px !important;
             }
+
             .image-preview-box {
                 width: 100% !important;
                 background: none !important;
@@ -1085,7 +1483,7 @@ $green-hg: #558B2F;
                 border: none !important;
                 display: flex !important;
                 justify-content: center !important;
-                
+
                 .cert-product-img {
                     max-width: 380px !important;
                     max-height: 280px !important;
@@ -1094,7 +1492,7 @@ $green-hg: #558B2F;
                     border-radius: 4px !important;
                     object-fit: contain !important;
                 }
-                
+
                 .placeholder-icon {
                     display: none !important;
                 }
@@ -1110,6 +1508,7 @@ $green-hg: #558B2F;
             display: flex !important;
             justify-content: space-between !important;
             align-items: flex-start !important;
+
             .basis-title {
                 font-size: 20px !important; // 与副标题配套
             }
@@ -1126,6 +1525,7 @@ $green-hg: #558B2F;
                 display: flex !important;
                 align-items: center !important;
                 margin-bottom: 8px !important;
+
                 .basis-box {
                     width: 32px !important;
                     height: 32px !important;
@@ -1135,6 +1535,7 @@ $green-hg: #558B2F;
                     line-height: 26px !important;
                     text-align: center !important;
                 }
+
                 .basis-label {
                     font-size: 23px !important; // 放大 1.3 倍
                     color: #000 !important;
@@ -1148,6 +1549,7 @@ $green-hg: #558B2F;
             display: flex;
             align-items: center;
             margin-bottom: 12px;
+
             .basis-box {
                 width: 18px;
                 height: 18px;
@@ -1159,12 +1561,14 @@ $green-hg: #558B2F;
                 line-height: 16px;
                 font-size: 14px;
                 background: #F5F7FA;
+
                 &.checked {
                     background: #fff;
                     border-color: #00B3ED;
                     color: #00B3ED;
                 }
             }
+
             .basis-label {
                 font-size: 14px;
                 color: #606266;
@@ -1174,6 +1578,7 @@ $green-hg: #558B2F;
 
     .cert-header {
         margin-bottom: 24px;
+
         .cert-no-tag {
             background: #F0F7FF;
             color: #333;
@@ -1205,6 +1610,7 @@ $green-hg: #558B2F;
 .qr-code-wrapper {
     width: 120px;
     height: 120px;
+
     img {
         width: 100%;
     }
@@ -1213,12 +1619,15 @@ $green-hg: #558B2F;
 .info-table {
     border: 1px solid #EDEDED;
     text-align: left;
+
     .info-row {
         display: flex;
         border-bottom: 1px solid #EDEDED;
+
         &:last-child {
             border-bottom: none;
         }
+
         .label {
             width: 140px;
             background: #F9FAFB;
@@ -1226,6 +1635,7 @@ $green-hg: #558B2F;
             font-weight: 600;
             border-right: 1px solid #EDEDED;
         }
+
         .value {
             flex: 1;
             padding: 12px;

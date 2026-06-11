@@ -3,7 +3,8 @@
         <!-- 快速检测标题 -->
         <div class="guide-card">
             <div class="card-header">
-                <h2 class="card-title">快速检测</h2>
+                <h2 class="card-title">任务检测</h2>
+                <div class="card-desc">对本机构已接收任务开始快速检测</div>
             </div>
         </div>
 
@@ -23,7 +24,7 @@
                     </el-form-item>
 
                     <el-form-item label="" prop="isReport">
-                        <el-select v-model="queryParams.isReport" placeholder="检测结果上报" clearable
+                        <el-select v-model="queryParams.isReport" placeholder="授权政府查询" clearable
                             class="rapid-task-query-field rapid-task-query-field--select">
                             <el-option label="是" :value="true" />
                             <el-option label="否" :value="false" />
@@ -87,7 +88,7 @@
                                 {{ row.checkedNum }}/{{ row.totalNum }}
                             </template>
                         </el-table-column>
-                        <el-table-column label="检测结果是否上报" prop="isReport" align="center" width="150">
+                        <el-table-column label="授权政府查询" prop="isReport" align="center" width="150">
                             <template #default="{ row }">
                                 {{ row.isReport ? '是' : '否' }}
                             </template>

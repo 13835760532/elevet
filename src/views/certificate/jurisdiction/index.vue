@@ -28,7 +28,7 @@
                 <!-- 顶部标题区 -->
                 <div class="guide-card">
                     <div class="card-header">
-                        <h2 class="card-title">辖区合格证</h2>
+                        <h2 class="card-title">辖区合格证统计</h2>
                     </div>
                     <p class="page-subtitle">本机构管辖地区合格证开具、查验、存证情况统计</p>
                 </div>
@@ -57,67 +57,64 @@
                     <div class="record-tabs">
                         <div class="tab-item" :class="{ active: activeTab === 'produce' }"
                             @click="handleTabChange('produce')">
-                            合格证开具（生产者）
+                            合格证开具
                         </div>
                         <div class="tab-item" :class="{ active: activeTab === 'verify' }"
                             @click="handleTabChange('verify')">
-                            合格证查验存证（收购者与批发市场）
+                            合格证收证
                         </div>
                     </div>
                     <div class="query-form-wrapper">
                         <el-form :model="queryParams" class="custom-query-form custom-query-form-row"
                             label-position="left">
-                            <div class="query-row" style="margin-bottom: 16px;">
-                                <el-form-item label="统计周期" prop="dateRange">
-                                    <el-date-picker v-model="queryParams.dateRange" type="daterange" range-separator="至"
-                                        start-placeholder="开始日期" end-placeholder="结束日期" value-format="YYYY-MM-DD"
-                                        class="date-picker custom-input" :prefix-icon="Search"
-                                        style="width: 240px !important;" />
-                                </el-form-item>
-                            </div>
                             <div class="query-row main-filters">
-                                <el-form-item label="合格证编号" prop="certificateCode">
-                                    <el-input v-model="queryParams.certificateCode" placeholder="请输入" clearable
-                                        class="custom-input w140" />
+                                <el-form-item label="" prop="dateRange">
+                                    <el-date-picker v-model="queryParams.dateRange" type="daterange" range-separator="-"
+                                        start-placeholder="开始日期" end-placeholder="结束日期" value-format="YYYY-MM-DD"
+                                        class="date-picker custom-input" style="width: 240px !important;" />
                                 </el-form-item>
-                                <el-form-item label="产品名称" prop="productName">
-                                    <el-input v-model="queryParams.productName" placeholder="请输入" clearable
-                                        class="custom-input w140" />
+                                <el-form-item label="" prop="certificateCode">
+                                    <el-input :prefix-icon="Search" v-model="queryParams.certificateCode"
+                                        placeholder="搜索合格证编号" clearable class="custom-input w140" />
                                 </el-form-item>
-                                <el-form-item label="生产经营企业/个人" prop="subjectName">
-                                    <el-input v-model="queryParams.subjectName" placeholder="请输入" clearable
-                                        class="custom-input w140" />
+                                <el-form-item label="" prop="productName">
+                                    <el-input :prefix-icon="Search" v-model="queryParams.productName"
+                                        placeholder="搜索产品名称" clearable class="custom-input w140" />
                                 </el-form-item>
-                                <el-form-item v-if="activeTab === 'produce'" label="状态" prop="status">
-                                    <el-select v-model="queryParams.status" placeholder="请选择" clearable
+                                <el-form-item label="" prop="subjectName">
+                                    <el-input :prefix-icon="Search" v-model="queryParams.subjectName"
+                                        placeholder="搜索生产经营企业" clearable class="custom-input w140" />
+                                </el-form-item>
+                                <el-form-item v-if="activeTab === 'produce'" label="" prop="status">
+                                    <el-select v-model="queryParams.status" placeholder="开具状态" clearable
                                         class="custom-select w100">
                                         <el-option v-for="item in certificateStatusOptions" :key="item.value"
                                             :label="item.label" :value="item.value" />
                                     </el-select>
                                 </el-form-item>
-                                <el-form-item label="产品产地" prop="productionArea">
+                                <el-form-item label="" prop="productionArea">
                                     <div class="area-selectors">
-                                        <AreaCascader v-model="areaIds" @select="handleAreaSelect" placeholder="请选择产地"
+                                        <AreaCascader v-model="areaIds" @select="handleAreaSelect" placeholder="产品产地"
                                             style="width: 260px;" />
                                     </div>
                                 </el-form-item>
-                                <el-form-item v-if="activeTab === 'verify'" label="来源" prop="certificateSource">
-                                    <el-select v-model="queryParams.certificateSource" placeholder="请选择" clearable
+                                <el-form-item v-if="activeTab === 'verify'" label="" prop="certificateSource">
+                                    <el-select v-model="queryParams.certificateSource" placeholder="来源" clearable
                                         class="custom-select w100">
                                         <el-option label="本平台" :value="1" />
                                         <el-option label="其他平台" :value="2" />
                                     </el-select>
                                 </el-form-item>
-                                <el-form-item v-if="activeTab === 'verify'" label="查验状态" prop="verificationType">
-                                    <el-select v-model="queryParams.verificationType" placeholder="请选择" clearable
+                                <!-- <el-form-item v-if="activeTab === 'verify'" label="" prop="verificationType">
+                                    <el-select v-model="queryParams.verificationType" placeholder="查验状态" clearable
                                         class="custom-select w100">
                                         <el-option label="仅查验" :value="1" />
                                         <el-option label="已存证" :value="2" />
                                     </el-select>
-                                </el-form-item>
-                                <el-form-item label="联系电话" prop="contactPhone">
-                                    <el-input v-model="queryParams.contactPhone" placeholder="请输入" clearable
-                                        class="custom-input w140" />
+                                </el-form-item> -->
+                                <el-form-item label="" prop="contactPhone">
+                                    <el-input :prefix-icon="Search" v-model="queryParams.contactPhone"
+                                        placeholder="搜索联系电话" clearable class="custom-input w140" />
                                 </el-form-item>
 
                                 <div class="query-btns">
@@ -166,13 +163,13 @@
                                         </el-tag>
                                     </template>
                                 </el-table-column>
-                                <el-table-column prop="verificationType" label="查验状态" width="100" align="center">
+                                <!-- <el-table-column prop="verificationType" label="查验状态" width="100" align="center">
                                     <template #default="scope">
                                         <el-tag :type="scope.row.verificationType === 2 ? 'success' : 'warning'">
                                             {{ scope.row.verificationType === 2 ? '已存证' : '仅查验' }}
                                         </el-tag>
                                     </template>
-                                </el-table-column>
+                                </el-table-column> -->
                                 <el-table-column prop="verificationTime" label="查验时间" width="160" align="center"
                                     :formatter="dateFormatter" />
                             </template>

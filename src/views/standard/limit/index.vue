@@ -4,7 +4,7 @@
     <div class="header-section">
       <div class="header-top">
         <h2 class="page-title">国标限量</h2>
-        <p class="page-desc">根据产品名称查询对应的国标限量数据（GB2763-2021）</p>
+        <p class="page-desc">根据产品名称查询国标限量标准</p>
       </div>
 
       <div class="search-bar">

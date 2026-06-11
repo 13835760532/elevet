@@ -10,9 +10,8 @@
             <div class="section-header">
                 <h3 class="section-title">样品检测信息</h3>
                 <div v-if="recordData && recordData.overallResult !== null && recordData.overallResult !== undefined"
-                    class="stamp"
-                    :class="{ 'stamp-fail': recordData.overallResult === 1 || recordData.overallResult === 2 }">
-                    {{ recordData.overallResult === 2 ? '结果异常' : (isQualified ? '阴性' : '阳性') }}
+                    class="stamp-img-container">
+                    <img v-if="stampImageSrc" :src="stampImageSrc" class="status-stamp-img" />
                 </div>
             </div>
 
@@ -154,13 +153,30 @@ import { formatDate } from '@/utils/formatTime';
 import { getAgriUnitLabel } from '@/utils';
 import RapidDetectionReport from '../components/RapidDetectionReport.vue';
 
+import imgYinXing from '@/assets/imgs/status/阴性.png';
+import imgYangXing from '@/assets/imgs/status/阳性.png';
+import imgRuoYang from '@/assets/imgs/status/弱阳.png';
+import imgChuCuo from '@/assets/imgs/status/出错.png';
+
 const router = useRouter();
 const route = useRoute();
 const loading = ref(false);
 
+const recordData = ref(null);
 const isQualified = computed(() => recordData.value?.overallResult === 0);
 
-const recordData = ref(null);
+const stampImageSrc = computed(() => {
+    if (!recordData.value) return '';
+    const val = recordData.value.overallResult;
+    // overallResult logic might need an update if there's a new 弱阳 enum, but if we just base it on results:
+    const hasAbnormal = resultList.value.some(item => item.result?.includes('异常') || item.result?.includes('出错') || item.status === '异常' || item.status === '出错');
+    if (hasAbnormal) return imgChuCuo;
+    const hasYang = resultList.value.some(item => item.result?.includes('阳') && !item.result?.includes('弱阳') || item.status === '阳性');
+    if (hasYang) return imgYangXing;
+    const hasRuoYang = resultList.value.some(item => item.result?.includes('弱阳') || item.status === '弱阳');
+    if (hasRuoYang) return imgRuoYang;
+    return imgYinXing; // default to 阴性 if qualified
+});
 const reportData = ref(null);
 const sampleInfo = ref({
     sampleNo: '--',
@@ -210,12 +226,14 @@ const formattedResults = computed(() => {
     return resultList.value.map(item => {
         // 标准化结果文字
         let statusText = item.result;
-        if (statusText?.includes('阳') || statusText?.includes('不合格')) {
+        if (statusText?.includes('弱阳')) {
+            statusText = '弱阳';
+        } else if (statusText?.includes('阳') || statusText?.includes('不合格')) {
             statusText = '阳性';
         } else if (statusText?.includes('阴') || statusText?.includes('合格')) {
             statusText = '阴性';
-        } else if (statusText?.includes('异常')) {
-            statusText = '异常';
+        } else if (statusText?.includes('异常') || statusText?.includes('出错')) {
+            statusText = '出错';
         }
 
         return {
@@ -373,40 +391,22 @@ const handleDownloadReport = () => {
 }
 
 /* 印章样式 */
-.stamp {
-    width: 90px;
-    height: 90px;
-    border: 4px double #52C41A;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 20px;
-    font-weight: 800;
-    color: #52C41A;
-    transform: rotate(-25deg);
-    opacity: 0.6;
-    user-select: none;
+.stamp-img-container {
     position: absolute;
     top: -10px;
     right: 40px;
-    box-shadow: 0 0 0 4px rgba(82, 196, 26, 0.1);
-    background: rgba(255, 255, 255, 0.8);
+    width: 90px;
+    height: 90px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    pointer-events: none;
 
-    &::after {
-        content: '';
-        position: absolute;
-        width: 110%;
-        height: 110%;
-        border: 1px solid currentColor;
-        border-radius: 50%;
-        opacity: 0.3;
-    }
-
-    &.stamp-fail {
-        border-color: #EF4444;
-        color: #EF4444;
-        box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1);
+    .status-stamp-img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
     }
 }
 

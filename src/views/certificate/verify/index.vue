@@ -10,28 +10,40 @@
         <!-- 查询卡 -->
         <div class="query-card">
             <div class="query-form-wrapper">
-                <el-form :model="queryParams" :inline="true" class="custom-query-form custom-query-form-row" label-position="left">
+                <el-form :model="queryParams" :inline="true" class="custom-query-form custom-query-form-row"
+                    label-position="left">
                     <el-form-item label="" prop="certNo">
-                        <el-input :prefix-icon="Search" v-model="queryParams.certNo" placeholder="请输入合格证编号查询" clearable class="custom-input w220" />
+                        <el-input :prefix-icon="Search" v-model="queryParams.certNo" placeholder="合格证编号查询" clearable
+                            class="custom-input w180" />
                     </el-form-item>
                     <el-form-item label="" prop="productName">
-                        <el-input :prefix-icon="Search" v-model="queryParams.productName" placeholder="请输入产品名称查询" clearable class="custom-input w220" />
+                        <el-input :prefix-icon="Search" v-model="queryParams.productName" placeholder="产品名称查询" clearable
+                            class="custom-input w180" />
                     </el-form-item>
                     <el-form-item label="" prop="entity">
-                        <el-input :prefix-icon="Search" v-model="queryParams.entity" placeholder="请输入经营主体信息" clearable class="custom-input w220" />
+                        <el-input :prefix-icon="Search" v-model="queryParams.entity" placeholder="生产经营主体查询" clearable
+                            class="custom-input w180" />
                     </el-form-item>
                     <el-form-item label="" prop="certType">
-                        <el-select v-model="queryParams.certType" placeholder="请选择出证类型" clearable class="custom-select">
+                        <el-select v-model="queryParams.certType" style="width: 150px!important" placeholder="出证类型"
+                            clearable class="custom-select">
                             <el-option label="生产者" :value="1" />
                             <el-option label="收购者" :value="2" />
                             <el-option label="批发市场" :value="3" />
                         </el-select>
                     </el-form-item>
                     <el-form-item label="" prop="productionArea">
-                        <AreaCascader v-model="areaIds" @select="handleAreaSelect" placeholder="请选择产地" style="width: 260px;" />
+                        <AreaCascader v-model="areaIds" @select="handleAreaSelect" placeholder="产品产地"
+                            style="width: 220px;" />
                     </el-form-item>
                     <el-form-item label="" prop="phone">
-                        <el-input :prefix-icon="Search" v-model="queryParams.phone" placeholder="请输入联系电话" clearable class="custom-input w180" />
+                        <el-input :prefix-icon="Search" v-model="queryParams.phone" placeholder="联系电话" clearable
+                            class="custom-input w180" />
+                    </el-form-item>
+                    <el-form-item label="" prop="dateRange">
+                        <el-date-picker style="width: 240px !important;" v-model="queryParams.dateRange"
+                            type="daterange" range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期"
+                            value-format="YYYY-MM-DD" class="custom-datepicker" />
                     </el-form-item>
                     <div class="query-btns">
                         <el-button @click="handleReset" class="reset-btn">重置</el-button>
@@ -44,7 +56,9 @@
             <div class="table-actions">
                 <div class="action-left">
                     <el-button type="primary" class="primary-btn" @click="handleVerify">
-                        <el-icon style="margin-right: 4px;"><Edit /></el-icon>收证
+                        <el-icon style="margin-right: 4px;">
+                            <Edit />
+                        </el-icon>收证
                     </el-button>
                 </div>
                 <div class="action-right">
@@ -57,7 +71,7 @@
                 <el-table ref="tableRef" :data="tableData" v-loading="loading" :height="tableHeight">
                     <el-table-column label="序号" type="index" width="70" align="center" />
                     <el-table-column label="合格证编号" prop="certificateCode" width="160" align="center" />
-                    <el-table-column label="来源" prop="certificateSource" width="100" align="center">
+                    <el-table-column label="收证来源" prop="certificateSource" width="100" align="center">
                         <template #default="{ row }">
                             <span class="source-tag" :class="row.certificateSource === 1 ? 'local' : 'other'">
                                 {{ row.certificateSource === 1 ? '本平台' : '其他' }}
@@ -72,11 +86,13 @@
                     </el-table-column>
                     <el-table-column label="产地" prop="productionArea" min-width="150" show-overflow-tooltip />
                     <el-table-column label="生产经营主体" prop="subjectName" min-width="200" show-overflow-tooltip />
-                    <el-table-column label="收证时间" prop="verificationTime" width="160" align="center" :formatter="dateFormatter" />
+                    <el-table-column label="收证时间" prop="verificationTime" width="160" align="center"
+                        :formatter="dateFormatter" />
                     <el-table-column label="操作" width="160" align="center" fixed="right">
                         <template #default="scope">
                             <div class="table-operate-action-btns">
-                                <span v-if="scope.row.certificateSource === 2" class="table-edit-operate" @click="handleEdit(scope.row)">编辑</span>
+                                <span v-if="scope.row.certificateSource === 2" class="table-edit-operate"
+                                    @click="handleEdit(scope.row)">编辑</span>
                                 <span class="table-view-operate" @click="handleView(scope.row)">详情</span>
                                 <span class="table-delete-operate" @click="handleDelete(scope.row)">删除</span>
                             </div>
@@ -87,16 +103,9 @@
 
             <!-- 分页区域 -->
             <div class="pagination-wrapper">
-                <el-pagination 
-                    v-model:current-page="pageNum" 
-                    v-model:page-size="pageSize" 
-                    :total="total" 
-                    layout="total, sizes, prev, pager, next, jumper" 
-                    background 
-                    class="custom-pagination"
-                    @current-change="handleCurrentChange"
-                    @size-change="handleSizeChange" 
-                />
+                <el-pagination v-model:current-page="pageNum" v-model:page-size="pageSize" :total="total"
+                    layout="total, sizes, prev, pager, next, jumper" background class="custom-pagination"
+                    @current-change="handleCurrentChange" @size-change="handleSizeChange" />
             </div>
         </div>
     </div>
@@ -134,7 +143,8 @@ const queryParams = reactive({
     province: '',
     city: '',
     county: '',
-    phone: ''
+    phone: '',
+    dateRange: [] as any
 });
 
 const pageNum = ref(1);
@@ -164,6 +174,8 @@ const loadData = async () => {
             certificateType: queryParams.certType || undefined,
             contactPhone: queryParams.phone || undefined,
             productionArea: queryParams.productionArea?.length ? queryParams.productionArea.join('/') : undefined,
+            startDate: queryParams.dateRange?.[0] ? queryParams.dateRange[0] + ' 00:00:00' : undefined,
+            endDate: queryParams.dateRange?.[1] ? queryParams.dateRange[1] + ' 23:59:59' : undefined,
         };
         const data = await CertificateApi.getCertificateVerificationPage(params);
         tableData.value = data.list || [];
@@ -204,6 +216,8 @@ const handleExport = async () => {
             certificateType: queryParams.certType || undefined,
             contactPhone: queryParams.phone || undefined,
             productionArea: queryParams.productionArea?.length ? queryParams.productionArea.join('/') : undefined,
+            startDate: queryParams.dateRange?.[0] ? queryParams.dateRange[0] + ' 00:00:00' : undefined,
+            endDate: queryParams.dateRange?.[1] ? queryParams.dateRange[1] + ' 23:59:59' : undefined,
         };
         const data = await CertificateApi.exportCertificateVerification(params);
         download.excel(data, '合格证收证记录.xls');
@@ -252,13 +266,13 @@ const handleCurrentChange = (val: number) => {
     padding: 2px 8px;
     border-radius: 4px;
     font-size: 12px;
-    
+
     &.local {
         background: rgba(0, 179, 237, 0.1);
         color: #00B3ED;
         border: 1px solid rgba(0, 179, 237, 0.2);
     }
-    
+
     &.other {
         background: rgba(144, 147, 153, 0.1);
         color: #909399;
@@ -270,25 +284,25 @@ const handleCurrentChange = (val: number) => {
     display: flex;
     justify-content: center;
     gap: 12px;
-    
+
     span {
         cursor: pointer;
         font-size: 14px;
         transition: all 0.2s;
-        
+
         &:hover {
             opacity: 0.8;
         }
     }
-    
+
     .table-edit-operate {
         color: #00B3ED;
     }
-    
+
     .table-view-operate {
         color: #67c23a;
     }
-    
+
     .table-delete-operate {
         color: #f56c6c;
     }

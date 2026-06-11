@@ -84,7 +84,8 @@ $input-default-width: 150px;
 
 .card-header {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
+    flex-direction: column;
     row-gap: 8px;
     margin-bottom: 16px;
 
@@ -99,6 +100,11 @@ $input-default-width: 150px;
         font-size: 18px;
         font-weight: 600;
         color: $text-color;
+        margin: 0;
+    }
+     .card-desc {
+        font-size: 14px;
+        color: #64748B;
         margin: 0;
     }
 }

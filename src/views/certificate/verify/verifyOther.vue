@@ -23,7 +23,7 @@
                                     <Plus />
                                 </el-icon>
                                 <div class="upload-text">
-                                    <span class="main-title">点击或拖拽上传合格证照片（进行识别）</span>
+                                    <span class="main-title">点击或拖拽上传合格证照片（AI识别）</span>
                                     <p class="sub-tips">支持 JPG、PNG、webp 格式，单个文件不超过 5MB</p>
                                 </div>
                             </div>
@@ -115,7 +115,8 @@
                                             </div>
                                             <div class="tr">
                                                 <div class="td-label">产品数量</div>
-                                                <div class="td-value">{{ formData.quantity }}{{ getAgriUnitLabel(formData.unit) }}</div>
+                                                <div class="td-value">{{ formData.quantity }}{{
+                                                    getAgriUnitLabel(formData.unit) }}</div>
                                             </div>
                                             <div class="tr">
                                                 <div class="td-label">产品产地</div>
@@ -144,8 +145,8 @@
                                 <div class="preview-header">上游合格证预览</div>
                                 <div class="external-preview-content">
                                     <div class="info-list-side">
-                                        <div class="s-item"><span class="s-label">合格证编号</span><span
-                                                class="s-val">{{ formData.certificateCode || '--' }}</span></div>
+                                        <div class="s-item"><span class="s-label">合格证编号</span><span class="s-val">{{
+                                                formData.certificateCode || '--' }}</span></div>
                                         <div class="s-item"><span class="s-label">出证类型</span><span
                                                 class="s-val">--</span></div>
                                         <div class="s-item"><span class="s-label">产品档案编号</span><span
@@ -153,7 +154,8 @@
                                         <div class="s-item required"><span class="s-label">产品名称</span><span
                                                 class="s-val">{{ formData.productName }}</span></div>
                                         <div class="s-item required"><span class="s-label">重量/数量</span><span
-                                                class="s-val">{{ formData.quantity }} {{ getAgriUnitLabel(formData.unit) }}</span></div>
+                                                class="s-val">{{ formData.quantity }} {{ getAgriUnitLabel(formData.unit)
+                                                }}</span></div>
                                         <div class="s-item required"><span class="s-label">产品产地</span><span
                                                 class="s-val">{{ formData.productionArea }}</span></div>
                                         <div class="s-item required"><span class="s-label">生产经营主体</span><span
