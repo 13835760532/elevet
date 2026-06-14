@@ -1,13 +1,8 @@
 <template>
   <div class="stat-content">
     <!-- 数据范围筛选 -->
-    <StatisticsRangeFilter
-      v-model:range-type="dateRangeType"
-      v-model:date-range="dateRange"
-      description="合格证开具统计周期"
-      @search="handleSearch"
-      @reset="handleReset"
-    >
+    <StatisticsRangeFilter v-model:range-type="dateRangeType" v-model:date-range="dateRange" description="合格证统计周期"
+      @search="handleSearch" @reset="handleReset">
       <template #extra>
         <AreaCascader v-model="areaIds" placeholder="省/市/县" @select="handleAreaSelect" />
       </template>
@@ -37,7 +32,7 @@
     <!-- 合格证开具 -->
     <div class="card-section">
       <div class="section-title">合格证开具</div>
-      
+
       <!-- 第二层筛选 -->
       <div class="result-filters">
         <el-input v-model="filters.certNo" placeholder="合格证编号" class="filter-item input-item" />
@@ -51,9 +46,11 @@
           <el-option v-for="item in productCategoryOptions" :key="item.value" :label="item.label" :value="item.value" />
         </el-select>
         <el-input v-model="filters.origin" placeholder="产地" class="filter-item" clearable />
-        <el-button type="primary" class="export-btn" @click="handleSearch">查询</el-button>
-        <el-button class="export-btn plain-btn" @click="resetTableFilters">重置</el-button>
-        <el-button type="primary" class="export-btn" @click="handleExport">导出</el-button>
+        <div class="filter-actions">
+          <el-button type="primary" class="export-btn" @click="handleSearch">查询</el-button>
+          <el-button type="primary" class="export-btn" @click="resetTableFilters">重置</el-button>
+          <el-button type="primary" class="export-btn" @click="handleExport">导出</el-button>
+        </div>
       </div>
 
       <!-- 图表区域 -->
@@ -66,7 +63,8 @@
 
       <!-- 表格区域 -->
       <div class="table-container">
-        <el-table v-loading="loading" :data="tableData" style="width: 100%" border header-cell-class-name="custom-header" empty-text="暂无合格证开具记录">
+        <el-table v-loading="loading" :data="tableData" style="width: 100%" border
+          header-cell-class-name="custom-header" empty-text="暂无合格证开具记录">
           <el-table-column type="index" label="序号" width="60" align="center" />
           <el-table-column prop="certNo" label="合格证编号" align="center" min-width="140" />
           <el-table-column prop="issueType" label="出证类型" align="center" width="100" />
@@ -75,20 +73,12 @@
           <el-table-column prop="origin" label="产地" align="center" min-width="120" show-overflow-tooltip />
           <el-table-column prop="subject" label="生产经营主体" align="center" min-width="180" show-overflow-tooltip />
           <el-table-column prop="date" label="开具日期" align="center" width="150" />
-          <el-table-column prop="contact" label="联系人(生产经营企业/个人)" align="center" min-width="160" />
-          <el-table-column prop="phone" label="联系电话(生产经营企业/个人)" align="center" min-width="160" />
         </el-table>
-        
+
         <div class="pagination-container">
           <div class="total-text">合计：{{ total }}条</div>
-          <el-pagination
-            v-model:current-page="pageNo"
-            v-model:page-size="pageSize"
-            background
-            layout="prev, pager, next"
-            :total="total"
-            @current-change="loadTable"
-          />
+          <el-pagination v-model:current-page="pageNo" v-model:page-size="pageSize" background
+            layout="prev, pager, next" :total="total" @current-change="loadTable" />
         </div>
       </div>
     </div>
@@ -129,7 +119,7 @@ const { options: productCategoryOptions, getLabel: getProductCategoryLabel } = u
 
 const filters = reactive({
   certNo: '',
-  issueType: undefined as number | undefined,
+  issueType: 3 as number | undefined,
   productName: '',
   category: '',
   origin: ''
@@ -150,10 +140,8 @@ const trendOption = computed(() => ({
     {
       name: '开具份数',
       type: 'line',
-      smooth: true,
       data: trend.value.issueCounts || [],
-      areaStyle: { opacity: 0.12 },
-      itemStyle: { color: '#faa63e' }
+      itemStyle: { color: '#00B3ED' }
     }
   ]
 }))
@@ -240,7 +228,7 @@ const handleSearch = () => {
 
 const resetTableFilters = () => {
   filters.certNo = ''
-  filters.issueType = undefined
+  filters.issueType = 3
   filters.productName = ''
   filters.category = ''
   filters.origin = ''
@@ -332,7 +320,7 @@ onMounted(() => {
     display: flex;
     align-items: baseline;
     gap: 4px;
-    
+
     .unit {
       font-size: 14px;
       font-weight: normal;
@@ -356,18 +344,28 @@ onMounted(() => {
   align-items: center;
   gap: 12px;
   margin-bottom: 30px;
-  
+
   .filter-item {
     width: 140px;
   }
-  
+
   .input-item {
     width: 180px;
   }
-  
+
   .export-btn {
     background-color: #00B3ED;
     border-color: #00B3ED;
+  }
+
+  .filter-actions {
+    margin-left: auto;
+    display: flex;
+    gap: 12px;
+  }
+
+  :deep(.el-button + .el-button) {
+    margin-left: 0;
   }
 }
 
@@ -382,7 +380,7 @@ onMounted(() => {
   align-items: center;
   position: relative;
   margin-bottom: 20px;
-  
+
   .chart-y-title {
     position: absolute;
     left: 0;
@@ -425,7 +423,7 @@ onMounted(() => {
   flex-direction: column;
   justify-content: space-between;
   pointer-events: none;
-  
+
   .grid-line {
     width: 100%;
     height: 1px;
@@ -445,7 +443,7 @@ onMounted(() => {
 /* 表格区域 */
 .table-container {
   margin-top: 10px;
-  
+
   ::v-deep(.custom-header) {
     background-color: #f5f7fa !important;
     color: #333;
@@ -460,7 +458,7 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   margin-top: 20px;
-  
+
   .total-text {
     font-size: 14px;
     color: #333;

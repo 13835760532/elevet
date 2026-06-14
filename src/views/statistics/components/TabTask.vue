@@ -1,13 +1,8 @@
 <template>
   <div class="stat-content">
     <!-- 数据范围筛选 -->
-    <StatisticsRangeFilter
-      v-model:range-type="dateRangeType"
-      v-model:date-range="dateRange"
-      description="检测任务统计周期"
-      @search="handleSearch"
-      @reset="handleReset"
-    >
+    <StatisticsRangeFilter v-model:range-type="dateRangeType" v-model:date-range="dateRange" description="检测任务统计周期"
+      @search="handleSearch" @reset="handleReset">
       <template #extra>
         <el-input v-model="keyword" placeholder="任务名称/任务编号" clearable />
       </template>
@@ -20,21 +15,29 @@
         <div class="stat-card blue-card">
           <div class="card-bg-icon">¥</div>
           <div class="card-info">
-            <div class="card-title">任务下发（检测项）</div>
+            <div class="card-title">已发任务量</div>
+            <div class="card-value">{{ formatNumber((overview as any).taskCount || total) }} <span class="unit">个</span>
+            </div>
+          </div>
+        </div>
+        <div class="stat-card blue-card-light">
+          <div class="card-bg-icon">¥</div>
+          <div class="card-info">
+            <div class="card-title">任务已下发（总检测量）</div>
             <div class="card-value">{{ formatNumber(overview.taskIssuedCount) }} <span class="unit">项次</span></div>
           </div>
         </div>
         <div class="stat-card blue-card-light">
           <div class="card-bg-icon">¥</div>
           <div class="card-info">
-            <div class="card-title">任务完成（检测项）</div>
+            <div class="card-title">任务已完成（总检测量）</div>
             <div class="card-value">{{ formatNumber(overview.taskCompletedCount) }} <span class="unit">项次</span></div>
           </div>
         </div>
         <div class="stat-card blue-card-light">
           <div class="card-bg-icon">¥</div>
           <div class="card-info">
-            <div class="card-title">任务完成率</div>
+            <div class="card-title">任务完成率（已完成/已下发）</div>
             <div class="card-value">{{ formatPercent(overview.taskCompletionRate) }}</div>
           </div>
         </div>
@@ -71,32 +74,71 @@
     <div class="card-section table-section">
       <div class="table-header">
         <div class="table-tabs">
-          <span class="t-tab active">检测任务</span>
+          <span class="t-tab" :class="{ active: activeTab === 'task' }" @click="activeTab = 'task'">检测任务</span>
           <span class="t-divider">|</span>
-          <span class="t-tab">检测结果</span>
+          <span class="t-tab" :class="{ active: activeTab === 'result' }" @click="activeTab = 'result'">检测结果</span>
         </div>
         <el-button type="primary" class="export-btn" @click="handleExport">导出</el-button>
       </div>
       <div class="table-container">
-        <el-table v-loading="loading" :data="filteredTableData" style="width: 100%" empty-text="暂无任务检测分析数据">
+        <el-table v-if="activeTab === 'task'" v-loading="loading" :data="filteredTableData" style="width: 100%" empty-text="暂无任务检测分析数据">
           <el-table-column type="index" label="序号" width="80" align="center" />
           <el-table-column prop="taskNo" label="任务编号" align="center" />
           <el-table-column prop="taskName" label="任务名称" align="center" show-overflow-tooltip />
-          <el-table-column prop="unit" label="承担单位" align="center" />
+          <el-table-column prop="unit" label="承检单位" align="center" />
           <el-table-column prop="issued" label="任务下达" align="center" />
           <el-table-column prop="completed" label="任务完成" align="center" />
           <el-table-column prop="rate" label="当前完成率" align="center" />
         </el-table>
-        <div class="pagination-container">
+
+        <!-- 检测结果筛选区 -->
+        <div class="result-filters" v-if="activeTab === 'result'">
+          <el-input v-model="resultFilters.keyword" placeholder="任务名称/任务编号" class="filter-item input-item" clearable @change="loadResultPage" />
+          <el-input v-model="resultFilters.sample" placeholder="样品" class="filter-item input-item" clearable @change="loadResultPage" />
+          <el-select v-model="resultFilters.category" placeholder="产品分类" class="filter-item" clearable @change="loadResultPage">
+            <el-option v-for="item in productCategoryOptions" :key="item.value" :label="item.label" :value="item.value" />
+          </el-select>
+          <AreaCascader v-model="resultFilters.area" placeholder="检测地区" @select="handleResultAreaSelect" class="filter-item" style="width: 150px" />
+          <el-select v-model="resultFilters.org" placeholder="检测机构" class="filter-item" clearable @change="loadResultPage"></el-select>
+          <el-select v-model="resultFilters.result" placeholder="检测结果" class="filter-item" clearable @change="loadResultPage">
+            <el-option label="阴性" :value="0" />
+            <el-option label="阳性" :value="1" />
+            <el-option label="结果异常" :value="2" />
+          </el-select>
+        </div>
+
+        <!-- 检测结果趋势图 -->
+        <div class="chart-container" v-if="activeTab === 'result' && trendOption">
+           <div class="chart-title">检测量</div>
+           <Echart :options="trendOption" height="320px" />
+        </div>
+
+        <el-table v-if="activeTab === 'result'" v-loading="resultLoading" :data="resultTableData" style="width: 100%" empty-text="暂无检测结果数据">
+          <el-table-column type="index" label="序号" width="60" align="center" />
+          <el-table-column prop="taskNo" label="任务编号" align="center" width="100" />
+          <el-table-column prop="taskName" label="任务名称" align="center" show-overflow-tooltip min-width="120" />
+          <el-table-column prop="sampleNo" label="样品编号" align="center" width="120" />
+          <el-table-column prop="sampleName" label="样品名称" align="center" width="80" />
+          <el-table-column prop="category" label="产品分类" align="center" width="80" />
+          <el-table-column prop="origin" label="产地" align="center" width="100" />
+          <el-table-column prop="subject" label="被检主体" align="center" width="120" show-overflow-tooltip />
+          <el-table-column prop="inspectArea" label="抽检地区" align="center" width="100" />
+          <el-table-column prop="inspectOrg" label="抽检机构" align="center" width="120" show-overflow-tooltip />
+          <el-table-column prop="time" label="检测时间" align="center" width="100" />
+          <el-table-column prop="resultLabel" label="检测结果" align="center" width="80" />
+          <el-table-column prop="statusText" label="检测状态" align="center" width="80" />
+        </el-table>
+
+        <div class="pagination-container" v-if="activeTab === 'task'">
           <div class="total-text">合计：{{ total }}条</div>
-          <el-pagination
-            v-model:current-page="pageNo"
-            v-model:page-size="pageSize"
-            background
-            layout="prev, pager, next"
-            :total="total"
-            @current-change="loadTaskPage"
-          />
+          <el-pagination v-model:current-page="pageNo" v-model:page-size="pageSize" background
+            layout="prev, pager, next" :total="total" @current-change="loadTaskPage" />
+        </div>
+
+        <div class="pagination-container" v-if="activeTab === 'result'">
+          <div class="total-text">合计：{{ resultTotal }}条</div>
+          <el-pagination v-model:current-page="resultPageNo" v-model:page-size="resultPageSize" background
+            layout="prev, pager, next" :total="resultTotal" @current-change="loadResultPage" />
         </div>
       </div>
     </div>
@@ -106,18 +148,39 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 import StatisticsRangeFilter from './StatisticsRangeFilter.vue'
+import Echart from '@/components/Echart/src/Echart.vue'
+import AreaCascader from '@/components/AreaCascader/index.vue'
+import { useDict } from '@/hooks/web/useDict'
 import {
   getTaskAnalysisPage,
   getTaskOverview,
+  getTaskVolumeTrend,
   type DashboardTaskOverviewRespVO,
   type TaskAnalysisRespVO
 } from '@/api/agri/dashboard/task'
+import * as DetectionRecordApi from '@/api/agri/detectionRecord'
 import { buildRangeParams, formatNumber, formatPercent, normalizePagedResult } from './statisticsData'
 import { ElMessage } from 'element-plus'
 
 const dateRangeType = ref('近一周')
 const dateRange = ref<string[]>([])
 const keyword = ref('')
+const activeTab = ref('task')
+
+const productCategoryOptions = useDict('agri_product_category', 'str').options
+const resultFilters = ref({
+  keyword: '',
+  sample: '',
+  category: '',
+  area: [] as any,
+  org: '',
+  result: ''
+})
+const handleResultAreaSelect = (area: any) => {
+  resultFilters.value.area = [area.province, area.city, area.district].filter(Boolean).join('-')
+  loadResultPage()
+}
+const trendOption = ref<any>(null)
 const overview = ref<DashboardTaskOverviewRespVO>({})
 const tableData = ref<TaskAnalysisRespVO[]>([])
 const total = ref(0)
@@ -125,12 +188,18 @@ const pageNo = ref(1)
 const pageSize = ref(10)
 const loading = ref(false)
 
+const resultTableData = ref<any[]>([])
+const resultTotal = ref(0)
+const resultPageNo = ref(1)
+const resultPageSize = ref(10)
+const resultLoading = ref(false)
+
 const currentQueryParams = computed(() => buildRangeParams(dateRangeType.value, dateRange.value))
 
 const filteredTableData = computed(() => {
   const keywordValue = keyword.value.trim()
   const source = tableData.value.map((item) => ({
-    taskNo: item.taskId ? String(item.taskId) : '--',
+    taskNo: item.taskCode || item.taskNo || (item.taskId ? String(item.taskId) : '--'),
     taskName: item.taskName || '--',
     unit: item.undertakeDeptName || '--',
     issued: formatNumber(item.sampleCount),
@@ -156,15 +225,15 @@ const loadTaskPage = async () => {
   loading.value = true
   try {
     const data = await getTaskAnalysisPage({
-      ...currentQueryParams.value,
       pageNo: pageNo.value,
-      pageSize: pageSize.value
+      pageSize: pageSize.value,
+      ...currentQueryParams.value
     })
     const normalized = normalizePagedResult<TaskAnalysisRespVO>(data)
-    tableData.value = normalized.list
-    total.value = normalized.total
+    tableData.value = normalized.list || []
+    total.value = normalized.total || 0
   } catch (error) {
-    console.error('[StatisticsTask] load task page failed:', error)
+    console.error('[StatisticsTask] load page failed:', error)
     tableData.value = []
     total.value = 0
   } finally {
@@ -172,22 +241,118 @@ const loadTaskPage = async () => {
   }
 }
 
-const loadData = () => {
-  loadOverview()
-  loadTaskPage()
+const buildResultTableQuery = () => ({
+  pageNo: resultPageNo.value,
+  pageSize: resultPageSize.value,
+  ...currentQueryParams.value,
+  recordCode: resultFilters.value.keyword || undefined,
+  sampleName: resultFilters.value.sample || undefined,
+  productCategory: resultFilters.value.category || undefined,
+  detectionArea: typeof resultFilters.value.area === 'string' ? resultFilters.value.area : undefined,
+  detectionOrgName: resultFilters.value.org || undefined,
+  overallResult: resultFilters.value.result !== '' ? resultFilters.value.result : undefined,
+  selfDetection: 'false'
+})
+
+const loadResultPage = async () => {
+  resultLoading.value = true
+  try {
+    const data = await DetectionRecordApi.getDetectionRecordPage(buildResultTableQuery())
+    const normalized = normalizePagedResult<any>(data)
+    resultTableData.value = (normalized.list || []).map(item => ({
+      ...item,
+      taskNo: item.taskCode || item.task?.taskCode || (item.taskId ? String(item.taskId) : '--'),
+      taskName: item.taskName || item.task?.taskName || '--',
+      sampleNo: item.sampleCode || item.recordCode || '--',
+      sampleName: item.productName || item.sampleName || '--',
+      category: item.productCategory ? productCategoryOptions.value?.find(o => o.value === item.productCategory)?.label || item.productCategory : '--',
+      origin: item.sampleArea || item.productionArea || item.sample?.productionArea || '--',
+      subject: item.subjectName || '--',
+      inspectArea: item.detectionArea || '--',
+      inspectOrg: item.detectionOrgName || '--',
+      time: item.detectionDate ? String(item.detectionDate).slice(0, 10) : '--',
+      resultLabel: item.overallResult === 0 ? '阴性' : item.overallResult === 1 ? '阳性' : item.overallResult === 2 ? '结果异常' : '--',
+      statusText: item.status === 1 ? '已检测' : (item.status === 0 ? '未检测' : '失败')
+    }))
+    resultTotal.value = normalized.total || 0
+  } catch (error) {
+    console.error('[StatisticsTask] load result page failed:', error)
+    resultTableData.value = []
+    resultTotal.value = 0
+  } finally {
+    resultLoading.value = false
+  }
+}
+
+const loadTrend = async () => {
+  try {
+    const data = await getTaskVolumeTrend(currentQueryParams.value)
+    if (data && data.xaxis) {
+      trendOption.value = {
+        grid: { top: 40, right: 20, bottom: 20, left: 40, containLabel: true },
+        tooltip: { trigger: 'axis' },
+        legend: {
+          data: ['样品量', '检测量'],
+          top: 0,
+          right: 20,
+          icon: 'circle'
+        },
+        xAxis: {
+          type: 'category',
+          data: data.xaxis,
+          axisLine: { lineStyle: { color: '#E2E8F0' } },
+          axisLabel: { color: '#64748B' }
+        },
+        yAxis: {
+          type: 'value',
+          splitLine: { lineStyle: { type: 'dashed', color: '#E2E8F0' } },
+          axisLabel: { color: '#64748B' }
+        },
+        series: [
+          {
+            name: '样品量',
+            type: 'line',
+            smooth: true,
+            data: data.sampleCounts || [],
+            itemStyle: { color: '#A855F7' },
+            areaStyle: { color: 'rgba(168, 85, 247, 0.1)' }
+          },
+          {
+            name: '检测量',
+            type: 'line',
+            smooth: true,
+            data: data.itemCounts || [],
+            itemStyle: { color: '#FDE047' },
+            areaStyle: { color: 'rgba(253, 224, 71, 0.1)' }
+          }
+        ]
+      }
+    } else {
+      trendOption.value = null
+    }
+  } catch (error) {
+    console.error('Failed to load trend:', error)
+    trendOption.value = null
+  }
 }
 
 const handleSearch = () => {
   pageNo.value = 1
-  loadData()
+  resultPageNo.value = 1
+  loadOverview()
+  if (activeTab.value === 'task') {
+    loadTaskPage()
+  } else {
+    loadTrend()
+    loadResultPage()
+  }
 }
 
 const handleReset = () => {
-  dateRangeType.value = '近一周'
+  dateRangeType.value = '当年'
   dateRange.value = []
   keyword.value = ''
-  pageNo.value = 1
-  loadData()
+  handleSearch()
 }
 
 const handleExport = () => {
@@ -195,12 +360,20 @@ const handleExport = () => {
 }
 
 watch([dateRangeType, dateRange], () => {
-  pageNo.value = 1
-  loadData()
+  handleSearch()
+})
+
+watch(activeTab, (val) => {
+  if (val === 'task') {
+    loadTaskPage()
+  } else {
+    loadTrend()
+    loadResultPage()
+  }
 })
 
 onMounted(() => {
-  loadData()
+  handleSearch()
 })
 
 </script>
@@ -230,7 +403,7 @@ onMounted(() => {
 /* 整体业务概况卡片 */
 .overview-cards {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 16px;
 }
 
@@ -266,7 +439,7 @@ onMounted(() => {
     display: flex;
     align-items: baseline;
     gap: 4px;
-    
+
     .unit {
       font-size: 14px;
       font-weight: normal;
@@ -353,21 +526,21 @@ onMounted(() => {
   align-items: center;
   font-size: 16px;
   font-weight: bold;
-  
+
   .t-tab {
     cursor: pointer;
     color: #333;
     transition: color 0.3s;
-    
+
     &.active {
       color: #00B3ED;
     }
-    
+
     &:hover {
       color: #00B3ED;
     }
   }
-  
+
   .t-divider {
     margin: 0 16px;
     color: #e4e7ed;
@@ -381,7 +554,7 @@ onMounted(() => {
 
 .table-container {
   margin-top: 10px;
-  
+
   ::v-deep(.el-table__header-wrapper th) {
     background-color: #f8fbff;
     color: #333;
@@ -399,6 +572,34 @@ onMounted(() => {
     font-size: 14px;
     color: #333;
     font-weight: bold;
+  }
+}
+
+.result-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 20px;
+  
+  .filter-item {
+    width: 140px;
+    &.input-item {
+      width: 160px;
+    }
+  }
+}
+
+.chart-container {
+  margin-bottom: 20px;
+  background: #fff;
+  padding: 10px 0;
+  
+  .chart-title {
+    font-size: 14px;
+    color: #333;
+    font-weight: bold;
+    margin-bottom: 10px;
+    padding-left: 10px;
   }
 }
 </style>

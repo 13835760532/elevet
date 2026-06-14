@@ -20,14 +20,14 @@
         <div class="stat-card blue-card">
           <div class="card-bg-icon">¥</div>
           <div class="card-info">
-            <div class="card-title">总样品量</div>
+            <div class="card-title">检测样品总量</div>
             <div class="card-value">{{ formatNumber(overview.sampleBatchCount) }} <span class="unit">个</span></div>
           </div>
         </div>
         <div class="stat-card blue-card-light">
           <div class="card-bg-icon">¥</div>
           <div class="card-info">
-            <div class="card-title">总检测量</div>
+            <div class="card-title">检测项目总量</div>
             <div class="card-value">{{ formatNumber(overview.detectionItemCount) }} <span class="unit">项次</span></div>
           </div>
         </div>
@@ -57,21 +57,32 @@
           <el-option label="结果异常" :value="2" />
         </el-select>
         <el-date-picker v-model="filters.date" type="daterange" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期" class="filter-item date-picker-small" />
-        <el-button type="primary" class="export-btn" @click="handleSearch">查询</el-button>
-        <el-button class="export-btn plain-btn" @click="resetResultFilters">重置</el-button>
-        <el-button type="primary" class="export-btn" @click="handleExport">导出</el-button>
+        <div class="filter-actions">
+          <el-button type="primary" class="export-btn" @click="handleSearch">查询</el-button>
+          <el-button type="primary" class="export-btn" @click="resetResultFilters">重置</el-button>
+          <el-button type="primary" class="export-btn" @click="handleExport">导出</el-button>
+        </div>
       </div>
 
       <!-- 图表区域 -->
-      <div class="chart-area-wrapper">
-        <div class="chart-header">
-          <span class="chart-y-title">检测量</span>
-          <div class="chart-legends">
-            <div class="legend-item"><span class="legend-dot purple"></span>样品量</div>
-            <div class="legend-item"><span class="legend-dot yellow"></span>阳性率</div>
+      <div class="charts-container" style="display: flex; gap: 20px; margin-bottom: 30px;">
+        <div class="chart-area-wrapper" style="flex: 1; margin-bottom: 0;">
+          <div class="chart-header">
+            <div class="chart-legends">
+              <div class="legend-item"><span class="legend-dot theme"></span>样品量</div>
+            </div>
           </div>
+          <Echart :options="sampleTrendOption" height="320px" />
         </div>
-        <Echart :options="trendOption" height="320px" />
+        
+        <div class="chart-area-wrapper" style="flex: 1; margin-bottom: 0;">
+          <div class="chart-header">
+            <div class="chart-legends">
+              <div class="legend-item"><span class="legend-dot theme"></span>阳性率</div>
+            </div>
+          </div>
+          <Echart :options="positiveTrendOption" height="320px" />
+        </div>
       </div>
 
       <!-- 表格区域 -->
@@ -80,7 +91,6 @@
           <el-table-column type="index" label="序号" width="60" align="center" />
           <el-table-column prop="taskNo" label="任务编号" align="center" width="100" />
           <el-table-column prop="taskName" label="任务名称" align="center" show-overflow-tooltip min-width="120" />
-          <el-table-column prop="type" label="类型" align="center" width="90" />
           <el-table-column prop="sampleNo" label="样品编号" align="center" width="120" />
           <el-table-column prop="sampleName" label="样品名称" align="center" width="80" />
           <el-table-column prop="category" label="产品分类" align="center" width="80" />
@@ -171,35 +181,46 @@ const tableRangeParams = computed(() => {
   return dashboardQueryParams.value
 })
 
-const trendOption = computed(() => {
+const sampleTrendOption = computed(() => {
   const xAxis = selfTrend.value.xaxis?.length
     ? selfTrend.value.xaxis
     : positiveTrend.value.xaxis || []
   return {
     grid: { top: 24, right: 36, bottom: 36, left: 48 },
     tooltip: { trigger: 'axis' },
-    xAxis: { type: 'category', boundaryGap: false, data: xAxis },
-    yAxis: [
-      { type: 'value', name: '样品量' },
-      { type: 'value', name: '阳性率(%)' }
-    ],
+    xAxis: { type: 'category', data: xAxis },
+    yAxis: { type: 'value', name: '样品量' },
     series: [
       {
         name: '样品量',
-        type: 'line',
-        smooth: true,
+        type: 'bar',
+        barMaxWidth: 30,
         data: selfTrend.value.sampleCounts || [],
-        areaStyle: { opacity: 0.12 },
-        itemStyle: { color: '#8D76FF' }
-      },
+        itemStyle: { color: '#00B3ED' }
+      }
+    ]
+  }
+})
+
+const positiveTrendOption = computed(() => {
+  const xAxis = selfTrend.value.xaxis?.length
+    ? selfTrend.value.xaxis
+    : positiveTrend.value.xaxis || []
+  return {
+    grid: { top: 24, right: 36, bottom: 36, left: 48 },
+    tooltip: { 
+      trigger: 'axis',
+      valueFormatter: (value: any) => value + '%'
+    },
+    xAxis: { type: 'category', data: xAxis },
+    yAxis: { type: 'value', name: '阳性率(%)' },
+    series: [
       {
         name: '阳性率',
-        type: 'line',
-        smooth: true,
-        yAxisIndex: 1,
+        type: 'bar',
+        barMaxWidth: 30,
         data: positiveTrend.value.positiveRates || [],
-        areaStyle: { opacity: 0.1 },
-        itemStyle: { color: '#faa63e' }
+        itemStyle: { color: '#00B3ED' }
       }
     ]
   }
@@ -428,6 +449,16 @@ onMounted(() => {
   gap: 12px;
   margin-bottom: 30px;
   
+  .filter-actions {
+    margin-left: auto;
+    display: flex;
+    gap: 12px;
+  }
+
+  :deep(.el-button + .el-button) {
+    margin-left: 0;
+  }
+  
   .filter-item {
     width: 130px;
   }
@@ -484,12 +515,8 @@ onMounted(() => {
     height: 16px;
     border-radius: 50%;
     
-    &.purple {
-      background-color: #d1c4e9; /* Light purple for legend */
-    }
-    
-    &.yellow {
-      background-color: #fff9c4; /* Light yellow for legend */
+    &.theme {
+      background-color: #00B3ED;
     }
   }
 }

@@ -17,14 +17,14 @@
         <div class="stat-card blue-card">
           <div class="card-bg-icon">¥</div>
           <div class="card-info">
-            <div class="card-title">涉及样品量</div>
+            <div class="card-title">样品档案量</div>
             <div class="card-value">10,273 <span class="unit">↑</span></div>
           </div>
         </div>
         <div class="stat-card blue-card-light">
           <div class="card-bg-icon">¥</div>
           <div class="card-info">
-            <div class="card-title">涉及生产经营主体量</div>
+            <div class="card-title">主体档案量 (生产经营企业或个人)</div>
             <div class="card-value">10,273 <span class="unit">↑</span></div>
           </div>
         </div>
@@ -151,7 +151,6 @@
           <el-table-column prop="name" label="产品名称" align="center" width="100" />
           <el-table-column prop="category" label="产品类别" align="center" width="100" />
           <el-table-column prop="origin" label="产品产地" align="center" width="100" />
-          <el-table-column prop="subjectType" label="被检主体类型" align="center" width="120" />
           <el-table-column prop="subjectName" label="主体名称" align="center" min-width="160" show-overflow-tooltip />
           <el-table-column prop="filingDate" label="建档日期" align="center" width="120" />
           <el-table-column prop="createOrg" label="创建机构" align="center" min-width="140" show-overflow-tooltip />
@@ -312,7 +311,6 @@ const tableDataProduct = ref([
     left: 0;
     font-size: 14px;
     color: #333;
-    font-weight: bold;
   }
 }
 

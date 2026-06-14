@@ -39,7 +39,7 @@ withDefaults(
   {
     label: '数据范围',
     description: '',
-    presets: () => ['近一周', '近一月', '今年']
+    presets: () => ['近一周', '近一月', '去年', '当年']
   }
 )
 

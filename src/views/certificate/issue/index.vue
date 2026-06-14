@@ -101,10 +101,8 @@
                     <el-table-column label="产品类别" prop="productCategory" width="160" align="center"
                         show-overflow-tooltip>
                         <template #default="scope">
-                            <el-tag v-if="scope.row.productCategory" effect="light" type="primary">
-                                {{productCategoryOptions.find(item => item.value === scope.row.productCategory)?.label
-                                    ||
-                                    scope.row.productCategory}}
+                            <el-tag v-if="scope.row.productCategory" effect="light" type="primary" class="truncate-tag">
+                                {{productCategoryOptions.find(item => item.value === scope.row.productCategory)?.label || scope.row.productCategory}}
                             </el-tag>
                             <span v-else>--</span>
                         </template>
@@ -382,6 +380,18 @@ const handleCurrentChange = (val: number) => {
 /* 页面特有样式（公共样式已在 App.vue 全局引入） */
 .custom-datepicker {
     width: 260px !important;
+}
+
+.truncate-tag {
+    max-width: 100%;
+    display: inline-flex;
+    justify-content: flex-start;
+}
+
+:deep(.truncate-tag .el-tag__content) {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .type-tag {

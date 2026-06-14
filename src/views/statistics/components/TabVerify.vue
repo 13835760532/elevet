@@ -73,7 +73,7 @@
           <el-table-column prop="category" label="产品类别" align="center" width="120" />
           <el-table-column prop="origin" label="产地" align="center" min-width="140" show-overflow-tooltip />
           <el-table-column prop="subject" label="生产经营主体" align="center" min-width="200" show-overflow-tooltip />
-          <el-table-column prop="time" label="存证时间" align="center" min-width="160" />
+          <el-table-column prop="time" label="收证时间" align="center" min-width="160" />
         </el-table>
         
         <div class="pagination-container">
@@ -94,6 +94,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from 'vue'
+import dayjs from 'dayjs'
 import StatisticsRangeFilter from './StatisticsRangeFilter.vue'
 import AreaCascader from '@/components/AreaCascader/index.vue'
 import { Echart } from '@/components/Echart'
@@ -173,7 +174,7 @@ const mapRow = (item: any) => ({
   category: item.productCategory ? getProductCategoryLabel(item.productCategory) : '--',
   origin: item.productionArea || '--',
   subject: item.subjectName || '--',
-  time: item.verificationTime || item.createTime || '--'
+  time: (item.verificationTime || item.createTime) ? dayjs(item.verificationTime || item.createTime).format('YYYY-MM-DD HH:mm:ss') : '--'
 })
 
 const loadDashboardData = async () => {

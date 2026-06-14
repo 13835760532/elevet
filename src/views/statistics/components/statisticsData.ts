@@ -5,33 +5,43 @@ export interface StatisticsQueryParams {
   endDate?: string
   provinceName?: string
   cityName?: string
+  dateType?: number
+  timeUnit?: 'DAY' | 'MONTH'
 }
 
 export const buildRangeParams = (rangeType: string, dateRange: string[]): StatisticsQueryParams => {
+  let startDate = ''
+  let endDate = ''
+
   if (Array.isArray(dateRange) && dateRange.length === 2 && dateRange[0] && dateRange[1]) {
-    return {
-      startDate: dateRange[0],
-      endDate: dateRange[1]
+    startDate = dateRange[0]
+    endDate = dateRange[1]
+  } else {
+    const today = dayjs()
+    if (rangeType === '近一周') {
+      startDate = today.subtract(6, 'day').format('YYYY-MM-DD')
+      endDate = today.format('YYYY-MM-DD')
+    } else if (rangeType === '近一月') {
+      startDate = today.subtract(1, 'month').add(1, 'day').format('YYYY-MM-DD')
+      endDate = today.format('YYYY-MM-DD')
+    } else if (rangeType === '去年') {
+      startDate = today.subtract(1, 'year').startOf('year').format('YYYY-MM-DD')
+      endDate = today.subtract(1, 'year').endOf('year').format('YYYY-MM-DD')
+    } else {
+      // 默认当年
+      startDate = today.startOf('year').format('YYYY-MM-DD')
+      endDate = today.format('YYYY-MM-DD')
     }
   }
 
-  const today = dayjs()
-  if (rangeType === '近一周') {
-    return {
-      startDate: today.subtract(6, 'day').format('YYYY-MM-DD'),
-      endDate: today.format('YYYY-MM-DD')
-    }
-  }
-  if (rangeType === '近一月') {
-    return {
-      startDate: today.subtract(1, 'month').add(1, 'day').format('YYYY-MM-DD'),
-      endDate: today.format('YYYY-MM-DD')
-    }
-  }
+  const diff = dayjs(endDate).diff(dayjs(startDate), 'day')
+  const isDaily = diff <= 31
 
   return {
-    startDate: today.startOf('year').format('YYYY-MM-DD'),
-    endDate: today.format('YYYY-MM-DD')
+    startDate,
+    endDate,
+    dateType: isDaily ? 1 : 2, // 1按天 2按月
+    timeUnit: isDaily ? 'DAY' : 'MONTH'
   }
 }
 
@@ -44,7 +54,7 @@ export const formatNumber = (value?: number | string, fractionDigits = 0) => {
   })
 }
 
-export const formatPercent = (value?: number | string) => `${formatNumber(value, 2)}%`
+export const formatPercent = (value?: number | string) => `${formatNumber(value, 1)}%`
 
 export const getStatValue = (
   item: { statValue?: number; detectionCount?: number; positiveRate?: number; positiveCount?: number },

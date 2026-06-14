@@ -37,6 +37,8 @@ export interface TaskAnalysisPageQueryParams extends TaskDashboardQueryParams {
 
 export interface TaskAnalysisRespVO {
   taskId?: number
+  taskNo?: string
+  taskCode?: string
   taskName?: string
   undertakeDeptName?: string
   sampleCount?: number
