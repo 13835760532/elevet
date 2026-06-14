@@ -4,13 +4,13 @@
         <div class="header-section">
             <div class="header-top">
                 <h2 class="page-title">农产品指标推荐</h2>
-                <p class="page-desc">根据农产品名称、分类快速查询并推荐对应的检测指标</p>
+                <p class="page-desc">根据产品名称或分类推荐不同的检测指标</p>
             </div>
 
             <div class="search-bar">
-                <el-form :inline="true" @submit.prevent>
-                    <el-form-item class="!mb-0" style="margin-right: 0;">
-                        <el-input :prefix-icon="Search" v-model="queryParams.keyword" placeholder="搜索农产品名称或关键词查询指标"
+                <el-form :inline="true" @submit.prevent class="full-width-form">
+                    <el-form-item class="!mb-0 search-input-item">
+                        <el-input :prefix-icon="Search" v-model="queryParams.keyword" placeholder="搜索农产品名称或关键词查询产品对应的指标"
                             class="custom-search-input" clearable @keyup.enter="handleSearch" />
                     </el-form-item>
                     <el-button type="primary" class="search-btn" @click="handleSearch">
@@ -26,26 +26,26 @@
                 <div v-for="(item, index) in list" :key="index" class="data-card">
                     <div class="card-info">
                         <div class="info-row">
-                            <span class="label">农产品名称：</span>
-                            <span class="value name-highlight">{{ item.produceName }}</span>
+                            <span class="label">产品名称：</span>
+                            <span class="value name-highlight">{{ item.produceName || '-' }}</span>
                         </div>
                         <div class="info-row">
                             <span class="label">产品分类：</span>
-                            <span class="value">{{ item.fullCategory || '--' }}</span>
+                            <span class="value">{{ item.fullCategory || '-' }}</span>
                         </div>
                     </div>
 
                     <div class="card-table">
                         <el-table :data="item.targetRanges" style="width: 100%" border size="small">
-                            <el-table-column prop="targetCategory" label="指标分类" align="center" width="130"
-                                show-overflow-tooltip />
-                            <el-table-column prop="targetName" label="目标物名称" align="center" min-width="120" />
-                            <el-table-column label="禁限类型" align="center" width="100">
-                                <template #default="scope">
-                                    <el-tag :type="getRestrictionTag(scope.row.restrictionType)" size="small">
-                                        {{ getRestrictionLabel(scope.row.restrictionType) }}
-                                    </el-tag>
-                                </template>
+                            <el-table-column type="index" label="序号" align="center" width="60" />
+                            <el-table-column prop="detectCategory" label="检测类别" align="center" width="130" show-overflow-tooltip>
+                                <template #default="scope">{{ scope.row.detectCategory || '-' }}</template>
+                            </el-table-column>
+                            <el-table-column prop="targetCategory" label="检测项类别" align="center" width="130" show-overflow-tooltip>
+                                <template #default="scope">{{ scope.row.targetCategory || '-' }}</template>
+                            </el-table-column>
+                            <el-table-column prop="targetName" label="指标" align="center" min-width="120">
+                                <template #default="scope">{{ scope.row.targetName || '-' }}</template>
                             </el-table-column>
                         </el-table>
                     </div>
@@ -145,11 +145,15 @@ onMounted(() => {
 .header-section {
     background: #fff;
     padding: 16px 20px;
-    border-bottom: 1px solid #ebeef5;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.03);
+    position: relative;
+    z-index: 10;
     flex-shrink: 0;
 
     .header-top {
         margin-bottom: 16px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid #ebeef5;
 
         .page-title {
             font-size: 20px;
@@ -166,8 +170,22 @@ onMounted(() => {
     }
 
     .search-bar {
+        .full-width-form {
+            display: flex;
+            width: 100%;
+        }
+
+        .search-input-item {
+            flex: 1;
+            margin-right: 0;
+            :deep(.el-form-item__content) {
+                width: 100%;
+                display: flex;
+            }
+        }
+
         .custom-search-input {
-            width: 520px;
+            width: 100%;
 
             :deep(.el-input__wrapper) {
                 background-color: #f4f6f8;
@@ -197,7 +215,7 @@ onMounted(() => {
 .grid-container {
     flex: 1;
     overflow-y: auto;
-    padding: 16px 20px;
+    padding: 10px 20px 16px 20px;
 }
 
 .data-grid {
@@ -236,7 +254,7 @@ onMounted(() => {
         .label {
             color: #606266;
             width: 90px;
-            text-align: right;
+            text-align: left;
             flex-shrink: 0;
         }
 
@@ -255,7 +273,9 @@ onMounted(() => {
 .footer-pagination {
     background: #fff;
     padding: 12px 24px;
-    border-top: 1px solid #ebeef5;
+    box-shadow: 0 -3px 12px rgba(0, 0, 0, 0.03);
+    position: relative;
+    z-index: 10;
     display: flex;
     justify-content: flex-end;
     flex-shrink: 0;

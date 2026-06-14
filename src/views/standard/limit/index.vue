@@ -4,12 +4,12 @@
     <div class="header-section">
       <div class="header-top">
         <h2 class="page-title">国标限量</h2>
-        <p class="page-desc">根据产品名称查询国标限量标准</p>
+        <p class="page-desc">根据产品名称或目标检测项查询对应的国标限量数据 （GB2763-2021、 GB31650）</p>
       </div>
 
       <div class="search-bar">
-        <el-form :inline="true" @submit.prevent>
-          <el-form-item class="!mb-0" style="margin-right: 0;">
+        <el-form :inline="true" @submit.prevent class="full-width-form">
+          <el-form-item class="!mb-0 search-input-item">
             <el-input :prefix-icon="Search" v-model="queryParams.keyword" placeholder="搜索农药化学名称、食物名称、用途查询国标限量信息"
               class="custom-search-input" clearable @keyup.enter="handleSearch" />
           </el-form-item>
@@ -27,22 +27,26 @@
           <div class="card-info">
             <div class="info-row">
               <span class="label">目标物名称：</span>
-              <span class="value name-highlight">{{ item.targetName }}</span>
+              <span class="value name-highlight">{{ item.targetName || '-' }}</span>
             </div>
             <div class="info-row">
               <span class="label">主要用途：</span>
-              <span class="value">{{ item.mainPurpose || '--' }}</span>
+              <span class="value">{{ item.mainPurpose || '-' }}</span>
             </div>
           </div>
 
           <div class="card-table">
             <el-table :data="item.produceRanges" style="width: 100%" border size="small">
-              <el-table-column prop="foodCategory" label="食品类别" align="center" width="130" show-overflow-tooltip />
-              <el-table-column prop="foodName" label="食品名称" align="center" min-width="100" />
+              <el-table-column prop="foodCategory" label="食品类别" align="center" width="130" show-overflow-tooltip>
+                <template #default="scope">{{ scope.row.foodCategory || '-' }}</template>
+              </el-table-column>
+              <el-table-column prop="foodName" label="食品名称" align="center" min-width="100">
+                <template #default="scope">{{ scope.row.foodName || '-' }}</template>
+              </el-table-column>
               <el-table-column label="最大残留限量 (MRL)" align="center" width="160">
                 <template #default="scope">
                   <div class="limit-value">
-                    <span class="num">{{ scope.row.maxResidueLimit }}</span>
+                    <span class="num">{{ scope.row.maxResidueLimit || '-' }}</span>
                     <span class="unit">{{ scope.row.unit }}</span>
                   </div>
                 </template>
@@ -125,11 +129,15 @@ onMounted(() => {
 .header-section {
   background: #fff;
   padding: 16px 20px;
-  border-bottom: 1px solid #ebeef5;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.03);
+  position: relative;
+  z-index: 10;
   flex-shrink: 0;
 
   .header-top {
     margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #ebeef5;
 
     .page-title {
       font-size: 20px;
@@ -146,8 +154,22 @@ onMounted(() => {
   }
 
   .search-bar {
+    .full-width-form {
+      display: flex;
+      width: 100%;
+    }
+
+    .search-input-item {
+      flex: 1;
+      margin-right: 0;
+      :deep(.el-form-item__content) {
+        width: 100%;
+        display: flex;
+      }
+    }
+
     .custom-search-input {
-      width: 520px;
+      width: 100%;
       display: flex;
       justify-content: flex-start;
 
@@ -179,7 +201,7 @@ onMounted(() => {
 .grid-container {
   flex: 1;
   overflow-y: auto;
-  padding: 16px 20px;
+  padding: 10px 20px 16px 20px;
 }
 
 .data-grid {
@@ -218,7 +240,7 @@ onMounted(() => {
     .label {
       color: #606266;
       width: 90px;
-      text-align: right;
+      text-align: left;
       flex-shrink: 0;
     }
 
