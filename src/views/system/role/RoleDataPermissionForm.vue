@@ -10,7 +10,11 @@
       <el-form-item label="权限范围">
         <el-select v-model="formData.dataScope">
           <el-option
-            v-for="item in getIntDictOptions(DICT_TYPE.SYSTEM_DATA_SCOPE)"
+            v-for="item in getIntDictOptions(DICT_TYPE.SYSTEM_DATA_SCOPE).filter(
+              (i) =>
+                i.value !== SystemDataScopeEnum.DEPT_CUSTOM &&
+                i.value !== SystemDataScopeEnum.DEPT_AND_CHILD
+            )"
             :key="item.value"
             :label="item.label"
             :value="item.value"

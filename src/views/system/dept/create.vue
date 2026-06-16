@@ -26,43 +26,30 @@
           </el-form-item> -->
 
           <!-- 所属行业 -->
-          <el-form-item label="所属行业" prop="industry">
+          <!-- <el-form-item label="所属行业" prop="industry">
             <el-select v-model="formData.industry" placeholder="选择所属行业" class="full-width">
-              <el-option
-                v-for="dict in industryOptions"
-                :key="dict.value"
-                :label="dict.label"
-                :value="dict.value"
-              />
+              <el-option v-for="dict in industryOptions" :key="dict.value" :label="dict.label" :value="dict.value" />
+            </el-select>
+          </el-form-item> -->
+          <!-- 备案主体类型 -->
+          <el-form-item label="备案主体类型" prop="subjectType">
+            <el-select v-model="formData.subjectType" placeholder="选择备案主体类型" class="full-width"
+              @change="handleSubjectTypeChange">
+              <el-option v-for="dict in filingSubjectTypeOptions" :key="dict.value" :label="dict.label"
+                :value="dict.value" />
             </el-select>
           </el-form-item>
-
           <!-- 机构类型 -->
           <el-form-item label="机构类型" prop="deptType">
             <el-select v-model="formData.deptType" placeholder="选择机构类型" class="full-width">
               <el-option label="监管机构" :value="1" />
               <el-option label="检测机构" :value="2" />
-              <el-option label="企业" :value="3" />
-              <el-option label="系统部门" :value="4" />
+              <el-option label="生产经营企业（企业/类型）" :value="3" />
+              <el-option label="系统机构管理" :value="4" />
             </el-select>
           </el-form-item>
 
-          <!-- 备案主体类型 -->
-          <el-form-item label="备案主体类型" prop="subjectType">
-            <el-select
-              v-model="formData.subjectType"
-              placeholder="选择备案主体类型"
-              class="full-width"
-              @change="handleSubjectTypeChange"
-            >
-              <el-option
-                v-for="dict in filingSubjectTypeOptions"
-                :key="dict.value"
-                :label="dict.label"
-                :value="dict.value"
-              />
-            </el-select>
-          </el-form-item>
+
 
           <!-- 机构行政级别 -->
           <el-form-item label="机构行政级别" prop="adminLevel">
@@ -80,7 +67,7 @@
           </el-form-item>
 
           <!-- 所属地区 -->
-          <el-form-item label="所属地区" prop="region">
+          <el-form-item label="地址" prop="region">
             <el-input v-model="formData.region" placeholder="输入公司的地址信息" />
           </el-form-item>
 
@@ -185,11 +172,7 @@ const formRules = {
   deptType: [{ required: true, message: '请选择机构类型', trigger: 'change' }],
   subjectType: [{ required: true, message: '请选择备案主体类型', trigger: 'change' }],
   contact: [{ required: true, message: '请输入机构联系人信息', trigger: 'blur' }],
-  phone: [{ required: true, message: '请输入机构联系人电话', trigger: 'blur' }],
-  creditCode: [{ required: true, message: '请输入信用代码或身份证代码', trigger: 'blur' }],
-  businessLicenseUrl: [{ required: true, message: '请上传营业执照或机构资质', trigger: 'change' }],
-  idCardFrontUrl: [{ required: true, message: '请上传身份证正面', trigger: 'change' }],
-  idCardBackUrl: [{ required: true, message: '请上传身份证反面', trigger: 'change' }]
+  phone: [{ required: true, message: '请输入机构联系人电话', trigger: 'blur' }]
 }
 
 const selectedRowId = ref<number | string | undefined>()
@@ -214,6 +197,11 @@ const handleSubjectTypeChange = (val: number | string) => {
   } else {
     clearPersonalCertificateFields()
   }
+
+  if (Number(val) === 1) {
+    formData.deptType = 3
+  }
+
   formRef.value?.clearValidate?.(['creditCode', 'businessLicenseUrl', 'idCardFrontUrl', 'idCardBackUrl'])
 }
 

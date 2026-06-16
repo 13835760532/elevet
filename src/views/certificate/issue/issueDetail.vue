@@ -47,7 +47,7 @@
                                 </div>
                                 <div class="qr-code">
                                     <Qrcode v-if="certificate?.qrCode"
-                                        :text="`https://yishizhijian.jikeyun.net/certificate/trace?qrcode=${certificate.qrCode}`"
+                                        :text="`https://yishizhijian.jikeyun.net/web/index.html#/pages/index?id=${certificate.id || ''}&code=${certificate.qrCode}`"
                                         :options="{ errorCorrectionLevel: 'L' }" :width="80" />
                                 </div>
                             </div>
@@ -141,7 +141,7 @@
                                 </div>
                                 <div class="qr-code">
                                     <Qrcode v-if="upstreamCertificate?.qrCode"
-                                        :text="`https://yishizhijian.jikeyun.net/certificate/trace?qrcode=${upstreamCertificate.qrCode}`"
+                                        :text="`https://yishizhijian.jikeyun.net/web/index.html#/pages/index?id=${upstreamCertificate.id || ''}&code=${upstreamCertificate.qrCode}`"
                                         :options="{ errorCorrectionLevel: 'L' }" :width="80" />
                                 </div>
                             </div>

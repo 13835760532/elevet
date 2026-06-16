@@ -71,7 +71,7 @@
                 <el-form :model="formData" label-position="top" class="creation-form">
                     <!-- 产品档案信息 -->
                     <div class="form-section">
-                        <h3 class="section-title">产品信息</h3>
+                        <h3 class="section-title">合格证产品信息</h3>
 
                         <div class="archive-relation-row">
                             <div class="relation-label">是否关联农产品档案</div>
@@ -160,9 +160,11 @@
                         </div>
                     </div>
 
+                    <div class="divider compact"></div>
+
                     <!-- 生产经营企业 -->
                     <div class="form-section">
-                        <h3 class="section-title"><span class="required-mark">*</span>生产经营企业（主体名称）</h3>
+                        <h3 class="section-title"><span class="required-mark">*</span>关联主体信息</h3>
                         <p class="section-tip" v-if="!selectedSubjectDetail">*从生产档案中选择，或直接搜索到企业，支持多项建档</p>
 
                         <div class="entity-selector">
@@ -279,7 +281,83 @@
                                 </el-button>
                             </div>
 
-                            <div v-else class="other-platform-area">
+                            <!-- 关联本平台开具合格证 预览 -->
+                            <div v-if="formData.upstreamCertificateSource === 1 && formData.upstreamId"
+                                class="upstream-platform-preview mt16">
+                                <div class="linked-cert-card">
+                                    <div class="linked-cert-code">合格证编号－{{ upstreamCertificateCode }}</div>
+                                    <div class="linked-cert-body">
+                                        <div class="linked-cert-title">承诺达标合格</div>
+                                        <div class="linked-cert-subtitle">我承诺生产销售的食用农产品</div>
+                                        <div class="linked-cert-desc">{{ upstreamCommitmentIntro }}</div>
+                                        <div class="linked-cert-main">
+                                            <div class="linked-cert-left">
+                                                <div class="linked-cert-basis-title">承诺依据</div>
+                                                <div class="linked-cert-basis-list">
+                                                    <div class="linked-cert-basis-item"
+                                                        v-for="item in upstreamBasisOptions" :key="item.value">
+                                                        <span class="basis-check" :class="{ checked: item.checked }">{{
+                                                            item.checked ? '✓' : '' }}</span>
+                                                        <span>{{ item.label }}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="linked-cert-qr">
+                                                <Qrcode v-if="upstreamQrText" :text="upstreamQrText"
+                                                    :options="{ errorCorrectionLevel: 'L' }" :width="86" />
+                                            </div>
+                                        </div>
+                                        <div class="linked-cert-divider"></div>
+                                        <div class="linked-cert-info">
+                                            <div class="linked-info-title">基本信息</div>
+                                            <div class="linked-info-table">
+                                                <div class="linked-info-row">
+                                                    <div class="linked-info-label">产品名称</div>
+                                                    <div class="linked-info-value">{{
+                                                        upstreamCertificateDetail.productName
+                                                        || upstreamCertificateDetail.productDraft?.productName || '--'
+                                                        }}
+                                                    </div>
+                                                </div>
+                                                <div class="linked-info-row">
+                                                    <div class="linked-info-label">产品数量</div>
+                                                    <div class="linked-info-value">{{ upstreamCertificateDetail.quantity
+                                                        ??
+                                                        upstreamCertificateDetail.batchNo ?? '--' }} {{
+                                                            getAgriUnitLabel(upstreamCertificateDetail.unit) }}</div>
+                                                </div>
+                                                <div class="linked-info-row">
+                                                    <div class="linked-info-label">产品产地</div>
+                                                    <div class="linked-info-value">{{
+                                                        upstreamCertificateDetail.productionArea ||
+                                                        upstreamCertificateDetail.productDraft?.productionArea || '--'
+                                                        }}
+                                                    </div>
+                                                </div>
+                                                <div class="linked-info-row">
+                                                    <div class="linked-info-label">承诺主体</div>
+                                                    <div class="linked-info-value">{{
+                                                        upstreamCertificateDetail.subjectName || '--' }}</div>
+                                                </div>
+                                                <div class="linked-info-row">
+                                                    <div class="linked-info-label">联系方式</div>
+                                                    <div class="linked-info-value">{{
+                                                        upstreamCertificateDetail.contactPhone || '--' }}</div>
+                                                </div>
+                                                <div class="linked-info-row">
+                                                    <div class="linked-info-label">开具时间</div>
+                                                    <div class="linked-info-value">{{
+                                                        upstreamCertificateDetail.issueDate
+                                                        || '--' }}</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="linked-cert-footer">*电子合格证由链安食检数智服务平台承载展示</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div v-else-if="formData.upstreamCertificateSource === 2" class="other-platform-area">
                                 <div class="upload-trigger-wrap">
                                     <el-upload class="upstream-uploader" action="#" :auto-upload="false"
                                         :show-file-list="false" @change="onUpstreamFileChange">
@@ -309,35 +387,10 @@
                         </template>
                     </div>
 
-                    <!-- 合格证预览区 -->
-                    <div class="certificate-preview-mini"
-                        v-if="formData.linkUpstream == 'yes' && formData.upstreamCertificateSource == 1 && formData.upstreamId">
-                        <div class="cert-no">上游合格证编号：{{ formData.upstreamCertNo }}</div>
-                        <div class="cert-inner-card">
-                            <h2 class="cert-main-title">承诺达标合格</h2>
-                            <div class="cert-sub-title">承诺事项：</div>
-                            <div class="cert-declaration-list mini">
-                                <p style="text-align: left;" v-for="(line, idx) in computedCommitment" :key="idx"
-                                    class="declaration-line">•
-                                    {{ line }}</p>
-                            </div>
-                            <div class="cert-promises">
-                                <div class="cert-title">承诺依据</div>
-                                <el-checkbox v-model="formData.p1" disabled>质量安全控制符合要求</el-checkbox>
-                                <el-checkbox v-model="formData.p2" disabled>自行检测合格</el-checkbox>
-                                <el-checkbox v-model="formData.p3" disabled>委托检测合格</el-checkbox>
-                            </div>
-                            <div class="qr-placeholder">
-                                <Qrcode v-if="formData.qrCode" :text="formData.qrCode"
-                                    :options="{ errorCorrectionLevel: 'L' }" :width="80" />
-                            </div>
-                        </div>
-                    </div>
-
                     <!-- 基本信息预览 -->
-                    <div class="divider compact"></div>
+                    <!-- <div class="divider compact"></div>
                     <div class="basic-info-preview">
-                        <h3 class="preview-title">待开具合格证-产品信息预览</h3>
+                        <h3 class="preview-title">合格证生成预览</h3>
                         <div class="info-grid">
                             <div class="info-row"><span class="label">产品名称</span><span class="value">{{
                                 formData.productName || '--'
@@ -364,7 +417,7 @@
                                     }}</span></div>
                         </div>
                         <p class="info-tip">*电子合格证由链安食检数智服务平台承载展示</p>
-                    </div>
+                    </div> -->
 
 
                     <!-- 底部按钮 -->
@@ -510,7 +563,7 @@
                         <h2 class="cert-subtitle">承诺事项：</h2>
                         <div class="cert-declaration-list">
                             <p v-for="(line, idx) in computedCommitment" :key="idx" class="declaration-line">• {{ line
-                                }}</p>
+                            }}</p>
                         </div>
 
                         <div class="cert-middle-section">
@@ -528,7 +581,7 @@
                             </div>
                             <div class="qr-code-wrapper">
                                 <Qrcode v-if="displayCertNo"
-                                    :text="`https://yishizhijian.jikeyun.net/certificate/trace?qrcode=${displayCertNo}`"
+                                    :text="`https://yishizhijian.jikeyun.net/web/index.html#/pages/index?id=${formData.id || ''}&code=${displayCertNo}`"
                                     :options="{ errorCorrectionLevel: 'L' }" :width="132" />
                             </div>
                         </div>
@@ -763,6 +816,7 @@ const rules = {
 };
 
 const formData = reactive({
+    id: undefined,
     // Step 1
     linkProfile: 'yes',
     searchProfile: '',
@@ -949,6 +1003,54 @@ const handlePlatformActiveRecordChange = (record) => {
 };
 
 const upstreamLoading = ref(false);
+const upstreamCertificateDetail = ref({});
+
+const parseBasisList = (value) => {
+    if (Array.isArray(value)) return value.map(item => Number(item));
+    if (!value) return [];
+    try {
+        const parsed = typeof value === 'string' ? JSON.parse(value) : value;
+        return Array.isArray(parsed) ? parsed.map(item => Number(item)) : [];
+    } catch (error) {
+        console.error('解析承诺依据失败', error);
+        return [];
+    }
+};
+
+const upstreamCertificateCode = computed(() =>
+    upstreamCertificateDetail.value.certificateCode ||
+    upstreamCertificateDetail.value.qrCode ||
+    formData.upstreamCertNo ||
+    '--'
+);
+
+const upstreamQrText = computed(() => {
+    const id = upstreamCertificateDetail.value.id || '';
+    const code = upstreamCertificateDetail.value.qrCode || upstreamCertificateDetail.value.certificateCode || formData.upstreamCertNo;
+    return code ? `https://yishizhijian.jikeyun.net/web/index.html#/pages/index?id=${id}&code=${code}` : '';
+});
+
+const upstreamBasisOptions = computed(() => {
+    const selected = new Set(parseBasisList(upstreamCertificateDetail.value.commitmentBasis));
+    const fallbackSelected = selected.size ? selected : new Set([1, 2, 3]);
+    return [
+        { value: 1, label: '质量安全控制符合要求' },
+        { value: 2, label: '自行检测合格' },
+        { value: 3, label: '委托检测合格' }
+    ].map(item => ({
+        ...item,
+        checked: fallbackSelected.has(item.value)
+    }));
+});
+
+const upstreamCommitmentIntro = computed(() => {
+    const type = Number(upstreamCertificateDetail.value.certificateType);
+    if (type === 1) {
+        return '未使用禁用农药、兽药及其他化合物；使用的常规农药、兽药残留不超标。';
+    }
+    return '已按规定收取并保存该批次产品的承诺达标合格证或者其他质量安全合格证明。';
+});
+
 const handleSearchUpstream = async () => {
     if (!formData.upstreamCertNo) {
         message.warning('请输入上游合格证编号');
@@ -962,27 +1064,26 @@ const handleSearchUpstream = async () => {
         if (data) {
             message.success('查询成功');
             // 仅记录关联关系，不覆盖当前填写的产品档案信息
+            upstreamCertificateDetail.value = data;
             formData.upstreamId = data.id;
-            formData.qrCode = 'https://yishizhijian.jikeyun.net/certificate/trace?qrcode=' + (data.qrCode || data.certificateCode) || formData.qrCode;
+            formData.qrCode = upstreamQrText.value || formData.qrCode;
 
             // 回填承诺依据，用于 Step 1 的上游预览展示
             if (data.commitmentBasis) {
-                try {
-                    const basis = typeof data.commitmentBasis === 'string' ? JSON.parse(data.commitmentBasis) : data.commitmentBasis;
-                    formData.p1 = basis.includes(1) || basis.includes("1");
-                    formData.p2 = basis.includes(2) || basis.includes("2");
-                    formData.p3 = basis.includes(3) || basis.includes("3");
-                } catch (e) {
-                    console.error('解析承诺依据失败', e);
-                }
+                const basis = parseBasisList(data.commitmentBasis);
+                formData.p1 = basis.includes(1);
+                formData.p2 = basis.includes(2);
+                formData.p3 = basis.includes(3);
             }
         } else {
             message.warning('未找到对应的合格证信息');
             formData.upstreamId = undefined;
+            upstreamCertificateDetail.value = {};
         }
     } catch (error) {
         console.error('查询上游合格证失败', error);
         formData.upstreamId = undefined;
+        upstreamCertificateDetail.value = {};
     } finally {
         upstreamLoading.value = false;
     }
@@ -1462,7 +1563,8 @@ const handleGenerate = async () => {
         };
 
 
-        await CertificateApi.createCertificate(submitData);
+        const newId = await CertificateApi.createCertificate(submitData);
+        formData.id = newId;
         message.success('创建成功');
 
         certStore.updateIssueInfo(formData);
@@ -2132,81 +2234,6 @@ const handlePrint = async (prepared) => {
     display: flex;
     align-items: center;
     gap: 16px;
-}
-
-/* 合格证预览 */
-.certificate-preview-mini {
-    background: #fff;
-    border: 1px solid #E5E7EB;
-    border-radius: 12px;
-    padding: 16px;
-    margin: 24px 0;
-
-    .cert-no {
-        font-size: 13px;
-        color: #00B3ED;
-        font-weight: 600;
-        margin-bottom: 16px;
-    }
-
-    .cert-inner-card {
-        text-align: center;
-        padding: 20px;
-        position: relative;
-    }
-
-    .cert-main-title {
-        font-size: 22px;
-        font-weight: 800;
-        color: #333;
-        margin-bottom: 8px;
-    }
-
-    .cert-sub-title {
-        font-size: 14px;
-        font-weight: 600;
-        color: #333;
-        margin-bottom: 8px;
-    }
-
-    .cert-desc {
-        font-size: 12px;
-        color: #666;
-        margin-bottom: 16px;
-    }
-
-    .cert-promises {
-        text-align: left;
-        background: #F9FAFB;
-        padding: 16px;
-        border-radius: 8px;
-
-        .cert-title {
-            font-size: 14px;
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 12px;
-        }
-
-        .el-checkbox {
-            display: block;
-            margin-bottom: 8px;
-        }
-    }
-
-    .qr-placeholder {
-        position: absolute;
-        right: 30px;
-        bottom: 30px;
-        width: 100px;
-        height: 100px;
-        background: #F3F4F6;
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #ccc;
-    }
 }
 
 /* 基本信息预览 */
@@ -3287,5 +3314,179 @@ const handlePrint = async (prepared) => {
             }
         }
     }
+
+}
+
+.upstream-platform-preview {
+    width: 407px;
+    max-width: 100%;
+    margin-top: 16px;
+}
+
+.linked-cert-card {
+    overflow: hidden;
+    background: #fff;
+    border: 1px solid #E5E7EB;
+    border-radius: 4px;
+    box-shadow: none;
+}
+
+.linked-cert-code {
+    height: 32px;
+    display: flex;
+    align-items: center;
+    padding: 0 13px;
+    background: #EAF6FF;
+    color: #111827;
+    font-size: 12px;
+    font-weight: 500;
+    margin-bottom: 8px;
+}
+
+.linked-cert-body {
+    padding: 0 17px 12px;
+    color: #111827;
+}
+
+.linked-cert-title {
+    margin-top: 0;
+    text-align: center;
+    font-size: 15px;
+    font-weight: 800;
+    line-height: 22px;
+}
+
+.linked-cert-subtitle {
+    margin-top: 0;
+    font-size: 13px;
+    font-weight: 800;
+    line-height: 20px;
+}
+
+.linked-cert-desc {
+    margin-top: 0;
+    font-size: 12px;
+    line-height: 19px;
+}
+
+.linked-cert-main {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    margin-top: 4px;
+}
+
+.linked-cert-left {
+    flex: 1;
+    min-width: 0;
+}
+
+.linked-cert-basis-title {
+    margin-bottom: 3px;
+    font-size: 13px;
+    font-weight: 800;
+    line-height: 19px;
+}
+
+.linked-cert-basis-list {
+    width: 184px;
+    max-width: 100%;
+    padding: 0;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+}
+
+.linked-cert-basis-item {
+    display: flex;
+    align-items: center;
+    min-height: 18px;
+    gap: 4px;
+    font-size: 12px;
+    line-height: 18px;
+}
+
+.basis-check {
+    width: 12px;
+    height: 12px;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #3478FF;
+    color: #1677FF;
+    font-size: 10px;
+    font-weight: 800;
+    line-height: 1;
+
+    &.checked {
+        border-color: #1677FF;
+        background: #EAF3FF;
+    }
+}
+
+.linked-cert-qr {
+    width: 104px;
+    min-height: 88px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-shrink: 0;
+    margin-left: auto;
+    margin-right: 0;
+}
+
+.linked-cert-divider {
+    margin: 9px 0 10px;
+    border-top: 1px dashed #D7DCE3;
+}
+
+.linked-info-title {
+    margin-bottom: 8px;
+    font-size: 13px;
+    font-weight: 800;
+    line-height: 19px;
+}
+
+.linked-info-table {
+    border: 1px solid #E5E7EB;
+}
+
+.linked-info-row {
+    display: grid;
+    grid-template-columns: 116px minmax(0, 1fr);
+    min-height: 29px;
+
+    &:nth-child(odd) {
+        background: #F2F2F2;
+    }
+}
+
+.linked-info-label,
+.linked-info-value {
+    display: flex;
+    align-items: center;
+    padding: 6px 24px;
+    font-size: 12px;
+    line-height: 17px;
+}
+
+.linked-info-label {
+    color: #111827;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.linked-info-value {
+    min-width: 0;
+    color: #374151;
+    word-break: break-all;
+}
+
+.linked-cert-footer {
+    margin-top: 14px;
+    color: #6B7280;
+    font-size: 12px;
+    line-height: 18px;
 }
 </style>

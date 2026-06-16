@@ -128,13 +128,14 @@
       </div>
       <div class="map-container">
         <div class="map-left">
-          <Echart :options="mapChartOption" height="430px" width="100%" />
+          <Echart class="china-map-chart" :options="mapChartOption" height="460px" width="100%" />
         </div>
         <div class="map-right">
-          <!-- 右侧柱状图列表 -->
-          <div class="bar-chart-list">
+          <div class="map-rank-title">区域排行</div>
+          <div class="bar-chart-list" v-if="mapRankRows.length">
             <div class="bar-item" v-for="(item, index) in mapRankRows" :key="`${item.mapName}-${index}`">
-              <span class="bar-label">{{ item.displayName }}</span>
+              <span class="bar-index">{{ String(index + 1).padStart(2, '0') }}</span>
+              <span class="bar-label" :title="item.displayName">{{ item.displayName }}</span>
               <div class="bar-track">
                 <div class="bar-fill" :style="{ width: item.percent + '%' }"></div>
               </div>
@@ -142,6 +143,11 @@
                 {{ formatNumber(item.value, item.fractionDigits || 0) }}{{ mapType === '阳性率分布' ? '%' : '' }}
               </span>
             </div>
+          </div>
+          <div class="map-empty" v-else>
+            <div class="map-empty-mark"></div>
+            <div class="map-empty-title">暂无区域数据</div>
+            <div class="map-empty-desc">切换时间范围或分布类型后查看排行</div>
           </div>
         </div>
         <div class="map-visual-legend" v-if="mapRows.length">
@@ -507,7 +513,7 @@ const mapChartOption = computed(() => ({
     min: 0,
     max: Math.max(...mapRows.value.map((item) => item.value), 1),
     inRange: {
-      color: ['#edf5ff', '#d7e8ff', '#b3d0ff', '#7fb1ff', '#3b82f6']
+      color: ['#eefbff', '#c9f1fc', '#8ee1f7', '#4bc9f1', '#00B3ED']
     }
   },
   series: [
@@ -518,29 +524,29 @@ const mapChartOption = computed(() => ({
       mapType: STATISTICS_CHINA_MAP_NAME,
       roam: false,
       zoom: 1.08,
-      top: '4%',
-      bottom: '6%',
-      left: '3%',
-      right: '3%',
-      aspectScale: 0.9,
-      layoutCenter: ['50%', '52%'],
+      top: '0%',
+      bottom: '2%',
+      left: '2%',
+      right: '2%',
+      aspectScale: 0.82,
+      layoutCenter: ['50%', '53%'],
       layoutSize: '100%',
       label: {
         show: true,
-        color: '#2f3a4f',
+        color: '#34455f',
         fontSize: 12,
         formatter: (params: any) => stripRegionSuffix(params.name)
       },
       itemStyle: {
-        areaColor: '#f7f9fd',
-        borderColor: '#d8dde7',
+        areaColor: '#f5f9fd',
+        borderColor: '#d7e2ec',
         borderWidth: 1
       },
       emphasis: {
-        label: { color: '#0f172a', fontWeight: 'bold' },
+        label: { color: '#102a43', fontWeight: 'bold' },
         itemStyle: {
-          areaColor: '#7fb1ff',
-          borderColor: '#3b82f6',
+          areaColor: '#36c3ef',
+          borderColor: '#00B3ED',
           borderWidth: 1.2
         }
       },
@@ -1057,34 +1063,83 @@ onMounted(() => {
 
 /* 业务分布地图 */
 .map-section {
-  min-height: 520px;
+  min-height: 560px;
+  overflow: visible;
+  padding-top: 28px;
+  background:
+    linear-gradient(180deg, rgba(0, 179, 237, 0.035) 0%, rgba(255, 255, 255, 0) 42%),
+    #fff;
 }
 
 .map-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
+  align-items: flex-start;
+  gap: 24px;
+  margin-bottom: 18px;
+
+  .section-title {
+    margin-bottom: 0;
+    min-width: 132px;
+  }
 }
 
 .map-actions {
   display: flex;
   align-items: center;
-  gap: 20px;
+  justify-content: flex-end;
+  min-width: 0;
+  flex: 1;
+
+  ::v-deep(.el-radio-group) {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+
+  ::v-deep(.el-radio-button) {
+    --el-radio-button-checked-bg-color: #00B3ED;
+    --el-radio-button-checked-border-color: #00B3ED;
+    --el-radio-button-checked-text-color: #fff;
+    margin-right: 0;
+  }
+
+  ::v-deep(.el-radio-button:first-child .el-radio-button__inner),
+  ::v-deep(.el-radio-button:last-child .el-radio-button__inner) {
+    border-radius: 4px;
+  }
+
+  ::v-deep(.el-radio-button__original-radio:focus-visible + .el-radio-button__inner) {
+    box-shadow: 0 0 0 2px rgba(0, 179, 237, 0.22);
+  }
 
   ::v-deep(.el-radio-button__inner) {
-    border: none;
+    min-width: 112px;
+    height: 32px;
+    border: 1px solid transparent;
     background: transparent;
-    color: #00B3ED;
-    padding: 6px 16px;
-    border-radius: 0;
+    color: #23a9df;
+    padding: 7px 15px;
+    border-radius: 4px;
+    box-shadow: none;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 16px;
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+
+    &:hover {
+      border-color: rgba(0, 179, 237, 0.28);
+      background: rgba(0, 179, 237, 0.08);
+      color: #008ec1;
+    }
   }
 
   ::v-deep(.el-radio-button__original-radio:checked + .el-radio-button__inner) {
     background-color: #00B3ED;
     color: #fff;
-    box-shadow: none;
-    border-radius: 2px;
+    border-color: #00B3ED;
+    box-shadow: 0 8px 18px rgba(0, 179, 237, 0.22);
   }
 
   .view-all {
@@ -1097,91 +1152,203 @@ onMounted(() => {
 
 .map-container {
   position: relative;
-  display: flex;
-  gap: 56px;
-  height: 430px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 440px;
+  gap: 64px;
+  min-height: 460px;
+  padding: 16px 0 8px;
 }
 
 .map-left {
-  flex: 1;
+  position: relative;
   min-width: 0;
-  background-color: #fff;
+  min-height: 460px;
+  padding: 4px 0 0 32px;
+  background:
+    radial-gradient(circle at 52% 46%, rgba(0, 179, 237, 0.08), rgba(0, 179, 237, 0) 44%);
   display: flex;
   align-items: center;
   justify-content: center;
   color: #999;
 }
 
+.china-map-chart {
+  position: relative;
+  z-index: 1;
+}
+
 .map-right {
-  width: 320px;
+  width: 100%;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   justify-content: center;
+  padding: 18px 0 18px 4px;
+}
+
+.map-rank-title {
+  margin: 0 0 16px 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #1f2d3d;
+  letter-spacing: 0;
 }
 
 .bar-chart-list {
   display: flex;
   flex-direction: column;
-  gap: 13px;
+  gap: 10px;
+}
+
+.map-empty {
+  width: 100%;
+  min-height: 190px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #8a98a9;
+  text-align: center;
+}
+
+.map-empty-mark {
+  width: 64px;
+  height: 64px;
+  margin-bottom: 14px;
+  border-radius: 50%;
+  background:
+    linear-gradient(#fff, #fff) padding-box,
+    linear-gradient(135deg, rgba(0, 179, 237, 0.28), rgba(0, 179, 237, 0.02)) border-box;
+  border: 1px solid transparent;
+  position: relative;
+
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    border-radius: 999px;
+    transform: translateX(-50%);
+  }
+
+  &::before {
+    top: 20px;
+    width: 30px;
+    height: 8px;
+    background: rgba(0, 179, 237, 0.22);
+  }
+
+  &::after {
+    top: 36px;
+    width: 42px;
+    height: 8px;
+    background: rgba(0, 179, 237, 0.12);
+  }
+}
+
+.map-empty-title {
+  color: #526273;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.map-empty-desc {
+  margin-top: 8px;
+  color: #9aa8b8;
+  font-size: 13px;
 }
 
 .bar-item {
-  height: 23px;
+  height: 24px;
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
+
+  &:nth-child(1) {
+    .bar-index,
+    .bar-label,
+    .bar-value {
+      color: #007eaa;
+      font-weight: 700;
+    }
+
+    .bar-fill {
+      background: linear-gradient(90deg, #00B3ED 0%, #43d2f6 100%);
+      box-shadow: 0 4px 10px rgba(0, 179, 237, 0.22);
+    }
+  }
+
+  &:nth-child(n + 10) {
+    .bar-label,
+    .bar-value {
+      font-size: 15px;
+    }
+  }
+
+  .bar-index {
+    width: 28px;
+    flex-shrink: 0;
+    font-size: 12px;
+    color: #9aa8b8;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
 
   .bar-label {
-    width: 48px;
+    width: 82px;
     flex-shrink: 0;
-    font-size: 18px;
-    line-height: 1;
-    color: #5f6673;
+    overflow: hidden;
+    color: #667385;
+    font-size: 17px;
+    line-height: 24px;
     text-align: right;
+    text-overflow: ellipsis;
     white-space: nowrap;
   }
 
   .bar-track {
     flex: 1;
-    height: 15px;
-    background-color: transparent;
-    border-radius: 8px;
+    height: 14px;
+    min-width: 96px;
+    background: linear-gradient(90deg, rgba(0, 179, 237, 0.08), rgba(0, 179, 237, 0.02));
+    border-radius: 999px;
     overflow: hidden;
   }
 
   .bar-fill {
     height: 100%;
-    background-color: #1e90ff;
-    border-radius: 8px;
+    background: linear-gradient(90deg, #18bdec 0%, #67d9f7 100%);
+    border-radius: 999px;
+    transition: width 0.28s ease;
   }
 
   .bar-value {
-    width: 68px;
+    width: 72px;
     flex-shrink: 0;
     text-align: right;
-    font-size: 18px;
+    font-size: 17px;
     line-height: 1;
-    color: #5f6673;
+    color: #667385;
     font-variant-numeric: tabular-nums;
   }
 }
 
 .map-visual-legend {
   position: absolute;
-  left: 0;
-  bottom: 4px;
+  left: 8px;
+  bottom: 16px;
   display: grid;
-  grid-template-columns: 28px 26px 56px;
-  grid-template-rows: auto 116px auto;
-  column-gap: 10px;
+  grid-template-columns: 28px 18px 56px;
+  grid-template-rows: auto 122px auto;
+  column-gap: 12px;
   align-items: center;
-  color: #5f6673;
+  color: #667385;
 }
 
 .legend-high,
 .legend-low {
   grid-column: 1;
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 600;
 }
 
@@ -1194,25 +1361,76 @@ onMounted(() => {
 }
 
 .legend-scale {
-  grid-column: 1;
+  grid-column: 1 / 2;
   grid-row: 2;
   width: 24px;
-  height: 116px;
+  height: 122px;
   border-radius: 2px;
-  background: linear-gradient(to bottom, #3b82f6 0%, #8ab8ff 48%, #edf5ff 100%);
+  background: linear-gradient(to bottom, #00B3ED 0%, #7adef7 48%, #eefbff 100%);
+  box-shadow: inset 0 0 0 1px rgba(0, 179, 237, 0.08);
 }
 
 .legend-values {
   grid-column: 2 / 4;
   grid-row: 2;
-  height: 116px;
+  height: 122px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   padding: 2px 0;
   font-size: 16px;
-  color: #5f6673;
+  color: #667385;
   font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 1366px) {
+  .map-container {
+    grid-template-columns: minmax(0, 1fr) 380px;
+    gap: 36px;
+  }
+
+  .map-actions {
+    ::v-deep(.el-radio-button__inner) {
+      min-width: 100px;
+      padding-inline: 12px;
+      font-size: 13px;
+    }
+  }
+
+  .bar-item {
+    .bar-label {
+      width: 70px;
+      font-size: 16px;
+    }
+  }
+}
+
+@media (max-width: 1180px) {
+  .map-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .map-actions {
+    justify-content: flex-start;
+
+    ::v-deep(.el-radio-group) {
+      justify-content: flex-start;
+    }
+  }
+
+  .map-container {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .map-left {
+    padding-left: 40px;
+  }
+
+  .map-right {
+    padding: 0 0 8px;
+  }
 }
 
 /* 风险业务板块 */

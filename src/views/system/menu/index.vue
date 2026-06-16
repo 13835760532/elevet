@@ -1,38 +1,18 @@
 <template>
-  <doc-alert title="功能权限" url="https://doc.iocoder.cn/resource-permission" />
-  <doc-alert title="菜单路由" url="https://doc.iocoder.cn/vue3/route/" />
+  <!-- <doc-alert title="功能权限" url="https://doc.iocoder.cn/resource-permission" /> -->
+  <!-- <doc-alert title="菜单路由" url="https://doc.iocoder.cn/vue3/route/" /> -->
 
   <!-- 搜索工作栏 -->
   <ContentWrap>
-    <el-form
-      ref="queryFormRef"
-      :inline="true"
-      :model="queryParams"
-      class="-mb-15px"
-      label-width="68px"
-    >
+    <el-form ref="queryFormRef" :inline="true" :model="queryParams" class="-mb-15px" label-width="68px">
       <el-form-item label="菜单名称" prop="name">
-        <el-input
-          v-model="queryParams.name"
-          class="!w-240px"
-          clearable
-          placeholder="请输入菜单名称"
-          @keyup.enter="handleQuery"
-        />
+        <el-input v-model="queryParams.name" class="!w-240px" clearable placeholder="请输入菜单名称"
+          @keyup.enter="handleQuery" />
       </el-form-item>
       <el-form-item label="状态" prop="status">
-        <el-select
-          v-model="queryParams.status"
-          class="!w-240px"
-          clearable
-          placeholder="请选择菜单状态"
-        >
-          <el-option
-            v-for="dict in getIntDictOptions(DICT_TYPE.COMMON_STATUS)"
-            :key="dict.value"
-            :label="dict.label"
-            :value="dict.value"
-          />
+        <el-select v-model="queryParams.status" class="!w-240px" clearable placeholder="请选择菜单状态">
+          <el-option v-for="dict in getIntDictOptions(DICT_TYPE.COMMON_STATUS)" :key="dict.value" :label="dict.label"
+            :value="dict.value" />
         </el-select>
       </el-form-item>
       <el-form-item>
@@ -44,12 +24,7 @@
           <Icon class="mr-5px" icon="ep:refresh" />
           重置
         </el-button>
-        <el-button
-          v-hasPermi="['system:menu:create']"
-          plain
-          type="primary"
-          @click="openForm('create')"
-        >
+        <el-button v-hasPermi="['system:menu:create']" plain type="primary" @click="openForm('create')">
           <Icon class="mr-5px" icon="ep:plus" />
           新增
         </el-button>
@@ -69,16 +44,8 @@
   <ContentWrap>
     <el-auto-resizer>
       <template #default="{ width }">
-        <el-table-v2
-          v-model:expanded-row-keys="expandedRowKeys"
-          :columns="columns"
-          :data="list"
-          :expand-column-key="columns[0].key"
-          :height="1000"
-          :width="width"
-          fixed
-          row-key="id"
-        />
+        <el-table-v2 v-model:expanded-row-keys="expandedRowKeys" :columns="columns" :data="list"
+          :expand-column-key="columns[0].key" :height="1000" :width="width" fixed row-key="id" />
       </template>
     </el-auto-resizer>
   </ContentWrap>
@@ -280,7 +247,7 @@ const refreshMenu = async () => {
     wsCache.delete(CACHE_KEY.ROLE_ROUTERS)
     // 刷新浏览器
     location.reload()
-  } catch {}
+  } catch { }
 }
 
 /** 删除按钮操作 */
@@ -293,7 +260,7 @@ const handleDelete = async (id: number) => {
     message.success(t('common.delSuccess'))
     // 刷新列表
     await getList()
-  } catch {}
+  } catch { }
 }
 
 /** 开启/关闭菜单的状态 */

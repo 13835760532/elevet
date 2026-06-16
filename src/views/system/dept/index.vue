@@ -16,17 +16,7 @@
                 </template>
               </el-input>
             </el-form-item>
-            <el-form-item prop="industry" class="!mb-0" style="margin-right: 0px!important;">
-              <el-select v-model="queryParams.industry" placeholder="所属行业" clearable class="custom-select"
-                style="width: 160px">
-                <el-option
-                  v-for="dict in industryOptions"
-                  :key="dict.value"
-                  :label="dict.label"
-                  :value="dict.value"
-                />
-              </el-select>
-            </el-form-item>
+
             <el-form-item prop="status" class="!mb-0" style="margin-right: 0px!important;">
               <el-select v-model="queryParams.status" placeholder="全部状态" clearable class="custom-select"
                 style="width: 140px">
@@ -66,15 +56,11 @@
         <el-table v-loading="loading" :data="list" row-key="id" v-if="refreshTable" height="100%">
           <el-table-column label="机构ID" prop="id" width="80" align="center" />
           <el-table-column prop="name" label="机构名称" min-width="180" />
-          <el-table-column prop="industry" label="所属行业" width="100" align="center">
-            <template #default="scope">
-              {{ getIndustryLabel(scope.row.industry) }}
-            </template>
-          </el-table-column>
-          <el-table-column prop="deptType" label="机构类型" width="120" align="center">
+
+          <el-table-column prop="deptType" label="生产经营企业" width="120" align="center">
             <template #default="scope">
               {{ scope.row.deptType === 1 ? '监管机构' : scope.row.deptType === 2 ? '检测机构' : scope.row.deptType === 3 ?
-                '生产经营主体' : '系统部门' }}
+                '生产经营企业' : '系统机构管理' }}
             </template>
           </el-table-column>
           <el-table-column prop="areaLevel" label="机构行政级别" width="120" align="center">
@@ -84,16 +70,18 @@
               }}
             </template>
           </el-table-column>
-          <el-table-column label="机构行政管辖范围" min-width="180">
+          <el-table-column label="所属行政区划" min-width="180">
             <template #default="scope">
-              {{ scope.row.address || '--' }}
+              {{ formatArea(scope.row) || scope.row.address || '--' }}
             </template>
           </el-table-column>
           <el-table-column prop="contactName" label="联系人" width="100" align="center" />
-          <el-table-column prop="contactPhone" label="手机号" width="120" align="center" />
-          <el-table-column prop="socialCreditCode" label="组织机构代码" width="180" align="center" />
-          <el-table-column label="操作" align="center" fixed="right" width="140">
+
+          <el-table-column label="操作" align="center" fixed="right" width="180">
             <template #default="scope">
+              <el-button link type="primary" @click="openDetail(scope.row.id)" v-hasPermi="['system:dept:query']">
+                详情
+              </el-button>
               <el-button link type="primary" @click="openForm('update', scope.row.id)"
                 v-hasPermi="['system:dept:update']">
                 编辑
@@ -117,6 +105,9 @@
 
     <!-- 表单弹窗：添加/修改 -->
     <DeptForm ref="formRef" @success="getList" />
+
+    <!-- 详情弹窗 -->
+    <DeptDetail ref="detailRef" />
   </div>
 </template>
 
@@ -124,7 +115,9 @@
 import { DICT_TYPE, getIntDictOptions } from '@/utils/dict'
 import { dateFormatter } from '@/utils/formatTime'
 import * as DeptApi from '@/api/system/dept'
+import * as AreaApi from '@/api/system/area'
 import DeptForm from './DeptForm.vue'
+import DeptDetail from './DeptDetail.vue'
 import * as UserApi from '@/api/system/user'
 import { useDict } from '@/hooks/web/useDict'
 
@@ -133,25 +126,43 @@ defineOptions({ name: 'SystemDept' })
 const message = useMessage() // 消息弹窗
 const { t } = useI18n() // 国际化
 const router = useRouter()
-const { options: industryOptions, getLabel: getIndustryLabel } = useDict('agri_industry', 'str')
 
 const loading = ref(true) // 列表的加载中
 const list = ref([]) // 列表的数据
 const total = ref(0) // 列表的总页数
 const userList = ref<UserApi.UserVO[]>([]) // 用户列表
 const refreshTable = ref(true) // 重新渲染表格状态
+const areaMap = ref<Record<string, string>>({}) // 地区字典
+
+const formatArea = (row: any) => {
+  const parts = []
+  if (row.provinceCode && areaMap.value[String(row.provinceCode)]) parts.push(areaMap.value[String(row.provinceCode)])
+  if (row.cityCode && areaMap.value[String(row.cityCode)]) parts.push(areaMap.value[String(row.cityCode)])
+  if (row.districtCode && areaMap.value[String(row.districtCode)]) parts.push(areaMap.value[String(row.districtCode)])
+  return parts.length > 0 ? parts.join('-') : ''
+}
+
+const buildAreaMap = (nodes: any[]) => {
+  if (!nodes || !nodes.length) return
+  for (const node of nodes) {
+    areaMap.value[String(node.id)] = node.name
+    if (node.children && node.children.length > 0) {
+      buildAreaMap(node.children)
+    }
+  }
+}
 
 const queryParams = reactive({
   pageNo: 1,
   pageSize: 10,
   name: undefined,
-  industry: undefined,
   status: undefined,
   createTime: undefined
 })
 const queryFormRef = ref() // 搜索的表单
+const detailRef = ref() // 详情的弹窗
 
-/** 查询部门列表 */
+/** 查询机构管理列表 */
 const getList = async () => {
   loading.value = true
   try {
@@ -186,6 +197,11 @@ const openForm = (type: string, id?: number) => {
   } else {
     formRef.value.open(type, id)
   }
+}
+
+/** 打开详情 */
+const openDetail = (id?: number) => {
+  detailRef.value.open(id)
 }
 
 /** 删除按钮操作 */
@@ -224,6 +240,9 @@ onMounted(async () => {
   await getList()
   // 获取用户列表
   userList.value = await UserApi.getSimpleUserList()
+  // 获取地区列表并构建字典
+  const tree = await AreaApi.getAreaTree()
+  buildAreaMap(tree)
 })
 </script>
 
