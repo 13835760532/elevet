@@ -1,0 +1,1000 @@
+{
+  "parent": {
+    "id": "42:875",
+    "name": "ncpplfx",
+    "frame": {
+      "left": 20,
+      "top": 138,
+      "height": 292,
+      "width": 455
+    }
+  },
+  "layers": [
+    {
+      "id": "42:3138",
+      "name": "erji",
+      "type": "symbolMaster",
+      "frame": {
+        "left": 20,
+        "top": 138,
+        "height": 42,
+        "width": 455
+      },
+      "realFrame": {
+        "left": 20,
+        "top": 138,
+        "width": 455,
+        "height": 42
+      },
+      "visible": true,
+      "fills": [
+        {
+          "gradient": [
+            {
+              "color": "rgba(7,49,114,1)",
+              "pos": 0.0625
+            },
+            {
+              "color": "rgba(6,18,33,0.36)",
+              "pos": 1
+            }
+          ]
+        }
+      ],
+      "borders": [
+        "rgba(0,47,141,1) -> rgba(165,188,247,1) -> rgba(11,33,159,1)"
+      ]
+    },
+    {
+      "id": "42:3077",
+      "name": "icon",
+      "type": "artboard",
+      "frame": {
+        "left": 54,
+        "top": 147,
+        "height": 24,
+        "width": 24
+      },
+      "realFrame": {
+        "left": 30,
+        "top": 147,
+        "width": 24,
+        "height": 24
+      },
+      "visible": true,
+      "fills": [],
+      "borders": []
+    },
+    {
+      "id": "42:3078",
+      "name": "Vector",
+      "type": "shapeLayer",
+      "frame": {
+        "left": 52,
+        "top": 149,
+        "height": 19,
+        "width": 14
+      },
+      "realFrame": {
+        "left": 38,
+        "top": 149,
+        "width": 14,
+        "height": 19
+      },
+      "visible": true,
+      "fills": [
+        "rgba(52,204,208,1)"
+      ],
+      "borders": []
+    },
+    {
+      "id": "42:3079",
+      "name": "Vector",
+      "type": "shapeLayer",
+      "frame": {
+        "left": 45,
+        "top": 149,
+        "height": 19,
+        "width": 14.380887031555176
+      },
+      "realFrame": {
+        "left": 30.619112968444824,
+        "top": 149,
+        "width": 14.380887031555176,
+        "height": 19
+      },
+      "visible": true,
+      "fills": [
+        {
+          "gradient": [
+            {
+              "color": "rgba(255,255,255,0)",
+              "pos": 0.048076923936605453
+            },
+            {
+              "color": "rgba(213,229,229,1)",
+              "pos": 0.4951923191547394
+            },
+            {
+              "color": "rgba(255,255,255,0)",
+              "pos": 0.8653846383094788
+            }
+          ]
+        }
+      ],
+      "borders": []
+    },
+    {
+      "id": "42:3080",
+      "name": "农产品类别风险分布",
+      "type": "textLayer",
+      "frame": {
+        "left": 61,
+        "top": 146,
+        "height": 26,
+        "width": 162
+      },
+      "realFrame": {
+        "left": 61,
+        "top": 146,
+        "width": 162,
+        "height": 26
+      },
+      "visible": true,
+      "fills": [
+        "rgba(224,239,239,1)"
+      ],
+      "borders": [],
+      "text": "农产品类别风险分布",
+      "font": {
+        "type": "SemiBold",
+        "postScriptName": "Source Sans 3-SemiBold",
+        "align": "left",
+        "verticalAlignment": "top",
+        "name": "Source Sans 3",
+        "size": 18,
+        "letterSpacing": {
+          "value": 0,
+          "unit": "percent"
+        },
+        "underline": 0,
+        "linethrough": false,
+        "lineHeight": {
+          "unit": "AUTO"
+        },
+        "bold": false,
+        "italic": false,
+        "lineSpacing": 0,
+        "fontWeight": 600
+      },
+      "color": "rgba(224,239,239,1)"
+    },
+    {
+      "id": "42:3081",
+      "name": "Frame 30",
+      "type": "artboard",
+      "frame": {
+        "left": 308,
+        "top": 142,
+        "height": 34,
+        "width": 62
+      },
+      "realFrame": {
+        "left": 308,
+        "top": 142,
+        "width": 62,
+        "height": 34
+      },
+      "visible": true,
+      "fills": [
+        {
+          "gradient": [
+            {
+              "color": "rgba(0,35,74,1)",
+              "pos": 0
+            },
+            {
+              "color": "rgba(60,106,214,0)",
+              "pos": 1
+            }
+          ]
+        }
+      ],
+      "borders": [
+        "rgba(238,246,246,1)"
+      ]
+    },
+    {
+      "id": "42:3082",
+      "name": "检测量",
+      "type": "textLayer",
+      "frame": {
+        "left": 318,
+        "top": 149,
+        "height": 20,
+        "width": 42
+      },
+      "realFrame": {
+        "left": 318,
+        "top": 149,
+        "width": 42,
+        "height": 20
+      },
+      "visible": true,
+      "fills": [
+        "rgba(194,212,212,1)",
+        "rgba(255,255,255,1)"
+      ],
+      "borders": [],
+      "text": "检测量 ",
+      "font": {
+        "type": "Regular",
+        "postScriptName": "Source Sans 3-Regular",
+        "align": "left",
+        "verticalAlignment": "top",
+        "name": "Source Sans 3",
+        "size": 14,
+        "letterSpacing": {
+          "value": 0,
+          "unit": "percent"
+        },
+        "underline": 0,
+        "linethrough": false,
+        "lineHeight": {
+          "unit": "AUTO"
+        },
+        "bold": false,
+        "italic": false,
+        "lineSpacing": 0,
+        "fontWeight": 400
+      },
+      "color": "rgba(194,212,212,1)"
+    },
+    {
+      "id": "42:3083",
+      "name": "Frame 32",
+      "type": "artboard",
+      "frame": {
+        "left": 384,
+        "top": 142,
+        "height": 34,
+        "width": 62
+      },
+      "realFrame": {
+        "left": 384,
+        "top": 142,
+        "width": 62,
+        "height": 34
+      },
+      "visible": true,
+      "fills": [
+        {
+          "gradient": [
+            {
+              "color": "rgba(21,30,63,1)",
+              "pos": 0
+            },
+            {
+              "color": "rgba(54,68,86,0)",
+              "pos": 0.9663461446762085
+            }
+          ]
+        }
+      ],
+      "borders": [
+        "rgba(194,212,212,1)"
+      ]
+    },
+    {
+      "id": "42:3084",
+      "name": "阳性率",
+      "type": "textLayer",
+      "frame": {
+        "left": 394,
+        "top": 149,
+        "height": 20,
+        "width": 42
+      },
+      "realFrame": {
+        "left": 394,
+        "top": 149,
+        "width": 42,
+        "height": 20
+      },
+      "visible": true,
+      "fills": [
+        "rgba(0,0,0,1)",
+        "rgba(173,204,201,1)"
+      ],
+      "borders": [],
+      "text": "阳性率",
+      "font": {
+        "type": "Regular",
+        "postScriptName": "Source Sans 3-Regular",
+        "align": "left",
+        "verticalAlignment": "top",
+        "name": "Source Sans 3",
+        "size": 14,
+        "letterSpacing": {
+          "value": 0,
+          "unit": "percent"
+        },
+        "underline": 0,
+        "linethrough": false,
+        "lineHeight": {
+          "unit": "AUTO"
+        },
+        "bold": false,
+        "italic": false,
+        "lineSpacing": 0,
+        "fontWeight": 400
+      },
+      "color": "rgba(0,0,0,1)"
+    },
+    {
+      "id": "42:3095",
+      "name": "bg",
+      "type": "symbolMaster",
+      "frame": {
+        "left": 20,
+        "top": 180,
+        "height": 250,
+        "width": 455
+      },
+      "realFrame": {
+        "left": 20,
+        "top": 180,
+        "width": 455,
+        "height": 250
+      },
+      "visible": true,
+      "fills": [
+        "rgba(0,2,31,0.31)"
+      ],
+      "borders": [
+        "rgba(32,51,159,0) -> rgba(32,45,159,1) -> rgba(133,151,229,1) -> rgba(32,62,159,1) -> rgba(32,45,159,0)"
+      ]
+    },
+    {
+      "id": "42:878",
+      "name": "Rectangle 30",
+      "type": "symbolInstence",
+      "frame": {
+        "left": 318,
+        "top": 231,
+        "height": 24,
+        "width": 119
+      },
+      "realFrame": {
+        "left": 318,
+        "top": 231,
+        "width": 119,
+        "height": 24
+      },
+      "visible": true,
+      "fills": [],
+      "borders": []
+    },
+    {
+      "id": "I42:878;29:115",
+      "name": "Rectangle 30",
+      "type": "shapeLayer",
+      "frame": {
+        "left": 318,
+        "top": 231,
+        "height": 24,
+        "width": 119
+      },
+      "realFrame": {
+        "left": 318,
+        "top": 231,
+        "width": 119,
+        "height": 24
+      },
+      "visible": true,
+      "fills": [
+        "rgba(44,59,58,0.54)"
+      ],
+      "borders": []
+    },
+    {
+      "id": "I42:878;30:135",
+      "name": "Rectangle 35",
+      "type": "shapeLayer",
+      "frame": {
+        "left": 330,
+        "top": 239,
+        "height": 9,
+        "width": 9
+      },
+      "realFrame": {
+        "left": 330,
+        "top": 239,
+        "width": 9,
+        "height": 9
+      },
+      "visible": true,
+      "fills": [
+        "rgba(44,84,225,1)"
+      ],
+      "borders": []
+    },
+    {
+      "id": "42:879",
+      "name": "Rectangle 31",
+      "type": "symbolInstence",
+      "frame": {
+        "left": 318,
+        "top": 263,
+        "height": 24,
+        "width": 119
+      },
+      "realFrame": {
+        "left": 318,
+        "top": 263,
+        "width": 119,
+        "height": 24
+      },
+      "visible": true,
+      "fills": [],
+      "borders": []
+    },
+    {
+      "id": "I42:879;29:115",
+      "name": "Rectangle 30",
+      "type": "shapeLayer",
+      "frame": {
+        "left": 318,
+        "top": 263,
+        "height": 24,
+        "width": 119
+      },
+      "realFrame": {
+        "left": 318,
+        "top": 263,
+        "width": 119,
+        "height": 24
+      },
+      "visible": true,
+      "fills": [
+        "rgba(44,59,58,0.54)"
+      ],
+      "borders": []
+    },
+    {
+      "id": "I42:879;30:135",
+      "name": "Rectangle 35",
+      "type": "shapeLayer",
+      "frame": {
+        "left": 330,
+        "top": 271,
+        "height": 9,
+        "width": 9
+      },
+      "realFrame": {
+        "left": 330,
+        "top": 271,
+        "width": 9,
+        "height": 9
+      },
+      "visible": true,
+      "fills": [
+        "rgba(26,138,245,1)",
+        "rgba(47,81,235,1)",
+        "rgba(32,231,234,1)"
+      ],
+      "borders": []
+    },
+    {
+      "id": "42:880",
+      "name": "Rectangle 32",
+      "type": "symbolInstence",
+      "frame": {
+        "left": 318,
+        "top": 295,
+        "height": 24,
+        "width": 119
+      },
+      "realFrame": {
+        "left": 318,
+        "top": 295,
+        "width": 119,
+        "height": 24
+      },
+      "visible": true,
+      "fills": [],
+      "borders": []
+    },
+    {
+      "id": "I42:880;29:115",
+      "name": "Rectangle 30",
+      "type": "shapeLayer",
+      "frame": {
+        "left": 318,
+        "top": 295,
+        "height": 24,
+        "width": 119
+      },
+      "realFrame": {
+        "left": 318,
+        "top": 295,
+        "width": 119,
+        "height": 24
+      },
+      "visible": true,
+      "fills": [
+        "rgba(44,59,58,0.54)"
+      ],
+      "borders": []
+    },
+    {
+      "id": "I42:880;30:135",
+      "name": "Rectangle 35",
+      "type": "shapeLayer",
+      "frame": {
+        "left": 330,
+        "top": 303,
+        "height": 9,
+        "width": 9
+      },
+      "realFrame": {
+        "left": 330,
+        "top": 303,
+        "width": 9,
+        "height": 9
+      },
+      "visible": true,
+      "fills": [
+        "rgba(26,138,245,1)",
+        "rgba(47,81,235,1)",
+        "rgba(32,231,234,1)",
+        "rgba(129,195,64,1)"
+      ],
+      "borders": []
+    },
+    {
+      "id": "42:881",
+      "name": "Rectangle 33",
+      "type": "symbolInstence",
+      "frame": {
+        "left": 318,
+        "top": 327,
+        "height": 24,
+        "width": 119
+      },
+      "realFrame": {
+        "left": 318,
+        "top": 327,
+        "width": 119,
+        "height": 24
+      },
+      "visible": true,
+      "fills": [],
+      "borders": []
+    },
+    {
+      "id": "I42:881;29:115",
+      "name": "Rectangle 30",
+      "type": "shapeLayer",
+      "frame": {
+        "left": 318,
+        "top": 327,
+        "height": 24,
+        "width": 119
+      },
+      "realFrame": {
+        "left": 318,
+        "top": 327,
+        "width": 119,
+        "height": 24
+      },
+      "visible": true,
+      "fills": [
+        "rgba(44,59,58,0.54)"
+      ],
+      "borders": []
+    },
+    {
+      "id": "I42:881;30:135",
+      "name": "Rectangle 35",
+      "type": "shapeLayer",
+      "frame": {
+        "left": 330,
+        "top": 335,
+        "height": 9,
+        "width": 9
+      },
+      "realFrame": {
+        "left": 330,
+        "top": 335,
+        "width": 9,
+        "height": 9
+      },
+      "visible": true,
+      "fills": [
+        "rgba(47,81,235,1)",
+        "rgba(229,177,47,1)"
+      ],
+      "borders": []
+    },
+    {
+      "id": "42:882",
+      "name": "Rectangle 34",
+      "type": "symbolInstence",
+      "frame": {
+        "left": 318,
+        "top": 359,
+        "height": 24,
+        "width": 119
+      },
+      "realFrame": {
+        "left": 318,
+        "top": 359,
+        "width": 119,
+        "height": 24
+      },
+      "visible": true,
+      "fills": [],
+      "borders": []
+    },
+    {
+      "id": "I42:882;29:115",
+      "name": "Rectangle 30",
+      "type": "shapeLayer",
+      "frame": {
+        "left": 318,
+        "top": 359,
+        "height": 24,
+        "width": 119
+      },
+      "realFrame": {
+        "left": 318,
+        "top": 359,
+        "width": 119,
+        "height": 24
+      },
+      "visible": true,
+      "fills": [
+        "rgba(44,59,58,0.54)"
+      ],
+      "borders": []
+    },
+    {
+      "id": "I42:882;30:135",
+      "name": "Rectangle 35",
+      "type": "shapeLayer",
+      "frame": {
+        "left": 330,
+        "top": 367,
+        "height": 9,
+        "width": 9
+      },
+      "realFrame": {
+        "left": 330,
+        "top": 367,
+        "width": 9,
+        "height": 9
+      },
+      "visible": true,
+      "fills": [
+        "rgba(47,81,235,1)",
+        "rgba(239,115,38,1)"
+      ],
+      "borders": []
+    },
+    {
+      "id": "42:883",
+      "name": "蔬菜 450 水果 256 畜禽 378 水产 135 茶叶 627",
+      "type": "textLayer",
+      "frame": {
+        "left": 352,
+        "top": 230,
+        "height": 160,
+        "width": 72
+      },
+      "realFrame": {
+        "left": 352,
+        "top": 230,
+        "width": 72,
+        "height": 160
+      },
+      "visible": true,
+      "fills": [],
+      "borders": [],
+      "text": "蔬菜      450\n水果       256 \n畜禽       378\n水产       135\n茶叶        627",
+      "font": {
+        "type": "Regular",
+        "postScriptName": "Source Sans 3-Regular",
+        "align": "left",
+        "verticalAlignment": "top",
+        "name": "Source Sans 3",
+        "size": 14,
+        "letterSpacing": {
+          "value": 0,
+          "unit": "percent"
+        },
+        "underline": 0,
+        "linethrough": false,
+        "lineHeight": {
+          "unit": "PIXELS",
+          "value": 32
+        },
+        "bold": false,
+        "italic": false,
+        "lineSpacing": 0,
+        "fontWeight": 400
+      },
+      "color": "rgba(255,255,255,0.8)"
+    },
+    {
+      "id": "118:8698",
+      "name": "环图",
+      "type": "symbolInstence",
+      "frame": {
+        "left": 79,
+        "top": 210,
+        "height": 194,
+        "width": 194
+      },
+      "realFrame": {
+        "left": 79,
+        "top": 210,
+        "width": 194,
+        "height": 194
+      },
+      "visible": true,
+      "fills": [],
+      "borders": []
+    },
+    {
+      "id": "I118:8698;110:5669",
+      "name": "Vector",
+      "type": "shapeLayer",
+      "frame": {
+        "left": 178.44436645507812,
+        "top": 210,
+        "height": 67.74787139892578,
+        "width": 82.97711181640625
+      },
+      "realFrame": {
+        "left": 178.44436645507812,
+        "top": 210,
+        "width": 82.97711181640625,
+        "height": 67.74787139892578
+      },
+      "visible": true,
+      "fills": [
+        "rgba(44,84,225,1)"
+      ],
+      "borders": []
+    },
+    {
+      "id": "I118:8698;110:5670",
+      "name": "Vector",
+      "type": "shapeLayer",
+      "frame": {
+        "left": 216.05589294433594,
+        "top": 264.6329345703125,
+        "height": 111.8226089477539,
+        "width": 56.77534484863281
+      },
+      "realFrame": {
+        "left": 216.05589294433594,
+        "top": 264.6329345703125,
+        "width": 56.77534484863281,
+        "height": 111.8226089477539
+      },
+      "visible": true,
+      "fills": [
+        "rgba(202,239,255,0.37)"
+      ],
+      "borders": []
+    },
+    {
+      "id": "I118:8698;110:5671",
+      "name": "Vector",
+      "type": "shapeLayer",
+      "frame": {
+        "left": 107.11273193359375,
+        "top": 344.16082763671875,
+        "height": 55.864418029785156,
+        "width": 129.51893615722656
+      },
+      "realFrame": {
+        "left": 107.11273193359375,
+        "top": 344.16082763671875,
+        "width": 129.51893615722656,
+        "height": 55.864418029785156
+      },
+      "visible": true,
+      "fills": [
+        "rgba(254,168,38,1)"
+      ],
+      "borders": []
+    },
+    {
+      "id": "I118:8698;110:5672",
+      "name": "Vector",
+      "type": "shapeLayer",
+      "frame": {
+        "left": 80.68695831298828,
+        "top": 270.8593444824219,
+        "height": 96.02668762207031,
+        "width": 50.90974044799805
+      },
+      "realFrame": {
+        "left": 80.68695831298828,
+        "top": 270.8593444824219,
+        "width": 50.90974044799805,
+        "height": 96.02668762207031
+      },
+      "visible": true,
+      "fills": [
+        "rgba(40,156,255,0.5)"
+      ],
+      "borders": []
+    },
+    {
+      "id": "I118:8698;110:5673",
+      "name": "Vector",
+      "type": "shapeLayer",
+      "frame": {
+        "left": 89.26851654052734,
+        "top": 210,
+        "height": 71.4837875366211,
+        "width": 85.80193328857422
+      },
+      "realFrame": {
+        "left": 89.26851654052734,
+        "top": 210,
+        "width": 85.80193328857422,
+        "height": 71.4837875366211
+      },
+      "visible": true,
+      "fills": [
+        "rgba(34,232,231,1)"
+      ],
+      "borders": []
+    },
+    {
+      "id": "118:8699",
+      "name": "环图",
+      "type": "artboard",
+      "frame": {
+        "left": 96,
+        "top": 224,
+        "height": 162,
+        "width": 162
+      },
+      "realFrame": {
+        "left": 96,
+        "top": 224,
+        "width": 162,
+        "height": 162
+      },
+      "visible": true,
+      "fills": [],
+      "borders": []
+    },
+    {
+      "id": "118:8700",
+      "name": "Vector",
+      "type": "shapeLayer",
+      "frame": {
+        "left": 178.09109497070312,
+        "top": 230.75,
+        "height": 53.62645721435547,
+        "width": 65.68130493164062
+      },
+      "realFrame": {
+        "left": 178.09109497070312,
+        "top": 230.75,
+        "width": 65.68130493164062,
+        "height": 53.62645721435547
+      },
+      "visible": true,
+      "fills": [
+        "rgba(46,81,233,1)"
+      ],
+      "borders": [
+        "rgba(22,100,255,0)"
+      ]
+    },
+    {
+      "id": "118:8701",
+      "name": "Vector",
+      "type": "shapeLayer",
+      "frame": {
+        "left": 207.8628692626953,
+        "top": 273.9952697753906,
+        "height": 88.51422119140625,
+        "width": 44.94104766845703
+      },
+      "realFrame": {
+        "left": 207.8628692626953,
+        "top": 273.9952697753906,
+        "width": 44.94104766845703,
+        "height": 88.51422119140625
+      },
+      "visible": true,
+      "fills": [
+        "rgba(186,233,253,1)"
+      ],
+      "borders": [
+        "rgba(26,198,255,0)"
+      ]
+    },
+    {
+      "id": "118:8702",
+      "name": "Vector",
+      "type": "shapeLayer",
+      "frame": {
+        "left": 121.62789916992188,
+        "top": 336.9463195800781,
+        "height": 44.21999740600586,
+        "width": 102.52191162109375
+      },
+      "realFrame": {
+        "left": 121.62789916992188,
+        "top": 336.9463195800781,
+        "width": 102.52191162109375,
+        "height": 44.21999740600586
+      },
+      "visible": true,
+      "fills": [
+        "rgba(254,168,38,1)"
+      ],
+      "borders": [
+        "rgba(255,138,0,0)"
+      ]
+    },
+    {
+      "id": "118:8703",
+      "name": "Vector",
+      "type": "shapeLayer",
+      "frame": {
+        "left": 100.7103271484375,
+        "top": 278.9236755371094,
+        "height": 76.01081848144531,
+        "width": 40.29807662963867
+      },
+      "realFrame": {
+        "left": 100.7103271484375,
+        "top": 278.9236755371094,
+        "width": 40.29807662963867,
+        "height": 76.01081848144531
+      },
+      "visible": true,
+      "fills": [
+        "rgba(40,156,255,1)"
+      ],
+      "borders": [
+        "rgba(60,199,128,0)"
+      ]
+    },
+    {
+      "id": "118:8704",
+      "name": "Vector",
+      "type": "shapeLayer",
+      "frame": {
+        "left": 107.5031509399414,
+        "top": 230.75,
+        "height": 56.583656311035156,
+        "width": 67.91732025146484
+      },
+      "realFrame": {
+        "left": 107.5031509399414,
+        "top": 230.75,
+        "width": 67.91732025146484,
+        "height": 56.583656311035156
+      },
+      "visible": true,
+      "fills": [
+        "rgba(34,232,231,1)"
+      ],
+      "borders": [
+        "rgba(116,66,212,0)"
+      ]
+    }
+  ]
+}

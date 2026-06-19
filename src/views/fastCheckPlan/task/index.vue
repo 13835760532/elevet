@@ -151,7 +151,7 @@ const filteredTaskStatusOptions = computed(() => {
 // 第一行步骤
 const stepsRow1 = [
   { id: '01', title: '方案创建', description: '创建工作方案(如年度、专项)', disabled: true },
-  { id: '02', title: '任务拆分', description: '承检', disabled: true },
+  { id: '02', title: '任务拆分', description: '按承检机构拆分检测任务', disabled: true },
   { id: '03', title: '任务下达', description: '任务下达至承检机构', disabled: true },
   { id: '04', title: '任务接收', description: '承检机构接收任务', highlight: true },
   { id: '05', title: '任务转派（按需拆分）', description: '按需向下转派或拆分任务' },

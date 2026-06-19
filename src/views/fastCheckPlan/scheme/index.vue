@@ -163,7 +163,7 @@ const selectedIds = ref([]) // 批量选中的 ID 列表
 
 const steps = [
   { id: '01', title: '方案创建', description: '创建工作方案(如年度、专项)' },
-  { id: '02', title: '任务拆分', description: '承检' },
+  { id: '02', title: '任务拆分', description: '按承检机构拆分检测任务' },
   { id: '03', title: '任务下达', description: '任务下达至承检机构' },
   { id: '04', title: '检测结果查看', description: '任务内检测结果查看' },
   { id: '05', title: '方案进度跟踪', description: '任务执行进度统计' }

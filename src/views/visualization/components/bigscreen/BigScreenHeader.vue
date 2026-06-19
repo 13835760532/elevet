@@ -10,9 +10,14 @@
         <div class="caret-icon"></div>
       </div>
 
-      <div class="nav-btn" v-for="item in leftMenus" :key="item.key" :class="{ active: activeMenu === item.key }"
+      <div
+        class="nav-btn"
+        v-for="item in leftMenus"
+        :key="item.key"
+        :class="{ active: activeMenu === item.key }"
         :style="{ backgroundImage: `url(${activeMenu === item.key ? item.activeBg : item.bg})` }"
-        @click="handleMenuClick(item.key)">
+        @click="handleMenuClick(item.key)"
+      >
         <span class="btn-label"></span>
       </div>
       <!-- 数据配置弹窗 -->
@@ -29,18 +34,37 @@
           <div class="form-item">
             <div class="item-label">数据时间范围</div>
             <div class="field-shell">
-              <el-date-picker v-model="configForm.timeRange" type="daterange" value-format="YYYY-MM-DD"
-                range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期" size="large" :teleported="false"
-                class="custom-date-picker" popper-class="big-screen-date-popper" />
+              <el-date-picker
+                v-model="configForm.timeRange"
+                type="daterange"
+                value-format="YYYY-MM-DD"
+                range-separator="至"
+                start-placeholder="开始日期"
+                end-placeholder="结束日期"
+                size="large"
+                :teleported="false"
+                class="custom-date-picker"
+                popper-class="big-screen-date-popper"
+              />
             </div>
           </div>
 
           <div class="form-item">
             <div class="item-label">数据地区设置</div>
             <div class="field-shell">
-              <el-cascader v-model="configForm.regionPath" :options="areaOptions" :props="areaCascaderProps"
-                :show-all-levels="false" :teleported="false" separator="-" filterable clearable size="large"
-                class="custom-cascader" popper-class="big-screen-area-popper" />
+              <el-cascader
+                v-model="configForm.regionPath"
+                :options="areaOptions"
+                :props="areaCascaderProps"
+                :show-all-levels="false"
+                :teleported="false"
+                separator="-"
+                filterable
+                clearable
+                size="large"
+                class="custom-cascader"
+                popper-class="big-screen-area-popper"
+              />
             </div>
           </div>
 
@@ -48,8 +72,13 @@
             <div class="item-label">风险公告更新频次</div>
             <div class="frequency-input">
               <span>每</span>
-              <el-input-number v-model="configForm.frequency" :min="1" :controls="false" size="small"
-                class="custom-number-input" />
+              <el-input-number
+                v-model="configForm.frequency"
+                :min="1"
+                :controls="false"
+                size="small"
+                class="custom-number-input"
+              />
               <span>分钟更新一次</span>
             </div>
           </div>
@@ -62,12 +91,17 @@
       </div>
     </div>
     <div class="header-center">
-      <h1>壹拾智检数智服务平台</h1>
+      <h1>风险监测预警信息化平台</h1>
     </div>
     <div class="header-side right">
-      <div class="nav-btn" v-for="item in rightMenus" :key="item.key" :class="{ active: activeMenu === item.key }"
+      <div
+        class="nav-btn"
+        v-for="item in rightMenus"
+        :key="item.key"
+        :class="{ active: activeMenu === item.key }"
         :style="{ backgroundImage: `url(${activeMenu === item.key ? item.activeBg : item.bg})` }"
-        @click="handleMenuClick(item.key)">
+        @click="handleMenuClick(item.key)"
+      >
         <span class="btn-label"></span>
       </div>
       <div class="assistant-badge">
@@ -82,41 +116,41 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted, reactive, ref, toRefs } from 'vue';
-import { useRouter } from 'vue-router';
-import { ElMessage } from 'element-plus';
-import { List, Aim, Checked, Bell } from '@element-plus/icons-vue';
-import { getAreaTree } from '@/api/system/area';
-import botImg from '@/assets/imgs/echarts/bot.png';
-import taskBg from '@/assets/imgs/echarts/首页/jcrw_nor.png';
-import taskBgActive from '@/assets/imgs/echarts/首页/jcrw_pr.png';
-import inspectBg from '@/assets/imgs/echarts/首页/jiance_nor.png';
-import inspectBgActive from '@/assets/imgs/echarts/首页/jiance_pr.jpg';
-import certBg from '@/assets/imgs/echarts/首页/hegezheng_nor.png';
-import certBgActive from '@/assets/imgs/echarts/首页/hgz_pr.png';
-import warnBg from '@/assets/imgs/echarts/首页/xyyj_nor.png';
-import warnBgActive from '@/assets/imgs/echarts/首页/xyyj_pr.png';
+import { onMounted, onUnmounted, reactive, ref, toRefs } from 'vue'
+import { useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
+import { List, Aim, Checked, Bell } from '@element-plus/icons-vue'
+import { getAreaTree } from '@/api/system/area'
+import botImg from '@/assets/imgs/echarts/bot.png'
+import taskBg from '@/assets/imgs/echarts/首页/jcrw_nor.png'
+import taskBgActive from '@/assets/imgs/echarts/首页/jcrw_pr.png'
+import inspectBg from '@/assets/imgs/echarts/首页/jiance_nor.png'
+import inspectBgActive from '@/assets/imgs/echarts/首页/jiance_pr.jpg'
+import certBg from '@/assets/imgs/echarts/首页/hegezheng_nor.png'
+import certBgActive from '@/assets/imgs/echarts/首页/hgz_pr.png'
+import warnBg from '@/assets/imgs/echarts/首页/xyyj_nor.png'
+import warnBgActive from '@/assets/imgs/echarts/首页/xyyj_pr.png'
 import {
   dispatchBigScreenRefresh,
   getBigScreenConfig,
   getDefaultBigScreenConfig,
   saveBigScreenConfig,
   type BigScreenDataConfig
-} from './config';
+} from './config'
 
 const props = withDefaults(
   defineProps<{
-    showDataConfig?: boolean;
-    activeMenu?: '' | 'task' | 'inspect' | 'cert' | 'warn';
+    showDataConfig?: boolean
+    activeMenu?: '' | 'task' | 'inspect' | 'cert' | 'warn'
   }>(),
   {
     showDataConfig: true,
     activeMenu: ''
   }
-);
-const { showDataConfig, activeMenu } = toRefs(props);
-const emit = defineEmits(['update:activeMenu', 'toggleConfig']);
-const router = useRouter();
+)
+const { showDataConfig, activeMenu } = toRefs(props)
+const emit = defineEmits(['update:activeMenu', 'toggleConfig'])
+const router = useRouter()
 
 interface AreaNodeRespVO {
   id: number
@@ -124,16 +158,16 @@ interface AreaNodeRespVO {
   children?: AreaNodeRespVO[]
 }
 
-const showConfig = ref(false);
-const areaOptions = ref<AreaNodeRespVO[]>([]);
-const areaOptionsLoaded = ref(false);
-const areaOptionsLoading = ref(false);
-let refreshTimer: number | null = null;
+const showConfig = ref(false)
+const areaOptions = ref<AreaNodeRespVO[]>([])
+const areaOptionsLoaded = ref(false)
+const areaOptionsLoading = ref(false)
+let refreshTimer: number | null = null
 const configForm = reactive({
   timeRange: getDefaultBigScreenConfig().timeRange as [string, string],
   regionPath: [] as number[],
   frequency: 5
-});
+})
 
 const areaCascaderProps = {
   value: 'id',
@@ -141,85 +175,88 @@ const areaCascaderProps = {
   children: 'children',
   checkStrictly: true,
   emitPath: true
-};
+}
 
 const ensureAreaOptionsLoaded = async () => {
-  if (areaOptionsLoaded.value || areaOptionsLoading.value) return;
-  areaOptionsLoading.value = true;
+  if (areaOptionsLoaded.value || areaOptionsLoading.value) return
+  areaOptionsLoading.value = true
   try {
-    const data = await getAreaTree();
-    areaOptions.value = formatAreaTree((data || []) as AreaNodeRespVO[]);
-    const cachedConfig = getBigScreenConfig();
+    const data = await getAreaTree()
+    areaOptions.value = formatAreaTree((data || []) as AreaNodeRespVO[])
+    const cachedConfig = getBigScreenConfig()
     if (cachedConfig.regionPath.length) {
-      configForm.regionPath = [...cachedConfig.regionPath];
+      configForm.regionPath = [...cachedConfig.regionPath]
     }
-    areaOptionsLoaded.value = true;
+    areaOptionsLoaded.value = true
   } catch (error) {
-    console.error('加载地区树失败', error);
-    areaOptions.value = [];
+    console.error('加载地区树失败', error)
+    areaOptions.value = []
   } finally {
-    areaOptionsLoading.value = false;
+    areaOptionsLoading.value = false
   }
-};
+}
 
 const toggleConfig = () => {
-  showConfig.value = !showConfig.value;
+  showConfig.value = !showConfig.value
   if (showConfig.value) {
-    void ensureAreaOptionsLoaded();
+    void ensureAreaOptionsLoaded()
   }
-};
+}
 
 const syncConfigForm = (config: BigScreenDataConfig) => {
-  configForm.timeRange = [...config.timeRange] as [string, string];
-  configForm.regionPath = [...config.regionPath];
-  configForm.frequency = config.frequency;
-};
+  configForm.timeRange = [...config.timeRange] as [string, string]
+  configForm.regionPath = [...config.regionPath]
+  configForm.frequency = config.frequency
+}
 
 const formatAreaTree = (tree: AreaNodeRespVO[] = []): AreaNodeRespVO[] =>
   tree.map((item) => {
-    const node = { ...item };
+    const node = { ...item }
     if (node.children?.length) {
-      node.children = formatAreaTree(node.children);
+      node.children = formatAreaTree(node.children)
     } else {
-      delete node.children;
+      delete node.children
     }
-    return node;
-  });
+    return node
+  })
 
 const resolveRegionMetaByPath = (path: number[]) => {
-  const labels: string[] = [];
-  let currentTree = areaOptions.value;
+  const labels: string[] = []
+  let currentTree = areaOptions.value
   for (const id of path) {
-    const current = currentTree.find((item) => item.id === id);
-    if (!current) break;
-    labels.push(current.name);
-    currentTree = current.children || [];
+    const current = currentTree.find((item) => item.id === id)
+    if (!current) break
+    labels.push(current.name)
+    currentTree = current.children || []
   }
   return {
     regionLabel: labels.join('-'),
     provinceName: labels[0] || '',
     cityName: labels[1] || '',
     districtName: labels[2] || ''
-  };
-};
+  }
+}
 
 const clearRefreshTimer = () => {
   if (refreshTimer !== null) {
-    window.clearInterval(refreshTimer);
-    refreshTimer = null;
+    window.clearInterval(refreshTimer)
+    refreshTimer = null
   }
-};
+}
 
 const startRefreshTimer = (frequency: number) => {
-  clearRefreshTimer();
-  const intervalMinutes = Math.max(1, Number(frequency || 5));
-  refreshTimer = window.setInterval(() => {
-    dispatchBigScreenRefresh('timer');
-  }, intervalMinutes * 60 * 1000);
-};
+  clearRefreshTimer()
+  const intervalMinutes = Math.max(1, Number(frequency || 5))
+  refreshTimer = window.setInterval(
+    () => {
+      dispatchBigScreenRefresh('timer')
+    },
+    intervalMinutes * 60 * 1000
+  )
+}
 
 const saveConfig = () => {
-  const regionMeta = resolveRegionMetaByPath(configForm.regionPath);
+  const regionMeta = resolveRegionMetaByPath(configForm.regionPath)
   const nextConfig: BigScreenDataConfig = {
     timeRange: [...configForm.timeRange] as [string, string],
     regionPath: [...configForm.regionPath],
@@ -228,41 +265,41 @@ const saveConfig = () => {
     cityName: regionMeta.cityName,
     districtName: regionMeta.districtName,
     frequency: Math.max(1, Number(configForm.frequency || 5))
-  };
-  saveBigScreenConfig(nextConfig);
-  startRefreshTimer(nextConfig.frequency);
-  console.log('保存配置:', nextConfig);
-  ElMessage.success('数据配置已更新');
-  showConfig.value = false;
-  dispatchBigScreenRefresh('save');
-};
+  }
+  saveBigScreenConfig(nextConfig)
+  startRefreshTimer(nextConfig.frequency)
+  console.log('保存配置:', nextConfig)
+  ElMessage.success('数据配置已更新')
+  showConfig.value = false
+  dispatchBigScreenRefresh('save')
+}
 
 const leftMenus = [
   { key: 'task', label: '检测任务', bg: taskBg, activeBg: taskBgActive, icon: List },
   { key: 'inspect', label: '快速检测', bg: inspectBg, activeBg: inspectBgActive, icon: Aim }
-];
+]
 
 const rightMenus = [
   { key: 'cert', label: '合格证', bg: certBg, activeBg: certBgActive, icon: Checked },
   { key: 'warn', label: '小壹预警', bg: warnBg, activeBg: warnBgActive, icon: Bell }
-];
+]
 
 const handleMenuClick = (key: '' | 'task' | 'inspect' | 'cert' | 'warn') => {
   if (key === 'warn') {
-    router.push('/ai-assistant');
-    return;
+    router.push('/ai-assistant')
+    return
   }
-  emit('update:activeMenu', key);
-};
+  emit('update:activeMenu', key)
+}
 
 onMounted(() => {
-  syncConfigForm(getBigScreenConfig());
-  startRefreshTimer(getBigScreenConfig().frequency);
-});
+  syncConfigForm(getBigScreenConfig())
+  startRefreshTimer(getBigScreenConfig().frequency)
+})
 
 onUnmounted(() => {
-  clearRefreshTimer();
-});
+  clearRefreshTimer()
+})
 </script>
 
 <style scoped lang="scss">
@@ -335,12 +372,13 @@ onUnmounted(() => {
 
 .nav-btn {
   height: 46px;
-  min-width: 140px;
-  padding: 0 20px;
+  width: 178px;
+  flex: 0 0 178px;
+  padding: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background-size: 100% 100%;
+  background-size: contain;
   background-position: center;
   background-repeat: no-repeat;
   color: #c6e7ff;
@@ -383,7 +421,7 @@ onUnmounted(() => {
   }
 
   &::after {
-    content: "";
+    content: '';
     position: absolute;
     width: 14px;
     height: 14px;
@@ -535,7 +573,9 @@ onUnmounted(() => {
   .save-btn {
     background: linear-gradient(90deg, #20c7d2 0%, #2aa9df 100%) !important;
     color: #fff !important;
-    box-shadow: inset 0 0 0 1px rgba(130, 246, 255, 0.25), 0 0 18px rgba(32, 199, 210, 0.28);
+    box-shadow:
+      inset 0 0 0 1px rgba(130, 246, 255, 0.25),
+      0 0 18px rgba(32, 199, 210, 0.28);
 
     &:hover {
       filter: brightness(1.05);
@@ -543,13 +583,21 @@ onUnmounted(() => {
   }
 
   .cancel-btn {
-    background: linear-gradient(180deg, rgba(18, 44, 92, 0.92) 0%, rgba(10, 28, 68, 0.92) 100%) !important;
+    background: linear-gradient(
+      180deg,
+      rgba(18, 44, 92, 0.92) 0%,
+      rgba(10, 28, 68, 0.92) 100%
+    ) !important;
     border: 1px solid rgba(57, 141, 231, 0.75) !important;
     color: #c4e1ff !important;
     box-shadow: inset 0 0 0 1px rgba(67, 196, 255, 0.08);
 
     &:hover {
-      background: linear-gradient(180deg, rgba(22, 56, 114, 0.95) 0%, rgba(13, 36, 84, 0.95) 100%) !important;
+      background: linear-gradient(
+        180deg,
+        rgba(22, 56, 114, 0.95) 0%,
+        rgba(13, 36, 84, 0.95) 100%
+      ) !important;
     }
   }
 }

@@ -1,52 +1,112 @@
 <template>
-  <div class="category-gauges">
-    <Echart :options="pieOption" :height="248" width="100%" />
+  <div v-if="mode === '阳性率'" class="category-rate-platforms">
+    <div class="rate-platform" v-for="(item, index) in ratePlatformItems" :key="item.name"
+      :class="`platform-${index + 1}`">
+      <div class="rate-value" :style="{ color: item.valueColor }">{{ item.displayValue }}</div>
+      <div class="rate-name">{{ item.name }}</div>
+      <div class="platform-base" aria-hidden="true">
+        <img :src="platformImg" alt="" class="platform-img" />
+      </div>
+    </div>
+  </div>
+  <div v-else class="category-gauges">
+    <div class="category-pie">
+      <Echart :options="pieOption" :height="202" width="252px" />
+    </div>
     <div class="category-legend">
       <div class="legend-row" v-for="item in displayItems" :key="item.name">
         <span class="dot" :style="{ background: item.color }"></span>
         <span class="name">{{ item.name }}</span>
-        <span class="value">{{ item.displayValue }}</span>
+        <span class="value" :style="{ color: item.valueColor }">{{ item.displayValue }}</span>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
-import echarts from '@/plugins/echarts';
-import { Echart } from '@/components/Echart';
-import { getCategoryRisk, type CategoryRiskRespVO } from '@/api/agri/dashboard';
-import { getBigScreenQueryParams, subscribeBigScreenRefresh } from './config';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { Echart } from '@/components/Echart'
+import { getCategoryRisk, type CategoryRiskRespVO } from '@/api/agri/dashboard'
+import { getBigScreenQueryParams, subscribeBigScreenRefresh } from './config'
+import platformImg from '@/assets/imgs/new/a.png'
 
 const props = withDefaults(
   defineProps<{
-    mode?: '检测量' | '阳性率';
+    mode?: '检测量' | '阳性率'
   }>(),
   {
     mode: '检测量'
   }
-);
+)
 
-const categoryRiskList = ref<CategoryRiskRespVO[]>([]);
-const categoryColors = ['#3f6dff', '#35d9db', '#91d64c', '#f2bc35', '#ff8a34', '#7d60ff'];
+const categoryRiskList = ref<CategoryRiskRespVO[]>([])
+
+const categoryColorMap: Record<string, { color: string; valueColor: string }> = {
+  蔬菜: { color: '#3155f1', valueColor: '#188bf5' },
+  水果: { color: '#2fd6d2', valueColor: '#4efafe' },
+  畜禽: { color: '#8bc748', valueColor: '#81c340' },
+  水产: { color: '#f0bb32', valueColor: '#e5b12f' },
+  茶叶: { color: '#f0772c', valueColor: '#fea931' }
+}
+
+const categoryColors = ['#3155f1', '#2fd6d2', '#8bc748', '#f0bb32', '#f0772c', '#7d60ff']
+const valueColors = ['#188bf5', '#4efafe', '#81c340', '#e5b12f', '#fea931', '#7d60ff']
+const outerColors = ['#142246', '#0f3f40', '#314523', '#44351d', '#3f2a1d', '#241d45']
+const rateValueColors = ['#188bf5', '#4efafe', '#81c340', '#e5b12f', '#ef7330']
+
+const normalizeRateValue = (item: CategoryRiskRespVO) => {
+  const statValue = Number(item.statValue)
+  const positiveRate = Number(item.positiveRate)
+  const rawValue =
+    Number.isFinite(statValue) && statValue > 0 && statValue <= 100
+      ? statValue
+      : Number.isFinite(positiveRate)
+        ? positiveRate
+        : Number.isFinite(statValue)
+          ? statValue
+          : 0
+
+  return rawValue > 0 && rawValue <= 1 ? rawValue * 100 : rawValue
+}
+
+const getStatValue = (item: CategoryRiskRespVO) => {
+  if (props.mode === '阳性率') {
+    return normalizeRateValue(item)
+  }
+
+  return Number(item.statValue ?? item.detectionCount ?? 0)
+}
 
 const displayItems = computed(() =>
-  [...categoryRiskList.value]
+  categoryRiskList.value
+    .slice(0, 5)
     .map((item) => ({
       name: item.category || '--',
-      value: Number(item.statValue || 0)
+      value: getStatValue(item)
     }))
-    .sort((a, b) => b.value - a.value)
     .map((item, index) => ({
       ...item,
-      color: categoryColors[index % categoryColors.length],
-      displayValue: props.mode === '阳性率' ? `${item.value.toFixed(2)}%` : `${item.value}`
+      color: categoryColorMap[item.name]?.color || categoryColors[index % categoryColors.length],
+      valueColor:
+        props.mode === '阳性率'
+          ? rateValueColors[index % rateValueColors.length]
+          : categoryColorMap[item.name]?.valueColor || valueColors[index % valueColors.length],
+      displayValue: props.mode === '阳性率' ? `${Math.round(item.value)}%` : `${item.value}`
     }))
-);
+)
 
-const pieItems = computed(() => displayItems.value.filter((item) => item.value > 0));
+const ratePlatformItems = computed(() =>
+  displayItems.value.slice(0, 5).map((item, index) => ({
+    ...item,
+    name: item.name,
+    valueColor: rateValueColors[index % rateValueColors.length]
+  }))
+)
+
+const pieItems = computed(() => displayItems.value.filter((item) => item.value > 0))
 
 const pieOption = computed(() => ({
+  animation: false,
   tooltip: {
     trigger: 'item',
     backgroundColor: 'rgba(6, 18, 42, 0.92)',
@@ -58,80 +118,184 @@ const pieOption = computed(() => ({
   series: [
     {
       type: 'pie',
-      radius: ['58%', '74%'],
-      center: ['36%', '50%'],
+      silent: true,
+      radius: ['63%', '82%'],
+      center: ['50%', '50%'],
+      clockwise: true,
+      minAngle: 18,
+      label: { show: false },
+      labelLine: { show: false },
+      itemStyle: {
+        borderColor: 'rgba(5, 9, 25, 0.96)',
+        borderWidth: 4
+      },
+      emphasis: { disabled: true },
+      data: pieItems.value.map((item, index) => ({
+        name: item.name,
+        value: item.value,
+        itemStyle: {
+          color: outerColors[index % outerColors.length]
+        }
+      }))
+    },
+    {
+      type: 'pie',
+      radius: ['38%', '62%'],
+      center: ['50%', '50%'],
+      clockwise: true,
+      minAngle: 18,
       avoidLabelOverlap: true,
       label: { show: false },
       labelLine: { show: false },
       itemStyle: {
-        borderColor: 'rgba(7, 16, 38, 0.96)',
+        borderColor: 'rgba(5, 9, 25, 0.96)',
         borderWidth: 4,
         shadowBlur: 12,
-        shadowColor: 'rgba(0, 0, 0, 0.2)'
+        shadowColor: 'rgba(0, 179, 237, 0.16)'
       },
       data: pieItems.value.map((item) => ({
         name: item.name,
         value: item.value,
         itemStyle: {
-          color: new echarts.graphic.LinearGradient(0, 0, 1, 1, [
-            { offset: 0, color: item.color },
-            { offset: 1, color: 'rgba(15, 52, 95, 0.9)' }
-          ])
+          color: item.color
         }
       }))
     }
   ]
-}));
+}))
 
 const loadCategoryRiskData = async () => {
   try {
     const data = await getCategoryRisk({
       ...getBigScreenQueryParams(),
       statType: props.mode === '阳性率' ? '2' : '1'
-    });
-    categoryRiskList.value = Array.isArray(data) ? data : [];
+    })
+    categoryRiskList.value = Array.isArray(data) ? data : []
   } catch (error) {
-    console.error('加载农产品品类风险分布失败', error);
-    categoryRiskList.value = [];
+    console.error('加载农产品品类风险分布失败', error)
+    categoryRiskList.value = []
   }
-};
+}
 
 watch(
   () => props.mode,
   () => {
-    loadCategoryRiskData();
+    loadCategoryRiskData()
   }
-);
+)
 
 onMounted(() => {
-  loadCategoryRiskData();
-});
+  loadCategoryRiskData()
+})
 
 const disposeRefresh = subscribeBigScreenRefresh(() => {
-  loadCategoryRiskData();
-});
+  loadCategoryRiskData()
+})
 
 onUnmounted(() => {
-  disposeRefresh();
-});
+  disposeRefresh()
+})
 </script>
 
 <style scoped lang="scss">
 .category-gauges {
-  height: 248px;
+  height: 226px;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 170px;
+  grid-template-columns: 252px 119px;
   align-items: center;
-  gap: 8px;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 12px 22px 12px 24px;
+}
+
+.category-rate-platforms {
+  position: relative;
+  height: 226px;
+  padding: 0 32px 10px;
+}
+
+.rate-platform {
+  position: absolute;
+  width: 112px;
+  height: 112px;
+  text-align: center;
+
+  &.platform-1 {
+    left: 44px;
+    top: 10px;
+  }
+
+  &.platform-2 {
+    left: 168px;
+    top: 10px;
+  }
+
+  &.platform-3 {
+    left: 292px;
+    top: 10px;
+  }
+
+  &.platform-4 {
+    left: 102px;
+    top: 122px;
+  }
+
+  &.platform-5 {
+    left: 236px;
+    top: 122px;
+  }
+}
+
+.rate-value {
+  position: relative;
+  z-index: 3;
+  height: 28px;
+  font-family: 'DIN Alternate', 'Source Sans 3', sans-serif;
+  font-size: 29px;
+  line-height: 28px;
+  font-weight: 700;
+  text-shadow: 0 0 12px currentColor;
+}
+
+.rate-name {
+  position: relative;
+  z-index: 3;
+  color: rgba(224, 239, 239, 0.86);
+  font-size: 16px;
+  line-height: 20px;
+  text-shadow: 0 0 8px rgba(111, 194, 255, 0.55);
+}
+
+.platform-base {
+  position: absolute;
+  left: 50%;
+  top: 42px;
+  width: 82px;
+  height: 82px;
+  transform: translateX(-50%);
+  margin-top: -20px;
+}
+
+.platform-img {
+  width: 82px;
+  height: 82px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 10px rgba(42, 235, 255, 0.5));
+}
+
+.category-pie {
+  width: 252px;
+  height: 202px;
+  min-width: 252px;
 }
 
 .category-legend {
-  height: 248px;
+  height: 160px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  overflow-y: auto;
-  padding-right: 6px;
+  gap: 8px;
+  overflow: visible;
+  padding-right: 0;
 }
 
 .category-legend::-webkit-scrollbar {
@@ -149,31 +313,34 @@ onUnmounted(() => {
 
 .legend-row {
   display: grid;
-  grid-template-columns: 12px minmax(0, 1fr) auto;
+  grid-template-columns: 9px minmax(0, 1fr) auto;
   align-items: center;
   gap: 10px;
-  padding: 7px 12px;
-  background: rgba(11, 44, 88, 0.45);
-  border: 1px solid rgba(39, 110, 196, 0.35);
+  width: 119px;
+  height: 24px;
+  padding: 0 12px;
+  background: rgba(39, 49, 59, 0.72);
+  border: none;
 
   .dot {
-    width: 12px;
-    height: 12px;
-    border-radius: 2px;
+    width: 9px;
+    height: 9px;
+    border-radius: 0;
   }
 
   .name {
-    color: #bbdbfa;
-    font-size: 15px;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 14px;
+    line-height: 24px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
 
   .value {
-    color: #4ce9ff;
-    font-weight: 700;
-    font-size: 15px;
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 24px;
   }
 }
 </style>

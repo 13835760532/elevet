@@ -1,6 +1,6 @@
 <template>
   <section class="panel-card">
-    <header class="panel-header">
+    <header class="panel-header" :style="headerStyle">
       <div class="panel-title-wrap">
         <h3 class="panel-title">{{ title }}</h3>
       </div>
@@ -24,49 +24,79 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed } from 'vue'
 
 const props = withDefaults(
   defineProps<{
-    title: string;
-    tabs?: string[];
-    activeTab?: string;
-    bgImage?: string;
+    title: string
+    tabs?: string[]
+    activeTab?: string
+    bgImage?: string
+    titleBgImage?: string
   }>(),
   {
     tabs: () => [],
     activeTab: '',
-    bgImage: ''
+    bgImage: '',
+    titleBgImage: ''
   }
-);
+)
 
 const emit = defineEmits<{
-  (e: 'update:activeTab', value: string): void;
-  (e: 'tab-click', value: string): void;
-}>();
+  (e: 'update:activeTab', value: string): void
+  (e: 'tab-click', value: string): void
+}>()
 
-const currentActiveTab = computed(() => props.activeTab || props.tabs[0] || '');
+const currentActiveTab = computed(() => props.activeTab || props.tabs[0] || '')
+
+const headerStyle = computed(() =>
+  props.titleBgImage
+    ? {
+        backgroundImage: `url(${props.titleBgImage})`
+      }
+    : undefined
+)
 
 const handleTabClick = (tab: string) => {
-  emit('update:activeTab', tab);
-  emit('tab-click', tab);
-};
+  emit('update:activeTab', tab)
+  emit('tab-click', tab)
+}
 </script>
 
 <style scoped lang="scss">
 .panel-card {
-  background: url('../../../../assets/imgs/echarts/首页/fxjzqy_bg.png');
-  background-size: 100% 100%;
-  box-shadow: inset 0 0 28px rgba(2, 74, 168, 0.2);
   position: relative;
-  /* 支撑自适应高度 */
   display: flex;
   flex-direction: column;
   height: 100%;
+  background:
+    linear-gradient(180deg, rgba(0, 2, 31, 0.31) 0%, rgba(0, 2, 31, 0.31) 100%),
+    linear-gradient(180deg, rgba(4, 19, 49, 0.18) 0%, rgba(5, 12, 34, 0.04) 100%);
+  box-shadow: inset 0 0 28px rgba(2, 74, 168, 0.14);
+  overflow: hidden;
+
+  &::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 2px;
+    background: linear-gradient(
+      90deg,
+      rgba(32, 51, 159, 0) 0%,
+      rgba(32, 45, 159, 1) 41%,
+      rgba(133, 151, 229, 1) 51%,
+      rgba(32, 62, 159, 1) 63%,
+      rgba(32, 45, 159, 0) 100%
+    );
+    pointer-events: none;
+  }
 }
 
 .panel-header {
   height: 46px;
+  flex: 0 0 46px;
   padding: 0 14px;
   display: flex;
   align-items: center;
@@ -89,8 +119,6 @@ const handleTabClick = (tab: string) => {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background: url('../../../../assets/imgs/echarts/首页/fgqt_bg.png') no-repeat center center;
-    background-size: 100% 100%;
   }
 }
 
@@ -98,44 +126,46 @@ const handleTabClick = (tab: string) => {
   display: flex;
   align-items: center;
   gap: 8px;
-
 }
 
 .panel-title {
   margin: 0;
   font-size: 18px;
-  font-weight: 700;
-  letter-spacing: 1px;
-  color: #E0EFEF;
+  font-weight: 600;
+  letter-spacing: 0;
+  color: #e0efef;
   padding-left: 40px;
+  line-height: 46px;
 }
 
 .panel-tabs {
   display: flex;
-  gap: 12px;
-  padding-right: 12px;
+  gap: 14px;
+  padding-right: 18px;
 }
 
 .panel-tab {
   border: none;
-  background: rgba(10, 40, 95, 0.4);
-  color: #92b0c9;
-  font-size: 16px;
-  padding: 6px 18px;
+  min-width: 62px;
+  height: 34px;
+  background: linear-gradient(180deg, rgba(21, 30, 63, 1) 0%, rgba(54, 68, 86, 0) 96.63%);
+  color: #adccc9;
+  font-size: 14px;
+  padding: 0 10px;
   cursor: pointer;
   position: relative;
-  transition: all 0.3s ease;
-  border-top: 2px solid #dcdcdc;
+  transition: all 0.2s ease;
+  border-top: 2px solid rgba(194, 212, 212, 1);
 
   &.active {
-    background: linear-gradient(180deg, rgba(20, 80, 160, 0.8) 0%, rgba(10, 40, 90, 0.8) 100%);
-    color: #fff;
-    font-weight: 700;
+    background: linear-gradient(180deg, rgba(0, 35, 74, 1) 0%, rgba(60, 106, 214, 0) 100%);
+    color: #c2d4d4;
+    border-top-color: #eef6f6;
+    font-weight: 400;
   }
 
   &:hover:not(.active) {
-    background: rgba(20, 80, 160, 0.4);
-    color: #fff;
+    color: #e0efef;
   }
 }
 

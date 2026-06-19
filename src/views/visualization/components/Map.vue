@@ -37,14 +37,16 @@ const REMOTE_GEO_BASE_URL = import.meta.env.DEV
 
 const mapRef = ref<HTMLElement | null>(null)
 const loading = ref(true)
-const HOME_CENTER: [number, number] = [106.5, 37.5]
-const HOME_ZOOM = 4.5
+const HOME_CENTER: [number, number] = [107.2, 35.8]
+const HOME_ZOOM = 4.75
 const isSwitching = ref(false)
 const FAST_MODE = true
 const DRILL_LABEL_LIMIT = FAST_MODE ? 20 : 30
 const ENABLE_HOVER_TOOLTIP = true
+const HOVER_TOOLTIP_DELAY = 1000
 const state = reactive({
   map: null as any,
+  glowLayer: null as any,
   provinceLayer: null as any,
   labelLayer: null as any, // national labels
   detailLabelLayer: null as any, // drill-down labels
@@ -55,6 +57,7 @@ const state = reactive({
 let remoteGeoCache: any = null
 const detailGeoCache = new Map<string, any>()
 let nationalLabelRaf = 0
+let loadingFallbackTimer: number | null = null
 const certificateMapData = ref<DashboardCertificateMapRespVO>({})
 const fastMapData = ref<FastMapDataRespVO[]>([])
 const dashboardMapData = ref<MapDataRespVO[]>([])
@@ -76,45 +79,88 @@ const ui = reactive({
 
 // 采用更简洁的解码逻辑
 const decodeFeature = (feature: any) => {
-  const { geometry } = feature;
-  if (!geometry || !geometry.encodeOffsets) return feature;
+  const { geometry } = feature
+  if (!geometry || !geometry.encodeOffsets) return feature
 
-  const scale = 1024;
-  const { type, coordinates, encodeOffsets } = geometry;
+  const scale = 1024
+  const { type, coordinates, encodeOffsets } = geometry
 
   const decodePart = (coordinate: string, encodeOffset: number[]) => {
-    const result: number[][] = [];
-    let prevX = encodeOffset[0];
-    let prevY = encodeOffset[1];
+    const result: number[][] = []
+    let prevX = encodeOffset[0]
+    let prevY = encodeOffset[1]
     for (let i = 0; i < coordinate.length; i += 2) {
-      let x = coordinate.charCodeAt(i) - 64;
-      let y = coordinate.charCodeAt(i + 1) - 64;
-      x = (x & 1) ? ~(x >> 1) : (x >> 1);
-      y = (y & 1) ? ~(y >> 1) : (y >> 1);
-      x += prevX;
-      y += prevY;
-      prevX = x;
-      prevY = y;
-      result.push([x / scale, y / scale]);
+      let x = coordinate.charCodeAt(i) - 64
+      let y = coordinate.charCodeAt(i + 1) - 64
+      x = x & 1 ? ~(x >> 1) : x >> 1
+      y = y & 1 ? ~(y >> 1) : y >> 1
+      x += prevX
+      y += prevY
+      prevX = x
+      prevY = y
+      result.push([x / scale, y / scale])
     }
-    return result;
-  };
+    return result
+  }
 
   if (type === 'Polygon') {
-    geometry.coordinates = coordinates.map((c: any, i: number) => decodePart(c, encodeOffsets[i]));
+    geometry.coordinates = coordinates.map((c: any, i: number) => decodePart(c, encodeOffsets[i]))
   } else if (type === 'MultiPolygon') {
     geometry.coordinates = coordinates.map((polygons: any, i: number) => {
-      return polygons.map((c: any, j: number) => decodePart(c, encodeOffsets[i][j]));
-    });
+      return polygons.map((c: any, j: number) => decodePart(c, encodeOffsets[i][j]))
+    })
   }
-  delete geometry.encodeOffsets;
-  return feature;
+  delete geometry.encodeOffsets
+  return feature
 }
 
 const isCertificateMode = computed(() => props.mode === 'certificate')
 const isFastMapMode = computed(() => props.mode === 'fast')
 const isTaskMapMode = computed(() => props.mode === 'task')
 const isDashboardMode = computed(() => props.mode === 'default')
+
+type MapLegendItem = {
+  label: string
+  blockClass: string
+}
+
+const createLegendItems = (labels: string[], blockClasses: string[]): MapLegendItem[] =>
+  labels.map((label, index) => ({
+    label,
+    blockClass: blockClasses[index] || `block-${index + 1}`
+  }))
+
+const mapLegendTitle = computed(() => {
+  if (isCertificateMode.value) return props.certificateTab === '存证' ? '存证分布' : '开具分布'
+  if (isFastMapMode.value) return '检测样本分布'
+  if (isTaskMapMode.value) return '任务下发分布'
+  return '测量分布'
+})
+
+const mapLegendItems = computed(() => {
+  if (isCertificateMode.value) {
+    return createLegendItems(
+      ['500+', '200-499', '100-199', '1-99', '0'],
+      ['block-1', 'block-2', 'block-3', 'block-4', 'block-8']
+    )
+  }
+  if (isFastMapMode.value) {
+    return createLegendItems(
+      ['300-499', '200-399', '100-299', '50-199', '30-100', '10-50', '0-10'],
+      ['block-1', 'block-2', 'block-3', 'block-4', 'block-5', 'block-6', 'block-8']
+    )
+  }
+  if (isTaskMapMode.value) {
+    return createLegendItems(
+      ['500+', '200-499', '100-199', '50-99', '1-49', '0'],
+      ['block-1', 'block-2', 'block-3', 'block-4', 'block-6', 'block-8']
+    )
+  }
+  return createLegendItems(
+    ['500+', '200-499', '100-199', '50-99', '10-49', '0-9'],
+    ['block-1', 'block-2', 'block-3', 'block-4', 'block-6', 'block-8']
+  )
+})
 
 const getAreaCandidates = (
   item: CertificateMapItemVO | FastMapDataRespVO | TaskMapDataRespVO | MapDataRespVO
@@ -130,7 +176,10 @@ const getFeatureCandidates = (featureProps: any) => {
 }
 
 const formatRegionLabel = (name: string) => {
-  return String(name || '').replace(/省|市|壮族自治区|回族自治区|维吾尔自治区|自治区|特别行政区/g, '')
+  return String(name || '').replace(
+    /省|市|壮族自治区|回族自治区|维吾尔自治区|自治区|特别行政区/g,
+    ''
+  )
 }
 
 const getColorByCount = (count: number) => {
@@ -170,12 +219,12 @@ const getActiveMapList = () =>
   isFastMapMode.value
     ? fastMapData.value
     : isDashboardMode.value
-    ? dashboardMapData.value
-    : isTaskMapMode.value
-    ? taskMapData.value
-    : props.certificateTab === '存证'
-    ? certificateMapData.value.verificationList || []
-    : certificateMapData.value.issueList || []
+      ? dashboardMapData.value
+      : isTaskMapMode.value
+        ? taskMapData.value
+        : props.certificateTab === '存证'
+          ? certificateMapData.value.verificationList || []
+          : certificateMapData.value.issueList || []
 
 const applyGeometryDataStyle = (geo: any) => {
   const geoProps = geo.getProperties?.() || {}
@@ -183,21 +232,45 @@ const applyGeometryDataStyle = (geo: any) => {
   geo.setSymbol({
     polygonPatternFile: fillImg,
     polygonFill: getColorByCount(count),
-    lineColor: '#22d3ee',
-    lineWidth: count > 0 ? 1.2 : 1,
-    lineOpacity: count > 0 ? 0.95 : 0.8
+    polygonOpacity: count > 0 ? 0.88 : 0.64,
+    lineColor: count > 0 ? '#53f4ff' : '#1fb6d5',
+    lineWidth: count > 0 ? 1.05 : 0.82,
+    lineOpacity: count > 0 ? 0.92 : 0.66
+  })
+}
+
+const applyMapGlowSymbol = (geo: any) => {
+  geo.setSymbol({
+    polygonFill: '#32f5a6',
+    polygonOpacity: 0.26,
+    lineColor: '#32f5a6',
+    lineWidth: 0,
+    lineOpacity: 0,
+    shadowBlur: 28,
+    shadowColor: 'rgba(50, 245, 166, 0.82)'
   })
 }
 
 const syncCurrentMapData = (geometries?: any[]) => {
-  if (!isCertificateMode.value && !isFastMapMode.value && !isTaskMapMode.value && !isDashboardMode.value) return
+  if (
+    !isCertificateMode.value &&
+    !isFastMapMode.value &&
+    !isTaskMapMode.value &&
+    !isDashboardMode.value
+  )
+    return
   currentMapList.value = getActiveMapList()
-  const targetGeometries = geometries
-    || (ui.isDrilled ? state.detailLayer?.getGeometries?.() || [] : state.provinceLayer?.getGeometries?.() || [])
+  const targetGeometries =
+    geometries ||
+    (ui.isDrilled
+      ? state.detailLayer?.getGeometries?.() || []
+      : state.provinceLayer?.getGeometries?.() || [])
   targetGeometries.forEach((geo: any) => {
     const geoProps = geo.getProperties?.() || {}
     const matched = currentMapList.value.find((item) =>
-      getFeatureCandidates(geoProps).some((featureName) => getAreaCandidates(item).includes(featureName))
+      getFeatureCandidates(geoProps).some((featureName) =>
+        getAreaCandidates(item).includes(featureName)
+      )
     )
     geo.setProperties({
       ...geoProps,
@@ -205,10 +278,10 @@ const syncCurrentMapData = (geometries?: any[]) => {
         isFastMapMode.value
           ? (matched as FastMapDataRespVO | undefined)?.sampleCount || 0
           : isDashboardMode.value
-          ? (matched as MapDataRespVO | undefined)?.sampleCount || 0
-          : isTaskMapMode.value
-          ? (matched as TaskMapDataRespVO | undefined)?.taskIssuedCount || 0
-          : (matched as CertificateMapItemVO | undefined)?.count || 0
+            ? (matched as MapDataRespVO | undefined)?.sampleCount || 0
+            : isTaskMapMode.value
+              ? (matched as TaskMapDataRespVO | undefined)?.taskIssuedCount || 0
+              : (matched as CertificateMapItemVO | undefined)?.count || 0
       ),
       sampleCount: Number(
         isDashboardMode.value
@@ -227,13 +300,16 @@ const syncCurrentMapData = (geometries?: any[]) => {
           : (matched as FastMapDataRespVO | undefined)?.positiveRate || 0
       ),
       taskIssuedCount: Number((matched as TaskMapDataRespVO | undefined)?.taskIssuedCount || 0),
-      taskCompletedCount: Number((matched as TaskMapDataRespVO | undefined)?.taskCompletedCount || 0),
-      taskCompletionRate: Number((matched as TaskMapDataRespVO | undefined)?.taskCompletionRate || 0)
+      taskCompletedCount: Number(
+        (matched as TaskMapDataRespVO | undefined)?.taskCompletedCount || 0
+      ),
+      taskCompletionRate: Number(
+        (matched as TaskMapDataRespVO | undefined)?.taskCompletionRate || 0
+      )
     })
     applyGeometryDataStyle(geo)
   })
 }
-
 
 const loadRemoteGeoJson = async () => {
   if (remoteGeoCache) return remoteGeoCache
@@ -280,6 +356,7 @@ const renderDetailLabels = (features: any[]) => {
     if (cp && name) {
       new maptalks.Label(name, cp, {
         draggable: false,
+        interactive: false,
         textSymbol: {
           textFaceName: 'sans-serif',
           textFill: '#c8f7ff',
@@ -382,7 +459,12 @@ const drillDown = async (geometry: any) => {
     const detailGeo = await loadDetailGeoJson(geoId)
     if (!detailGeo?.features?.length) return
 
-    if (isCertificateMode.value || isFastMapMode.value || isTaskMapMode.value || isDashboardMode.value) {
+    if (
+      isCertificateMode.value ||
+      isFastMapMode.value ||
+      isTaskMapMode.value ||
+      isDashboardMode.value
+    ) {
       if (currentDrillLevel.value === 0) {
         currentRegionParams.provinceName = properties.name
         delete currentRegionParams.cityName
@@ -412,6 +494,7 @@ const drillDown = async (geometry: any) => {
 
     state.detailLayer.clear()
     state.detailLabelLayer?.clear?.()
+    state.glowLayer?.hide?.()
     state.provinceLayer.getGeometries().forEach((g: any) => g.hide())
     state.labelLayer?.hide?.()
 
@@ -425,10 +508,13 @@ const drillDown = async (geometry: any) => {
       })
       geo.setSymbol({
         polygonPatternFile: fillImg,
-        polygonFill: 'rgba(4, 25, 50, 0.86)',
-        lineColor: '#67e8f9',
-        lineWidth: 1.2,
-        lineOpacity: 0.95
+        polygonFill: 'rgba(4, 38, 54, 0.86)',
+        polygonOpacity: 0.84,
+        lineColor: '#53f4ff',
+        lineWidth: 1.15,
+        lineOpacity: 0.96,
+        shadowBlur: 8,
+        shadowColor: 'rgba(83, 244, 255, 0.48)'
       })
       if (ENABLE_HOVER_TOOLTIP) {
         geo.on('mouseenter', (e: any) => {
@@ -468,18 +554,17 @@ const drillDown = async (geometry: any) => {
   }
 }
 
-
 const rollUp = () => {
   if (isSwitching.value) return
   isSwitching.value = true
   hideTooltip()
 
-
   // 2. 隐藏详情图层，显示全国图层
   if (state.detailLayer) state.detailLayer.clear()
   if (state.detailLabelLayer) state.detailLabelLayer.clear()
 
-  state.provinceLayer.getGeometries().forEach(g => g.show())
+  if (state.glowLayer) state.glowLayer.show()
+  state.provinceLayer.getGeometries().forEach((g) => g.show())
   if (state.labelLayer) state.labelLayer.show()
 
   // 3. 视角强制回归（避免偶发放大残留）
@@ -529,16 +614,18 @@ const renderNationalLabels = () => {
     const { name, cp } = feature.properties
     if (cp && name) {
       new maptalks.Label(formatRegionLabel(name), cp, {
-        'draggable': false,
-        'textSymbol': {
-          'textFaceName': 'sans-serif',
-          'textFill': '#ffffff',
-          'textSize': 13,
-          'textOpacity': 1,
-          'textWeight': 'bold',
-          'textHaloFill': '#06233c',
-          'textHaloRadius': 3,
-          'textDx': 0, 'textDy': 0
+        draggable: false,
+        interactive: false,
+        textSymbol: {
+          textFaceName: 'sans-serif',
+          textFill: '#ffffff',
+          textSize: 13,
+          textOpacity: 1,
+          textWeight: 'bold',
+          textHaloFill: '#06233c',
+          textHaloRadius: 3,
+          textDx: 0,
+          textDy: 0
         }
       }).addTo(state.labelLayer)
     }
@@ -569,10 +656,8 @@ const applyChinaMask = () => {
 }
 
 const initMap = async () => {
-  if (!mapRef.value) return
-
-    // 确保 echarts 在全局可用
-    ; (window as any).echarts = echarts
+  if (!mapRef.value) return // 确保 echarts 在全局可用
+  ;(window as any).echarts = echarts
   state.map = new maptalks.Map(mapRef.value, {
     center: HOME_CENTER,
     zoom: HOME_ZOOM,
@@ -581,8 +666,15 @@ const initMap = async () => {
     pitch: 0,
     maxExtent: new maptalks.Extent(73, 15, 135, 55),
     attribution: false,
-    background: { fill: '#020617' }
+    background: { fill: '#041621' }
   } as any)
+
+  state.glowLayer = new maptalks.VectorLayer('china-glow-layer', {
+    zIndex: 4,
+    enableSimplify: true,
+    simplifyTolerance: 1.3,
+    geometryEvents: false
+  } as any).addTo(state.map)
 
   // 省份图层
   state.provinceLayer = new maptalks.VectorLayer('province-layer', {
@@ -594,14 +686,16 @@ const initMap = async () => {
   // 4. 标签图层 (最顶层)
   state.labelLayer = new maptalks.VectorLayer('label-layer', {
     zIndex: 100,
-    enableSimplify: true
+    enableSimplify: true,
+    geometryEvents: false
   }).addTo(state.map)
   state.detailLabelLayer = new maptalks.VectorLayer('detail-label-layer', {
     zIndex: 101,
-    enableSimplify: true
+    enableSimplify: true,
+    geometryEvents: false
   }).addTo(state.map)
   state.detailLayer = new maptalks.VectorLayer('detail-layer', {
-    zIndex: 6,
+    zIndex: 8,
     enableSimplify: true,
     simplifyTolerance: 0.8
   } as any).addTo(state.map)
@@ -615,6 +709,11 @@ const initMap = async () => {
       const geometries = maptalks.GeoJSON.toGeometry(state.chinaFullGeo)
       if (geometries && geometries.length > 0) {
         applyChinaMask()
+        const glowGeometries = maptalks.GeoJSON.toGeometry(state.chinaFullGeo)
+        glowGeometries.forEach((geo: any) => {
+          applyMapGlowSymbol(geo)
+          geo.addTo(state.glowLayer)
+        })
         geometries.forEach((geo: any) => {
           const geoProps = geo.getProperties?.() || {}
           const featureId = String(geo.getId?.() || geoProps.id || '').trim()
@@ -624,11 +723,12 @@ const initMap = async () => {
           })
           // 顶层 - 纯矢量亮青色风格
           geo.setSymbol({
-            'polygonPatternFile': fillImg,
-            'polygonFill': 'rgba(2, 6, 23, 0.8)',
-            'lineColor': '#22d3ee',
-            'lineWidth': 1,
-            'lineOpacity': 0.8
+            polygonPatternFile: fillImg,
+            polygonFill: 'rgba(4, 34, 54, 0.9)',
+            polygonOpacity: 0.92,
+            lineColor: '#1595ba',
+            lineWidth: 0.62,
+            lineOpacity: 0.7
           })
 
           if (ENABLE_HOVER_TOOLTIP) {
@@ -655,16 +755,16 @@ const initMap = async () => {
         if (extent) {
           state.map.fitExtent(extent, 0, {
             animation: false,
-            padding: { top: 40, right: 40, bottom: 40, left: 40 }
+            padding: { top: 40, right: 104, bottom: 30, left: 150 }
           })
+          state.map.panBy([4, 8], { animation: false })
         }
       }
     }
     scheduleNationalLabels()
   } catch (e) {
-    console.error("GeoJSON Load Error", e)
+    console.error('GeoJSON Load Error', e)
   }
-
 }
 
 const tooltipData = reactive({
@@ -679,32 +779,82 @@ const tooltipData = reactive({
 })
 
 let tooltipRaf = 0
-const showTooltip = (e: any) => {
-  if (!ENABLE_HOVER_TOOLTIP) return
+let tooltipDelayTimer: number | null = null
+let pendingTooltipPayload: {
+  name: string
+  count: number
+  samples: number
+  items: number
+  rate: string
+  x: number
+  y: number
+} | null = null
+
+const clearTooltipDelay = () => {
+  if (tooltipDelayTimer !== null) {
+    window.clearTimeout(tooltipDelayTimer)
+    tooltipDelayTimer = null
+  }
+  pendingTooltipPayload = null
+}
+
+const getTooltipPayload = (e: any) => {
+  if (!e?.target || !state.map) return null
+  const props = e.target.getProperties()
+  const pos = state.map.coordinateToContainerPoint(e.coordinate)
+  const samples = Number(isTaskMapMode.value ? props.taskIssuedCount || 0 : props.sampleCount || 0)
+  return {
+    name: props.name,
+    count: Number(props.count || 0),
+    samples,
+    items: Number(
+      isDashboardMode.value ? props.detectionItemCount || 0 : props.taskCompletedCount || 0
+    ),
+    rate: `${Number(
+      isTaskMapMode.value ? props.taskCompletionRate || 0 : props.positiveRate || 0
+    ).toFixed(2)}%`,
+    x: pos.x,
+    y: pos.y - 14
+  }
+}
+
+const renderTooltip = (payload: NonNullable<typeof pendingTooltipPayload>) => {
   if (tooltipRaf) cancelAnimationFrame(tooltipRaf)
   tooltipRaf = requestAnimationFrame(() => {
-    const props = e.target.getProperties()
-    tooltipData.name = props.name
-    tooltipData.count = Number(props.count || 0)
-    tooltipData.samples = Number(props.sampleCount || 0)
-    tooltipData.items = Number(
-      isDashboardMode.value ? props.detectionItemCount || 0 : props.taskCompletedCount || 0
-    )
-    tooltipData.rate = `${Number(
-      isTaskMapMode.value ? props.taskCompletionRate || 0 : props.positiveRate || 0
-    ).toFixed(2)}%`
-    tooltipData.samples = Number(
-      isTaskMapMode.value ? props.taskIssuedCount || 0 : props.sampleCount || 0
-    )
+    tooltipData.name = payload.name
+    tooltipData.count = payload.count
+    tooltipData.samples = payload.samples
+    tooltipData.items = payload.items
+    tooltipData.rate = payload.rate
     tooltipData.show = true
-    const pos = state.map.coordinateToContainerPoint(e.coordinate)
-    tooltipData.x = pos.x
-    tooltipData.y = pos.y - 10
+    tooltipData.x = payload.x
+    tooltipData.y = payload.y
     tooltipRaf = 0
   })
 }
 
+const showTooltip = (e: any) => {
+  if (!ENABLE_HOVER_TOOLTIP) return
+  const payload = getTooltipPayload(e)
+  if (!payload) return
+  if (tooltipData.show) {
+    clearTooltipDelay()
+    renderTooltip(payload)
+    return
+  }
+  pendingTooltipPayload = payload
+  if (tooltipDelayTimer !== null) return
+  tooltipDelayTimer = window.setTimeout(() => {
+    tooltipDelayTimer = null
+    if (pendingTooltipPayload) {
+      renderTooltip(pendingTooltipPayload)
+      pendingTooltipPayload = null
+    }
+  }, HOVER_TOOLTIP_DELAY)
+}
+
 const hideTooltip = () => {
+  clearTooltipDelay()
   if (tooltipRaf) {
     cancelAnimationFrame(tooltipRaf)
     tooltipRaf = 0
@@ -732,9 +882,17 @@ watch(
 
 onMounted(async () => {
   await nextTick()
+  loadingFallbackTimer = window.setTimeout(() => {
+    loading.value = false
+    loadingFallbackTimer = null
+  }, 3000)
   try {
     await initMap()
   } finally {
+    if (loadingFallbackTimer !== null) {
+      window.clearTimeout(loadingFallbackTimer)
+      loadingFallbackTimer = null
+    }
     loading.value = false
   }
 })
@@ -756,6 +914,10 @@ const disposeRefresh = subscribeBigScreenRefresh(() => {
 
 onUnmounted(() => {
   disposeRefresh()
+  if (loadingFallbackTimer !== null) {
+    window.clearTimeout(loadingFallbackTimer)
+    loadingFallbackTimer = null
+  }
   hideTooltip()
   if (nationalLabelRaf) {
     cancelAnimationFrame(nationalLabelRaf)
@@ -765,6 +927,7 @@ onUnmounted(() => {
     state.detailLayer?.clear?.()
     state.detailLabelLayer?.clear?.()
     state.labelLayer?.clear?.()
+    state.glowLayer?.clear?.()
     state.provinceLayer?.clear?.()
     state.map.remove()
   }
@@ -786,8 +949,10 @@ onUnmounted(() => {
     <!-- 返回全国按钮 -->
     <transition name="fade">
       <div v-if="ui.isDrilled" class="absolute top-20 left-10 z-40">
-        <div @click="rollUp"
-          class="back-btn glass-panel px-6 py-2 rounded-xl flex items-center gap-2 text-cyan-400 font-bold hover:text-white cursor-pointer transition-all border border-cyan-400/30 shadow-[0_0_15px_rgba(34,211,238,0.2)]">
+        <div
+          @click="rollUp"
+          class="back-btn glass-panel px-6 py-2 rounded-xl flex items-center gap-2 text-cyan-400 font-bold hover:text-white cursor-pointer transition-all border border-cyan-400/30 shadow-[0_0_15px_rgba(34,211,238,0.2)]"
+        >
           <span class="text-xl">←</span>
           <span>返回全国</span>
         </div>
@@ -795,108 +960,73 @@ onUnmounted(() => {
     </transition>
 
     <!-- 自定义 Tooltip -->
-    <div v-if="tooltipData.show"
-      class="map-tooltip absolute pointer-events-none transition-all duration-200 transform -translate-x-1/2 -translate-y-full"
-      :style="{ left: tooltipData.x + 'px', top: tooltipData.y + 'px', zIndex: 9999 }">
-      <div
-        class="tooltip-content p-4 rounded-xl border border-cyan-400/50 bg-[#0c1e2dcc] backdrop-blur-md shadow-[0_0_20px_rgba(34,211,238,0.3)]">
-        <h3 class="text-white font-bold mb-3 pb-2 border-b border-cyan-400/20 text-lg">{{
-          tooltipData.name
-        }}</h3>
-        <div v-if="isCertificateMode" class="space-y-3">
-          <div class="flex justify-between gap-8 items-center">
-            <span class="text-cyan-400/80 text-sm">{{ props.certificateTab === '存证' ? '存证数量' : '开具数量' }}</span>
-            <span class="text-white font-mono font-bold text-xl">{{ tooltipData.count }}</span>
+    <div
+      v-if="tooltipData.show"
+      class="map-tooltip absolute pointer-events-none"
+      :style="{ left: tooltipData.x + 'px', top: tooltipData.y + 'px', zIndex: 9999 }"
+    >
+      <div class="tooltip-content">
+        <div v-if="isCertificateMode" class="tooltip-lines">
+          <div class="tooltip-line">
+            <span>{{ props.certificateTab === '存证' ? '存证数量' : '开具数量' }}</span>
+            <b>{{ tooltipData.count }}</b>
           </div>
         </div>
-        <div v-else-if="isFastMapMode" class="space-y-3">
-          <div class="flex justify-between gap-8 items-center">
-            <span class="text-cyan-400/80 text-sm">检测样本量</span>
-            <span class="text-white font-mono font-bold text-xl">{{ tooltipData.samples }}</span>
+        <div v-else-if="isFastMapMode" class="tooltip-lines">
+          <div class="tooltip-line">
+            <span>检测样本量</span>
+            <b>{{ tooltipData.samples }}</b>
           </div>
-          <div class="flex justify-between gap-8 items-center">
-            <span class="text-cyan-400/80 text-sm">检测阳性率</span>
-            <span class="text-white font-mono font-bold text-xl">{{ tooltipData.rate }}</span>
-          </div>
-        </div>
-        <div v-else-if="isTaskMapMode" class="space-y-3">
-          <div class="flex justify-between gap-8 items-center">
-            <span class="text-cyan-400/80 text-sm">任务下发</span>
-            <span class="text-white font-mono font-bold text-xl">{{ tooltipData.samples }}</span>
-          </div>
-          <div class="flex justify-between gap-8 items-center">
-            <span class="text-cyan-400/80 text-sm">任务完成</span>
-            <span class="text-white font-mono font-bold text-xl">{{ tooltipData.items }}</span>
-          </div>
-          <div class="flex justify-between gap-8 items-center">
-            <span class="text-cyan-400/80 text-sm">任务完成率</span>
-            <span class="text-white font-mono font-bold text-xl">{{ tooltipData.rate }}</span>
+          <div class="tooltip-line">
+            <span>检测阳性率</span>
+            <b>{{ tooltipData.rate }}</b>
           </div>
         </div>
-        <div v-else class="space-y-3">
-          <div class="flex justify-between gap-8 items-center">
-            <span class="text-cyan-400/80 text-sm">样品量</span>
-            <span class="text-white font-mono font-bold text-xl">{{ tooltipData.samples }}</span>
+        <div v-else-if="isTaskMapMode" class="tooltip-lines">
+          <div class="tooltip-line">
+            <span>任务下发</span>
+            <b>{{ tooltipData.samples }}</b>
           </div>
-          <div class="flex justify-between gap-8 items-center">
-            <span class="text-cyan-400/80 text-sm">检测项次</span>
-            <span class="text-white font-mono font-bold text-xl">{{ tooltipData.items }}</span>
+          <div class="tooltip-line">
+            <span>任务完成</span>
+            <b>{{ tooltipData.items }}</b>
           </div>
-          <div class="flex justify-between gap-8 items-center">
-            <span class="text-cyan-400/80 text-sm">检测项阳性率</span>
-            <span class="text-white font-mono font-bold text-xl">{{ tooltipData.rate }}</span>
+          <div class="tooltip-line">
+            <span>任务完成率</span>
+            <b>{{ tooltipData.rate }}</b>
           </div>
         </div>
-        <!-- 装饰角 -->
-        <div
-          class="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-[#0c1e2dcc] border-r border-b border-cyan-400/50 rotate-45">
+        <div v-else class="tooltip-lines">
+          <div class="tooltip-line">
+            <span>样品量</span>
+            <b>{{ tooltipData.samples }}（批次）</b>
+          </div>
+          <div class="tooltip-line">
+            <span>检测项次</span>
+            <b>{{ tooltipData.items }}（批次）</b>
+          </div>
+          <div class="tooltip-line">
+            <span>阳性率</span>
+            <b>{{ tooltipData.rate }}</b>
+          </div>
+          <div class="tooltip-note">（检测阳性占比）</div>
         </div>
       </div>
     </div>
 
     <!-- 图例 Legend -->
-    <div class="absolute bottom-10 right-10 z-30 pointer-events-none">
-      <div class="glass-panel p-5 rounded-2xl w-48 border-l-4 border-l-cyan-500">
-        <h4 class="text-cyan-400 text-sm font-bold mb-4 tracking-wider uppercase flex items-center gap-2">
-          <div class="w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_8px_#22d3ee]"></div>
-          {{
-            isCertificateMode
-              ? (props.certificateTab === '存证' ? '存证分布' : '开具分布')
-              : isFastMapMode
-                ? '检测样本分布'
-                : isTaskMapMode
-                  ? '任务下发分布'
-                : '测量分布'
-          }}
-        </h4>
-        <div class="space-y-2">
-          <div class="flex items-center gap-3">
-            <div class="w-2.5 h-2.5 rounded-sm bg-cyan-400 shadow-[0_0_5px_#22d3ee]"></div>
-            <span class="text-slate-300 text-xs font-mono">{{ isCertificateMode ? '500+' : isFastMapMode ? '300-499' : isTaskMapMode ? '500+' : '300-499' }}</span>
-          </div>
-          <div class="flex items-center gap-3">
-            <div class="w-2.5 h-2.5 rounded-sm bg-cyan-500/80"></div>
-            <span class="text-slate-300 text-xs font-mono">{{ isCertificateMode ? '200-499' : isFastMapMode ? '200-399' : isTaskMapMode ? '200-499' : '200-399' }}</span>
-          </div>
-          <div class="flex items-center gap-3">
-            <div class="w-2.5 h-2.5 rounded-sm bg-cyan-600/60"></div>
-            <span class="text-slate-300 text-xs font-mono">{{ isCertificateMode ? '100-199' : isFastMapMode ? '100-299' : isTaskMapMode ? '100-199' : '100-299' }}</span>
-          </div>
-          <div class="flex items-center gap-3">
-            <div class="w-2.5 h-2.5 rounded-sm bg-cyan-800/40"></div>
-            <span class="text-slate-300 text-xs font-mono">{{ isCertificateMode ? '1-99' : isFastMapMode ? '50-199' : isTaskMapMode ? '50-99' : '50-99' }}</span>
-          </div>
-          <div v-if="isFastMapMode" class="flex items-center gap-3">
-            <div class="w-2.5 h-2.5 rounded-sm bg-cyan-700/50"></div>
-            <span class="text-slate-300 text-xs font-mono">30-100</span>
-          </div>
-          <div v-if="isFastMapMode" class="flex items-center gap-3">
-            <div class="w-2.5 h-2.5 rounded-sm bg-cyan-700/35"></div>
-            <span class="text-slate-300 text-xs font-mono">10-50</span>
-          </div>
-          <div class="flex items-center gap-3 opacity-50">
-            <div class="w-2.5 h-2.5 rounded-sm bg-slate-700"></div>
-            <span class="text-slate-500 text-xs font-mono">{{ isCertificateMode ? '0' : isFastMapMode ? '0-10' : isTaskMapMode ? '0' : '0-49' }}</span>
+    <div class="map-legend absolute z-30 pointer-events-none">
+      <div class="legend-panel">
+        <h4 class="legend-title">{{ mapLegendTitle }}</h4>
+        <div class="legend-list">
+          <div
+            v-for="(item, index) in mapLegendItems"
+            :key="item.label"
+            class="legend-item"
+            :class="{ muted: index === mapLegendItems.length - 1 }"
+          >
+            <div class="legend-block" :class="item.blockClass"></div>
+            <span>{{ item.label }}</span>
           </div>
         </div>
       </div>
@@ -911,8 +1041,14 @@ onUnmounted(() => {
   height: 100%;
   overflow: hidden;
   /* 深邃科技蓝渐变背景 */
-  background: radial-gradient(circle at center, #051932 0%, #020617 80%);
-  background-color: #020617;
+  background:
+    radial-gradient(
+      circle at 50% 48%,
+      rgba(14, 74, 118, 0.22) 0%,
+      rgba(4, 20, 42, 0.08) 45%,
+      rgba(2, 6, 23, 0) 72%
+    ),
+    transparent;
 }
 
 .map-loading {
@@ -947,7 +1083,7 @@ onUnmounted(() => {
 #map-container {
   width: 100%;
   height: 100%;
-  min-height: 500px;
+  min-height: 0;
 }
 
 .glass-panel {
@@ -958,7 +1094,145 @@ onUnmounted(() => {
 }
 
 .map-tooltip {
-  filter: drop-shadow(0 0 15px rgba(34, 211, 238, 0.4));
+  min-width: 180px;
+  transform: translate(-50%, -100%);
+  filter: drop-shadow(0 0 14px rgba(42, 229, 255, 0.44));
+}
+
+.map-tooltip::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -30px;
+  width: 11px;
+  height: 11px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: #ffea10;
+  box-shadow:
+    0 0 0 3px rgba(255, 234, 16, 0.22),
+    0 0 13px rgba(255, 234, 16, 0.82);
+}
+
+.tooltip-content {
+  position: relative;
+  padding: 8px 13px 9px;
+  border: 1px solid rgba(78, 232, 238, 0.9);
+  background: rgba(8, 52, 49, 0.9);
+  box-shadow:
+    inset 0 0 16px rgba(96, 239, 255, 0.2),
+    0 0 16px rgba(42, 229, 255, 0.3);
+  color: #fff;
+  font-size: 14px;
+  line-height: 21px;
+}
+
+.tooltip-content::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -15px;
+  width: 0;
+  height: 0;
+  transform: translateX(-50%);
+  border: 8px solid transparent;
+  border-top-color: rgba(8, 52, 49, 0.9);
+  filter: drop-shadow(0 4px 6px rgba(42, 229, 255, 0.32));
+}
+
+.tooltip-line {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.tooltip-line span {
+  color: rgba(238, 255, 255, 0.9);
+}
+
+.tooltip-line b {
+  color: #fff;
+  font-weight: 700;
+}
+
+.tooltip-note {
+  color: rgba(238, 255, 255, 0.86);
+  white-space: nowrap;
+}
+
+.map-legend {
+  right: 34px;
+  bottom: 28px;
+}
+
+.legend-panel {
+  width: 66px;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.legend-title {
+  margin: 0 0 4px;
+  color: #43cdff;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 700;
+}
+
+.legend-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 12px;
+  line-height: 16px;
+  font-family: 'Din Alternate', sans-serif;
+}
+
+.legend-block {
+  width: 6px;
+  height: 6px;
+  flex: 0 0 6px;
+}
+
+.block-1 {
+  background: #0e5c37;
+}
+
+.block-2 {
+  background: #27d07e;
+}
+
+.block-3 {
+  background: #043e7d;
+}
+
+.block-4 {
+  background: #19b3e2;
+}
+
+.block-5 {
+  background: #0b6259;
+}
+
+.block-6 {
+  background: #1ed9c6;
+}
+
+.block-8 {
+  background: #d0f3ff;
+}
+
+.legend-item.muted {
+  opacity: 0.68;
 }
 
 @keyframes scan {
