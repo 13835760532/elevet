@@ -110,7 +110,7 @@ defineOptions({ name: 'VisualizationBigScreen' })
 
 type BigScreenMenu = '' | 'task' | 'inspect' | 'cert' | 'warn'
 
-const activeMenu = ref<BigScreenMenu>('cert')
+const activeMenu = ref<BigScreenMenu>('')
 const entranceLoading = ref(true)
 const { visibility: panelVisibility, schedule } = useDeferredPanelMount()
 let loadingTimer: number | null = null

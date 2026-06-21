@@ -1,8 +1,10 @@
 <template>
   <transition name="fade">
     <div v-if="visible" class="screen-loading">
-      <div class="loading-ring"></div>
-      <p class="loading-text">{{ text }}</p>
+      <div class="loading-content">
+        <div class="loading-ring"></div>
+        <p class="loading-text">{{ text }}</p>
+      </div>
     </div>
   </transition>
 </template>
@@ -23,14 +25,22 @@ withDefaults(
 .screen-loading {
   position: absolute;
   inset: 0;
-  z-index: 30;
+  z-index: 3000;
+  background: rgba(2, 6, 23, 0.94);
+  backdrop-filter: blur(4px);
+  contain: layout paint;
+  pointer-events: auto;
+}
+
+.loading-content {
+  position: absolute;
+  left: 50%;
+  top: 50%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
   gap: 14px;
-  background: rgba(2, 6, 23, 0.94);
-  backdrop-filter: blur(4px);
+  transform: translate(-50%, -50%);
 }
 
 .loading-ring {

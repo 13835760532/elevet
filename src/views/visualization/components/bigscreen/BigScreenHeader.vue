@@ -67,7 +67,7 @@
       </div>
     </div>
     <div class="header-center">
-      <h1>风险监测预警信息化平台</h1>
+      <h1 @click="handleGoHome">风险监测预警信息化平台</h1>
     </div>
     <div class="header-side right">
       <div class="nav-btn" v-for="item in rightMenus" :key="item.key" :class="{ active: activeMenu === item.key }"
@@ -320,6 +320,21 @@ const handleMenuClick = (key: '' | 'task' | 'inspect' | 'cert' | 'warn') => {
     return
   }
   emit('update:activeMenu', key)
+
+  const routeMap: Record<string, string> = {
+    task: '/big-screen-task',
+    inspect: '/big-screen-quick',
+    cert: '/big-screen-certificate',
+    '': '/big-screen'
+  }
+  const targetPath = routeMap[key]
+  if (targetPath) {
+    router.push(targetPath)
+  }
+}
+
+const handleGoHome = () => {
+  router.push('/big-screen')
 }
 
 const handleBack = () => {
@@ -687,6 +702,13 @@ onUnmounted(() => {
     font-weight: 800;
     letter-spacing: 2px;
     text-shadow: 0 0 15px rgba(63, 212, 255, 0.35);
+    cursor: pointer;
+    transition: all 0.25s ease;
+
+    &:hover {
+      text-shadow: 0 0 25px rgba(63, 212, 255, 0.75);
+      filter: brightness(1.15);
+    }
   }
 }
 

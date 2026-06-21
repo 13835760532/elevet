@@ -549,6 +549,15 @@ const remainingRouter: AppRouteRecordRaw[] = [
     }
   },
   {
+    path: '/big-screen-task-receive',
+    component: () => import('@/views/visualization/BigScreenTaskReceive.vue'),
+    name: 'BigScreenTaskReceive',
+    meta: {
+      title: '检测任务接收大屏可视化',
+      hidden: true
+    }
+  },
+  {
     path: '/big-screen-quick',
     component: () => import('@/views/visualization/BigScreenQuick.vue'),
     name: 'BigScreenQuick',

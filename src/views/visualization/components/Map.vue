@@ -24,10 +24,12 @@ const props = withDefaults(
   defineProps<{
     mode?: 'default' | 'certificate' | 'fast' | 'task'
     certificateTab?: string
+    taskLabel?: string
   }>(),
   {
     mode: 'default',
-    certificateTab: '开具'
+    certificateTab: '开具',
+    taskLabel: '任务下发'
   }
 )
 
@@ -182,7 +184,7 @@ const createLegendItems = (labels: string[], blockClasses: string[]): MapLegendI
 const mapLegendTitle = computed(() => {
   if (isCertificateMode.value) return props.certificateTab === '存证' ? '存证分布' : '开具分布'
   if (isFastMapMode.value) return '检测样本分布'
-  if (isTaskMapMode.value) return '任务下发分布'
+  if (isTaskMapMode.value) return `${props.taskLabel}分布`
   return '测量分布'
 })
 
@@ -1155,13 +1157,6 @@ onUnmounted(() => {
 
 <template>
   <div class="map-wrapper">
-    <transition name="fade">
-      <div v-if="loading" class="map-loading">
-        <div class="loading-ring"></div>
-        <p class="loading-text">地图加载中...</p>
-      </div>
-    </transition>
-
     <!-- 地图容器 -->
     <div id="map-container" ref="mapRef"></div>
 
@@ -1203,7 +1198,7 @@ onUnmounted(() => {
         </div>
         <div v-else-if="isTaskMapMode" class="tooltip-lines">
           <div class="tooltip-line">
-            <span>任务下发</span>
+            <span>{{ props.taskLabel }}</span>
             <b>{{ tooltipData.samples }}</b>
           </div>
           <div class="tooltip-line">
@@ -1300,10 +1295,6 @@ onUnmounted(() => {
   z-index: 2;
 }
 
-.map-loading {
-  z-index: 2000;
-}
-
 #map-container canvas {
   filter: saturate(1.32) contrast(1.16) brightness(1.04)
     drop-shadow(0 0 18px rgba(30, 218, 255, 0.3));
@@ -1320,35 +1311,6 @@ onUnmounted(() => {
 .map-wrapper :deep(.maptalks-wrapper) {
   background:
     radial-gradient(ellipse at 48% 48%, rgba(16, 96, 146, 0.1), rgba(2, 8, 25, 0) 58%), transparent;
-}
-
-.map-loading {
-  position: absolute;
-  inset: 0;
-  z-index: 2000;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  background: rgba(2, 6, 23, 0.86);
-  backdrop-filter: blur(2px);
-}
-
-.loading-ring {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  border: 3px solid rgba(56, 189, 248, 0.25);
-  border-top-color: #22d3ee;
-  animation: spin 0.85s linear infinite;
-}
-
-.loading-text {
-  margin: 0;
-  color: #8fd7e9;
-  font-size: 14px;
-  letter-spacing: 0.5px;
 }
 
 #map-container {
