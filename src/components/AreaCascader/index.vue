@@ -42,6 +42,10 @@ const props = defineProps({
   emitPath: {
     type: Boolean,
     default: true
+  },
+  rootAreaCode: {
+    type: [Number, String],
+    default: ''
   }
 })
 
@@ -49,6 +53,7 @@ const emit = defineEmits(['update:modelValue', 'change', 'select'])
 
 const cascaderValue = ref(props.modelValue)
 const areaTree = ref<any[]>([])
+const originalAreaTree = ref<any[]>([])
 
 const cascaderProps = computed(() => ({
   value: 'id',
@@ -62,7 +67,8 @@ const cascaderProps = computed(() => ({
 const getAreaTree = async () => {
   try {
     const data = await AreaApi.getAreaTree()
-    areaTree.value = formatAreaTree(data)
+    originalAreaTree.value = formatAreaTree(data)
+    areaTree.value = limitTreeByRootArea(originalAreaTree.value, props.rootAreaCode)
   } catch (error) {
     console.error('获取地区树失败', error)
   }
@@ -93,6 +99,36 @@ const findPathById = (id: any, tree: any[]): any[] | undefined => {
     }
   }
   return undefined
+}
+
+const findNodeById = (id: any, tree: any[]): any | undefined => {
+  if (!id || !tree || tree.length === 0) return undefined
+  for (const node of tree) {
+    if (String(node.id) === String(id)) return node
+    if (node.children && node.children.length > 0) {
+      const found = findNodeById(id, node.children)
+      if (found) return found
+    }
+  }
+  return undefined
+}
+
+const findNodePathById = (id: any, tree: any[]): any[] | undefined => {
+  if (!id || !tree || tree.length === 0) return undefined
+  for (const node of tree) {
+    if (String(node.id) === String(id)) return [node]
+    if (node.children && node.children.length > 0) {
+      const path = findNodePathById(id, node.children)
+      if (path) return [node, ...path]
+    }
+  }
+  return undefined
+}
+
+const limitTreeByRootArea = (tree: any[], rootAreaCode: any) => {
+  if (!rootAreaCode) return tree || []
+  const rootNode = findNodeById(rootAreaCode, tree || [])
+  return rootNode ? [rootNode] : tree || []
 }
 
 // 递归通过名称查找 ID 路径
@@ -198,6 +234,14 @@ watch(
   }
 )
 
+watch(
+  () => props.rootAreaCode,
+  async () => {
+    await getAreaTree()
+    syncCascaderValue(props.modelValue)
+  }
+)
+
 const handleChange = (val) => {
   emit('update:modelValue', val)
   emit('change', val)
@@ -209,13 +253,20 @@ const handleChange = (val) => {
       const node = checkedNodes[0]
       const pathLabels = node.pathLabels || []
       const pathValues = node.pathValues || []
+      const selectedValue = pathValues[pathValues.length - 1] || val
+      const fullPathNodes = findNodePathById(selectedValue, originalAreaTree.value) || []
+      const fullPathLabels = fullPathNodes.length ? fullPathNodes.map((item) => item.name) : pathLabels
+      const fullPathValues = fullPathNodes.length ? fullPathNodes.map((item) => item.id) : pathValues
+      const selectedNode = fullPathNodes[fullPathNodes.length - 1] || {}
       emit('select', {
-        province: pathLabels[0] || '',
-        city: pathLabels[1] || '',
-        district: pathLabels[2] || '',
-        provinceCode: pathValues[0] || '',
-        cityCode: pathValues[1] || '',
-        districtCode: pathValues[2] || ''
+        province: fullPathLabels[0] || '',
+        city: fullPathLabels[1] || '',
+        district: fullPathLabels[2] || '',
+        provinceCode: fullPathValues[0] || '',
+        cityCode: fullPathValues[1] || '',
+        districtCode: fullPathValues[2] || '',
+        selectedCode: selectedValue || '',
+        selectedLevel: selectedNode.type || selectedNode.level || fullPathValues.length || ''
       })
     }
   }

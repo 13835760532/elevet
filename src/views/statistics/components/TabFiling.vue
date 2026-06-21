@@ -3,10 +3,14 @@
     <!-- 数据范围筛选 -->
     <StatisticsRangeFilter v-model:range-type="dateRangeType" v-model:date-range="dateRange" description="建档备案统计周期">
       <template #extra>
-        <el-select v-model="region" placeholder="省/市/县" clearable>
-          <el-option label="北京市" value="beijing" />
-          <el-option label="上海市" value="shanghai" />
-        </el-select>
+        <AreaCascader
+          v-model="areaIds"
+          placeholder="省/市/县"
+          checkStrictly
+          :root-area-code="userDeptAreaCode"
+          @select="handleAreaSelect"
+          @change="handleAreaChange"
+        />
       </template>
     </StatisticsRangeFilter>
 
@@ -40,7 +44,14 @@
         <el-input v-model="filtersSubject.name" placeholder="主体名称" class="filter-item input-item" />
         <el-select v-model="filtersSubject.filingType" placeholder="建档类型" class="filter-item"></el-select>
         <el-select v-model="filtersSubject.subjectType" placeholder="主体类型" class="filter-item"></el-select>
-        <el-select v-model="filtersSubject.region" placeholder="所属地区" class="filter-item"></el-select>
+        <AreaCascader
+          v-model="filtersSubject.region"
+          placeholder="所属地区"
+          checkStrictly
+          :root-area-code="userDeptAreaCode"
+          class="filter-item"
+          @select="handleSubjectAreaSelect"
+        />
         <el-button type="primary" class="export-btn">导出</el-button>
       </div>
 
@@ -163,12 +174,21 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { computed, ref, reactive } from 'vue'
 import StatisticsRangeFilter from './StatisticsRangeFilter.vue'
+import AreaCascader from '@/components/AreaCascader/index.vue'
+import { getSelectedAreaParams, getUserDeptAreaParams } from './statisticsData'
 
 const dateRangeType = ref('近一周')
 const dateRange = ref<string[]>([])
-const region = ref('')
+const areaIds = ref<string[]>([])
+const userDeptAreaCode = computed(() => getUserDeptAreaParams().areaCode)
+
+const handleAreaSelect = (area: any) => {
+  getSelectedAreaParams(area)
+}
+
+const handleAreaChange = () => {}
 
 const filtersSubject = reactive({
   name: '',
@@ -176,6 +196,10 @@ const filtersSubject = reactive({
   subjectType: '',
   region: ''
 })
+
+const handleSubjectAreaSelect = (area: any) => {
+  filtersSubject.region = [area.province, area.city, area.district].filter(Boolean).join('-')
+}
 
 const tableDataSubject = ref([
   { code: '1102011818788786816', name: '晓辉农场', filingType: '企业备案', subjectType: '生产', mainProduct: '黄瓜、西红柿', region: '北京市/北京市/海淀区', createTime: '20251219', createOrg: '北京市农业农村局' },

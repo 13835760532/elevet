@@ -1,4 +1,5 @@
 import dayjs from 'dayjs'
+import { CACHE_KEY, useCache } from '@/hooks/web/useCache'
 
 export const BIG_SCREEN_CONFIG_STORAGE_KEY = 'big-screen-data-config'
 export const BIG_SCREEN_REFRESH_EVENT = 'big-screen-refresh'
@@ -10,6 +11,8 @@ export interface BigScreenDataConfig {
   provinceName: string
   cityName: string
   districtName: string
+  areaType: string
+  areaCode: string
   frequency: number
 }
 
@@ -23,8 +26,38 @@ export const getDefaultBigScreenConfig = (): BigScreenDataConfig => ({
   provinceName: '',
   cityName: '',
   districtName: '',
+  areaType: '',
+  areaCode: '',
   frequency: 5
 })
+
+const normalizeAreaValue = (value: unknown) => {
+  if (value === undefined || value === null || value === '') return ''
+  return String(value)
+}
+
+export const isBigScreenSuperAdmin = () => {
+  const { wsCache } = useCache()
+  const userInfo = wsCache.get(CACHE_KEY.USER)
+  const roles = userInfo?.roles || []
+  return Array.isArray(roles) && roles.includes('super_admin')
+}
+
+export const getBigScreenUserDeptAreaParams = () => {
+  if (isBigScreenSuperAdmin()) {
+    return {
+      areaType: '',
+      areaCode: ''
+    }
+  }
+
+  const { wsCache } = useCache()
+  const userDept = wsCache.get(CACHE_KEY.USER_DEPT) || {}
+  return {
+    areaType: normalizeAreaValue(userDept.areaType || userDept.areaLevel),
+    areaCode: normalizeAreaValue(userDept.areaCode)
+  }
+}
 
 export const getBigScreenConfig = (): BigScreenDataConfig => {
   if (typeof window === 'undefined') return getDefaultBigScreenConfig()
@@ -58,11 +91,14 @@ export const saveBigScreenConfig = (config: BigScreenDataConfig) => {
 
 export const getBigScreenQueryParams = () => {
   const config = getBigScreenConfig()
+  const userDeptAreaParams = getBigScreenUserDeptAreaParams()
   return {
     startDate: config.timeRange?.[0] || undefined,
     endDate: config.timeRange?.[1] || undefined,
     provinceName: config.provinceName || undefined,
-    cityName: config.cityName || undefined
+    cityName: config.cityName || undefined,
+    areaType: config.areaType || userDeptAreaParams.areaType || undefined,
+    areaCode: config.areaCode || userDeptAreaParams.areaCode || undefined
   }
 }
 

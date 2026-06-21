@@ -5,7 +5,7 @@
         <p class="analysis-title">合格证出具类型</p>
         <div class="analysis-layout">
           <div class="analysis-pie">
-            <Echart :options="analysisOption" height="180px" width="100%" />
+            <Echart :options="analysisOption" height="100%" width="100%" />
           </div>
           <div class="analysis-legend">
             <div class="legend-row" v-for="item in analysisItems" :key="item.name">
@@ -31,7 +31,7 @@
           <tbody>
             <tr v-for="(item, idx) in issueRank" :key="item.name + idx">
               <td>
-                <div class="rank-badge" :class="{ '': idx == 4, [`top-${idx + 1}`]: idx != 4 }">
+                <div class="rank-badge" :class="`top-${idx + 1}`">
                   {{ String(idx + 1).padStart(2, '0') }}
                 </div>
               </td>
@@ -71,11 +71,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue';
-import echarts from '@/plugins/echarts';
-import { Echart } from '@/components/Echart';
-import BigPanelCard from '../bigscreen/BigPanelCard.vue';
-import rightBg from '@/assets/imgs/echarts/合格证/Frame 60_bg.png';
+import { computed, onMounted, onUnmounted, ref } from 'vue'
+import echarts from '@/plugins/echarts'
+import { Echart } from '@/components/Echart'
+import BigPanelCard from '../bigscreen/BigPanelCard.vue'
+import rightBg from '@/assets/imgs/echarts/合格证/Frame 60_bg.png'
 import {
   getCertificateIssueTop10,
   getCertificateTypeDistribution,
@@ -83,46 +83,44 @@ import {
   type CertificateIssueTopRespVO,
   type CertificateTypeDistributionRespVO,
   type CertificateVerificationTopRespVO
-} from '@/api/agri/dashboard/certificate';
-import { getBigScreenQueryParams, subscribeBigScreenRefresh } from '../bigscreen/config';
+} from '@/api/agri/dashboard/certificate'
+import { getBigScreenQueryParams, subscribeBigScreenRefresh } from '../bigscreen/config'
 
 interface RankItem {
   name: string
   value: number
 }
 
-const PIE_TYPE_META: Record<
-  number,
-  { name: string; color: string }
-> = {
+const PIE_TYPE_META: Record<number, { name: string; color: string }> = {
   1: { name: '生产者', color: '#3ba4ff' },
   2: { name: '收购者', color: '#76cf3f' },
   3: { name: '批发市场', color: '#f6b23c' }
-};
+}
 
-const issueRank = ref<RankItem[]>([]);
-const distributionData = ref<CertificateTypeDistributionRespVO[]>([]);
-const storeRank = ref<RankItem[]>([]);
+const issueRank = ref<RankItem[]>([])
+const distributionData = ref<CertificateTypeDistributionRespVO[]>([])
+const storeRank = ref<RankItem[]>([])
 
 const normalizeDistribution = (list: CertificateTypeDistributionRespVO[] = []) => {
-  const distributionMap = new Map(list.map((item) => [item.certificateType, item]));
+  const distributionMap = new Map(list.map((item) => [item.certificateType, item]))
   return [1, 2, 3]
     .map((type) => {
-      const current = distributionMap.get(type);
-      const meta = PIE_TYPE_META[type];
+      const current = distributionMap.get(type)
+      const meta = PIE_TYPE_META[type]
       return {
         value: Number(current?.count || 0),
         name: current?.typeName || meta.name,
         color: meta.color
-      };
+      }
     })
-    .sort((a, b) => b.value - a.value);
-};
+    .sort((a, b) => b.value - a.value)
+}
 
-const analysisItems = computed(() => normalizeDistribution(distributionData.value));
-const analysisPieItems = computed(() => analysisItems.value.filter((item) => item.value > 0));
+const analysisItems = computed(() => normalizeDistribution(distributionData.value))
+const analysisPieItems = computed(() => analysisItems.value.filter((item) => item.value > 0))
 
 const analysisOption = computed(() => ({
+  animation: false,
   tooltip: {
     trigger: 'item',
     backgroundColor: 'rgba(6, 18, 42, 0.92)',
@@ -133,8 +131,8 @@ const analysisOption = computed(() => ({
   series: [
     {
       type: 'pie',
-      radius: ['44%', '64%'],
-      center: ['42%', '50%'],
+      radius: ['48%', '68%'],
+      center: ['50%', '52%'],
       minAngle: 8,
       avoidLabelOverlap: true,
       label: {
@@ -150,8 +148,8 @@ const analysisOption = computed(() => ({
       },
       labelLine: {
         show: true,
-        length: 10,
-        length2: 14,
+        length: 12,
+        length2: 16,
         lineStyle: { color: 'rgba(255,255,255,0.85)', width: 1.1 }
       },
       itemStyle: {
@@ -172,19 +170,19 @@ const analysisOption = computed(() => ({
       }))
     }
   ]
-}));
+}))
 
 const formatRankList = (list: CertificateVerificationTopRespVO[] = []) =>
   list.map((item) => ({
     name: item.subjectName || '--',
     value: Number(item.count || 0)
-  }));
+  }))
 
 const formatIssueRankList = (list: CertificateIssueTopRespVO[] = []) =>
   list.map((item) => ({
     name: item.subjectName || '--',
     value: Number(item.count || 0)
-  }));
+  }))
 
 const loadDashboardData = async () => {
   try {
@@ -192,36 +190,36 @@ const loadDashboardData = async () => {
       getCertificateTypeDistribution(getBigScreenQueryParams()),
       getCertificateIssueTop10(getBigScreenQueryParams()),
       getCertificateVerificationTop10(getBigScreenQueryParams())
-    ]);
-    distributionData.value = Array.isArray(typeDistribution) ? typeDistribution : [];
-    issueRank.value = formatIssueRankList(Array.isArray(issueTop10) ? issueTop10 : []);
-    storeRank.value = formatRankList(Array.isArray(verificationTop10) ? verificationTop10 : []);
+    ])
+    distributionData.value = Array.isArray(typeDistribution) ? typeDistribution : []
+    issueRank.value = formatIssueRankList(Array.isArray(issueTop10) ? issueTop10 : [])
+    storeRank.value = formatRankList(Array.isArray(verificationTop10) ? verificationTop10 : [])
   } catch (error) {
-    console.error('加载合格证大屏右侧数据失败', error);
-    distributionData.value = [];
-    issueRank.value = [];
-    storeRank.value = [];
+    console.error('加载合格证大屏右侧数据失败', error)
+    distributionData.value = []
+    issueRank.value = []
+    storeRank.value = []
   }
-};
+}
 
 onMounted(() => {
-  loadDashboardData();
-});
+  loadDashboardData()
+})
 
 const disposeRefresh = subscribeBigScreenRefresh(() => {
-  loadDashboardData();
-});
+  loadDashboardData()
+})
 
 onUnmounted(() => {
-  disposeRefresh();
-});
+  disposeRefresh()
+})
 </script>
 
 <style scoped lang="scss">
 .right-section {
   display: grid;
-  grid-template-rows: 300px minmax(0, 1fr) minmax(0, 1fr);
-  gap: 12px;
+  grid-template-rows: 264px minmax(0, 1fr) minmax(0, 1fr);
+  gap: 10px;
   min-height: 0;
 }
 
@@ -229,63 +227,64 @@ onUnmounted(() => {
   height: 100%;
 
   .analysis-title {
-    margin: 4px 10px 0px 10px;
+    margin: 4px 10px 0;
     color: #a9caea;
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 700;
   }
 }
 
 .analysis-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 150px;
+  grid-template-columns: minmax(0, 1fr) 118px;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   height: calc(100% - 28px);
   min-height: 0;
-  padding-top: 6px;
+  padding: 4px 10px 8px;
 }
 
 .analysis-pie {
   min-width: 0;
-  height: 180px;
+  height: 100%;
 }
 
 .analysis-legend {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 7px;
 }
 
 .legend-row {
   display: grid;
-  grid-template-columns: 12px minmax(0, 1fr) auto;
+  grid-template-columns: 9px minmax(0, 1fr);
   align-items: center;
-  gap: 10px;
-  min-height: 42px;
-  padding: 0 12px;
-  border: 1px solid rgba(52, 116, 195, 0.55);
-  background: linear-gradient(90deg, rgba(23, 51, 92, 0.78), rgba(10, 24, 56, 0.52));
-  box-shadow: inset 0 0 16px rgba(66, 159, 255, 0.1);
+  gap: 8px;
+  min-height: 24px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 2px;
+  width: 9px;
+  height: 9px;
+  border-radius: 0;
   box-shadow: 0 0 8px rgba(87, 226, 255, 0.28);
 }
 
 .name {
   min-width: 0;
   color: #d6eefe;
-  font-size: 13px;
+  font-size: 12px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .value {
+  display: none;
   color: #57e2ff;
   font-family: 'DIN Alternate', 'Inter', sans-serif;
   font-size: 13px;
@@ -295,7 +294,7 @@ onUnmounted(() => {
 .rank-container {
   height: 100%;
   overflow: hidden;
-  padding: 0 4px;
+  padding: 4px 12px 8px;
 }
 
 .rank-table {
@@ -304,28 +303,35 @@ onUnmounted(() => {
   table-layout: fixed;
 
   th {
-    height: 30px;
-    color: #8fb7dc;
-    font-size: 14px;
+    height: 28px;
+    color: rgba(211, 231, 246, 0.84);
+    font-size: 13px;
     font-weight: 600;
     text-align: center;
     background: rgba(158, 194, 229, 0.1);
   }
 
   td {
-    height: 26px;
+    height: 25px;
     padding: 1px 0;
     color: #d6eefe;
-    font-size: 14px;
+    font-size: 13px;
     text-align: center;
   }
 
+  tbody tr:nth-child(odd) {
+    background: rgba(13, 56, 99, 0.44);
+  }
+
   tbody tr:nth-child(even) {
-    background: rgba(17, 56, 109, 0.15);
+    background: rgba(0, 6, 20, 0.2);
   }
 
   .name-cell {
     color: #bbdbfa;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .value-cell {
@@ -336,16 +342,16 @@ onUnmounted(() => {
 
 .rank-badge {
   display: inline-block;
-  width: 42px;
-  height: 20px;
-  line-height: 20px;
+  width: 30px;
+  height: 18px;
+  line-height: 18px;
   font-family: 'DIN Alternate', sans-serif;
   font-weight: 700;
-  font-size: 14px;
+  font-size: 13px;
   color: #8fa7c1;
-  background: rgba(12, 45, 92, 0.4);
+  background: transparent;
   position: relative;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 0;
 
   // 通用 L 型护角装饰
   &::before,
@@ -380,21 +386,21 @@ onUnmounted(() => {
   }
 
   &.top-1 {
-    --rank-color: #22c55e;
-    color: #22c55e;
-    background: rgba(34, 197, 94, 0.15);
+    --rank-color: #2de17c;
+    color: #2de17c;
+    background: rgba(23, 91, 53, 0.86);
   }
 
   &.top-2 {
-    --rank-color: #3b82f6;
-    color: #3b82f6;
-    background: rgba(59, 130, 246, 0.15);
+    --rank-color: #37d4ff;
+    color: #37d4ff;
+    background: rgba(9, 75, 87, 0.86);
   }
 
   &.top-3 {
-    --rank-color: #f59e0b;
-    color: #f59e0b;
-    background: rgba(245, 158, 11, 0.15);
+    --rank-color: #f6be35;
+    color: #f6be35;
+    background: rgba(103, 73, 9, 0.86);
   }
 }
 </style>

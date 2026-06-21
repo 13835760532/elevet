@@ -3,6 +3,7 @@ import { defineStore } from 'pinia'
 import { getAccessToken, removeToken } from '@/utils/auth'
 import { CACHE_KEY, useCache, deleteUserCache } from '@/hooks/web/useCache'
 import { getInfo, loginOut } from '@/api/login'
+import * as DeptApi from '@/api/system/dept'
 
 const { wsCache } = useCache()
 
@@ -11,6 +12,9 @@ interface UserVO {
   avatar: string
   nickname: string
   deptId: number
+  username?: string
+  email?: string
+  deptName?: string
 }
 
 interface UserInfoVO {
@@ -19,6 +23,7 @@ interface UserInfoVO {
   roles: string[]
   isSetUser: boolean
   user: UserVO
+  deptInfo: DeptApi.DeptVO | null
 }
 
 const isValidUserInfo = (userInfo: any) => {
@@ -35,7 +40,8 @@ export const useUserStore = defineStore('admin-user', {
       avatar: '',
       nickname: '',
       deptId: 0
-    }
+    },
+    deptInfo: null
   }),
   getters: {
     getPermissions(): Set<string> {
@@ -49,6 +55,9 @@ export const useUserStore = defineStore('admin-user', {
     },
     getUser(): UserVO {
       return this.user
+    },
+    getDeptInfo(): DeptApi.DeptVO | null {
+      return this.deptInfo
     }
   },
   actions: {
@@ -80,6 +89,32 @@ export const useUserStore = defineStore('admin-user', {
       this.isSetUser = true
       wsCache.set(CACHE_KEY.USER, userInfo)
       wsCache.set(CACHE_KEY.ROLE_ROUTERS, userInfo.menus || [])
+      await this.setUserDeptInfoAction(this.user.deptId)
+    },
+    async setUserDeptInfoAction(deptId?: number) {
+      if (!deptId) {
+        this.deptInfo = null
+        wsCache.delete(CACHE_KEY.USER_DEPT)
+        return
+      }
+      try {
+        const deptInfo = await DeptApi.getDept(deptId)
+        this.deptInfo = deptInfo
+        this.user = {
+          ...this.user,
+          deptName: deptInfo?.name || this.user.deptName
+        }
+        const userInfo = wsCache.get(CACHE_KEY.USER)
+        if (userInfo?.user) {
+          userInfo.user = this.user
+          wsCache.set(CACHE_KEY.USER, userInfo)
+        }
+        wsCache.set(CACHE_KEY.USER_DEPT, deptInfo)
+      } catch (error) {
+        const cachedDeptInfo = wsCache.get(CACHE_KEY.USER_DEPT)
+        this.deptInfo = cachedDeptInfo?.id === deptId ? cachedDeptInfo : null
+        console.error('获取当前用户部门信息失败', error)
+      }
     },
     async setUserAvatarAction(avatar: string) {
       const userInfo = wsCache.get(CACHE_KEY.USER)
@@ -111,6 +146,7 @@ export const useUserStore = defineStore('admin-user', {
         nickname: '',
         deptId: 0
       }
+      this.deptInfo = null
     }
   }
 })

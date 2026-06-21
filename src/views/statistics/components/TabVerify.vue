@@ -9,7 +9,14 @@
       @reset="handleReset"
     >
       <template #extra>
-        <AreaCascader v-model="areaIds" placeholder="省/市/县" @select="handleAreaSelect" />
+        <AreaCascader
+          v-model="areaIds"
+          placeholder="省/市/县"
+          checkStrictly
+          :root-area-code="userDeptAreaCode"
+          @select="handleAreaSelect"
+          @change="handleAreaChange"
+        />
       </template>
     </StatisticsRangeFilter>
 
@@ -105,7 +112,14 @@ import {
   type DashboardCertificateOverviewRespVO
 } from '@/api/agri/dashboard/certificate'
 import * as CertificateApi from '@/api/agri/certificate'
-import { buildRangeParams, formatNumber, normalizePagedResult } from './statisticsData'
+import {
+  buildRangeParams,
+  formatNumber,
+  getEffectiveAreaParams,
+  getSelectedAreaParams,
+  getUserDeptAreaParams,
+  normalizePagedResult
+} from './statisticsData'
 import { useDict } from '@/hooks/web/useDict'
 import { ElMessage } from 'element-plus'
 
@@ -114,7 +128,9 @@ const dateRange = ref<string[]>([])
 const areaIds = ref<string[]>([])
 const areaParams = reactive({
   provinceName: '',
-  cityName: ''
+  cityName: '',
+  areaType: '',
+  areaCode: ''
 })
 const overview = ref<DashboardCertificateOverviewRespVO>({})
 const trend = ref<CertificateServiceTrendRespVO>({})
@@ -135,9 +151,10 @@ const filters = reactive({
 
 const queryParams = computed(() => ({
   ...buildRangeParams(dateRangeType.value, dateRange.value),
-  provinceName: areaParams.provinceName || undefined,
-  cityName: areaParams.cityName || undefined
+  ...getEffectiveAreaParams(areaParams)
 }))
+
+const userDeptAreaCode = computed(() => getUserDeptAreaParams().areaCode)
 
 const trendOption = computed(() => ({
   grid: { top: 24, right: 32, bottom: 36, left: 48 },
@@ -157,8 +174,16 @@ const trendOption = computed(() => ({
 }))
 
 const handleAreaSelect = (area: any) => {
-  areaParams.provinceName = area?.province || ''
-  areaParams.cityName = area?.city || ''
+  Object.assign(areaParams, getSelectedAreaParams(area))
+}
+
+const handleAreaChange = (value: any) => {
+  if (value === undefined || value === null || value === '' || (Array.isArray(value) && value.length === 0)) {
+    areaParams.provinceName = ''
+    areaParams.cityName = ''
+    areaParams.areaType = ''
+    areaParams.areaCode = ''
+  }
 }
 
 const getSourceLabel = (value?: number) => {
@@ -204,7 +229,9 @@ const loadTable = async () => {
       productCategory: filters.category || undefined,
       productionArea: filters.origin || undefined,
       startDate: queryParams.value.startDate,
-      endDate: queryParams.value.endDate
+      endDate: queryParams.value.endDate,
+      areaType: queryParams.value.areaType,
+      areaCode: queryParams.value.areaCode
     })
     const normalized = normalizePagedResult<any>(data)
     tableData.value = normalized.list.map(mapRow)
@@ -243,6 +270,8 @@ const handleReset = () => {
   areaIds.value = []
   areaParams.provinceName = ''
   areaParams.cityName = ''
+  areaParams.areaType = ''
+  areaParams.areaCode = ''
   resetTableFilters()
 }
 

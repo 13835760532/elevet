@@ -1,12 +1,69 @@
 import dayjs from 'dayjs'
+import { CACHE_KEY, useCache } from '@/hooks/web/useCache'
 
 export interface StatisticsQueryParams {
   startDate?: string
   endDate?: string
   provinceName?: string
   cityName?: string
+  areaType?: string | number
+  areaCode?: string | number
   dateType?: number
   timeUnit?: 'DAY' | 'MONTH'
+}
+
+const normalizeAreaValue = (value: unknown) => {
+  if (value === undefined || value === null || value === '') return ''
+  return String(value)
+}
+
+export const isSuperAdmin = () => {
+  const { wsCache } = useCache()
+  const userInfo = wsCache.get(CACHE_KEY.USER)
+  const roles = userInfo?.roles || []
+  return Array.isArray(roles) && roles.includes('super_admin')
+}
+
+export const getUserDeptAreaParams = () => {
+  if (isSuperAdmin()) {
+    return {
+      areaType: '',
+      areaCode: ''
+    }
+  }
+
+  const { wsCache } = useCache()
+  const userDept = wsCache.get(CACHE_KEY.USER_DEPT) || {}
+  return {
+    areaType: normalizeAreaValue(userDept.areaType || userDept.areaLevel),
+    areaCode: normalizeAreaValue(userDept.areaCode)
+  }
+}
+
+export const getSelectedAreaParams = (area: any) => ({
+  provinceName: area?.province || '',
+  cityName: area?.city || '',
+  areaCode: normalizeAreaValue(
+    area?.selectedCode || area?.districtCode || area?.cityCode || area?.provinceCode
+  ),
+  areaType: normalizeAreaValue(
+    area?.selectedLevel || (area?.districtCode ? 3 : area?.cityCode ? 2 : area?.provinceCode ? 1 : '')
+  )
+})
+
+export const getEffectiveAreaParams = (areaParams?: {
+  provinceName?: string
+  cityName?: string
+  areaType?: string | number
+  areaCode?: string | number
+}) => {
+  const userDeptAreaParams = getUserDeptAreaParams()
+  return {
+    provinceName: areaParams?.provinceName || undefined,
+    cityName: areaParams?.cityName || undefined,
+    areaType: areaParams?.areaType || userDeptAreaParams.areaType || undefined,
+    areaCode: areaParams?.areaCode || userDeptAreaParams.areaCode || undefined
+  }
 }
 
 export const buildRangeParams = (rangeType: string, dateRange: string[]): StatisticsQueryParams => {

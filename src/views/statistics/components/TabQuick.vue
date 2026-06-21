@@ -9,7 +9,14 @@
       @reset="handleReset"
     >
       <template #extra>
-        <AreaCascader v-model="areaIds" placeholder="省/市/县" @select="handleAreaSelect" />
+        <AreaCascader
+          v-model="areaIds"
+          placeholder="省/市/县"
+          checkStrictly
+          :root-area-code="userDeptAreaCode"
+          @select="handleAreaSelect"
+          @change="handleAreaChange"
+        />
       </template>
     </StatisticsRangeFilter>
 
@@ -134,7 +141,14 @@ import {
 } from '@/api/agri/dashboard/fast'
 import * as DetectionRecordApi from '@/api/agri/detectionRecord'
 import { useDict } from '@/hooks/web/useDict'
-import { buildRangeParams, formatNumber, normalizePagedResult } from './statisticsData'
+import {
+  buildRangeParams,
+  formatNumber,
+  getEffectiveAreaParams,
+  getSelectedAreaParams,
+  getUserDeptAreaParams,
+  normalizePagedResult
+} from './statisticsData'
 import { ElMessage } from 'element-plus'
 
 const dateRangeType = ref('近一周')
@@ -142,7 +156,9 @@ const dateRange = ref<string[]>([])
 const areaIds = ref<string[]>([])
 const areaParams = reactive({
   provinceName: '',
-  cityName: ''
+  cityName: '',
+  areaType: '',
+  areaCode: ''
 })
 const overview = ref<DashboardFastOverviewRespVO>({})
 const selfTrend = ref<FastSelfSampleTrendRespVO>({})
@@ -165,10 +181,11 @@ const filters = reactive({
   date: []
 })
 
+const userDeptAreaCode = computed(() => getUserDeptAreaParams().areaCode)
+
 const dashboardQueryParams = computed(() => ({
   ...buildRangeParams(dateRangeType.value, dateRange.value),
-  provinceName: areaParams.provinceName || undefined,
-  cityName: areaParams.cityName || undefined
+  ...getEffectiveAreaParams(areaParams)
 }))
 
 const tableRangeParams = computed(() => {
@@ -227,8 +244,16 @@ const positiveTrendOption = computed(() => {
 })
 
 const handleAreaSelect = (area: any) => {
-  areaParams.provinceName = area?.province || ''
-  areaParams.cityName = area?.city || ''
+  Object.assign(areaParams, getSelectedAreaParams(area))
+}
+
+const handleAreaChange = (value: any) => {
+  if (value === undefined || value === null || value === '' || (Array.isArray(value) && value.length === 0)) {
+    areaParams.provinceName = ''
+    areaParams.cityName = ''
+    areaParams.areaType = ''
+    areaParams.areaCode = ''
+  }
 }
 
 const parseDetectionItems = (value: any) => {
@@ -290,8 +315,7 @@ const buildTableQuery = () => ({
   pageNo: pageNo.value,
   pageSize: pageSize.value,
   ...tableRangeParams.value,
-  provinceName: areaParams.provinceName || undefined,
-  cityName: areaParams.cityName || undefined,
+  ...getEffectiveAreaParams(areaParams),
   recordCode: filters.keyword || undefined,
   sampleName: filters.sample || undefined,
   productCategory: filters.category || undefined,
@@ -345,6 +369,8 @@ const handleReset = () => {
   areaIds.value = []
   areaParams.provinceName = ''
   areaParams.cityName = ''
+  areaParams.areaType = ''
+  areaParams.areaCode = ''
   resetResultFilters()
 }
 
@@ -364,6 +390,9 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
+$statistics-control-height: 42px;
+$statistics-control-radius: 6px;
+
 .stat-content {
   padding: 20px;
   display: flex;
@@ -470,8 +499,32 @@ onMounted(() => {
   .date-picker-small {
     width: 240px;
   }
+
+  :deep(.el-input__wrapper),
+  :deep(.el-select__wrapper),
+  :deep(.el-date-editor.el-input__wrapper),
+  :deep(.el-date-editor.el-input) {
+    min-height: $statistics-control-height;
+    border-radius: $statistics-control-radius;
+  }
+
+  :deep(.el-input__wrapper),
+  :deep(.el-select__wrapper),
+  :deep(.el-date-editor.el-input__wrapper) {
+    box-shadow: 0 0 0 1px #dfe8f2 inset;
+  }
+
+  :deep(.el-input__inner),
+  :deep(.el-select__placeholder),
+  :deep(.el-range-input),
+  :deep(.el-range-separator) {
+    height: $statistics-control-height;
+    line-height: $statistics-control-height;
+  }
   
   .export-btn {
+    height: $statistics-control-height;
+    border-radius: $statistics-control-radius;
     background-color: #00B3ED;
     border-color: #00B3ED;
   }

@@ -1,20 +1,21 @@
 <template>
   <section class="left-section">
-    <BigScreenSelector label="年度合格证总览" />
+    <BigScreenSelector :label="selectorLabel" />
 
     <BigPanelCard title="合格证概况" :bg-image="leftBg">
       <div class="overview-grid">
-        <div class="overview-card" :class="item.type" v-for="item in overviewData" :key="item.label">
-          <!-- 装饰角 -->
-          <div class="corner-mark top-left"></div>
-          <div class="corner-mark bottom-right"></div>
-
+        <div
+          class="overview-card"
+          :class="[item.type, `card-${index + 1}`, getMetricSizeClass(item.value)]"
+          v-for="(item, index) in overviewData"
+          :key="item.label"
+        >
           <div class="card-inner">
-            <div class="card-label">{{ item.label }}</div>
-            <div class="card-body">
-              <div class="icon-box">
-                <img src="@/assets/imgs/echarts/合格证/icon.png" alt="">
-              </div>
+            <div class="icon-box">
+              <img src="@/assets/imgs/echarts/合格证/icon.png" alt="" />
+            </div>
+            <div class="metric-content">
+              <div class="card-label">{{ item.label }}</div>
               <div class="num-box">
                 <span class="value-text">{{ item.value }}</span>
                 <span class="unit-text">{{ item.unit }}</span>
@@ -32,11 +33,9 @@
             <p class="label">{{ item.label }}</p>
             <div class="value-container">
               <span class="value">{{ item.value }}</span>
-              <!-- 全息投影效果 -->
               <img class="holographic-img" src="@/assets/imgs/echarts/合格证/bf67.png" />
             </div>
           </div>
-          <!-- 分隔线 -->
           <div v-if="index < subjectData.length - 1" class="separator"></div>
         </div>
       </div>
@@ -45,7 +44,7 @@
     <BigPanelCard title="各品类合格证开具量" :bg-image="leftBg">
       <div class="category-layout">
         <div class="pie-container">
-          <Echart :options="categoryPieOption" height="230px" width="100%" />
+          <Echart :options="categoryPieOption" height="100%" width="100%" />
         </div>
         <div class="category-legend">
           <div class="legend-row" v-for="item in categoryItems" :key="item.name">
@@ -60,22 +59,33 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue';
-import echarts from '@/plugins/echarts';
-import { Echart } from '@/components/Echart';
-import BigPanelCard from '../bigscreen/BigPanelCard.vue';
-import BigScreenSelector from '../bigscreen/BigScreenSelector.vue';
-import leftBg from '@/assets/imgs/echarts/合格证/Frame 58_bg.png';
+import { computed, onMounted, onUnmounted, ref } from 'vue'
+import echarts from '@/plugins/echarts'
+import { Echart } from '@/components/Echart'
+import BigPanelCard from '../bigscreen/BigPanelCard.vue'
+import BigScreenSelector from '../bigscreen/BigScreenSelector.vue'
+import leftBg from '@/assets/imgs/echarts/合格证/Frame 58_bg.png'
 import {
   getCertificateCategoryDistribution,
   getCertificateOverview,
   type CertificateCategoryDistributionRespVO,
   type DashboardCertificateOverviewRespVO
-} from '@/api/agri/dashboard/certificate';
-import { getBigScreenQueryParams, subscribeBigScreenRefresh } from '../bigscreen/config';
+} from '@/api/agri/dashboard/certificate'
+import { getDashboardOverview, type DashboardOverviewRespVO } from '@/api/agri/dashboard'
+import { getSubjectPage } from '@/api/agri/subject'
+import {
+  getBigScreenConfig,
+  getBigScreenQueryParams,
+  subscribeBigScreenRefresh
+} from '../bigscreen/config'
 
-const overview = ref<DashboardCertificateOverviewRespVO>({});
-const categoryDistribution = ref<CertificateCategoryDistributionRespVO[]>([]);
+const overview = ref<DashboardCertificateOverviewRespVO>({})
+const dashboardOverview = ref<DashboardOverviewRespVO>({})
+const subjectArchiveStats = ref({
+  enterpriseCount: 0,
+  personalCount: 0
+})
+const categoryDistribution = ref<CertificateCategoryDistributionRespVO[]>([])
 const categoryColors = [
   '#3f6dff',
   '#ffb22c',
@@ -85,7 +95,7 @@ const categoryColors = [
   '#8ad64c',
   '#7d60ff',
   '#ff8a34'
-];
+]
 
 const overviewData = computed(() => [
   { label: '合格证开具', value: Number(overview.value.issueCount || 0), unit: '份', type: 'blue' },
@@ -95,23 +105,100 @@ const overviewData = computed(() => [
     unit: '份',
     type: 'green'
   },
+  {
+    label: '合格证查验',
+    value: Number(overview.value.verificationCount || 0),
+    unit: '次',
+    type: 'cyan'
+  },
   { label: '合格证溯源', value: Number(overview.value.traceCount || 0), unit: '次', type: 'orange' }
-]);
+])
+
+const getMetricSizeClass = (value: number) => {
+  const length = String(Math.trunc(Math.abs(Number(value) || 0))).length
+  if (length >= 9) return 'value-size-xxl'
+  if (length >= 8) return 'value-size-xl'
+  if (length >= 7) return 'value-size-lg'
+  if (length >= 6) return 'value-size-md'
+  return 'value-size-base'
+}
+
+const selectorLabel = computed(() => {
+  const config = getBigScreenConfig()
+  const region = config.regionLabel || '北京地区'
+  const start = (config.timeRange?.[0] || '').replaceAll('-', '')
+  const end = (config.timeRange?.[1] || '').replaceAll('-', '')
+  return `${start ? `${start.slice(0, 4)}年度` : '年度'}${region}农产品质量安全风险预警【${start}-${end}】`
+})
+
+const supervisorOrgCount = computed(
+  () =>
+    Number(overview.value.supervisorCount ?? dashboardOverview.value.supervisorCount ?? 0) +
+    Number(overview.value.detectionOrgCount ?? dashboardOverview.value.detectionOrgCount ?? 0)
+)
+const enterpriseCount = computed(() =>
+  Number(
+    overview.value.enterpriseCount ??
+      subjectArchiveStats.value.enterpriseCount ??
+      dashboardOverview.value.enterpriseCount ??
+      0
+  )
+)
+const personalCount = computed(() =>
+  Number(
+    overview.value.personalCount ??
+      overview.value.individualCount ??
+      subjectArchiveStats.value.personalCount ??
+      0
+  )
+)
 
 const subjectData = computed(() => [
-  { label: '开具主体', value: Number(overview.value.issueSubjectCount || 0) },
-  { label: '存证主体', value: Number(overview.value.verificationSubjectCount || 0) }
-]);
+  {
+    label: '监管机构/检测机构',
+    value: supervisorOrgCount.value || Number(overview.value.issueSubjectCount || 0)
+  },
+  { label: '企业', value: enterpriseCount.value },
+  { label: '个人', value: personalCount.value }
+])
 
 const loadOverviewData = async () => {
   try {
-    const data = await getCertificateOverview(getBigScreenQueryParams());
-    overview.value = data || {};
+    const params = getBigScreenQueryParams()
+    const [certificateData, dashboardData, enterprisePage, personalPage] = await Promise.all([
+      getCertificateOverview(params),
+      getDashboardOverview(params),
+      getSubjectPage({
+        pageNo: 1,
+        pageSize: 1,
+        type: 1,
+        provinceCode: params.provinceName,
+        cityCode: params.cityName
+      }),
+      getSubjectPage({
+        pageNo: 1,
+        pageSize: 1,
+        type: 2,
+        provinceCode: params.provinceName,
+        cityCode: params.cityName
+      })
+    ])
+    overview.value = certificateData || {}
+    dashboardOverview.value = dashboardData || {}
+    subjectArchiveStats.value = {
+      enterpriseCount: Number(enterprisePage?.total || 0),
+      personalCount: Number(personalPage?.total || 0)
+    }
   } catch (error) {
-    console.error('加载合格证概览数据失败', error);
-    overview.value = {};
+    console.error('加载合格证概览数据失败', error)
+    overview.value = {}
+    dashboardOverview.value = {}
+    subjectArchiveStats.value = {
+      enterpriseCount: 0,
+      personalCount: 0
+    }
   }
-};
+}
 
 const categoryItems = computed(() =>
   [...categoryDistribution.value]
@@ -124,11 +211,12 @@ const categoryItems = computed(() =>
       ...item,
       color: categoryColors[index % categoryColors.length]
     }))
-);
+)
 
-const pieItems = computed(() => categoryItems.value.filter((item) => item.value > 0));
+const pieItems = computed(() => categoryItems.value.filter((item) => item.value > 0))
 
 const categoryPieOption = computed(() => ({
+  animation: false,
   tooltip: {
     trigger: 'item',
     backgroundColor: 'rgba(6, 18, 42, 0.92)',
@@ -139,8 +227,8 @@ const categoryPieOption = computed(() => ({
   series: [
     {
       type: 'pie',
-      radius: ['42%', '62%'],
-      center: ['38%', '50%'],
+      radius: ['42%', '64%'],
+      center: ['48%', '52%'],
       minAngle: 6,
       avoidLabelOverlap: true,
       label: {
@@ -178,136 +266,271 @@ const categoryPieOption = computed(() => ({
       }))
     }
   ]
-}));
+}))
 
 const loadCategoryDistribution = async () => {
   try {
-    const data = await getCertificateCategoryDistribution(getBigScreenQueryParams());
-    categoryDistribution.value = Array.isArray(data) ? data : [];
+    const data = await getCertificateCategoryDistribution(getBigScreenQueryParams())
+    categoryDistribution.value = Array.isArray(data) ? data : []
   } catch (error) {
-    console.error('加载合格证品类分布失败', error);
-    categoryDistribution.value = [];
+    console.error('加载合格证品类分布失败', error)
+    categoryDistribution.value = []
   }
-};
+}
 
 onMounted(() => {
-  loadOverviewData();
-  loadCategoryDistribution();
-});
+  loadOverviewData()
+  loadCategoryDistribution()
+})
 
 const disposeRefresh = subscribeBigScreenRefresh(() => {
-  loadOverviewData();
-  loadCategoryDistribution();
-});
+  loadOverviewData()
+  loadCategoryDistribution()
+})
 
 onUnmounted(() => {
-  disposeRefresh();
-});
+  disposeRefresh()
+})
 </script>
 
 <style scoped lang="scss">
 .left-section {
   display: grid;
-  grid-template-rows: auto 0.8fr 0.6fr 1.1fr;
-  gap: 12px;
+  grid-template-rows: 42px 10px 345px 20px 233px 20px 302px;
+  row-gap: 0;
   height: 100%;
   min-height: 0;
+
+  :deep(.panel-card),
+  :deep(.panel-body) {
+    min-height: 0;
+  }
+
+  :deep(.panel-body) {
+    padding: 0;
+  }
+
+  :deep(.big-screen-selector),
+  :deep(.selector-trigger) {
+    width: 455px;
+    height: 42px;
+  }
+
+  :deep(.panel-card) {
+    background: transparent;
+    box-shadow: none;
+  }
+
+  :deep(.panel-card::after) {
+    display: none;
+  }
+
+  :deep(.panel-header) {
+    height: 42px;
+    flex-basis: 42px;
+    background-image: url('@/assets/imgs/echarts/合格证/erji_bg.png');
+    background-size: 455px 42px;
+    padding: 0;
+  }
+
+  :deep(.panel-title) {
+    height: 42px;
+    padding-left: 61px;
+    font-size: 18px;
+    line-height: 42px;
+    color: #e0efef;
+  }
+
+  > :nth-child(1) {
+    grid-row: 1;
+  }
+
+  > :nth-child(2) {
+    grid-row: 3;
+  }
+
+  > :nth-child(3) {
+    grid-row: 5;
+  }
+
+  > :nth-child(4) {
+    grid-row: 7;
+  }
 }
 
 .overview-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-  padding: 10px 4px;
+  position: relative;
+  flex: 1;
+  width: 455px;
+  min-height: 0;
+  background:
+    linear-gradient(180deg, rgba(0, 2, 31, 0.31) 0%, rgba(0, 2, 31, 0.31) 100%),
+    linear-gradient(180deg, rgba(4, 19, 49, 0.18) 0%, rgba(5, 12, 34, 0.04) 100%);
+  box-shadow: inset 0 0 28px rgba(2, 74, 168, 0.14);
+
+  &::after {
+    content: '';
+    position: absolute;
+    right: 1px;
+    bottom: 0;
+    left: 0;
+    height: 2px;
+    background: linear-gradient(
+      90deg,
+      rgba(32, 51, 159, 0) 0%,
+      rgba(32, 45, 159, 1) 41%,
+      rgba(133, 151, 229, 1) 51%,
+      rgba(32, 62, 159, 1) 63%,
+      rgba(32, 45, 159, 0) 100%
+    );
+    pointer-events: none;
+  }
 }
 
-
 .overview-card {
-  position: relative;
-  height: 100px;
-  background: rgba(14, 39, 90, 0.4);
-  border: 1px solid rgba(37, 137, 255, 0.2);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  .corner-mark {
-    position: absolute;
-    width: 14px;
-    height: 14px;
-
-    &.top-left {
-      top: 0;
-      left: 0;
-      border-top: 2px solid var(--theme-color);
-      border-left: 2px solid var(--theme-color);
-    }
-
-    &.bottom-right {
-      bottom: 0;
-      right: 0;
-      border-bottom: 2px solid var(--theme-color);
-      border-right: 2px solid var(--theme-color);
-    }
-  }
+  position: absolute;
+  width: 202px;
+  height: 98px;
+  background-repeat: no-repeat;
+  background-position: 0 0;
+  background-size: 202px 98px;
 
   .card-inner {
-    width: 100%;
-    padding: 0 16px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+    position: relative;
+    width: 202px;
+    height: 98px;
+    padding: 0;
+  }
+
+  .metric-content {
+    position: absolute;
+    left: 54px;
+    top: 10px;
+    width: 148px;
+    height: 87px;
   }
 
   .card-label {
+    width: 122px;
+    height: 23px;
+    margin: 0 0 0;
+    color: #c2d4d4;
     font-size: 16px;
-    color: #9ec2e6;
-    margin-bottom: 6px;
-    letter-spacing: 1px;
-    text-shadow: 0 0 10px rgba(158, 194, 230, 0.3);
-    margin-left: 10px;
-  }
-
-  .card-body {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-
-  .icon-box {
-    width: 44px;
-
-    img {
-      width: 100%;
-      height: auto;
-    }
+    font-weight: 500;
+    line-height: 23px;
+    letter-spacing: 0;
+    text-align: left;
+    text-shadow: none;
   }
 
   .num-box {
+    width: 148px;
+    height: 44px;
+    margin-top: 0;
     display: flex;
-    align-items: baseline;
-    gap: 4px;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 0;
 
     .value-text {
-      font-family: 'DIN Alternate', 'Inter', sans-serif;
-      font-size: 34px;
-      font-weight: 800;
-      background: linear-gradient(to bottom, #ffffff 30%, var(--theme-light-color) 100%);
+      flex: 0 1 auto;
+      min-width: 0;
+      font-family: 'DIN Black', 'DIN Alternate', 'Inter', sans-serif;
+      font-size: 36px;
+      font-weight: 900;
+      line-height: 44px;
+      letter-spacing: 0;
+      background: linear-gradient(180deg, #48c5ff 0%, #e4f5ff 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-      filter: drop-shadow(0 0 8px var(--theme-glow-color));
-      line-height: 1;
+      filter: none;
       margin-left: 0px;
+      white-space: nowrap;
     }
 
     .unit-text {
-      font-size: 16px;
-      color: #9ec2e6;
-      opacity: 0.8;
+      flex: 0 0 auto;
+      margin-top: 10px;
+      color: #c2d4d4;
+      font-size: 14px;
+      font-weight: 500;
+      line-height: 23px;
+      opacity: 1;
     }
   }
 
-  // 主题配色
+  .icon-box {
+    position: absolute;
+    left: 5px;
+    top: 54px;
+    width: 41px;
+    height: 23px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    img {
+      width: 41px;
+      height: 23px;
+      object-fit: contain;
+    }
+  }
+
+  &.value-size-md {
+    .value-text {
+      font-size: 32px;
+    }
+
+    .unit-text {
+      margin-top: 9px;
+    }
+  }
+
+  &.value-size-lg {
+    .value-text {
+      font-size: 28px;
+    }
+
+    .unit-text {
+      margin-top: 8px;
+    }
+  }
+
+  &.value-size-xl,
+  &.value-size-xxl {
+    .value-text {
+      font-size: 24px;
+    }
+
+    .unit-text {
+      margin-top: 7px;
+    }
+  }
+
+  &.card-1 {
+    left: 18px;
+    top: 32px;
+    background-image: url('@/assets/imgs/echarts/合格证/Frame 57_bg.png');
+  }
+
+  &.card-2 {
+    left: 234px;
+    top: 32px;
+    background-image: url('@/assets/imgs/echarts/合格证/Frame 58_bg.png');
+  }
+
+  &.card-3 {
+    left: 18px;
+    top: 156px;
+    background-image: url('@/assets/imgs/echarts/合格证/Frame 59_bg.png');
+  }
+
+  &.card-4 {
+    left: 234px;
+    top: 156px;
+    background-image: url('@/assets/imgs/echarts/合格证/Frame 60_bg.png');
+  }
+
   &.blue {
     --theme-color: #2589ff;
     --theme-light-color: #8cecff;
@@ -334,17 +557,36 @@ onUnmounted(() => {
 }
 
 .subject-grid {
-  display: flex;
-  justify-content: space-around;
-  align-items: center;
-  padding-top: 30px;
+  flex: 1;
+  min-height: 0;
+  box-sizing: border-box;
+  position: relative;
+  display: block;
+  height: 100%;
+  padding: 0;
+  background: url('@/assets/imgs/echarts/合格证/fwzt.png') no-repeat 0 0;
+  background-size: 454px 191px;
 }
 
 .subject-item {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  position: relative;
+  position: absolute;
+  top: 30px;
+  height: 87px;
+
+  &:nth-child(1) {
+    left: 0;
+    width: 145px;
+  }
+
+  &:nth-child(2) {
+    left: 174px;
+    width: 101px;
+  }
+
+  &:nth-child(3) {
+    left: 327px;
+    width: 101px;
+  }
 
   .item-inner {
     width: 100%;
@@ -353,114 +595,99 @@ onUnmounted(() => {
 
   .label {
     margin: 0;
-    color: #a7caea;
-    font-size: 15px;
-    margin-bottom: 8px;
+    height: 23px;
+    color: #c2d4d4;
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 23px;
   }
 
   .value-container {
     position: relative;
-    padding-bottom: 25px;
+    height: 44px;
 
     .value {
       color: #7feaff;
-      font-size: 38px;
-      line-height: 1;
-      font-weight: 700;
-      font-family: 'DIN Alternate', sans-serif;
+      font-size: 36px;
+      line-height: 44px;
+      font-weight: 900;
+      font-family: 'DIN Black', 'DIN Alternate', sans-serif;
       text-shadow: 0 0 10px rgba(127, 234, 255, 0.5);
     }
 
     .holographic-img {
       position: absolute;
-      bottom: -10px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 100px;
-      height: 50px;
+      top: 37px;
       pointer-events: none;
     }
   }
 
+  &:nth-child(1) .holographic-img {
+    left: 17px;
+    width: 116px;
+    height: 68px;
+  }
+
+  &:nth-child(2) .holographic-img {
+    left: -4px;
+    width: 115px;
+    height: 68px;
+  }
+
+  &:nth-child(3) .holographic-img {
+    left: -7px;
+    width: 115px;
+    height: 68px;
+  }
+
   .separator {
-    width: 2px;
-    height: 80px;
+    position: absolute;
+    top: 34px;
+    width: 1px;
+    height: 59px;
     background: linear-gradient(to bottom, transparent, rgba(255, 255, 255, 0.3), transparent);
-    position: absolute;
-    right: 0;
-    top: 20px;
-  }
-}
-
-.hologram-effect {
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 80px;
-  height: 40px;
-  pointer-events: none;
-
-  .light-beam {
-    position: absolute;
-    bottom: 5px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 60px;
-    height: 60px;
-    background: radial-gradient(ellipse at bottom, rgba(0, 218, 255, 0.35) 0%, transparent 70%);
-    clip-path: polygon(20% 0%, 80% 0%, 100% 100%, 0% 100%);
   }
 
-  .pedestal {
-    position: absolute;
-    bottom: -10px;
-    left: 50%;
-    transform: translateX(-50%) rotateX(65deg);
-    width: 60px;
-    height: 60px;
+  &:nth-child(1) .separator {
+    left: 145px;
+  }
 
-    .ring-1 {
-      position: absolute;
-      inset: 0;
-      border: 2px solid rgba(0, 218, 255, 0.8);
-      border-radius: 50%;
-      box-shadow: 0 0 15px rgba(0, 218, 255, 0.6), inset 0 0 10px rgba(0, 218, 255, 0.4);
-    }
-
-    .ring-2 {
-      position: absolute;
-      inset: 8px;
-      border: 1px solid rgba(0, 218, 255, 0.4);
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(0, 218, 255, 0.2) 0%, transparent 80%);
-    }
+  &:nth-child(2) .separator {
+    left: 126px;
   }
 }
 
 .category-layout {
+  flex: 1;
+  box-sizing: border-box;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 210px;
-  align-items: center;
-  gap: 12px;
+  grid-template-columns: minmax(0, 315px) 64px;
+  align-items: stretch;
+  gap: 8px;
   height: 100%;
   min-height: 0;
+  padding: 30px 22px 10px;
+  background: url('@/assets/imgs/echarts/合格证/kjl_bg.png') no-repeat 0 0;
+  background-size: 455px 259px;
 }
 
 .pie-container {
   min-width: 0;
-  height: 230px;
-  padding-top: 4px;
+  height: 100%;
+  min-height: 0;
+  padding-top: 0;
 }
 
 .category-legend {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  height: 230px;
+  height: 128px;
   min-height: 0;
   overflow-y: auto;
-  padding-right: 6px;
+  align-self: start;
+  margin-top: 38px;
+  padding-right: 0;
 
   &::-webkit-scrollbar {
     width: 6px;
@@ -478,36 +705,34 @@ onUnmounted(() => {
 
 .legend-row {
   display: grid;
-  grid-template-columns: 12px minmax(0, 1fr) auto;
+  grid-template-columns: 15px minmax(0, 1fr);
   align-items: center;
-  gap: 12px;
-  min-height: 48px;
-  padding: 0 16px;
-  border: 1px solid rgba(52, 116, 195, 0.55);
-  background: linear-gradient(90deg, rgba(23, 51, 92, 0.78), rgba(10, 24, 56, 0.52));
-  box-shadow: inset 0 0 16px rgba(66, 159, 255, 0.1);
+  gap: 6px;
+  min-height: 15px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 2px;
+  width: 15px;
+  height: 15px;
+  border-radius: 0;
   box-shadow: 0 0 8px rgba(87, 226, 255, 0.28);
 }
 
 .name {
   min-width: 0;
-  color: #d6eefe;
+  color: rgba(255, 255, 255, 0.8);
   font-size: 14px;
+  line-height: 20px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .value {
-  color: #57e2ff;
-  font-family: 'DIN Alternate', 'Inter', sans-serif;
-  font-size: 14px;
-  font-weight: 700;
+  display: none;
 }
 </style>

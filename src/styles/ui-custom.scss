@@ -11,8 +11,8 @@
   --el-color-primary: #00B3ED;
   
   /* 统一圆角规范 (border-radius) */
-  --el-border-radius-base: 4px; /* 默认主圆角组件，比如 Input, Select */
-  --el-border-radius-small: 4px; /* 小号圆角组件，比如 Tag, 小 Button */
+  --el-border-radius-base: 6px; /* 默认主圆角组件，比如 Input, Select */
+  --el-border-radius-small: 6px; /* 小号圆角组件，比如 Tag, 小 Button */
   --el-border-radius-round: 20px; /* 全圆角组件 */
 
   /* 统一卡片或弹窗的圆角 */
@@ -26,7 +26,7 @@
 ---------------------------------------------------------- */
 .el-button {
   /* 统一按钮圆角 */
-  border-radius: 4px!important;
+  border-radius: 6px!important;
   /* 设置字体加粗让按钮更有质感 */
   font-weight: 500;
   /* 统一按钮的横向内边距，确保文字不会太挤 */
@@ -54,7 +54,7 @@
 .el-button--large {
   padding-left: 24px;
   padding-right: 24px;
-  border-radius: 8px; /* 大按钮稍微平滑一点 */
+  border-radius: 6px;
   font-size: 15px;
 }
 
@@ -71,10 +71,12 @@
    3. 输入框/选择器等表单组件规范
 ---------------------------------------------------------- */
 .el-input__wrapper,
-.el-select__wrapper{
+.el-select__wrapper,
+.el-date-editor.el-input__wrapper,
+.el-date-editor .el-input__wrapper {
   height: 40px;
   /* 统一边框和圆角 */
-  border-radius: var(--el-border-radius-base);
+  border-radius: 6px !important;
   /* 基础状态使用真实边框替换默认的 box-shadow 阴影（内发光） */
   box-shadow: none !important;
   border: 1px solid var(--el-input-border-color, var(--el-border-color));
@@ -89,6 +91,18 @@
     box-shadow: none !important;
     border-color: var(--el-color-primary) !important;
   }
+}
+
+.el-button:not(.is-circle):not(.is-round),
+.el-input__wrapper,
+.el-select__wrapper,
+.el-textarea__inner,
+.el-date-editor,
+.el-date-editor.el-input__wrapper,
+.el-date-editor .el-input__wrapper,
+.el-range-editor.el-input__wrapper,
+.el-cascader .el-input__wrapper {
+  border-radius: 6px !important;
 }
 /* ----------------------------------------------------------
    4. 对话框/卡片等区块规范 (Dialog & Card)

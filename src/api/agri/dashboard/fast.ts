@@ -5,6 +5,8 @@ export interface FastDashboardQueryParams {
   endDate?: string
   provinceName?: string
   cityName?: string
+  areaType?: string | number
+  areaCode?: string | number
 }
 
 export interface FastPositiveRateTrendRespVO {

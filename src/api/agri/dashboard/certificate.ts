@@ -5,6 +5,8 @@ export interface CertificateDashboardQueryParams {
   endDate?: string
   provinceName?: string
   cityName?: string
+  areaType?: string | number
+  areaCode?: string | number
 }
 
 export interface CertificateVerificationTopRespVO {
@@ -33,6 +35,11 @@ export interface DashboardCertificateOverviewRespVO {
   traceCount?: number
   issueSubjectCount?: number
   verificationSubjectCount?: number
+  supervisorCount?: number
+  detectionOrgCount?: number
+  enterpriseCount?: number
+  personalCount?: number
+  individualCount?: number
 }
 
 export interface CertificateServiceTrendRespVO {

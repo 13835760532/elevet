@@ -116,7 +116,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted, reactive, ref, toRefs } from 'vue'
+import { computed, onMounted, onUnmounted, reactive, ref, toRefs } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { List, Aim, Checked, Bell } from '@element-plus/icons-vue'
@@ -133,7 +133,9 @@ import warnBgActive from '@/assets/imgs/echarts/首页/xyyj_pr.png'
 import {
   dispatchBigScreenRefresh,
   getBigScreenConfig,
+  getBigScreenUserDeptAreaParams,
   getDefaultBigScreenConfig,
+  isBigScreenSuperAdmin,
   saveBigScreenConfig,
   type BigScreenDataConfig
 } from './config'
@@ -160,6 +162,7 @@ interface AreaNodeRespVO {
 
 const showConfig = ref(false)
 const areaOptions = ref<AreaNodeRespVO[]>([])
+const originalAreaOptions = ref<AreaNodeRespVO[]>([])
 const areaOptionsLoaded = ref(false)
 const areaOptionsLoading = ref(false)
 let refreshTimer: number | null = null
@@ -177,14 +180,22 @@ const areaCascaderProps = {
   emitPath: true
 }
 
+const userDeptAreaCode = computed(() => getBigScreenUserDeptAreaParams().areaCode)
+
 const ensureAreaOptionsLoaded = async () => {
   if (areaOptionsLoaded.value || areaOptionsLoading.value) return
   areaOptionsLoading.value = true
   try {
     const data = await getAreaTree()
-    areaOptions.value = formatAreaTree((data || []) as AreaNodeRespVO[])
+    originalAreaOptions.value = formatAreaTree((data || []) as AreaNodeRespVO[])
+    areaOptions.value = limitTreeByRootArea(originalAreaOptions.value, userDeptAreaCode.value)
     const cachedConfig = getBigScreenConfig()
-    if (cachedConfig.regionPath.length) {
+    if (
+      !isBigScreenSuperAdmin() &&
+      (!cachedConfig.regionPath.length || !isPathInRootArea(cachedConfig.regionPath, userDeptAreaCode.value))
+    ) {
+      configForm.regionPath = userDeptAreaCode.value ? resolvePathByAreaCode(userDeptAreaCode.value) : []
+    } else if (cachedConfig.regionPath.length) {
       configForm.regionPath = [...cachedConfig.regionPath]
     }
     areaOptionsLoaded.value = true
@@ -220,20 +231,62 @@ const formatAreaTree = (tree: AreaNodeRespVO[] = []): AreaNodeRespVO[] =>
     return node
   })
 
+const findNodeById = (id: number | string, tree: AreaNodeRespVO[]): AreaNodeRespVO | undefined => {
+  if (!id) return undefined
+  for (const node of tree) {
+    if (String(node.id) === String(id)) return node
+    if (node.children?.length) {
+      const found = findNodeById(id, node.children)
+      if (found) return found
+    }
+  }
+  return undefined
+}
+
+const findPathById = (id: number | string, tree: AreaNodeRespVO[]): number[] => {
+  if (!id) return []
+  for (const node of tree) {
+    if (String(node.id) === String(id)) return [node.id]
+    if (node.children?.length) {
+      const childPath = findPathById(id, node.children)
+      if (childPath.length) return [node.id, ...childPath]
+    }
+  }
+  return []
+}
+
+const limitTreeByRootArea = (tree: AreaNodeRespVO[], rootAreaCode?: string) => {
+  if (!rootAreaCode) return tree
+  const rootNode = findNodeById(rootAreaCode, tree)
+  return rootNode ? [rootNode] : tree
+}
+
+const resolvePathByAreaCode = (areaCode: number | string) => findPathById(areaCode, originalAreaOptions.value)
+
+const isPathInRootArea = (path: number[], rootAreaCode?: string) => {
+  if (!rootAreaCode) return true
+  return Array.isArray(path) && path.some((id) => String(id) === String(rootAreaCode))
+}
+
 const resolveRegionMetaByPath = (path: number[]) => {
   const labels: string[] = []
-  let currentTree = areaOptions.value
-  for (const id of path) {
+  const fullPath = path.length ? resolvePathByAreaCode(path[path.length - 1]) || path : []
+  let currentTree = originalAreaOptions.value
+  for (const id of fullPath) {
     const current = currentTree.find((item) => item.id === id)
     if (!current) break
     labels.push(current.name)
     currentTree = current.children || []
   }
+  const selectedCode = fullPath[fullPath.length - 1]
   return {
+    regionPath: fullPath,
     regionLabel: labels.join('-'),
     provinceName: labels[0] || '',
     cityName: labels[1] || '',
-    districtName: labels[2] || ''
+    districtName: labels[2] || '',
+    areaCode: selectedCode ? String(selectedCode) : '',
+    areaType: fullPath.length ? String(fullPath.length) : ''
   }
 }
 
@@ -259,11 +312,13 @@ const saveConfig = () => {
   const regionMeta = resolveRegionMetaByPath(configForm.regionPath)
   const nextConfig: BigScreenDataConfig = {
     timeRange: [...configForm.timeRange] as [string, string],
-    regionPath: [...configForm.regionPath],
+    regionPath: [...regionMeta.regionPath],
     regionLabel: regionMeta.regionLabel,
     provinceName: regionMeta.provinceName,
     cityName: regionMeta.cityName,
     districtName: regionMeta.districtName,
+    areaType: regionMeta.areaType,
+    areaCode: regionMeta.areaCode,
     frequency: Math.max(1, Number(configForm.frequency || 5))
   }
   saveBigScreenConfig(nextConfig)

@@ -60,92 +60,126 @@ const handleDateRangeChange = (value: string[] | null) => {
 </script>
 
 <style scoped lang="scss">
+$statistics-control-height: 42px;
+$statistics-control-radius: 6px;
+
+@media (width <= 1360px) {
+  .date-field {
+    flex-basis: 310px;
+    min-width: 310px;
+  }
+}
+
+@media (width <= 960px) {
+  .statistics-range-filter {
+    align-items: center;
+  }
+
+  .filter-label-block {
+    width: 128px;
+    flex-basis: 128px;
+    min-width: 0;
+  }
+
+  .date-field {
+    flex: 0 0 300px;
+    min-width: 300px;
+  }
+
+  .filter-extra,
+  .filter-actions {
+    justify-content: flex-start;
+  }
+}
+
 .statistics-range-filter {
   display: flex;
-  align-items: center;
-  gap: 10px;
-  margin: 0 0 16px;
   padding: 10px 12px;
+  margin: 0 0 16px;
+  overflow: auto hidden;
+  background: #fff;
   border: 1px solid #e9f0f8;
   border-radius: 12px;
-  background: #fff;
+  align-items: center;
+  gap: 10px;
 }
 
 .filter-label-block {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  width: 110px;
-  flex: 0 0 110px;
+  width: 128px;
+  flex: 0 0 128px;
 }
 
 .filter-label {
-  color: #1f2d3d;
   font-size: 14px;
   font-weight: 700;
   line-height: 1.2;
+  color: #1f2d3d;
 }
 
 .filter-desc {
   margin-top: 3px;
-  color: #9aa8b8;
   font-size: 12px;
-}
-
-.range-preset-group {
-  flex: 0 0 auto;
-  padding: 2px;
-  border: 1px solid #e4edf6;
-  border-radius: 10px;
-  background: #f3f7fb;
+  color: #9aa8b8;
   white-space: nowrap;
 }
 
+.range-preset-group {
+  padding: 2px;
+  white-space: nowrap;
+  background: #f3f7fb;
+  border: 1px solid #e4edf6;
+  border-radius: $statistics-control-radius;
+  flex: 0 0 auto;
+}
+
 :deep(.range-preset-group .el-radio-button__inner) {
-  height: 32px;
+  height: 36px;
   min-width: 68px;
   padding: 0 14px;
-  border: 0;
-  border-radius: 8px;
-  background: transparent;
-  color: #64748b;
   font-weight: 600;
-  line-height: 32px;
+  line-height: 36px;
+  color: #64748b;
+  background: transparent;
+  border: 0;
+  border-radius: $statistics-control-radius;
   box-shadow: none;
 }
 
 :deep(.range-preset-group .el-radio-button__original-radio:checked + .el-radio-button__inner) {
-  background: #11b8ee;
   color: #fff;
+  background: #11b8ee;
   box-shadow: none;
 }
 
 .date-field {
-  flex: 0 0 320px;
   display: flex;
-  align-items: center;
-  min-width: 360px;
-  height: 38px;
+  height: $statistics-control-height;
+  min-width: 330px;
   padding: 0 8px 0 10px;
-  border: 1px solid #dfe8f2;
-  border-radius: 10px;
   background: #fff;
+  border: 1px solid #dfe8f2;
+  border-radius: $statistics-control-radius;
   transition: border-color 0.2s ease;
+  flex: 0 0 330px;
+  align-items: center;
 
   &:hover {
-    border-color: rgba(17, 184, 238, 0.65);
+    border-color: rgb(17 184 238 / 65%);
   }
 }
 
 .date-prefix {
-  flex: 0 0 auto;
-  margin-right: 8px;
   padding: 3px 7px;
-  border-radius: 999px;
-  background: rgba(17, 184, 238, 0.1);
-  color: #0ea5d7;
+  margin-right: 8px;
   font-size: 12px;
   font-weight: 700;
+  color: #0ea5d7;
+  background: rgb(17 184 238 / 10%);
+  border-radius: 999px;
+  flex: 0 0 auto;
 }
 
 .date-picker {
@@ -158,18 +192,19 @@ const handleDateRangeChange = (value: string[] | null) => {
   --el-input-hover-border-color: transparent;
   --el-input-focus-border-color: transparent;
   --el-input-bg-color: transparent;
+
   height: 36px;
   box-shadow: none;
 }
 
 :deep(.date-picker .el-range-input) {
-  color: #2f3b52;
   font-weight: 500;
+  color: #2f3b52;
 }
 
 :deep(.date-picker .el-range-separator) {
-  color: #8392a6;
   font-weight: 700;
+  color: #8392a6;
 }
 
 .filter-extra {
@@ -185,14 +220,14 @@ const handleDateRangeChange = (value: string[] | null) => {
 }
 
 :deep(.filter-extra .el-input) {
-  width: 190px;
+  width: 160px;
 }
 
 :deep(.filter-extra .el-select__wrapper),
 :deep(.filter-extra .el-input__wrapper) {
-  min-height: 42px;
+  min-height: $statistics-control-height;
   border: 1px solid #dfe8f2;
-  border-radius: 10px;
+  border-radius: $statistics-control-radius;
   box-shadow: none;
 }
 
@@ -210,53 +245,21 @@ const handleDateRangeChange = (value: string[] | null) => {
 
 .query-btn,
 .reset-btn {
-  height: 38px;
-  min-width: 68px;
-  border-radius: 8px;
+  height: $statistics-control-height;
+  min-width: 64px;
   font-weight: 700;
+  border-radius: $statistics-control-radius;
 }
 
 .query-btn {
-  border: 0;
   background: #11b8ee;
+  border: 0;
   box-shadow: none;
 }
 
 .reset-btn {
-  border-color: #dfe8f2;
-  background: #fff;
   color: #516174;
-}
-
-@media (max-width: 1360px) {
-  .statistics-range-filter {
-    flex-wrap: wrap;
-  }
-
-  .date-field {
-    flex-basis: 460px;
-  }
-}
-
-@media (max-width: 960px) {
-  .statistics-range-filter {
-    align-items: stretch;
-  }
-
-  .filter-label-block {
-    width: auto;
-    flex-basis: 100%;
-    min-width: 0;
-  }
-
-  .date-field {
-    flex: 1 1 100%;
-    min-width: 0;
-  }
-
-  .filter-extra,
-  .filter-actions {
-    justify-content: flex-start;
-  }
+  background: #fff;
+  border-color: #dfe8f2;
 }
 </style>

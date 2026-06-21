@@ -10,6 +10,7 @@ export const CACHE_KEY = {
   // 用户相关
   ROLE_ROUTERS: 'roleRouters',
   USER: 'user',
+  USER_DEPT: 'userDept',
   VisitTenantId: 'visitTenantId',
   // 系统设置
   IS_DARK: 'isDark',
@@ -35,6 +36,7 @@ export const useCache = (type: CacheType = 'localStorage') => {
 export const deleteUserCache = () => {
   const { wsCache } = useCache()
   wsCache.delete(CACHE_KEY.USER)
+  wsCache.delete(CACHE_KEY.USER_DEPT)
   wsCache.delete(CACHE_KEY.ROLE_ROUTERS)
   wsCache.delete(CACHE_KEY.VisitTenantId)
   // 注意，不要清理 LoginForm 登录表单

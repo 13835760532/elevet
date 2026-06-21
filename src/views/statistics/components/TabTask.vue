@@ -98,7 +98,16 @@
           <el-select v-model="resultFilters.category" placeholder="产品分类" class="filter-item" clearable @change="loadResultPage">
             <el-option v-for="item in productCategoryOptions" :key="item.value" :label="item.label" :value="item.value" />
           </el-select>
-          <AreaCascader v-model="resultFilters.area" placeholder="检测地区" @select="handleResultAreaSelect" class="filter-item" style="width: 150px" />
+          <AreaCascader
+            v-model="resultFilters.area"
+            placeholder="检测地区"
+            checkStrictly
+            :root-area-code="userDeptAreaCode"
+            class="filter-item"
+            style="width: 150px"
+            @select="handleResultAreaSelect"
+            @change="handleResultAreaChange"
+          />
           <el-select v-model="resultFilters.org" placeholder="检测机构" class="filter-item" clearable @change="loadResultPage"></el-select>
           <el-select v-model="resultFilters.result" placeholder="检测结果" class="filter-item" clearable @change="loadResultPage">
             <el-option label="阴性" :value="0" />
@@ -159,7 +168,15 @@ import {
   type TaskAnalysisRespVO
 } from '@/api/agri/dashboard/task'
 import * as DetectionRecordApi from '@/api/agri/detectionRecord'
-import { buildRangeParams, formatNumber, formatPercent, normalizePagedResult } from './statisticsData'
+import {
+  buildRangeParams,
+  formatNumber,
+  formatPercent,
+  getEffectiveAreaParams,
+  getSelectedAreaParams,
+  getUserDeptAreaParams,
+  normalizePagedResult
+} from './statisticsData'
 import { ElMessage } from 'element-plus'
 
 const dateRangeType = ref('近一周')
@@ -173,12 +190,25 @@ const resultFilters = ref({
   sample: '',
   category: '',
   area: [] as any,
+  areaType: '',
+  areaCode: '',
   org: '',
   result: ''
 })
 const handleResultAreaSelect = (area: any) => {
+  const selectedArea = getSelectedAreaParams(area)
   resultFilters.value.area = [area.province, area.city, area.district].filter(Boolean).join('-')
+  resultFilters.value.areaType = selectedArea.areaType
+  resultFilters.value.areaCode = selectedArea.areaCode
   loadResultPage()
+}
+const handleResultAreaChange = (value: any) => {
+  if (value === undefined || value === null || value === '' || (Array.isArray(value) && value.length === 0)) {
+    resultFilters.value.area = []
+    resultFilters.value.areaType = ''
+    resultFilters.value.areaCode = ''
+    loadResultPage()
+  }
 }
 const trendOption = ref<any>(null)
 const overview = ref<DashboardTaskOverviewRespVO>({})
@@ -194,7 +224,11 @@ const resultPageNo = ref(1)
 const resultPageSize = ref(10)
 const resultLoading = ref(false)
 
-const currentQueryParams = computed(() => buildRangeParams(dateRangeType.value, dateRange.value))
+const userDeptAreaCode = computed(() => getUserDeptAreaParams().areaCode)
+const currentQueryParams = computed(() => ({
+  ...buildRangeParams(dateRangeType.value, dateRange.value),
+  ...getEffectiveAreaParams()
+}))
 
 const filteredTableData = computed(() => {
   const keywordValue = keyword.value.trim()
@@ -249,6 +283,8 @@ const buildResultTableQuery = () => ({
   sampleName: resultFilters.value.sample || undefined,
   productCategory: resultFilters.value.category || undefined,
   detectionArea: typeof resultFilters.value.area === 'string' ? resultFilters.value.area : undefined,
+  areaType: resultFilters.value.areaType || currentQueryParams.value.areaType,
+  areaCode: resultFilters.value.areaCode || currentQueryParams.value.areaCode,
   detectionOrgName: resultFilters.value.org || undefined,
   overallResult: resultFilters.value.result !== '' ? resultFilters.value.result : undefined,
   selfDetection: 'false'

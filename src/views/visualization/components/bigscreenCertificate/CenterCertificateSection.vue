@@ -1,6 +1,12 @@
 <template>
   <section class="center-section">
-    <BigPanelCard class="big-panel-center" title="合格证地区分布图" :tabs="['开具', '存证']" v-model:active-tab="mapTab" :bg-image="mapBg">
+    <BigPanelCard
+      class="big-panel-center"
+      title="合格证地区分布图"
+      :tabs="['开具', '存证']"
+      v-model:active-tab="mapTab"
+      :bg-image="mapBg"
+    >
       <div class="map-area">
         <Map mode="certificate" :certificate-tab="mapTab" />
       </div>
@@ -8,33 +14,33 @@
 
     <BigPanelCard class="big-panel-center" title="合格证服务趋势图" :bg-image="trendBg">
       <div class="trend-head">{{ trendHead }}</div>
-      <Echart :options="currentTrendOption" :height="210" />
+      <Echart :options="currentTrendOption" height="100%" />
     </BigPanelCard>
   </section>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue';
-import echarts from '@/plugins/echarts';
-import { Echart } from '@/components/Echart';
+import { computed, onMounted, onUnmounted, ref } from 'vue'
+import echarts from '@/plugins/echarts'
+import { Echart } from '@/components/Echart'
 
-import BigPanelCard from '../bigscreen/BigPanelCard.vue';
-import Map from '../Map.vue';
-import mapBg from '@/assets/imgs/echarts/合格证/Frame 57_bg.png';
-import trendBg from '@/assets/imgs/echarts/合格证/Frame 59_bg.png';
+import BigPanelCard from '../bigscreen/BigPanelCard.vue'
+import Map from '../Map.vue'
+import mapBg from '@/assets/imgs/echarts/合格证/Frame 57_bg.png'
+import trendBg from '@/assets/imgs/echarts/合格证/Frame 59_bg.png'
 import {
   getCertificateServiceTrend,
   type CertificateServiceTrendRespVO
-} from '@/api/agri/dashboard/certificate';
-import { getBigScreenQueryParams, subscribeBigScreenRefresh } from '../bigscreen/config';
+} from '@/api/agri/dashboard/certificate'
+import { getBigScreenQueryParams, subscribeBigScreenRefresh } from '../bigscreen/config'
 
-const mapTab = ref('开具');
-const trendData = ref<CertificateServiceTrendRespVO>({});
+const mapTab = ref('开具')
+const trendData = ref<CertificateServiceTrendRespVO>({})
 
 const normalizeSeries = (series?: number[], length = 0) => {
-  const result = Array.from({ length }, (_, index) => Number(series?.[index] || 0));
-  return result;
-};
+  const result = Array.from({ length }, (_, index) => Number(series?.[index] || 0))
+  return result
+}
 
 const createTrendOption = (
   xAxisData: string[],
@@ -42,31 +48,43 @@ const createTrendOption = (
   storeData: number[],
   traceData: number[]
 ) => ({
-  grid: { left: 45, right: 20, top: 14, bottom: 26 },
-  tooltip: { trigger: 'axis' },
+  animation: false,
+  grid: { left: 42, right: 88, top: 28, bottom: 24 },
+  tooltip: {
+    trigger: 'axis',
+    backgroundColor: 'rgba(6, 18, 42, 0.92)',
+    borderColor: 'rgba(87, 226, 255, 0.35)',
+    textStyle: { color: '#dff7ff' }
+  },
   legend: {
-    right: 18,
-    top: 0,
-    textStyle: { color: '#8fb6da' },
+    orient: 'vertical',
+    right: 8,
+    top: 30,
+    itemWidth: 18,
+    itemHeight: 2,
+    textStyle: { color: '#8fb6da', fontSize: 12 },
     data: ['开具次数', '存证次数', '溯源次数']
   },
   xAxis: {
     type: 'category',
     boundaryGap: false,
     data: xAxisData,
-    axisLabel: { color: '#8fb6da' },
-    axisLine: { lineStyle: { color: '#2d67ac' } }
+    axisLabel: { color: 'rgba(198, 219, 239, 0.76)', fontSize: 12 },
+    axisTick: { show: false },
+    axisLine: { lineStyle: { color: 'rgba(72, 149, 214, 0.42)' } }
   },
   yAxis: {
     type: 'value',
-    axisLabel: { color: '#8fb6da' },
-    splitLine: { lineStyle: { color: 'rgba(45, 106, 184, 0.35)', type: 'dashed' } }
+    axisLabel: { color: 'rgba(198, 219, 239, 0.76)', fontSize: 12, formatter: '{value}%' },
+    axisTick: { show: false },
+    axisLine: { show: false },
+    splitLine: { lineStyle: { color: 'rgba(45, 106, 184, 0.28)', type: 'dashed' } }
   },
   series: [
     {
       name: '开具次数',
       type: 'line',
-      smooth: false,
+      smooth: true,
       symbol: 'circle',
       symbolSize: 6,
       itemStyle: { color: '#55e8ff' },
@@ -82,7 +100,7 @@ const createTrendOption = (
     {
       name: '存证次数',
       type: 'line',
-      smooth: false,
+      smooth: true,
       symbolSize: 5,
       lineStyle: { color: '#7bd644', width: 2 },
       itemStyle: { color: '#7bd644' },
@@ -91,19 +109,19 @@ const createTrendOption = (
     {
       name: '溯源次数',
       type: 'line',
-      smooth: false,
+      smooth: true,
       symbolSize: 5,
       lineStyle: { color: '#7d60ff', width: 2 },
       itemStyle: { color: '#7d60ff' },
       data: traceData
     }
   ]
-});
+})
 
 const xAxisData = computed(() => {
-  const axis = trendData.value.xaxis || [];
-  return axis;
-});
+  const axis = trendData.value.xaxis || []
+  return axis
+})
 
 const currentTrendOption = computed(() =>
   createTrendOption(
@@ -112,43 +130,44 @@ const currentTrendOption = computed(() =>
     normalizeSeries(trendData.value.verificationCounts, xAxisData.value.length),
     normalizeSeries(trendData.value.traceCounts, xAxisData.value.length)
   )
-);
+)
 
 const trendHead = computed(() => {
-  const axis = xAxisData.value;
-  if (!axis.length) return '';
-  return `${axis[0]} - ${axis[axis.length - 1]}`;
-});
+  const axis = xAxisData.value
+  if (!axis.length) return ''
+  return `${axis[0]} - ${axis[axis.length - 1]}`
+})
 
 const loadTrendData = async () => {
   try {
-    const data = await getCertificateServiceTrend(getBigScreenQueryParams());
-    trendData.value = data || {};
+    const data = await getCertificateServiceTrend(getBigScreenQueryParams())
+    trendData.value = data || {}
   } catch (error) {
-    console.error('加载合格证服务趋势失败', error);
-    trendData.value = {};
+    console.error('加载合格证服务趋势失败', error)
+    trendData.value = {}
   }
-};
+}
 
 onMounted(() => {
-  loadTrendData();
-});
+  loadTrendData()
+})
 
 const disposeRefresh = subscribeBigScreenRefresh(() => {
-  loadTrendData();
-});
+  loadTrendData()
+})
 
 onUnmounted(() => {
-  disposeRefresh();
-});
+  disposeRefresh()
+})
 </script>
 
 <style scoped lang="scss">
 .center-section {
   display: grid;
-  grid-template-rows: 1fr 270px;
-  gap: 12px;
+  grid-template-rows: minmax(0, 1fr) 178px;
+  gap: 10px;
   min-width: 0;
+  min-height: 0;
 }
 
 .map-area {
@@ -190,8 +209,9 @@ onUnmounted(() => {
 
 .trend-head {
   text-align: right;
-  padding: 2px 10px 0;
+  height: 16px;
+  padding: 2px 12px 0;
   color: #9ec2e5;
-  font-size: 13px;
+  font-size: 12px;
 }
 </style>
