@@ -1,6 +1,18 @@
 <template>
   <Dialog v-model="dialogVisible" :title="dialogTitle">
     <el-form ref="formRef" v-loading="formLoading" :model="formData" :rules="formRules" label-width="80px">
+      <el-row v-if="formData.id === undefined">
+        <el-col :span="12">
+          <el-form-item label="账号" prop="username">
+            <el-input v-model="formData.username" placeholder="请输入账号" />
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item label="密码" prop="password">
+            <el-input v-model="formData.password" placeholder="请输入密码" show-password type="password" />
+          </el-form-item>
+        </el-col>
+      </el-row>
       <el-row>
         <el-col :span="12">
           <el-form-item label="用户昵称" prop="nickname">
@@ -23,18 +35,6 @@
         <el-col :span="12">
           <el-form-item label="邮箱" prop="email">
             <el-input v-model="formData.email" maxlength="50" placeholder="请输入邮箱" />
-          </el-form-item>
-        </el-col>
-      </el-row>
-      <el-row>
-        <el-col :span="12">
-          <el-form-item v-if="formData.id === undefined" label="账号" prop="username">
-            <el-input v-model="formData.username" placeholder="请输入账号" />
-          </el-form-item>
-        </el-col>
-        <el-col :span="12">
-          <el-form-item v-if="formData.id === undefined" label="密码" prop="password">
-            <el-input v-model="formData.password" placeholder="请输入密码" show-password type="password" />
           </el-form-item>
         </el-col>
       </el-row>

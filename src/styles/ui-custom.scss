@@ -196,17 +196,32 @@
   }
 }
 
+.el-dialog {
+  border-radius: 6px !important;
+  padding: 0 !important;
+}
+
 .el-dialog__header {
-  padding: 16px 16px 8px 16px;
+  padding: 0 !important;
   border-bottom: 1px solid var(--el-border-color-lighter);
-  margin-right: 0;
-  padding-bottom: 15px;
+  margin-right: 0 !important;
   font-weight: bold;
+}
+
+.el-dialog__headerbtn {
+  top: 0 !important;
+  right: 0 !important;
+  height: 54px !important;
+  width: 54px !important;
+}
+
+.el-dialog__body {
+  padding: 20px !important;
 }
 
 .el-dialog__footer {
   border-top: 1px solid var(--el-border-color-lighter);
-  padding-top: 15px;
+  padding: 12px 16px;
 }
 
 
@@ -264,4 +279,10 @@
 
 .yy-detail-container{
   height: calc(100vh - 80px)!important;
+}
+
+/* 强制必填项星号的 margin-right 为 0 */
+.el-form-item.is-required:not(.is-no-asterisk).asterisk-left>.el-form-item__label-wrap>.el-form-item__label:before,
+.el-form-item.is-required:not(.is-no-asterisk).asterisk-left>.el-form-item__label:before {
+    margin-right: 0 !important;
 }

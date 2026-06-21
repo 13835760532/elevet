@@ -5,8 +5,9 @@
             <!-- 任务信息卡片 -->
             <div class="guide-card task-info-card" v-loading="loadingInfo">
                 <h2 class="task-title">
-                    {{ taskDetail.taskName || '--' }}
-                    <span class="task-code">（编号：{{ taskDetail.taskCode || '--' }}）</span>
+                    {{ taskDetail.taskName || '--' }}-{{ taskDetail.taskCode || '--' }}
+                    <span class="task-code" v-if="taskDetail.assignDeptName || deptMap[taskDetail.assignDeptId]">【{{
+                        taskDetail.assignDeptName || deptMap[taskDetail.assignDeptId] }}】</span>
                 </h2>
 
                 <div class="task-detail-grid">
@@ -24,12 +25,17 @@
                     <div class="info-section">
                         <div class="info-row">
                             <span class="label">所属方案</span>
-                            <span class="value">{{ taskDetail.planName || taskDetail.planId || '--' }}</span>
+                            <span class="value">{{ taskDetail.planInfo?.planName || taskDetail.planName ||
+                                taskDetail.planId || '--' }}</span>
                         </div>
                         <div class="info-row">
-                            <span class="label">主管单位</span>
-                            <span class="value link">{{ taskDetail.assignDeptName || deptMap[taskDetail.assignDeptId] ||
-                                taskDetail.assignDeptId || '--' }}</span>
+                            <span class="label">方案主管</span>
+                            <span class="value link"
+                                style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 500px; display: inline-block; vertical-align: bottom;">
+                                {{ taskDetail.planInfo?.issuerDeptName || taskDetail.issuerDeptName ||
+                                    deptMap[taskDetail.planInfo?.issuerDeptId] || deptMap[taskDetail.issuerDeptId] || '--'
+                                }}
+                            </span>
                         </div>
                         <div class="info-row">
                             <span class="label">任务类型</span>
@@ -57,38 +63,39 @@
             </div>
 
             <!-- 抽样检测查询 -->
-            <div class="query-card">
-
+            <div class="query-card" style="margin-top: 10px">
                 <div class="query-form-wrapper">
                     <el-form :inline="true" :model="queryParams" class="custom-query-form custom-query-form-row"
                         label-position="left">
-                        <el-form-item label="样品">
-                            <el-input :prefix-icon="Search" v-model="queryParams.sampleKeyword"
-                                placeholder="请输入样品编号或样品名称" class="custom-input w220" />
+                        <el-form-item label="">
+                            <el-input :prefix-icon="Search" v-model="queryParams.sampleKeyword" placeholder="样品编号或样品名称"
+                                class="custom-input w220" />
                         </el-form-item>
-                        <el-form-item label="承担单位">
-                            <el-select v-model="queryParams.unit" placeholder="请选择" class="custom-select" clearable>
+                        <el-form-item label="">
+                            <el-select v-model="queryParams.unit" placeholder="承担单位" class="custom-select" clearable>
                                 <el-option label="全部" value="" />
                                 <el-option v-for="item in deptOptions" :key="item.value" :label="item.label"
                                     :value="item.value" />
                             </el-select>
                         </el-form-item>
-                        <el-form-item label="产品分类">
-                            <el-select v-model="queryParams.category" placeholder="请选择" class="custom-select" clearable>
+                        <el-form-item label="">
+                            <el-select v-model="queryParams.category" placeholder="产品分类" class="custom-select"
+                                clearable>
                                 <el-option label="全部" value="" />
                                 <el-option v-for="item in categoryOptions" :key="item.value" :label="item.label"
                                     :value="item.value" />
                             </el-select>
                         </el-form-item>
-                        <el-form-item label="采样场所">
-                            <el-select v-model="queryParams.location" placeholder="请选择" class="custom-select" clearable>
+                        <el-form-item label="">
+                            <el-select v-model="queryParams.location" placeholder="采样场所" class="custom-select"
+                                clearable>
                                 <el-option label="全部" value="" />
                                 <el-option v-for="item in samplingLocationOptions" :key="item.value" :label="item.label"
                                     :value="item.value" />
                             </el-select>
                         </el-form-item>
-                        <el-form-item label="检测状态">
-                            <el-select v-model="queryParams.status" placeholder="请选择" class="custom-select" clearable>
+                        <el-form-item label="">
+                            <el-select v-model="queryParams.status" placeholder="检测状态" class="custom-select" clearable>
                                 <el-option label="全部" value="" />
                                 <el-option v-for="item in detectionStatusOptions" :key="item.value" :label="item.label"
                                     :value="item.value" />
@@ -102,7 +109,7 @@
                 </div>
 
                 <!-- 操作按钮行 -->
-                <div class="table-actions">
+                <div class="table-actions" style="margin-bottom: 0;">
                     <div class="action-left">
                         <el-button @click="handleExport">导出</el-button>
                     </div>
@@ -110,66 +117,69 @@
                         <el-button type="primary" @click="handleSingleInput" class="primary-btn">检测单条录入</el-button>
                     </div>
                 </div>
-            </div>
 
-            <!-- 数据表格区域 -->
-            <div class="content-card">
-                <div class="table-wrapper">
-                    <el-table :data="tableList" min-height="300" v-loading="loadingList" border="false">
-                        <el-table-column label="序号" type="index" width="60" align="center" />
-                        <el-table-column label="样品编号" prop="sampleCode" width="140" align="center" />
-                        <el-table-column label="样品名称" prop="productName" width="100" align="center" />
-                        <el-table-column label="样品来源" prop="sampleSource" width="110" align="center"
-                            show-overflow-tooltip />
-                        <el-table-column label="产品分类" prop="productCategory" width="90" align="center">
-                            <template #default="scope">
-                                {{ getCategoryLabel(scope.row.productCategory) }}
-                            </template>
-                        </el-table-column>
-                        <el-table-column label="产地" prop="sampleArea" width="110" align="center"
-                            show-overflow-tooltip />
-                        <el-table-column label="被检主体名称" prop="subjectName" min-width="120" show-overflow-tooltip />
-                        <el-table-column label="抽检地区" prop="detectionArea" width="110" align="center" />
-                        <el-table-column label="检测机构" prop="detectionOrgName" min-width="140" show-overflow-tooltip />
-                        <el-table-column label="检测时间" prop="testTime" width="100" align="center" />
-                        <el-table-column label="检测项目" prop="detectionItems" min-width="140" align="center"
-                            show-overflow-tooltip />
-                        <el-table-column label="检测结果" prop="testResult" width="100" align="center" />
-                        <el-table-column label="是否公开" prop="publicFlagText" width="90" align="center" />
-                        <el-table-column label="是否复检" prop="recheckText" width="90" align="center" />
-                        <el-table-column label="检测状态" prop="status" width="100" align="center">
-                            <template #default="scope">
-                                <span :class="['status-tag', statusMap[scope.row.status]?.apiClass]">
-                                    {{ statusMap[scope.row.status]?.text }}
-                                </span>
-                            </template>
-                        </el-table-column>
-                        <el-table-column label="操作" width="140" align="center" fixed="right">
-                            <template #default="scope">
-                                <div class="table-operate-action-btns">
-                                    <template v-if="scope.row.status === 0">
-                                        <span class="table-edit-operate" @click="handleTest(scope.row)">去检测</span>
-                                        <span class="table-delete-operate" @click="handleDelete(scope.row)">删除</span>
-                                    </template>
-                                    <template v-else-if="scope.row.status === 1">
-                                        <span class="table-edit-operate" @click="handleRetest(scope.row)"
-                                            v-if="!scope.row.recheckNo">复检结果</span>
-                                        <span class="table-view-operate" @click="handleView(scope.row)">查看详情</span>
-                                    </template>
-                                    <template v-else>
-                                        <span class="table-edit-operate" @click="handleTest(scope.row)">去检测</span>
-                                    </template>
-                                </div>
-                            </template>
-                        </el-table-column>
-                    </el-table>
-                </div>
 
-                <!-- 分页区域 -->
-                <div class="pagination-wrapper">
-                    <el-pagination v-model:current-page="pageParams.pageNum" v-model:page-size="pageParams.pageSize"
-                        :total="total" background layout="total, sizes, prev, pager, next, jumper"
-                        @size-change="getList" @current-change="getList" class="custom-pagination" />
+                <!-- 数据表格区域 -->
+                <div class="content-card" style="padding: 0; margin-top: 10px;">
+                    <div class="table-wrapper">
+                        <el-table :data="tableList" min-height="300" v-loading="loadingList" border="false">
+                            <el-table-column label="序号" type="index" width="60" align="center" />
+                            <el-table-column label="样品编号" prop="sampleCode" width="140" align="center" />
+                            <el-table-column label="样品名称" prop="productName" width="100" align="center" />
+                            <el-table-column label="样品来源" prop="sampleSource" width="110" align="center"
+                                show-overflow-tooltip />
+                            <el-table-column label="产品分类" prop="productCategory" width="90" align="center">
+                                <template #default="scope">
+                                    {{ getCategoryLabel(scope.row.productCategory) }}
+                                </template>
+                            </el-table-column>
+                            <el-table-column label="产地" prop="sampleArea" width="110" align="center"
+                                show-overflow-tooltip />
+                            <el-table-column label="被检主体名称" prop="subjectName" min-width="120" show-overflow-tooltip />
+                            <el-table-column label="抽检地区" prop="detectionArea" width="110" align="center" />
+                            <el-table-column label="检测机构" prop="detectionOrgName" min-width="140"
+                                show-overflow-tooltip />
+                            <el-table-column label="检测时间" prop="testTime" width="100" align="center" />
+                            <el-table-column label="检测项目" prop="detectionItems" min-width="140" align="center"
+                                show-overflow-tooltip />
+                            <el-table-column label="检测结果" prop="testResult" width="100" align="center" />
+                            <el-table-column label="是否公开" prop="publicFlagText" width="90" align="center" />
+                            <el-table-column label="是否复检" prop="recheckText" width="90" align="center" />
+                            <el-table-column label="检测状态" prop="status" width="100" align="center">
+                                <template #default="scope">
+                                    <span :class="['status-tag', statusMap[scope.row.status]?.apiClass]">
+                                        {{ statusMap[scope.row.status]?.text }}
+                                    </span>
+                                </template>
+                            </el-table-column>
+                            <el-table-column label="操作" width="140" align="center" fixed="right">
+                                <template #default="scope">
+                                    <div class="table-operate-action-btns">
+                                        <template v-if="scope.row.status === 0">
+                                            <span class="table-edit-operate" @click="handleTest(scope.row)">去检测</span>
+                                            <span class="table-delete-operate"
+                                                @click="handleDelete(scope.row)">删除</span>
+                                        </template>
+                                        <template v-else-if="scope.row.status === 1">
+                                            <span class="table-edit-operate" @click="handleRetest(scope.row)"
+                                                v-if="!scope.row.recheckNo">复检结果</span>
+                                            <span class="table-view-operate" @click="handleView(scope.row)">查看详情</span>
+                                        </template>
+                                        <template v-else>
+                                            <span class="table-edit-operate" @click="handleTest(scope.row)">去检测</span>
+                                        </template>
+                                    </div>
+                                </template>
+                            </el-table-column>
+                        </el-table>
+                    </div>
+
+                    <!-- 分页区域 -->
+                    <div class="pagination-wrapper">
+                        <el-pagination v-model:current-page="pageParams.pageNum" v-model:page-size="pageParams.pageSize"
+                            :total="total" background layout="total, sizes, prev, pager, next, jumper"
+                            @size-change="getList" @current-change="getList" class="custom-pagination" />
+                    </div>
                 </div>
             </div>
         </div>
@@ -179,7 +189,7 @@
 <script setup>
 import { reactive, ref, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { Search } from '@element-plus/icons-vue';
+import { Search, QuestionFilled } from '@element-plus/icons-vue';
 import * as DetectionTaskApi from '@/api/agri/detectionTask';
 import * as DetectionRecordApi from '@/api/agri/detectionRecord';
 import * as DeptApi from '@/api/system/dept';
