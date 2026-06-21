@@ -6,54 +6,54 @@
     <main class="screen-main" :class="activeMenu">
       <template v-if="activeMenu === 'cert'">
         <div class="cert-left-panel">
-          <LeftCertificateSection v-if="panelVisibility.left" />
+          <LeftCertificateSection v-if="panelVisibility.left" key="LeftCertificateSection" />
         </div>
         <div class="cert-center-panel">
-          <CenterCertificateSection v-if="panelVisibility.center" />
+          <CenterCertificateSection v-if="panelVisibility.center" key="CenterCertificateSection" />
         </div>
         <div class="cert-right-panel">
-          <RightCertificateSection v-if="panelVisibility.right" />
+          <RightCertificateSection v-if="panelVisibility.right" key="RightCertificateSection" />
         </div>
       </template>
       <template v-else-if="activeMenu === 'task'">
         <div class="task-top-layout">
           <div class="task-left-panel">
-            <LeftTaskSection v-if="panelVisibility.left" />
+            <LeftTaskSection v-if="panelVisibility.left" key="LeftTaskSection" />
           </div>
           <div class="task-center-panel">
-            <CenterTaskSection v-if="panelVisibility.center" />
+            <CenterTaskSection v-if="panelVisibility.center" key="CenterTaskSection" />
           </div>
           <div class="task-right-panel">
-            <RightTaskSection v-if="panelVisibility.right" />
+            <RightTaskSection v-if="panelVisibility.right" key="RightTaskSection" />
           </div>
         </div>
         <div class="task-bottom-panel">
-          <BottomTaskSection v-if="panelVisibility.bottom" />
+          <BottomTaskSection v-if="panelVisibility.bottom" key="BottomTaskSection" />
         </div>
       </template>
       <template v-else-if="activeMenu === 'inspect'">
         <div class="quick-left-panel">
-          <LeftQuickSection v-if="panelVisibility.left" />
+          <LeftQuickSection v-if="panelVisibility.left" key="LeftQuickSection" />
         </div>
         <div class="quick-center-panel">
-          <CenterQuickSection v-if="panelVisibility.center" />
+          <CenterQuickSection v-if="panelVisibility.center" key="CenterQuickSection" />
         </div>
         <div class="quick-bottom-panel">
-          <BottomQuickTrends v-if="panelVisibility.bottom" />
+          <BottomQuickTrends v-if="panelVisibility.bottom" key="BottomQuickTrends" />
         </div>
         <div class="quick-right-panel">
-          <RightQuickSection v-if="panelVisibility.right" />
+          <RightQuickSection v-if="panelVisibility.right" key="RightQuickSection" />
         </div>
       </template>
       <template v-else>
         <div class="default-left-panel">
-          <LeftSection v-if="panelVisibility.left" />
+          <LeftSection v-if="panelVisibility.left" key="LeftSection" />
         </div>
         <div class="default-center-panel">
-          <CenterSection v-if="panelVisibility.center" />
+          <CenterSection v-if="panelVisibility.center" key="CenterSection" />
         </div>
         <div class="default-right-panel">
-          <RightSection v-if="panelVisibility.right" />
+          <RightSection v-if="panelVisibility.right" key="RightSection" />
         </div>
       </template>
     </main>
@@ -61,97 +61,95 @@
 </template>
 
 <script setup lang="ts">
-import { defineAsyncComponent, onMounted, onUnmounted, ref, watch } from 'vue';
-import BigScreenHeader from './components/bigscreen/BigScreenHeader.vue';
-import BigScreenLoadingOverlay from './components/bigscreen/BigScreenLoadingOverlay.vue';
-import { useDeferredPanelMount, type DeferredPanelPlan } from './useDeferredPanelMount';
+import { defineAsyncComponent, onMounted, onUnmounted, ref, watch } from 'vue'
+import BigScreenHeader from './components/bigscreen/BigScreenHeader.vue'
+import BigScreenLoadingOverlay from './components/bigscreen/BigScreenLoadingOverlay.vue'
+import { useDeferredPanelMount, type DeferredPanelPlan } from './useDeferredPanelMount'
 
-const LeftSection = defineAsyncComponent(() => import('./components/bigscreen/LeftSection.vue'));
-const CenterSection = defineAsyncComponent(() => import('./components/bigscreen/CenterSection.vue'));
-const RightSection = defineAsyncComponent(() => import('./components/bigscreen/RightSection.vue'));
+const LeftSection = defineAsyncComponent(() => import('./components/bigscreen/LeftSection.vue'))
+const CenterSection = defineAsyncComponent(() => import('./components/bigscreen/CenterSection.vue'))
+const RightSection = defineAsyncComponent(() => import('./components/bigscreen/RightSection.vue'))
 
 const LeftTaskSection = defineAsyncComponent(
   () => import('./components/bigscreenTask/LeftTaskSection.vue')
-);
+)
 const CenterTaskSection = defineAsyncComponent(
   () => import('./components/bigscreenTask/CenterTaskSection.vue')
-);
+)
 const RightTaskSection = defineAsyncComponent(
   () => import('./components/bigscreenTask/RightTaskSection.vue')
-);
+)
 const BottomTaskSection = defineAsyncComponent(
   () => import('./components/bigscreenTask/BottomTaskSection.vue')
-);
+)
 
 const LeftQuickSection = defineAsyncComponent(
   () => import('./components/bigscreenQuick/LeftQuickSection.vue')
-);
+)
 const CenterQuickSection = defineAsyncComponent(
   () => import('./components/bigscreenQuick/CenterQuickSection.vue')
-);
+)
 const RightQuickSection = defineAsyncComponent(
   () => import('./components/bigscreenQuick/RightQuickSection.vue')
-);
+)
 const BottomQuickTrends = defineAsyncComponent(
   () => import('./components/bigscreenQuick/BottomQuickTrends.vue')
-);
+)
 
 const LeftCertificateSection = defineAsyncComponent(
   () => import('./components/bigscreenCertificate/LeftCertificateSection.vue')
-);
+)
 const CenterCertificateSection = defineAsyncComponent(
   () => import('./components/bigscreenCertificate/CenterCertificateSection.vue')
-);
+)
 const RightCertificateSection = defineAsyncComponent(
   () => import('./components/bigscreenCertificate/RightCertificateSection.vue')
-);
+)
 
-defineOptions({ name: 'VisualizationBigScreen' });
+defineOptions({ name: 'VisualizationBigScreen' })
 
-type BigScreenMenu = '' | 'task' | 'inspect' | 'cert' | 'warn';
+type BigScreenMenu = '' | 'task' | 'inspect' | 'cert' | 'warn'
 
-const activeMenu = ref<BigScreenMenu>('');
-const entranceLoading = ref(true);
-const { visibility: panelVisibility, schedule } = useDeferredPanelMount();
-let loadingTimer: number | null = null;
+const activeMenu = ref<BigScreenMenu>('cert')
+const entranceLoading = ref(true)
+const { visibility: panelVisibility, schedule } = useDeferredPanelMount()
+let loadingTimer: number | null = null
 
 const getPanelPlan = (mode: BigScreenMenu): DeferredPanelPlan => {
   if (mode === 'task' || mode === 'inspect') {
     return {
       immediate: ['left', 'center', 'right'],
-      deferred: [
-        { key: 'bottom', delay: 120 }
-      ]
-    };
+      deferred: [{ key: 'bottom', delay: 120 }]
+    }
   }
 
   return {
     immediate: ['left', 'center', 'right'],
     deferred: []
-  };
-};
+  }
+}
 
 watch(
   () => activeMenu.value,
   (mode) => {
-    schedule(getPanelPlan(mode));
+    schedule(getPanelPlan(mode))
   }
-);
+)
 
 onMounted(() => {
-  schedule(getPanelPlan(activeMenu.value));
+  schedule(getPanelPlan(activeMenu.value))
   loadingTimer = window.setTimeout(() => {
-    entranceLoading.value = false;
-    loadingTimer = null;
-  }, 520);
-});
+    entranceLoading.value = false
+    loadingTimer = null
+  }, 520)
+})
 
 onUnmounted(() => {
   if (loadingTimer !== null) {
-    window.clearTimeout(loadingTimer);
-    loadingTimer = null;
+    window.clearTimeout(loadingTimer)
+    loadingTimer = null
   }
-});
+})
 </script>
 
 <style scoped lang="scss">
@@ -205,6 +203,15 @@ onUnmounted(() => {
   grid-template-columns: 470px 1fr 470px;
   grid-template-areas: 'left center right';
   gap: 14px;
+}
+
+.screen-main.cert {
+  padding: 0 20px 10px;
+  grid-template-columns:
+    minmax(0, 0.49fr)
+    minmax(0, 1fr)
+    minmax(0, 0.49fr);
+  gap: 20px;
 }
 
 .default-left-panel,

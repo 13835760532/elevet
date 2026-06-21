@@ -1,10 +1,11 @@
 <template>
   <section class="bottom-quick-trends">
-    <BigPanelCard class="big-panel-center" title="快检量态势" :tabs="['快检量', '阳性率']" v-model:active-tab="leftTrendTab" :bg-image="bottomBg">
+    <BigPanelCard class="big-panel-center panel-header-bottom" title="快检量态势" :tabs="['快检量', '阳性率']"
+      v-model:active-tab="leftTrendTab" :bg-image="bottomBg">
       <Echart :options="currentLeftTrendOption" :height="200" />
     </BigPanelCard>
 
-    <BigPanelCard class="big-panel-center" title="风险态势" :tabs="['自主检测样本量', '阳性率']" v-model:active-tab="rightTrendTab" :bg-image="bottomBg">
+    <BigPanelCard class="big-panel-center panel-header-bottom" title="风险态势" :tabs="['自主检测样本量']" :bg-image="bottomBg">
       <Echart :options="currentRightTrendOption" :height="200" />
     </BigPanelCard>
   </section>
@@ -25,7 +26,6 @@ import {
 import { getBigScreenQueryParams, subscribeBigScreenRefresh } from '../bigscreen/config';
 
 const leftTrendTab = ref('快检量');
-const rightTrendTab = ref('自主检测样本量');
 const positiveRateTrend = ref<FastPositiveRateTrendRespVO>({});
 const selfSampleTrend = ref<FastSelfSampleTrendRespVO>({});
 
@@ -58,7 +58,18 @@ const createTrendOption = (xAxisData: string[], data: number[], max: number, for
     type: 'value',
     min: 0,
     max,
-    axisLabel: { color: '#90b5da', formatter: formatter || '{value}' },
+    axisLabel: {
+      color: '#90b5da',
+      formatter: (value: number) => {
+        if (formatter) {
+          return formatter.replace('{value}', String(value));
+        }
+        if (value >= 1000) {
+          return `${(value / 1000).toFixed(0)}K`;
+        }
+        return String(value);
+      }
+    },
     splitLine: { lineStyle: { color: 'rgba(45, 106, 184, 0.35)', type: 'dashed' } }
   },
   series: [
@@ -69,12 +80,6 @@ const createTrendOption = (xAxisData: string[], data: number[], max: number, for
       symbolSize: 6,
       lineStyle: { color: '#4deaff', width: 2 },
       itemStyle: { color: '#48e8ff', borderColor: '#fff', borderWidth: 1 },
-      areaStyle: {
-        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-          { offset: 0, color: 'rgba(72, 232, 255, 0.32)' },
-          { offset: 1, color: 'rgba(72, 232, 255, 0.02)' }
-        ])
-      },
       data
     }
   ]
@@ -92,31 +97,24 @@ const selfSampleData = computed(() =>
 const currentLeftTrendOption = computed(() =>
   leftTrendTab.value === '阳性率'
     ? createTrendOption(
-        positiveRateXAxis.value,
-        positiveRateData.value,
-        Math.min(calcMax(positiveRateData.value, 60), 100),
-        '{value}%'
-      )
+      positiveRateXAxis.value,
+      positiveRateData.value,
+      Math.min(calcMax(positiveRateData.value, 60), 100),
+      '{value}%'
+    )
     : createTrendOption(
-        selfSampleXAxis.value,
-        selfSampleData.value,
-        calcMax(selfSampleData.value, 60000)
-      )
+      selfSampleXAxis.value,
+      selfSampleData.value,
+      calcMax(selfSampleData.value, 60000)
+    )
 );
 
 const currentRightTrendOption = computed(() =>
-  rightTrendTab.value === '阳性率'
-    ? createTrendOption(
-        positiveRateXAxis.value,
-        positiveRateData.value,
-        Math.min(calcMax(positiveRateData.value, 60), 100),
-        '{value}%'
-      )
-    : createTrendOption(
-        selfSampleXAxis.value,
-        selfSampleData.value,
-        calcMax(selfSampleData.value, 60000)
-      )
+  createTrendOption(
+    selfSampleXAxis.value,
+    selfSampleData.value,
+    calcMax(selfSampleData.value, 60000)
+  )
 );
 
 const loadTrendData = async () => {

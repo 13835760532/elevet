@@ -1,7 +1,8 @@
 <template>
   <div class="stat-content">
     <!-- 数据范围筛选 -->
-    <StatisticsRangeFilter v-model:range-type="dateRangeType" v-model:date-range="dateRange" description="建档备案统计周期">
+    <StatisticsRangeFilter v-model:range-type="dateRangeType" v-model:date-range="dateRange" description="建档备案统计周期"
+      @search="handleRangeSearch" @reset="handleRangeReset">
       <template #extra>
         <AreaCascader
           v-model="areaIds"
@@ -42,8 +43,12 @@
       <!-- 第二层筛选 -->
       <div class="result-filters">
         <el-input v-model="filtersSubject.name" placeholder="主体名称" class="filter-item input-item" />
-        <el-select v-model="filtersSubject.filingType" placeholder="建档类型" class="filter-item"></el-select>
-        <el-select v-model="filtersSubject.subjectType" placeholder="主体类型" class="filter-item"></el-select>
+        <el-select v-model="filtersSubject.filingType" placeholder="建档类型" class="filter-item" clearable>
+          <el-option v-for="dict in filingTypeOptions" :key="dict.value" :label="dict.label" :value="dict.value" />
+        </el-select>
+        <el-select v-model="filtersSubject.subjectType" placeholder="主体类型" class="filter-item" clearable>
+          <el-option v-for="dict in categoryOptions" :key="dict.value" :label="dict.label" :value="dict.value" />
+        </el-select>
         <AreaCascader
           v-model="filtersSubject.region"
           placeholder="所属地区"
@@ -52,7 +57,8 @@
           class="filter-item"
           @select="handleSubjectAreaSelect"
         />
-        <el-button type="primary" class="export-btn">导出</el-button>
+        <el-button type="primary" class="search-btn" @click="handleSubjectSearch">查询</el-button>
+        <el-button type="primary" class="export-btn" @click="handleSubjectExport">导出</el-button>
       </div>
 
       <!-- 图表区域 mock -->
@@ -66,10 +72,9 @@
           </div>
           <div class="svg-wrapper">
             <svg viewBox="0 0 1000 300" preserveAspectRatio="none" style="width: 100%; height: 300px;">
-              <!-- purple area only -->
               <path
-                d="M0,250 C100,200 200,150 250,50 C300,60 400,150 500,200 C600,180 700,220 800,220 C900,250 1000,220 L1000,300 L0,300 Z"
-                fill="rgba(163, 149, 255, 0.2)" stroke="#8D76FF" stroke-width="2"></path>
+                d="M0,250 C100,200 200,150 250,50 C300,60 400,150 500,200 C600,180 700,220 800,220 C900,250 1000,220"
+                fill="none" stroke="#8D76FF" stroke-width="2"></path>
               <!-- Add data points markers -->
               <circle cx="0" cy="250" r="3" fill="#fff" stroke="#8D76FF" stroke-width="1.5" />
               <circle cx="150" cy="180" r="3" fill="#fff" stroke="#8D76FF" stroke-width="1.5" />
@@ -128,10 +133,9 @@
           </div>
           <div class="svg-wrapper">
             <svg viewBox="0 0 1000 300" preserveAspectRatio="none" style="width: 100%; height: 300px;">
-              <!-- purple area only -->
               <path
-                d="M0,250 C100,200 200,150 250,50 C300,60 400,150 500,200 C600,180 700,220 800,220 C900,250 1000,220 L1000,300 L0,300 Z"
-                fill="rgba(163, 149, 255, 0.2)" stroke="#8D76FF" stroke-width="2"></path>
+                d="M0,250 C100,200 200,150 250,50 C300,60 400,150 500,200 C600,180 700,220 800,220 C900,250 1000,220"
+                fill="none" stroke="#8D76FF" stroke-width="2"></path>
               <!-- Add data points markers -->
               <circle cx="0" cy="250" r="3" fill="#fff" stroke="#8D76FF" stroke-width="1.5" />
               <circle cx="150" cy="180" r="3" fill="#fff" stroke="#8D76FF" stroke-width="1.5" />
@@ -175,9 +179,14 @@
 
 <script setup lang="ts">
 import { computed, ref, reactive } from 'vue'
+import { ElMessage } from 'element-plus'
 import StatisticsRangeFilter from './StatisticsRangeFilter.vue'
 import AreaCascader from '@/components/AreaCascader/index.vue'
 import { getSelectedAreaParams, getUserDeptAreaParams } from './statisticsData'
+import { useDict } from '@/hooks/web/useDict'
+
+const { options: categoryOptions } = useDict('agri_subject_category', 'str')
+const { options: filingTypeOptions } = useDict('agri_filing_type', 'int')
 
 const dateRangeType = ref('近一周')
 const dateRange = ref<string[]>([])
@@ -192,13 +201,32 @@ const handleAreaChange = () => {}
 
 const filtersSubject = reactive({
   name: '',
-  filingType: '',
-  subjectType: '',
+  filingType: undefined,
+  subjectType: undefined,
   region: ''
 })
 
 const handleSubjectAreaSelect = (area: any) => {
   filtersSubject.region = [area.province, area.city, area.district].filter(Boolean).join('-')
+}
+
+// 模拟事件响应
+const handleRangeSearch = () => {
+  ElMessage.success('查询成功')
+}
+
+const handleRangeReset = () => {
+  dateRangeType.value = '近一周'
+  dateRange.value = []
+  ElMessage.success('重置成功')
+}
+
+const handleSubjectSearch = () => {
+  ElMessage.success('主体查询成功')
+}
+
+const handleSubjectExport = () => {
+  ElMessage.success('导出主体数据成功')
 }
 
 const tableDataSubject = ref([
@@ -311,10 +339,16 @@ const tableDataProduct = ref([
     width: 180px;
   }
 
-  .export-btn {
+  .search-btn {
     background-color: #00B3ED;
     border-color: #00B3ED;
     margin-left: auto;
+  }
+
+  .export-btn {
+    background-color: #00B3ED;
+    border-color: #00B3ED;
+    margin-left: 0 !important;
   }
 }
 

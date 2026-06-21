@@ -76,7 +76,10 @@ onUnmounted(() => {
   min-height: 0;
   padding: 0 20px 10px;
   display: grid;
-  grid-template-columns: 455px minmax(0, 1fr) 455px;
+  grid-template-columns:
+    minmax(0, 0.49fr)
+    minmax(0, 1fr)
+    minmax(0, 0.49fr);
   grid-template-areas: 'left center right';
   gap: 20px;
 }

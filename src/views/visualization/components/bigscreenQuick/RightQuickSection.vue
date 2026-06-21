@@ -7,12 +7,22 @@
       </div>
     </BigPanelCard>
 
-    <BigPanelCard title="产品·检测项目高风险top" :tabs="['检测项阳性率']" active-tab="检测项阳性率" :bg-image="rightBg">
-      <Echart :options="middleBarOption" :height="290" />
+    <BigPanelCard
+      class="rank-panel"
+      title="产品·检测项目高风险top"
+      :tabs="['检测项阳性率']"
+      active-tab="检测项阳性率"
+    >
+      <Echart class="rank-chart" :options="middleBarOption" height="100%" />
     </BigPanelCard>
 
-    <BigPanelCard title="检测项高风险top" :tabs="['检测项阳性率']" active-tab="检测项阳性率" :bg-image="rightBg">
-      <Echart :options="bottomBarOption" :height="290" />
+    <BigPanelCard
+      class="rank-panel"
+      title="检测项高风险top"
+      :tabs="['检测项阳性率']"
+      active-tab="检测项阳性率"
+    >
+      <Echart class="rank-chart" :options="bottomBarOption" height="100%" />
     </BigPanelCard>
   </section>
 </template>
@@ -82,7 +92,7 @@ const formatBarValue = (value: number) => Number(value).toFixed(2);
 
 const middleBarOption = computed(() => ({
   animation: false,
-  grid: { left: 122, right: 44, top: 14, bottom: 14 },
+  grid: { left: 122, right: 44, top: 4, bottom: 26 },
   xAxis: {
     type: 'value',
     min: 0,
@@ -146,7 +156,7 @@ const middleBarOption = computed(() => ({
 
 const bottomBarOption = computed(() => ({
   animation: false,
-  grid: { left: 122, right: 44, top: 14, bottom: 14 },
+  grid: { left: 122, right: 44, top: 4, bottom: 26 },
   xAxis: {
     type: 'value',
     min: 0,
@@ -338,5 +348,35 @@ watch(topTab, () => {
 
 :deep(.panel-body) {
   padding: 10px 10px 8px;
+}
+
+.rank-panel {
+  :deep(.panel-header) {
+    background: none !important;
+    height: 36px !important;
+    flex: 0 0 36px !important;
+  }
+
+  :deep(.panel-title) {
+    padding-left: 10px !important;
+    color: #88c9e6 !important;
+    line-height: 36px !important;
+  }
+
+  :deep(.panel-tab) {
+    border-top: none !important;
+    height: 26px !important;
+    line-height: 26px !important;
+  }
+
+  :deep(.panel-body) {
+    padding-top: 0 !important;
+  }
+
+  :deep(.rank-chart) {
+    flex: 1;
+    height: 0 !important;
+    min-height: 0;
+  }
 }
 </style>

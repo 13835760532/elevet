@@ -43,11 +43,12 @@ const isSwitching = ref(false)
 const FAST_MODE = true
 const DRILL_LABEL_LIMIT = FAST_MODE ? 20 : 30
 const ENABLE_HOVER_TOOLTIP = true
-const HOVER_TOOLTIP_DELAY = 1000
+const HOVER_TOOLTIP_DELAY = 120
 const state = reactive({
   map: null as any,
   glowLayer: null as any,
   provinceLayer: null as any,
+  hotspotLayer: null as any,
   labelLayer: null as any, // national labels
   detailLabelLayer: null as any, // drill-down labels
   detailLayer: null as any,
@@ -57,6 +58,10 @@ const state = reactive({
 let remoteGeoCache: any = null
 const detailGeoCache = new Map<string, any>()
 let nationalLabelRaf = 0
+let syncMapDataRaf = 0
+let refreshMapDataRaf = 0
+let mapDataRequestSeq = 0
+let disposed = false
 let loadingFallbackTimer: number | null = null
 const certificateMapData = ref<DashboardCertificateMapRespVO>({})
 const fastMapData = ref<FastMapDataRespVO[]>([])
@@ -76,6 +81,50 @@ const ui = reactive({
   subtitle: '',
   isDrilled: false
 })
+
+type MapDataRequestContext = {
+  id: number
+  mode?: string
+  certificateTab?: string
+  drillLevel: 0 | 1 | 2
+  provinceName?: string
+  cityName?: string
+}
+
+const createMapDataRequestContext = (): MapDataRequestContext => ({
+  id: ++mapDataRequestSeq,
+  mode: props.mode,
+  certificateTab: props.certificateTab,
+  drillLevel: currentDrillLevel.value,
+  provinceName: currentRegionParams.provinceName,
+  cityName: currentRegionParams.cityName
+})
+
+const isCurrentMapDataRequest = (context: MapDataRequestContext) =>
+  !disposed &&
+  context.id === mapDataRequestSeq &&
+  context.mode === props.mode &&
+  context.certificateTab === props.certificateTab &&
+  context.drillLevel === currentDrillLevel.value &&
+  context.provinceName === currentRegionParams.provinceName &&
+  context.cityName === currentRegionParams.cityName
+
+const invalidateMapDataRequests = () => {
+  mapDataRequestSeq += 1
+}
+
+const setVectorLayerVisible = (layer: any, visible: boolean) => {
+  if (!layer) return
+  const layerAction = visible ? layer.show : layer.hide
+  if (typeof layerAction === 'function') {
+    layerAction.call(layer)
+    return
+  }
+  layer.getGeometries?.().forEach((geo: any) => {
+    if (visible) geo.show?.()
+    else geo.hide?.()
+  })
+}
 
 // 采用更简洁的解码逻辑
 const decodeFeature = (feature: any) => {
@@ -226,32 +275,124 @@ const getActiveMapList = () =>
           ? certificateMapData.value.verificationList || []
           : certificateMapData.value.issueList || []
 
+const getGeometryCenter = (geo: any): [number, number] | null => {
+  const geoProps = geo.getProperties?.() || {}
+  const cp = geoProps.cp
+  if (Array.isArray(cp) && cp.length >= 2) return [Number(cp[0]), Number(cp[1])]
+
+  const center = geo.getCenter?.() || geo.getExtent?.()?.getCenter?.()
+  if (!center) return null
+  if (Array.isArray(center)) return [Number(center[0]), Number(center[1])]
+  if (typeof center.toArray === 'function') {
+    const centerArray = center.toArray()
+    return [Number(centerArray[0]), Number(centerArray[1])]
+  }
+  if (typeof center.x === 'number' && typeof center.y === 'number') return [center.x, center.y]
+  return null
+}
+
+const createHotspotSymbol = (size: number, isPeak = false) => ({
+  markerType: 'ellipse',
+  markerWidth: size,
+  markerHeight: size,
+  markerFill: isPeak ? 'rgba(255, 221, 36, 0.92)' : 'rgba(51, 232, 255, 0.92)',
+  markerLineColor: isPeak ? '#fff67a' : '#bbfbff',
+  markerLineWidth: isPeak ? 1.2 : 0.8,
+  markerOpacity: 1,
+  shadowBlur: isPeak ? 30 : 18,
+  shadowColor: isPeak ? 'rgba(255, 218, 34, 0.92)' : 'rgba(40, 226, 255, 0.82)'
+})
+
+const renderHotspots = (geometries: any[]) => {
+  if (!state.hotspotLayer) return
+  state.hotspotLayer.clear()
+
+  const points = geometries
+    .map((geo: any) => {
+      const geoProps = geo.getProperties?.() || {}
+      const count = Number(geoProps.count || 0)
+      const coordinate = count > 0 ? getGeometryCenter(geo) : null
+      return coordinate ? { coordinate, count } : null
+    })
+    .filter(Boolean)
+    .sort((a: any, b: any) => b.count - a.count)
+    .slice(0, ui.isDrilled ? 24 : 18) as Array<{
+    coordinate: [number, number]
+    count: number
+  }>
+
+  const maxCount = points[0]?.count || 0
+  points.forEach((point, index) => {
+    const isPeak = index === 0 && maxCount > 0
+    const ratio = maxCount > 0 ? point.count / maxCount : 0
+    const haloSize = isPeak ? 32 : 18 + Math.round(ratio * 10)
+    const coreSize = isPeak ? 9 : 5 + Math.round(ratio * 3)
+
+    new maptalks.Marker(point.coordinate, {
+      interactive: false,
+      symbol: {
+        ...createHotspotSymbol(haloSize, isPeak),
+        markerFill: isPeak ? 'rgba(255, 224, 48, 0.18)' : 'rgba(43, 224, 255, 0.16)',
+        markerLineColor: isPeak ? 'rgba(255, 236, 73, 0.48)' : 'rgba(80, 236, 255, 0.38)',
+        markerLineWidth: 1
+      }
+    }).addTo(state.hotspotLayer)
+
+    new maptalks.Marker(point.coordinate, {
+      interactive: false,
+      symbol: createHotspotSymbol(coreSize, isPeak)
+    }).addTo(state.hotspotLayer)
+  })
+}
+
 const applyGeometryDataStyle = (geo: any) => {
   const geoProps = geo.getProperties?.() || {}
   const count = Number(geoProps.count || 0)
   geo.setSymbol({
     polygonPatternFile: fillImg,
     polygonFill: getColorByCount(count),
-    polygonOpacity: count > 0 ? 0.88 : 0.64,
-    lineColor: count > 0 ? '#53f4ff' : '#1fb6d5',
-    lineWidth: count > 0 ? 1.05 : 0.82,
-    lineOpacity: count > 0 ? 0.92 : 0.66
+    polygonOpacity: count > 0 ? 0.86 : 0.68,
+    lineColor: count > 0 ? '#4ef4ff' : '#1fc7e8',
+    lineWidth: count > 0 ? 1.45 : 1.08,
+    lineOpacity: count > 0 ? 1 : 0.88,
+    shadowBlur: count > 0 ? 22 : 13,
+    shadowColor: count > 0 ? 'rgba(55, 237, 255, 0.66)' : 'rgba(22, 197, 234, 0.36)'
   })
 }
 
 const applyMapGlowSymbol = (geo: any) => {
   geo.setSymbol({
-    polygonFill: '#32f5a6',
-    polygonOpacity: 0.26,
-    lineColor: '#32f5a6',
-    lineWidth: 0,
-    lineOpacity: 0,
-    shadowBlur: 28,
-    shadowColor: 'rgba(50, 245, 166, 0.82)'
+    polygonFill: '#0bdcff',
+    polygonOpacity: 0.1,
+    lineColor: '#40f2ff',
+    lineWidth: 4.5,
+    lineOpacity: 0.64,
+    shadowBlur: 52,
+    shadowColor: 'rgba(32, 229, 255, 0.98)'
+  })
+}
+
+const setGeometryHoverState = (geo: any, active: boolean) => {
+  if (!geo) return
+  if (!active) {
+    applyGeometryDataStyle(geo)
+    return
+  }
+
+  const currentSymbol = geo.getSymbol?.() || {}
+  geo.setSymbol({
+    ...currentSymbol,
+    polygonOpacity: 0.96,
+    lineColor: '#bffcff',
+    lineWidth: 2.1,
+    lineOpacity: 1,
+    shadowBlur: 34,
+    shadowColor: 'rgba(91, 244, 255, 0.95)'
   })
 }
 
 const syncCurrentMapData = (geometries?: any[]) => {
+  if (disposed) return
   if (
     !isCertificateMode.value &&
     !isFastMapMode.value &&
@@ -309,6 +450,24 @@ const syncCurrentMapData = (geometries?: any[]) => {
     })
     applyGeometryDataStyle(geo)
   })
+  renderHotspots(targetGeometries)
+}
+
+const scheduleSyncCurrentMapData = (geometries?: any[]) => {
+  if (disposed) return
+  if (syncMapDataRaf) {
+    cancelAnimationFrame(syncMapDataRaf)
+  }
+  syncMapDataRaf = requestAnimationFrame(() => {
+    syncMapDataRaf = 0
+    syncCurrentMapData(geometries)
+  })
+}
+
+const cancelScheduledMapSync = () => {
+  if (!syncMapDataRaf) return
+  cancelAnimationFrame(syncMapDataRaf)
+  syncMapDataRaf = 0
 }
 
 const loadRemoteGeoJson = async () => {
@@ -359,91 +518,139 @@ const renderDetailLabels = (features: any[]) => {
         interactive: false,
         textSymbol: {
           textFaceName: 'sans-serif',
-          textFill: '#c8f7ff',
+          textFill: '#f8feff',
           textSize: 12,
-          textOpacity: 0.95,
+          textOpacity: 1,
           textWeight: 'bold',
-          textHaloFill: '#06233c',
-          textHaloRadius: 3
+          textHaloFill: 'rgba(2, 20, 42, 0.96)',
+          textHaloRadius: 4
         }
       }).addTo(state.detailLabelLayer)
     }
   })
 }
 
-const loadCertificateMapData = async () => {
+type LoadMapDataOptions = {
+  context?: MapDataRequestContext
+  sync?: boolean
+  geometries?: any[]
+}
+
+const loadCertificateMapData = async (options: LoadMapDataOptions = {}) => {
   if (!isCertificateMode.value) return
+  const context = options.context || createMapDataRequestContext()
   try {
     const data = await getCertificateMap({
       ...getBigScreenQueryParams(),
-      provinceName: currentRegionParams.provinceName,
-      cityName: currentRegionParams.cityName,
-      areaLevel:
-        currentDrillLevel.value === 1 ? '1' : currentDrillLevel.value === 2 ? '2' : undefined
+      provinceName: context.provinceName,
+      cityName: context.cityName,
+      areaLevel: context.drillLevel === 1 ? '1' : context.drillLevel === 2 ? '2' : undefined
     })
+    if (!isCurrentMapDataRequest(context)) return false
     certificateMapData.value = data || {}
-    syncCurrentMapData()
+    if (options.sync !== false) scheduleSyncCurrentMapData(options.geometries)
+    return true
   } catch (error) {
+    if (!isCurrentMapDataRequest(context)) return false
     console.error('[Map] Load certificate map failed:', error)
     certificateMapData.value = {}
     currentMapList.value = []
+    return false
   }
 }
 
-const loadFastMapData = async () => {
+const loadFastMapData = async (options: LoadMapDataOptions = {}) => {
   if (!isFastMapMode.value) return
+  const context = options.context || createMapDataRequestContext()
   try {
     const data = await getFastMap({
       ...getBigScreenQueryParams(),
-      provinceName: currentRegionParams.provinceName,
-      cityName: currentRegionParams.cityName,
-      areaLevel:
-        currentDrillLevel.value === 1 ? '1' : currentDrillLevel.value === 2 ? '2' : undefined
+      provinceName: context.provinceName,
+      cityName: context.cityName,
+      areaLevel: context.drillLevel === 1 ? '1' : context.drillLevel === 2 ? '2' : undefined
     })
+    if (!isCurrentMapDataRequest(context)) return false
     fastMapData.value = Array.isArray(data) ? data : []
-    syncCurrentMapData()
+    if (options.sync !== false) scheduleSyncCurrentMapData(options.geometries)
+    return true
   } catch (error) {
+    if (!isCurrentMapDataRequest(context)) return false
     console.error('[Map] Load fast map failed:', error)
     fastMapData.value = []
     currentMapList.value = []
+    return false
   }
 }
 
-const loadDashboardMapData = async () => {
+const loadDashboardMapData = async (options: LoadMapDataOptions = {}) => {
   if (!isDashboardMode.value) return
+  const context = options.context || createMapDataRequestContext()
   try {
     const data = await getDashboardMapData({
       ...getBigScreenQueryParams(),
-      provinceName: currentRegionParams.provinceName,
-      cityName: currentRegionParams.cityName,
-      areaLevel: currentDrillLevel.value === 2 ? '2' : '1'
+      provinceName: context.provinceName,
+      cityName: context.cityName,
+      areaLevel: context.drillLevel === 2 ? '2' : '1'
     })
+    if (!isCurrentMapDataRequest(context)) return false
     dashboardMapData.value = Array.isArray(data) ? data : []
-    syncCurrentMapData()
+    if (options.sync !== false) scheduleSyncCurrentMapData(options.geometries)
+    return true
   } catch (error) {
+    if (!isCurrentMapDataRequest(context)) return false
     console.error('[Map] Load dashboard map failed:', error)
     dashboardMapData.value = []
     currentMapList.value = []
+    return false
   }
 }
 
-const loadTaskMapData = async () => {
+const loadTaskMapData = async (options: LoadMapDataOptions = {}) => {
   if (!isTaskMapMode.value) return
+  const context = options.context || createMapDataRequestContext()
   try {
     const data = await getTaskMap({
       ...getBigScreenQueryParams(),
-      provinceName: currentRegionParams.provinceName,
-      cityName: currentRegionParams.cityName,
-      areaLevel:
-        currentDrillLevel.value === 1 ? '1' : currentDrillLevel.value === 2 ? '2' : undefined
+      provinceName: context.provinceName,
+      cityName: context.cityName,
+      areaLevel: context.drillLevel === 1 ? '1' : context.drillLevel === 2 ? '2' : undefined
     })
+    if (!isCurrentMapDataRequest(context)) return false
     taskMapData.value = Array.isArray(data) ? data : []
-    syncCurrentMapData()
+    if (options.sync !== false) scheduleSyncCurrentMapData(options.geometries)
+    return true
   } catch (error) {
+    if (!isCurrentMapDataRequest(context)) return false
     console.error('[Map] Load task map failed:', error)
     taskMapData.value = []
     currentMapList.value = []
+    return false
   }
+}
+
+const loadCurrentMapData = (options: LoadMapDataOptions = {}) => {
+  if (isCertificateMode.value) return loadCertificateMapData(options)
+  if (isFastMapMode.value) return loadFastMapData(options)
+  if (isDashboardMode.value) return loadDashboardMapData(options)
+  if (isTaskMapMode.value) return loadTaskMapData(options)
+  return Promise.resolve(false)
+}
+
+const scheduleRefreshCurrentMapData = () => {
+  if (disposed) return
+  if (refreshMapDataRaf) {
+    cancelAnimationFrame(refreshMapDataRaf)
+  }
+  refreshMapDataRaf = requestAnimationFrame(() => {
+    refreshMapDataRaf = 0
+    void loadCurrentMapData()
+  })
+}
+
+const cancelScheduledMapRefresh = () => {
+  if (!refreshMapDataRaf) return
+  cancelAnimationFrame(refreshMapDataRaf)
+  refreshMapDataRaf = 0
 }
 
 const drillDown = async (geometry: any) => {
@@ -454,11 +661,13 @@ const drillDown = async (geometry: any) => {
 
   isSwitching.value = true
   hideTooltip()
+  invalidateMapDataRequests()
 
   try {
     const detailGeo = await loadDetailGeoJson(geoId)
     if (!detailGeo?.features?.length) return
 
+    let mapDataPromise: Promise<boolean | undefined> | null = null
     if (
       isCertificateMode.value ||
       isFastMapMode.value ||
@@ -473,15 +682,10 @@ const drillDown = async (geometry: any) => {
         currentRegionParams.cityName = properties.name
         currentDrillLevel.value = 2
       }
-      if (isCertificateMode.value) {
-        await loadCertificateMapData()
-      } else if (isFastMapMode.value) {
-        await loadFastMapData()
-      } else if (isDashboardMode.value) {
-        await loadDashboardMapData()
-      } else {
-        await loadTaskMapData()
-      }
+      mapDataPromise = loadCurrentMapData({
+        context: createMapDataRequestContext(),
+        sync: false
+      })
     }
 
     if (!state.detailLayer) {
@@ -494,9 +698,12 @@ const drillDown = async (geometry: any) => {
 
     state.detailLayer.clear()
     state.detailLabelLayer?.clear?.()
-    state.glowLayer?.hide?.()
-    state.provinceLayer.getGeometries().forEach((g: any) => g.hide())
-    state.labelLayer?.hide?.()
+    state.hotspotLayer?.clear?.()
+    setVectorLayerVisible(state.detailLayer, true)
+    setVectorLayerVisible(state.detailLabelLayer, true)
+    setVectorLayerVisible(state.glowLayer, false)
+    setVectorLayerVisible(state.provinceLayer, false)
+    setVectorLayerVisible(state.labelLayer, false)
 
     const detailGeometries = maptalks.GeoJSON.toGeometry(detailGeo)
     detailGeometries.forEach((geo: any) => {
@@ -508,24 +715,26 @@ const drillDown = async (geometry: any) => {
       })
       geo.setSymbol({
         polygonPatternFile: fillImg,
-        polygonFill: 'rgba(4, 38, 54, 0.86)',
-        polygonOpacity: 0.84,
-        lineColor: '#53f4ff',
-        lineWidth: 1.15,
-        lineOpacity: 0.96,
-        shadowBlur: 8,
-        shadowColor: 'rgba(83, 244, 255, 0.48)'
+        polygonFill: 'rgba(3, 42, 67, 0.86)',
+        polygonOpacity: 0.88,
+        lineColor: '#4ef4ff',
+        lineWidth: 1.5,
+        lineOpacity: 1,
+        shadowBlur: 22,
+        shadowColor: 'rgba(71, 242, 255, 0.7)'
       })
       if (ENABLE_HOVER_TOOLTIP) {
         geo.on('mouseenter', (e: any) => {
           state.map.setCursor('pointer')
+          setGeometryHoverState(e.target, true)
           showTooltip(e)
         })
         geo.on('mousemove', (e: any) => {
           showTooltip(e)
         })
-        geo.on('mouseleave', () => {
+        geo.on('mouseleave', (e: any) => {
           state.map.setCursor('default')
+          setGeometryHoverState(e.target, false)
           hideTooltip()
         })
       }
@@ -534,7 +743,6 @@ const drillDown = async (geometry: any) => {
       }
       geo.addTo(state.detailLayer)
     })
-    syncCurrentMapData(detailGeometries)
 
     renderDetailLabels(detailGeo.features)
     const extent = state.detailLayer.getExtent?.()
@@ -547,6 +755,13 @@ const drillDown = async (geometry: any) => {
 
     ui.isDrilled = true
     ui.title = properties.name || '省级详情'
+    if (mapDataPromise) {
+      void mapDataPromise.then((updated) => {
+        if (updated) scheduleSyncCurrentMapData(detailGeometries)
+      })
+    } else {
+      scheduleSyncCurrentMapData(detailGeometries)
+    }
   } catch (error) {
     console.error('[Map] Drill down failed:', error)
   } finally {
@@ -558,14 +773,19 @@ const rollUp = () => {
   if (isSwitching.value) return
   isSwitching.value = true
   hideTooltip()
+  invalidateMapDataRequests()
+  cancelScheduledMapSync()
 
   // 2. 隐藏详情图层，显示全国图层
   if (state.detailLayer) state.detailLayer.clear()
   if (state.detailLabelLayer) state.detailLabelLayer.clear()
+  if (state.hotspotLayer) state.hotspotLayer.clear()
 
-  if (state.glowLayer) state.glowLayer.show()
-  state.provinceLayer.getGeometries().forEach((g) => g.show())
-  if (state.labelLayer) state.labelLayer.show()
+  setVectorLayerVisible(state.detailLayer, false)
+  setVectorLayerVisible(state.detailLabelLayer, false)
+  setVectorLayerVisible(state.glowLayer, true)
+  setVectorLayerVisible(state.provinceLayer, true)
+  setVectorLayerVisible(state.labelLayer, true)
 
   // 3. 视角强制回归（避免偶发放大残留）
   if (typeof state.map.setView === 'function') {
@@ -589,19 +809,8 @@ const rollUp = () => {
   delete currentRegionParams.provinceName
   delete currentRegionParams.cityName
 
-  if (isCertificateMode.value) {
-    void loadCertificateMapData()
-  }
-  if (isFastMapMode.value) {
-    void loadFastMapData()
-  }
-  if (isDashboardMode.value) {
-    void loadDashboardMapData()
-  }
-  if (isTaskMapMode.value) {
-    void loadTaskMapData()
-  }
   isSwitching.value = false
+  scheduleRefreshCurrentMapData()
 }
 
 const renderNationalLabels = () => {
@@ -622,8 +831,8 @@ const renderNationalLabels = () => {
           textSize: 13,
           textOpacity: 1,
           textWeight: 'bold',
-          textHaloFill: '#06233c',
-          textHaloRadius: 3,
+          textHaloFill: 'rgba(2, 17, 39, 0.98)',
+          textHaloRadius: 4,
           textDx: 0,
           textDy: 0
         }
@@ -643,11 +852,7 @@ const scheduleNationalLabels = () => {
 }
 
 const loadInitialMapData = () => {
-  if (isCertificateMode.value) return loadCertificateMapData()
-  if (isFastMapMode.value) return loadFastMapData()
-  if (isDashboardMode.value) return loadDashboardMapData()
-  if (isTaskMapMode.value) return loadTaskMapData()
-  return Promise.resolve()
+  return loadCurrentMapData({ sync: false })
 }
 
 // 提取应用全国遮罩的逻辑
@@ -666,7 +871,7 @@ const initMap = async () => {
     pitch: 0,
     maxExtent: new maptalks.Extent(73, 15, 135, 55),
     attribution: false,
-    background: { fill: '#041621' }
+    background: { fill: '#020b18' }
   } as any)
 
   state.glowLayer = new maptalks.VectorLayer('china-glow-layer', {
@@ -699,6 +904,10 @@ const initMap = async () => {
     enableSimplify: true,
     simplifyTolerance: 0.8
   } as any).addTo(state.map)
+  state.hotspotLayer = new maptalks.VectorLayer('hotspot-layer', {
+    zIndex: 96,
+    geometryEvents: false
+  } as any).addTo(state.map)
 
   // 4. 加载数据并渲染
   try {
@@ -724,23 +933,27 @@ const initMap = async () => {
           // 顶层 - 纯矢量亮青色风格
           geo.setSymbol({
             polygonPatternFile: fillImg,
-            polygonFill: 'rgba(4, 34, 54, 0.9)',
-            polygonOpacity: 0.92,
-            lineColor: '#1595ba',
-            lineWidth: 0.62,
-            lineOpacity: 0.7
+            polygonFill: 'rgba(3, 39, 65, 0.84)',
+            polygonOpacity: 0.84,
+            lineColor: '#38eaff',
+            lineWidth: 1.18,
+            lineOpacity: 0.9,
+            shadowBlur: 15,
+            shadowColor: 'rgba(31, 216, 255, 0.48)'
           })
 
           if (ENABLE_HOVER_TOOLTIP) {
             geo.on('mouseenter', (e: any) => {
               state.map.setCursor('pointer')
+              setGeometryHoverState(e.target, true)
               showTooltip(e)
             })
             geo.on('mousemove', (e: any) => {
               showTooltip(e)
             })
-            geo.on('mouseleave', () => {
+            geo.on('mouseleave', (e: any) => {
               state.map.setCursor('default')
+              setGeometryHoverState(e.target, false)
               hideTooltip()
             })
           }
@@ -748,16 +961,16 @@ const initMap = async () => {
 
           geo.addTo(state.provinceLayer)
         })
-        void initialMapDataPromise.finally(() => {
-          syncCurrentMapData(geometries)
+        void initialMapDataPromise.then((updated) => {
+          if (updated && !ui.isDrilled) scheduleSyncCurrentMapData(geometries)
         })
         const extent = state.provinceLayer.getExtent?.()
         if (extent) {
           state.map.fitExtent(extent, 0, {
             animation: false,
-            padding: { top: 40, right: 104, bottom: 30, left: 150 }
+            padding: { top: 88, right: 268, bottom: 72, left: 288 }
           })
-          state.map.panBy([4, 8], { animation: false })
+          state.map.panBy([8, 10], { animation: false })
         }
       }
     }
@@ -801,7 +1014,11 @@ const clearTooltipDelay = () => {
 const getTooltipPayload = (e: any) => {
   if (!e?.target || !state.map) return null
   const props = e.target.getProperties()
-  const pos = state.map.coordinateToContainerPoint(e.coordinate)
+  const coordinate = getGeometryCenter(e.target) || [e.coordinate.x, e.coordinate.y]
+  const pos = state.map.coordinateToContainerPoint(coordinate)
+  const mapSize = state.map.getSize?.()
+  const nextX = Math.min(Math.max(pos.x + 34, 12), Number(mapSize?.width || 0) - 198)
+  const nextY = Math.min(Math.max(pos.y - 18, 82), Number(mapSize?.height || 0) - 128)
   const samples = Number(isTaskMapMode.value ? props.taskIssuedCount || 0 : props.sampleCount || 0)
   return {
     name: props.name,
@@ -813,8 +1030,8 @@ const getTooltipPayload = (e: any) => {
     rate: `${Number(
       isTaskMapMode.value ? props.taskCompletionRate || 0 : props.positiveRate || 0
     ).toFixed(2)}%`,
-    x: pos.x,
-    y: pos.y - 14
+    x: nextX,
+    y: nextY
   }
 }
 
@@ -866,7 +1083,8 @@ watch(
   () => props.certificateTab,
   () => {
     if (isCertificateMode.value) {
-      syncCurrentMapData()
+      invalidateMapDataRequests()
+      scheduleRefreshCurrentMapData()
     }
   }
 )
@@ -874,8 +1092,14 @@ watch(
 watch(
   () => props.mode,
   () => {
-    if (isFastMapMode.value || isTaskMapMode.value || isDashboardMode.value) {
-      syncCurrentMapData()
+    if (
+      isCertificateMode.value ||
+      isFastMapMode.value ||
+      isTaskMapMode.value ||
+      isDashboardMode.value
+    ) {
+      invalidateMapDataRequests()
+      scheduleRefreshCurrentMapData()
     }
   }
 )
@@ -898,21 +1122,13 @@ onMounted(async () => {
 })
 
 const disposeRefresh = subscribeBigScreenRefresh(() => {
-  if (isCertificateMode.value) {
-    void loadCertificateMapData()
-  }
-  if (isFastMapMode.value) {
-    void loadFastMapData()
-  }
-  if (isDashboardMode.value) {
-    void loadDashboardMapData()
-  }
-  if (isTaskMapMode.value) {
-    void loadTaskMapData()
-  }
+  invalidateMapDataRequests()
+  scheduleRefreshCurrentMapData()
 })
 
 onUnmounted(() => {
+  disposed = true
+  invalidateMapDataRequests()
   disposeRefresh()
   if (loadingFallbackTimer !== null) {
     window.clearTimeout(loadingFallbackTimer)
@@ -923,10 +1139,13 @@ onUnmounted(() => {
     cancelAnimationFrame(nationalLabelRaf)
     nationalLabelRaf = 0
   }
+  cancelScheduledMapSync()
+  cancelScheduledMapRefresh()
   if (state.map) {
     state.detailLayer?.clear?.()
     state.detailLabelLayer?.clear?.()
     state.labelLayer?.clear?.()
+    state.hotspotLayer?.clear?.()
     state.glowLayer?.clear?.()
     state.provinceLayer?.clear?.()
     state.map.remove()
@@ -1040,15 +1259,67 @@ onUnmounted(() => {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  /* 深邃科技蓝渐变背景 */
   background:
+    linear-gradient(180deg, rgba(2, 10, 28, 0.24), rgba(0, 7, 22, 0.54)),
     radial-gradient(
-      circle at 50% 48%,
-      rgba(14, 74, 118, 0.22) 0%,
-      rgba(4, 20, 42, 0.08) 45%,
+      ellipse at 48% 51%,
+      rgba(23, 130, 181, 0.28) 0%,
+      rgba(5, 40, 73, 0.13) 43%,
       rgba(2, 6, 23, 0) 72%
     ),
-    transparent;
+    radial-gradient(ellipse at 72% 49%, rgba(0, 207, 255, 0.12), rgba(2, 8, 25, 0) 46%),
+    url('@/assets/imgs/echarts/1.png') center / cover no-repeat,
+    #020b18;
+}
+
+.map-wrapper::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(1, 8, 24, 0.62), rgba(2, 8, 25, 0) 28%, rgba(1, 8, 24, 0.52)),
+    radial-gradient(ellipse at 49% 50%, rgba(51, 218, 255, 0.12), rgba(2, 8, 25, 0) 56%);
+  mix-blend-mode: lighten;
+}
+
+.map-wrapper::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 50% 48%, rgba(0, 0, 0, 0) 38%, rgba(1, 5, 18, 0.68) 100%),
+    linear-gradient(180deg, rgba(1, 8, 24, 0.18), rgba(1, 6, 18, 0.48));
+}
+
+#map-container {
+  position: relative;
+  z-index: 2;
+}
+
+.map-loading {
+  z-index: 2000;
+}
+
+#map-container canvas {
+  filter: saturate(1.32) contrast(1.16) brightness(1.04)
+    drop-shadow(0 0 18px rgba(30, 218, 255, 0.3));
+}
+
+.map-wrapper :deep(.maptalks-attribution) {
+  display: none;
+}
+
+.map-wrapper :deep(canvas) {
+  mix-blend-mode: lighten;
+}
+
+.map-wrapper :deep(.maptalks-wrapper) {
+  background:
+    radial-gradient(ellipse at 48% 48%, rgba(16, 96, 146, 0.1), rgba(2, 8, 25, 0) 58%), transparent;
 }
 
 .map-loading {
@@ -1084,6 +1355,7 @@ onUnmounted(() => {
   width: 100%;
   height: 100%;
   min-height: 0;
+  background: transparent !important;
 }
 
 .glass-panel {
@@ -1094,66 +1366,78 @@ onUnmounted(() => {
 }
 
 .map-tooltip {
-  min-width: 180px;
-  transform: translate(-50%, -100%);
-  filter: drop-shadow(0 0 14px rgba(42, 229, 255, 0.44));
+  min-width: 176px;
+  transform: translate(0, -50%);
+  filter: drop-shadow(0 0 18px rgba(42, 229, 255, 0.54));
 }
 
 .map-tooltip::after {
   content: '';
   position: absolute;
-  left: 50%;
-  bottom: -30px;
-  width: 11px;
-  height: 11px;
-  transform: translateX(-50%);
+  right: -10px;
+  bottom: 16px;
+  width: 5px;
+  height: 5px;
   border-radius: 50%;
-  background: #ffea10;
+  background: #36efff;
   box-shadow:
-    0 0 0 3px rgba(255, 234, 16, 0.22),
-    0 0 13px rgba(255, 234, 16, 0.82);
+    0 0 0 3px rgba(54, 239, 255, 0.18),
+    0 0 13px rgba(54, 239, 255, 0.88);
 }
 
 .tooltip-content {
   position: relative;
-  padding: 8px 13px 9px;
-  border: 1px solid rgba(78, 232, 238, 0.9);
-  background: rgba(8, 52, 49, 0.9);
+  padding: 14px 16px 13px;
+  border: 1px solid rgba(78, 232, 238, 0.62);
+  border-radius: 8px;
+  background:
+    linear-gradient(
+      135deg,
+      rgba(18, 72, 92, 0.88),
+      rgba(5, 32, 55, 0.84) 58%,
+      rgba(2, 21, 38, 0.92)
+    ),
+    rgba(5, 32, 55, 0.88);
   box-shadow:
-    inset 0 0 16px rgba(96, 239, 255, 0.2),
-    0 0 16px rgba(42, 229, 255, 0.3);
+    inset 0 0 22px rgba(96, 239, 255, 0.22),
+    0 0 20px rgba(42, 229, 255, 0.28);
   color: #fff;
-  font-size: 14px;
-  line-height: 21px;
+  font-size: 13px;
+  line-height: 23px;
 }
 
 .tooltip-content::after {
   content: '';
   position: absolute;
-  left: 50%;
-  bottom: -15px;
+  left: 46px;
+  bottom: -13px;
   width: 0;
   height: 0;
-  transform: translateX(-50%);
-  border: 8px solid transparent;
-  border-top-color: rgba(8, 52, 49, 0.9);
+  border: 7px solid transparent;
+  border-top-color: rgba(7, 45, 62, 0.92);
   filter: drop-shadow(0 4px 6px rgba(42, 229, 255, 0.32));
+}
+
+.tooltip-lines::before {
+  content: attr(data-name);
 }
 
 .tooltip-line {
   display: flex;
-  align-items: baseline;
-  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
   white-space: nowrap;
 }
 
 .tooltip-line span {
-  color: rgba(238, 255, 255, 0.9);
+  color: rgba(108, 239, 255, 0.76);
 }
 
 .tooltip-line b {
-  color: #fff;
+  color: #f8ffff;
   font-weight: 700;
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.42);
 }
 
 .tooltip-note {

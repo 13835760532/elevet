@@ -62,10 +62,11 @@ const displayProduceRiskList = computed(() =>
 
 const displayPesticideRiskList = computed(() =>
   [...pesticideRiskList.value]
-    .sort(
-      (a, b) =>
-        Number(b.statValue ?? b.detectionCount ?? 0) - Number(a.statValue ?? a.detectionCount ?? 0)
-    )
+    .sort((a, b) => {
+      const valA = pesticideTab.value === '阳性率' ? Number(a.statValue ?? a.positiveRate ?? 0) : Number(a.statValue ?? a.detectionCount ?? 0)
+      const valB = pesticideTab.value === '阳性率' ? Number(b.statValue ?? b.positiveRate ?? 0) : Number(b.statValue ?? b.detectionCount ?? 0)
+      return valB - valA
+    })
     .slice(0, 9)
 )
 
@@ -73,7 +74,12 @@ const riskNames = computed(() =>
   displayProduceRiskList.value.map((item) => item.productName || '--')
 )
 const riskValues = computed(() =>
-  displayProduceRiskList.value.map((item) => Number(item.statValue ?? item.detectionCount ?? 0))
+  displayProduceRiskList.value.map((item) => {
+    if (riskTab.value === '阳性率') {
+      return Number(item.statValue ?? item.positiveRate ?? 0)
+    }
+    return Number(item.statValue ?? item.detectionCount ?? 0)
+  })
 )
 const riskMax = computed(() => {
   const maxValue = Math.max(...riskValues.value, 0)
@@ -90,7 +96,12 @@ const pesticideLabels = computed(() =>
   displayPesticideRiskList.value.map((item) => item.pesticideName || '--')
 )
 const pesticideValues = computed(() =>
-  displayPesticideRiskList.value.map((item) => Number(item.statValue ?? item.detectionCount ?? 0))
+  displayPesticideRiskList.value.map((item) => {
+    if (pesticideTab.value === '阳性率') {
+      return Number(item.statValue ?? item.positiveRate ?? 0)
+    }
+    return Number(item.statValue ?? item.detectionCount ?? 0)
+  })
 )
 
 const getNiceAxisMax = (value: number) => {

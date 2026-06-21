@@ -9,12 +9,7 @@
       </div>
     </BigPanelCard>
 
-    <BigPanelCard
-      title="区域风险排序TOP 10"
-      :tabs="['产地', '检测地']"
-      v-model:active-tab="rankTab"
-      :bg-image="rankBg"
-    >
+    <BigPanelCard title="区域风险排序TOP 10" :tabs="['产地', '检测地']" v-model:active-tab="rankTab" :bg-image="rankBg">
       <div class="rank-table-wrap">
         <table class="rank-table">
           <thead>
@@ -24,41 +19,28 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(item, idx) in currentRankData" :key="`${item.areaName}-${idx}`">
+            <tr v-for="(item, idx) in currentRankData" :key="`rank-${idx}`">
               <td>
-                <img
-                  v-if="idx < rankBadgeImages.length"
-                  class="rank-badge-img"
-                  :src="rankBadgeImages[idx]"
-                  alt=""
-                />
-                <span v-else class="rank-badge">{{ String(item.rank).padStart(2, '0') }}</span>
+                <template v-if="!item.isEmpty">
+                  <img v-if="idx < rankBadgeImages.length" class="rank-badge-img" :src="rankBadgeImages[idx]" alt="" />
+                  <span v-else class="rank-badge">{{ String(item.rank).padStart(2, '0') }}</span>
+                </template>
               </td>
               <td>{{ item.areaName }}</td>
             </tr>
           </tbody>
         </table>
         <div class="rank-level-tabs">
-          <button
-            v-for="tab in areaLevelTabs"
-            :key="tab"
-            type="button"
-            class="rank-level-tab"
-            :class="{ active: tab === rankAreaLevelTab }"
-            @click="rankAreaLevelTab = tab"
-          >
+          <button v-for="tab in areaLevelTabs" :key="tab" type="button" class="rank-level-tab"
+            :class="{ active: tab === rankAreaLevelTab }" @click="rankAreaLevelTab = tab">
             {{ tab }}
           </button>
         </div>
       </div>
     </BigPanelCard>
 
-    <BigPanelCard
-      title="农产品-检测项风险TOP 10"
-      :tabs="['检测总量', '阳性率']"
-      v-model:active-tab="projectRiskTab"
-      :bg-image="riskBg"
-    >
+    <BigPanelCard title="农产品-检测项风险TOP 10" :tabs="['检测总量', '阳性率']" v-model:active-tab="projectRiskTab"
+      :bg-image="riskBg">
       <div class="project-risk-chart">
         <Echart :options="currentProjectRiskOption" height="100%" />
       </div>
@@ -104,13 +86,19 @@ const formatRankAreaName = (item: RiskAreaTopRespVO) =>
 const currentRankData = computed(() => {
   const rows = rankList.value.map((item, index) => ({
     rank: item.rank || index + 1,
-    areaName: formatRankAreaName(item)
+    areaName: formatRankAreaName(item),
+    isEmpty: false
   }))
-  if (rows.length) return rows
-  return Array.from({ length: 10 }, (_, index) => ({
-    rank: index + 1,
-    areaName: '--'
-  }))
+
+  const result = [...rows]
+  for (let i = result.length; i < 10; i++) {
+    result.push({
+      rank: i + 1,
+      areaName: '',
+      isEmpty: true
+    })
+  }
+  return result
 })
 
 const displayProjectRiskList = computed(() => {
@@ -118,9 +106,9 @@ const displayProjectRiskList = computed(() => {
   return rows.length
     ? rows
     : Array.from({ length: 10 }, () => ({
-        combineName: '--',
-        statValue: 0
-      }))
+      combineName: '--',
+      statValue: 0
+    }))
 })
 const projectLabels = computed(() =>
   displayProjectRiskList.value.map((item) => item.combineName || '--')
@@ -336,7 +324,7 @@ onUnmounted(() => {
 
 .rank-level-tabs {
   position: absolute;
-  right: 22px;
+  right: 4px;
   bottom: 16px;
   display: flex;
   gap: 8px;
@@ -396,7 +384,7 @@ onUnmounted(() => {
 
   th:first-child,
   td:first-child {
-    width: 128px;
+    width: 120px;
   }
 }
 

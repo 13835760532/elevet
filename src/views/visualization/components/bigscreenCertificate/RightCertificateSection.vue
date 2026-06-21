@@ -1,6 +1,6 @@
 <template>
   <section class="right-section">
-    <BigPanelCard title="合格证分析" :bg-image="rightBg">
+    <BigPanelCard class="analysis-panel" title="合格证分析" :bg-image="rightBg">
       <div class="analysis-wrap">
         <p class="analysis-title">合格证出具类型</p>
         <div class="analysis-layout">
@@ -8,7 +8,7 @@
             <Echart :options="analysisOption" height="100%" width="100%" />
           </div>
           <div class="analysis-legend">
-            <div class="legend-row" v-for="item in analysisItems" :key="item.name">
+            <div class="legend-row" v-for="item in analysisLegendItems" :key="item.name">
               <span class="dot" :style="{ background: item.color }"></span>
               <span class="name">{{ item.name }}</span>
               <span class="value">{{ item.value }}</span>
@@ -18,20 +18,25 @@
       </div>
     </BigPanelCard>
 
-    <BigPanelCard title="合格证开具榜单" :tabs="['累计']" active-tab="累计" :bg-image="rightBg">
+    <BigPanelCard
+      class="rank-panel"
+      title="合格证开具榜单"
+      :tabs="['累计']"
+      active-tab="累计"
+    >
       <div class="rank-container">
         <table class="rank-table">
           <thead>
             <tr>
-              <th width="80">排行</th>
+              <th width="92">排行</th>
               <th>开具主体</th>
-              <th width="100">份数</th>
+              <th width="104">份数</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(item, idx) in issueRank" :key="item.name + idx">
+            <tr v-for="(item, idx) in displayedIssueRank" :key="`issue-${idx}-${item.name}`">
               <td>
-                <div class="rank-badge" :class="`top-${idx + 1}`">
+                <div class="rank-badge" :class="`badge-top-${idx + 1}`">
                   {{ String(idx + 1).padStart(2, '0') }}
                 </div>
               </td>
@@ -43,20 +48,25 @@
       </div>
     </BigPanelCard>
 
-    <BigPanelCard title="合格证存证排行榜" :tabs="['累计']" active-tab="累计" :bg-image="rightBg">
+    <BigPanelCard
+      class="rank-panel"
+      title="合格证存证排行榜"
+      :tabs="['累计']"
+      active-tab="累计"
+    >
       <div class="rank-container">
         <table class="rank-table">
           <thead>
             <tr>
-              <th width="80">排行</th>
+              <th width="92">排行</th>
               <th>存证主体</th>
-              <th width="100">份数</th>
+              <th width="104">份数</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(item, idx) in storeRank" :key="item.name + idx">
+            <tr v-for="(item, idx) in displayedStoreRank" :key="`store-${idx}-${item.name}`">
               <td>
-                <div class="rank-badge" :class="`top-${idx + 1}`">
+                <div class="rank-badge" :class="`badge-top-${idx + 1}`">
                   {{ String(idx + 1).padStart(2, '0') }}
                 </div>
               </td>
@@ -88,8 +98,10 @@ import { getBigScreenQueryParams, subscribeBigScreenRefresh } from '../bigscreen
 
 interface RankItem {
   name: string
-  value: number
+  value: number | string
 }
+
+const RANK_ROW_COUNT = 10
 
 const PIE_TYPE_META: Record<number, { name: string; color: string }> = {
   1: { name: '生产者', color: '#3ba4ff' },
@@ -100,6 +112,9 @@ const PIE_TYPE_META: Record<number, { name: string; color: string }> = {
 const issueRank = ref<RankItem[]>([])
 const distributionData = ref<CertificateTypeDistributionRespVO[]>([])
 const storeRank = ref<RankItem[]>([])
+
+const toTenRankRows = (list: RankItem[]) =>
+  Array.from({ length: RANK_ROW_COUNT }, (_, index) => list[index] || { name: '--', value: '--' })
 
 const normalizeDistribution = (list: CertificateTypeDistributionRespVO[] = []) => {
   const distributionMap = new Map(list.map((item) => [item.certificateType, item]))
@@ -118,6 +133,11 @@ const normalizeDistribution = (list: CertificateTypeDistributionRespVO[] = []) =
 
 const analysisItems = computed(() => normalizeDistribution(distributionData.value))
 const analysisPieItems = computed(() => analysisItems.value.filter((item) => item.value > 0))
+const analysisLegendItems = computed(() =>
+  analysisPieItems.value.length ? analysisPieItems.value : analysisItems.value
+)
+const displayedIssueRank = computed(() => toTenRankRows(issueRank.value))
+const displayedStoreRank = computed(() => toTenRankRows(storeRank.value))
 
 const analysisOption = computed(() => ({
   animation: false,
@@ -131,26 +151,58 @@ const analysisOption = computed(() => ({
   series: [
     {
       type: 'pie',
-      radius: ['48%', '68%'],
-      center: ['50%', '52%'],
+      radius: ['69%', '78%'],
+      center: ['46%', '54%'],
+      silent: true,
+      z: 0,
+      label: { show: false },
+      labelLine: { show: false },
+      itemStyle: {
+        color: 'rgba(44, 150, 255, 0.12)',
+        shadowBlur: 12,
+        shadowColor: 'rgba(37, 156, 255, 0.36)'
+      },
+      data: [
+        {
+          value: Math.max(
+            analysisPieItems.value.reduce((total, item) => total + item.value, 0),
+            1
+          ),
+          name: ''
+        }
+      ]
+    },
+    {
+      type: 'pie',
+      radius: ['48%', '66%'],
+      center: ['46%', '54%'],
       minAngle: 8,
       avoidLabelOverlap: true,
+      z: 2,
       label: {
         show: true,
         color: '#d6eefe',
-        fontSize: 11,
-        formatter: (params: { name: string; value: number }) =>
-          params.value > 0 ? `{name|${params.name}}\n{value|${params.value}}` : '',
+        fontSize: 12,
+        formatter: (params: { name: string; value: number; dataIndex: number }) => {
+          if (params.value <= 0) return ''
+          const valueStyle = `value${params.dataIndex}`
+          return `{name|${params.name}}\n{${valueStyle}|${params.value}}`
+        },
         rich: {
-          name: { color: '#d6eefe', fontSize: 11, lineHeight: 15 },
-          value: { color: '#57e2ff', fontSize: 11, lineHeight: 15, fontWeight: 700 }
+          name: { color: '#d6eefe', fontSize: 12, lineHeight: 16 },
+          ...Object.fromEntries(
+            analysisPieItems.value.map((item, index) => [
+              `value${index}`,
+              { color: item.color, fontSize: 12, lineHeight: 16, fontWeight: 700 }
+            ])
+          )
         }
       },
       labelLine: {
         show: true,
-        length: 12,
-        length2: 16,
-        lineStyle: { color: 'rgba(255,255,255,0.85)', width: 1.1 }
+        length: 11,
+        length2: 18,
+        lineStyle: { color: 'rgba(222, 246, 255, 0.86)', width: 1.2 }
       },
       itemStyle: {
         borderColor: 'rgba(7, 16, 38, 0.96)',
@@ -166,6 +218,9 @@ const analysisOption = computed(() => ({
             { offset: 0, color: item.color },
             { offset: 1, color: 'rgba(15, 52, 95, 0.9)' }
           ])
+        },
+        labelLine: {
+          lineStyle: { color: item.color }
         }
       }))
     }
@@ -218,49 +273,110 @@ onUnmounted(() => {
 <style scoped lang="scss">
 .right-section {
   display: grid;
-  grid-template-rows: 264px minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 0.7fr) minmax(0, 1fr) minmax(0, 1fr);
   gap: 10px;
+  height: 100%;
   min-height: 0;
+}
+
+.analysis-panel,
+.rank-panel {
+  background:
+    linear-gradient(180deg, rgba(0, 7, 32, 0.1) 0%, rgba(0, 7, 32, 0.32) 100%), rgba(0, 6, 26, 0.42);
+}
+
+.analysis-panel {
+  :deep(.panel-body) {
+    padding: 0 18px 12px;
+  }
+}
+
+.rank-panel {
+  :deep(.panel-body) {
+    padding: 0 24px 12px;
+  }
+
+  :deep(.panel-tabs) {
+    gap: 0;
+    padding-right: 8px;
+  }
+
+  :deep(.panel-tab) {
+    min-width: 0;
+    height: 30px;
+    padding: 0 24px 0 4px;
+    border: 0;
+    background: transparent;
+    color: rgba(224, 239, 239, 0.92);
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 30px;
+
+    &::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      right: 2px;
+      width: 0;
+      height: 0;
+      border-left: 8px solid transparent;
+      border-right: 8px solid transparent;
+      border-top: 10px solid #56f3f2;
+      transform: translateY(-34%);
+      filter: drop-shadow(0 0 5px rgba(86, 243, 242, 0.65));
+    }
+
+    &.active {
+      border: 0;
+      background: transparent;
+      color: #e0efef;
+    }
+  }
 }
 
 .analysis-wrap {
   height: 100%;
+  min-height: 0;
 
   .analysis-title {
-    margin: 4px 10px 0;
-    color: #a9caea;
-    font-size: 14px;
+    margin: 10px 12px 0;
+    color: #88c9e6;
+    font-size: 18px;
     font-weight: 700;
+    line-height: 24px;
   }
 }
 
 .analysis-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 118px;
+  grid-template-columns: minmax(0, 1fr) 128px;
   align-items: center;
-  gap: 8px;
-  height: calc(100% - 28px);
+  gap: 4px;
+  height: calc(100% - 34px);
   min-height: 0;
-  padding: 4px 10px 8px;
+  padding: 0 6px 0 2px;
 }
 
 .analysis-pie {
   min-width: 0;
   height: 100%;
+  min-height: 0;
 }
 
 .analysis-legend {
   display: flex;
   flex-direction: column;
-  gap: 7px;
+  gap: 18px;
+  justify-content: center;
+  min-width: 0;
 }
 
 .legend-row {
   display: grid;
-  grid-template-columns: 9px minmax(0, 1fr);
+  grid-template-columns: 16px minmax(0, 1fr);
   align-items: center;
-  gap: 8px;
-  min-height: 24px;
+  gap: 12px;
+  min-height: 28px;
   padding: 0;
   border: 0;
   background: transparent;
@@ -268,16 +384,17 @@ onUnmounted(() => {
 }
 
 .dot {
-  width: 9px;
-  height: 9px;
+  width: 16px;
+  height: 16px;
   border-radius: 0;
-  box-shadow: 0 0 8px rgba(87, 226, 255, 0.28);
+  box-shadow: 0 0 8px rgba(87, 226, 255, 0.26);
 }
 
 .name {
   min-width: 0;
-  color: #d6eefe;
-  font-size: 12px;
+  color: #cbd8dd;
+  font-size: 16px;
+  font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -294,41 +411,55 @@ onUnmounted(() => {
 .rank-container {
   height: 100%;
   overflow: hidden;
-  padding: 4px 12px 8px;
+  padding: 0 0 4px;
 }
 
 .rank-table {
   width: 100%;
+  height: 100%;
   border-collapse: collapse;
   table-layout: fixed;
 
+  thead {
+    height: 33px;
+  }
+
+  tbody {
+    height: calc(100% - 33px);
+  }
+
+  tbody tr {
+    height: 10%;
+  }
+
   th {
-    height: 28px;
-    color: rgba(211, 231, 246, 0.84);
-    font-size: 13px;
+    height: 33px;
+    border-bottom: 1px solid rgba(89, 209, 243, 0.7);
+    color: rgba(211, 231, 246, 0.92);
+    font-size: 15px;
     font-weight: 600;
     text-align: center;
-    background: rgba(158, 194, 229, 0.1);
+    background: rgba(0, 61, 91, 0.82);
   }
 
   td {
-    height: 25px;
-    padding: 1px 0;
+    padding: 0;
     color: #d6eefe;
-    font-size: 13px;
+    font-size: 15px;
+    font-weight: 600;
     text-align: center;
   }
 
   tbody tr:nth-child(odd) {
-    background: rgba(13, 56, 99, 0.44);
+    background: rgba(5, 47, 82, 0.62);
   }
 
   tbody tr:nth-child(even) {
-    background: rgba(0, 6, 20, 0.2);
+    background: rgba(0, 7, 27, 0.34);
   }
 
   .name-cell {
-    color: #bbdbfa;
+    color: rgba(214, 225, 230, 0.9);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -336,71 +467,80 @@ onUnmounted(() => {
 
   .value-cell {
     font-family: 'DIN Alternate', sans-serif;
-    color: #d6eefe;
+    color: rgba(214, 225, 230, 0.92);
   }
 }
 
 .rank-badge {
-  display: inline-block;
-  width: 30px;
-  height: 18px;
-  line-height: 18px;
+  --rank-bg: transparent;
+  --rank-color: rgba(216, 224, 228, 0.74);
+  position: relative;
+  z-index: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 22px;
+  line-height: 22px;
   font-family: 'DIN Alternate', sans-serif;
   font-weight: 700;
-  font-size: 13px;
-  color: #8fa7c1;
-  background: transparent;
-  position: relative;
+  font-size: 16px;
+  color: var(--rank-color);
   border: 0;
 
-  // 通用 L 型护角装饰
-  &::before,
-  &::after {
+  &::before {
     content: '';
     position: absolute;
-    width: 6px;
-    height: 6px;
+    inset: 1px 0;
+    z-index: -1;
+    border: 1px solid var(--rank-color);
+    background: var(--rank-bg);
+    box-shadow: 0 0 7px var(--rank-color);
     opacity: 0;
+    transform: skewX(-8deg);
   }
 
-  &.top-1,
-  &.top-2,
-  &.top-3 {
-    border-color: transparent;
-
+  &.badge-top-1,
+  &.badge-top-2,
+  &.badge-top-3 {
     &::before {
       opacity: 1;
-      top: -1px;
-      left: -1px;
-      border-top: 2px solid var(--rank-color);
-      border-left: 2px solid var(--rank-color);
-    }
-
-    &::after {
-      opacity: 1;
-      bottom: -1px;
-      right: -1px;
-      border-bottom: 2px solid var(--rank-color);
-      border-right: 2px solid var(--rank-color);
     }
   }
 
-  &.top-1 {
+  &.badge-top-1 {
     --rank-color: #2de17c;
-    color: #2de17c;
-    background: rgba(23, 91, 53, 0.86);
+    --rank-bg: rgba(16, 89, 62, 0.72);
   }
 
-  &.top-2 {
+  &.badge-top-2 {
     --rank-color: #37d4ff;
-    color: #37d4ff;
-    background: rgba(9, 75, 87, 0.86);
+    --rank-bg: rgba(9, 75, 87, 0.68);
   }
 
-  &.top-3 {
+  &.badge-top-3 {
     --rank-color: #f6be35;
-    color: #f6be35;
-    background: rgba(103, 73, 9, 0.86);
+    --rank-bg: rgba(103, 73, 9, 0.68);
+  }
+}
+
+.rank-panel {
+  :deep(.panel-header) {
+    background: none !important;
+    height: 36px !important;
+    flex: 0 0 36px !important;
+  }
+
+  :deep(.panel-title) {
+    padding-left: 10px !important;
+    color: #88c9e6 !important;
+    line-height: 36px !important;
+  }
+
+  :deep(.panel-tab) {
+    border-top: none !important;
+    height: 26px !important;
+    line-height: 26px !important;
   }
 }
 </style>

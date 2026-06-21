@@ -56,7 +56,23 @@ export interface FastMapDataRespVO {
 
 export interface FastCategoryDistributionRespVO {
   category?: string
-  sampleCount?: number
+  categoryName?: string
+  productCategory?: string
+  productCategoryName?: string
+  categoryTypeName?: string
+  typeName?: string
+  label?: string
+  name?: string
+  sampleCount?: number | string
+  detectionCount?: number | string
+  count?: number | string
+  statValue?: number | string
+  value?: number | string
+  total?: number | string
+  totalCount?: number | string
+  sampleNum?: number | string
+  quantity?: number | string
+  num?: number | string
 }
 
 export interface FastCategoryPesticideTopRespVO {

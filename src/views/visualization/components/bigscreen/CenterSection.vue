@@ -143,7 +143,7 @@ const getMarkerLabel = (index: number) => {
 
 const createLineTrendOption = (data: number[], max: number, formatter?: string) => ({
   animation: false,
-  grid: { left: 86, right: 68, top: 54, bottom: 58 },
+  grid: { left: 86, right: 100, top: 54, bottom: 58 },
   graphic: [
     {
       type: 'text',
@@ -167,7 +167,7 @@ const createLineTrendOption = (data: number[], max: number, formatter?: string) 
     },
     {
       type: 'text',
-      right: 18,
+      right: 10,
       bottom: 18,
       style: {
         text: '（月份）',

@@ -170,14 +170,18 @@ $input-default-width: 150px;
             font-size: $btn-font-size;
             background-color: $theme-color;
             border-color: $theme-color;
+            color: #fff;
         }
 
-        /* 重置按钮 - 默认样式 */
+        /* 重置按钮 - 与查询按钮同样式 */
         .reset-btn {
             width: $btn-width;
             height: $btn-height;
             border-radius: $btn-border-radius;
             font-size: $btn-font-size;
+            background-color: $theme-color;
+            border-color: $theme-color;
+            color: #fff;
         }
 
         /* 导出按钮 */
@@ -188,6 +192,7 @@ $input-default-width: 150px;
             font-size: $btn-font-size;
             background-color: $theme-color;
             border-color: $theme-color;
+            color: #fff;
         }
 
         /* 所有按钮统一圆角 */

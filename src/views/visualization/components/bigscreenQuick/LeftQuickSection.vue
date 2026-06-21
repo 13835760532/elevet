@@ -38,7 +38,7 @@
     <BigPanelCard title="快检产品品类" :bg-image="leftBg">
       <div class="category-layout">
         <div class="pie-container">
-          <Echart :options="categoryPieOption" height="230px" width="100%" />
+          <Echart :options="categoryPieOption" height="100%" width="100%" />
         </div>
         <div class="category-legend">
           <div class="legend-row" v-for="item in categoryItems" :key="item.name">
@@ -53,24 +53,23 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue';
-import echarts from '@/plugins/echarts';
-import { Echart } from '@/components/Echart';
-import BigPanelCard from '../bigscreen/BigPanelCard.vue';
-import BigScreenSelector from '../bigscreen/BigScreenSelector.vue';
-import leftBg from '@/assets/imgs/echarts/合格证/Frame 58_bg.png';
-import iconOrg from '@/assets/imgs/echarts/检测任务/68.png';
-import iconFactory from '@/assets/imgs/echarts/检测任务/69.png';
+import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { Echart } from '@/components/Echart'
+import BigPanelCard from '../bigscreen/BigPanelCard.vue'
+import BigScreenSelector from '../bigscreen/BigScreenSelector.vue'
+import leftBg from '@/assets/imgs/echarts/合格证/Frame 58_bg.png'
+import iconOrg from '@/assets/imgs/echarts/检测任务/68.png'
+import iconFactory from '@/assets/imgs/echarts/检测任务/69.png'
 import {
   getFastCategoryDistribution,
   getFastOverview,
   type DashboardFastOverviewRespVO,
   type FastCategoryDistributionRespVO
-} from '@/api/agri/dashboard/fast';
-import { getBigScreenQueryParams, subscribeBigScreenRefresh } from '../bigscreen/config';
+} from '@/api/agri/dashboard/fast'
+import { getBigScreenQueryParams, subscribeBigScreenRefresh } from '../bigscreen/config'
 
-const overview = ref<DashboardFastOverviewRespVO>({});
-const categoryDistribution = ref<FastCategoryDistributionRespVO[]>([]);
+const overview = ref<DashboardFastOverviewRespVO>({})
+const categoryDistribution = ref<FastCategoryDistributionRespVO[]>([])
 const categoryColors = [
   '#3f6dff',
   '#ffb22c',
@@ -80,50 +79,121 @@ const categoryColors = [
   '#8ad64c',
   '#7d60ff',
   '#ff8a34'
-];
+]
 
 const overviewData = computed(() => [
-  { label: '样品批次', value: Number(overview.value.sampleBatchCount || 0), unit: '', type: 'blue' },
-  { label: '检测项次', value: Number(overview.value.detectionItemCount || 0), unit: '', type: 'green' },
+  {
+    label: '样品批次',
+    value: Number(overview.value.sampleBatchCount || 0),
+    unit: '',
+    type: 'blue'
+  },
+  {
+    label: '检测项次',
+    value: Number(overview.value.detectionItemCount || 0),
+    unit: '',
+    type: 'green'
+  },
   {
     label: '检测项阳性率',
     value: Number(overview.value.itemPositiveRate || 0),
     unit: '%',
     type: 'cyan'
   }
-]);
+])
 
 const subjectData = computed(() => [
   { label: '生产经营主体', value: Number(overview.value.enterpriseCount || 0), icon: iconOrg },
   { label: '农产品品种', value: Number(overview.value.productVarietyCount || 0), icon: iconFactory }
-]);
+])
+
+type CategoryDistributionResponse =
+  | FastCategoryDistributionRespVO[]
+  | {
+      list?: FastCategoryDistributionRespVO[]
+      rows?: FastCategoryDistributionRespVO[]
+      records?: FastCategoryDistributionRespVO[]
+      data?: FastCategoryDistributionRespVO[] | { list?: FastCategoryDistributionRespVO[] }
+    }
+
+const normalizeCategoryDistribution = (data: CategoryDistributionResponse | null | undefined) => {
+  if (Array.isArray(data)) return data
+  if (!data || typeof data !== 'object') return []
+
+  const candidates = [
+    data.list,
+    data.rows,
+    data.records,
+    Array.isArray(data.data) ? data.data : undefined,
+    !Array.isArray(data.data) ? data.data?.list : undefined
+  ]
+  return (
+    candidates.find((item): item is FastCategoryDistributionRespVO[] => Array.isArray(item)) || []
+  )
+}
+
+const getCategoryName = (item: FastCategoryDistributionRespVO) =>
+  item.category ||
+  item.categoryName ||
+  item.productCategoryName ||
+  item.productCategory ||
+  item.categoryTypeName ||
+  item.typeName ||
+  item.label ||
+  item.name ||
+  '--'
+
+const toNumber = (value: unknown) => {
+  if (value === undefined || value === null || value === '') return 0
+  const normalized = typeof value === 'string' ? value.replace(/,/g, '') : value
+  const numericValue = Number(normalized)
+  return Number.isFinite(numericValue) ? numericValue : 0
+}
+
+const getCategoryValue = (item: FastCategoryDistributionRespVO) => {
+  const value =
+    item.sampleCount ??
+    item.detectionCount ??
+    item.count ??
+    item.statValue ??
+    item.value ??
+    item.total ??
+    item.totalCount ??
+    item.sampleNum ??
+    item.quantity ??
+    item.num ??
+    0
+  return toNumber(value)
+}
 
 const loadOverview = async () => {
   try {
-    const data = await getFastOverview(getBigScreenQueryParams());
-    overview.value = data || {};
+    const data = await getFastOverview(getBigScreenQueryParams())
+    overview.value = data || {}
   } catch (error) {
-    console.error('加载快速检测概览失败', error);
-    overview.value = {};
+    console.error('加载快速检测概览失败', error)
+    overview.value = {}
   }
-};
+}
 
 const categoryItems = computed(() =>
   [...categoryDistribution.value]
     .map((item) => ({
-      name: item.category || '--',
-      value: Number(item.sampleCount || 0)
+      name: getCategoryName(item),
+      value: getCategoryValue(item)
     }))
+    .filter((item) => item.name !== '--')
     .sort((a, b) => b.value - a.value)
     .map((item, index) => ({
       ...item,
       color: categoryColors[index % categoryColors.length]
     }))
-);
+)
 
-const pieItems = computed(() => categoryItems.value.filter((item) => item.value > 0));
+const pieItems = computed(() => categoryItems.value.filter((item) => item.value > 0))
 
 const categoryPieOption = computed(() => ({
+  animation: false,
   tooltip: {
     trigger: 'item',
     backgroundColor: 'rgba(6, 18, 42, 0.92)',
@@ -134,26 +204,57 @@ const categoryPieOption = computed(() => ({
   series: [
     {
       type: 'pie',
-      radius: ['42%', '62%'],
-      center: ['38%', '50%'],
+      radius: ['50%', '62%'],
+      center: ['44%', '50%'],
+      silent: true,
+      z: 0,
+      label: { show: false },
+      labelLine: { show: false },
+      itemStyle: {
+        borderColor: 'rgba(7, 16, 38, 0.96)',
+        borderWidth: 5,
+        opacity: 0.22,
+        shadowBlur: 10,
+        shadowColor: 'rgba(33, 151, 255, 0.38)'
+      },
+      data: pieItems.value.map((item) => ({
+        name: item.name,
+        value: item.value,
+        itemStyle: {
+          color: item.color
+        }
+      }))
+    },
+    {
+      type: 'pie',
+      radius: ['32%', '50%'],
+      center: ['44%', '50%'],
       minAngle: 6,
       avoidLabelOverlap: true,
+      z: 2,
       label: {
         show: true,
         color: '#d6eefe',
-        fontSize: 12,
-        formatter: (params: { name: string; value: number }) =>
-          params.value > 0 ? `{name|${params.name}}\n{value|${params.value}}` : '',
+        fontSize: 13,
+        formatter: (params: { name: string; value: number; dataIndex: number }) =>
+          params.value > 0
+            ? `{name|${params.name}}\n{value${params.dataIndex}|${params.value}}`
+            : '',
         rich: {
-          name: { color: '#d6eefe', fontSize: 12, lineHeight: 16 },
-          value: { color: '#57e2ff', fontSize: 12, lineHeight: 16, fontWeight: 700 }
+          name: { color: '#d6eefe', fontSize: 13, lineHeight: 17, fontWeight: 700 },
+          ...Object.fromEntries(
+            pieItems.value.map((item, index) => [
+              `value${index}`,
+              { color: item.color, fontSize: 13, lineHeight: 17, fontWeight: 700 }
+            ])
+          )
         }
       },
       labelLine: {
         show: true,
-        length: 14,
-        length2: 18,
-        lineStyle: { color: 'rgba(255,255,255,0.85)', width: 1.2 }
+        length: 10,
+        length2: 15,
+        lineStyle: { color: 'rgba(232, 244, 255, 0.92)', width: 1.5 }
       },
       itemStyle: {
         borderColor: 'rgba(7, 16, 38, 0.96)',
@@ -165,39 +266,39 @@ const categoryPieOption = computed(() => ({
         name: item.name,
         value: item.value,
         itemStyle: {
-          color: new echarts.graphic.LinearGradient(0, 0, 1, 1, [
-            { offset: 0, color: item.color },
-            { offset: 1, color: 'rgba(15, 52, 95, 0.9)' }
-          ])
+          color: item.color
+        },
+        labelLine: {
+          lineStyle: { color: 'rgba(232, 244, 255, 0.92)' }
         }
       }))
     }
   ]
-}));
+}))
 
 const loadCategoryDistribution = async () => {
   try {
-    const data = await getFastCategoryDistribution(getBigScreenQueryParams());
-    categoryDistribution.value = Array.isArray(data) ? data : [];
+    const data = await getFastCategoryDistribution(getBigScreenQueryParams())
+    categoryDistribution.value = normalizeCategoryDistribution(data as CategoryDistributionResponse)
   } catch (error) {
-    console.error('加载快速检测品类分布失败', error);
-    categoryDistribution.value = [];
+    console.error('加载快速检测品类分布失败', error)
+    categoryDistribution.value = []
   }
-};
+}
 
 onMounted(() => {
-  loadOverview();
-  loadCategoryDistribution();
-});
+  loadOverview()
+  loadCategoryDistribution()
+})
 
 const disposeRefresh = subscribeBigScreenRefresh(() => {
-  loadOverview();
-  loadCategoryDistribution();
-});
+  loadOverview()
+  loadCategoryDistribution()
+})
 
 onUnmounted(() => {
-  disposeRefresh();
-});
+  disposeRefresh()
+})
 </script>
 
 <style scoped lang="scss">
@@ -215,7 +316,6 @@ onUnmounted(() => {
   gap: 12px;
   padding: 10px 4px;
 }
-
 
 .overview-card {
   position: relative;
@@ -376,7 +476,6 @@ onUnmounted(() => {
       pointer-events: none;
     }
   }
-
 }
 
 .separator {
@@ -421,7 +520,9 @@ onUnmounted(() => {
       inset: 0;
       border: 2px solid rgba(0, 218, 255, 0.8);
       border-radius: 50%;
-      box-shadow: 0 0 15px rgba(0, 218, 255, 0.6), inset 0 0 10px rgba(0, 218, 255, 0.4);
+      box-shadow:
+        0 0 15px rgba(0, 218, 255, 0.6),
+        inset 0 0 10px rgba(0, 218, 255, 0.4);
     }
 
     .ring-2 {
@@ -436,71 +537,71 @@ onUnmounted(() => {
 
 .category-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 210px;
+  grid-template-columns: minmax(0, 1fr) 142px;
   align-items: center;
-  gap: 12px;
+  gap: 6px;
   height: 100%;
   min-height: 0;
+  padding: 0 24px 0 10px;
 }
 
 .pie-container {
   min-width: 0;
-  height: 230px;
-  padding-top: 4px;
+  height: 100%;
+  min-height: 0;
 }
 
 .category-legend {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  height: 230px;
+  padding: 8px 0;
+  gap: 8px;
+  height: 100%;
   min-height: 0;
+  overflow-x: hidden;
   overflow-y: auto;
-  padding-right: 6px;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 
   &::-webkit-scrollbar {
-    width: 6px;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: rgba(65, 190, 255, 0.5);
-    border-radius: 999px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: rgba(8, 18, 42, 0.35);
+    display: none;
+    width: 0;
+    height: 0;
   }
 }
 
 .legend-row {
   display: grid;
-  grid-template-columns: 12px minmax(0, 1fr) auto;
+  grid-template-columns: 14px minmax(0, 1fr);
   align-items: center;
-  gap: 12px;
-  min-height: 48px;
-  padding: 0 16px;
-  border: 1px solid rgba(52, 116, 195, 0.55);
-  background: linear-gradient(90deg, rgba(23, 51, 92, 0.78), rgba(10, 24, 56, 0.52));
-  box-shadow: inset 0 0 16px rgba(66, 159, 255, 0.1);
+  gap: 10px;
+  min-height: 22px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 2px;
-  box-shadow: 0 0 8px rgba(87, 226, 255, 0.28);
+  width: 14px;
+  height: 14px;
+  border-radius: 0;
+  box-shadow: 0 0 8px rgba(87, 226, 255, 0.22);
 }
 
 .name {
   min-width: 0;
-  color: #d6eefe;
+  color: #cdd9df;
   font-size: 14px;
+  font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.value {
+.legend-row .value {
+  display: none;
   color: #57e2ff;
   font-family: 'DIN Alternate', 'Inter', sans-serif;
   font-size: 14px;

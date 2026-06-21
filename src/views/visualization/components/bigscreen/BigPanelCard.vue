@@ -5,14 +5,8 @@
         <h3 class="panel-title">{{ title }}</h3>
       </div>
       <div v-if="tabs.length" class="panel-tabs">
-        <button
-          v-for="tab in tabs"
-          :key="tab"
-          class="panel-tab"
-          :class="{ active: tab === currentActiveTab }"
-          type="button"
-          @click="handleTabClick(tab)"
-        >
+        <button v-for="tab in tabs" :key="tab" class="panel-tab" :class="{ active: tab === currentActiveTab }"
+          type="button" @click="handleTabClick(tab)">
           {{ tab }}
         </button>
       </div>
@@ -52,8 +46,8 @@ const currentActiveTab = computed(() => props.activeTab || props.tabs[0] || '')
 const headerStyle = computed(() =>
   props.titleBgImage
     ? {
-        backgroundImage: `url(${props.titleBgImage})`
-      }
+      backgroundImage: `url('${props.titleBgImage}')`
+    }
     : undefined
 )
 
@@ -82,14 +76,12 @@ const handleTabClick = (tab: string) => {
     right: 0;
     bottom: 0;
     height: 2px;
-    background: linear-gradient(
-      90deg,
-      rgba(32, 51, 159, 0) 0%,
-      rgba(32, 45, 159, 1) 41%,
-      rgba(133, 151, 229, 1) 51%,
-      rgba(32, 62, 159, 1) 63%,
-      rgba(32, 45, 159, 0) 100%
-    );
+    background: linear-gradient(90deg,
+        rgba(32, 51, 159, 0) 0%,
+        rgba(32, 45, 159, 1) 41%,
+        rgba(133, 151, 229, 1) 51%,
+        rgba(32, 62, 159, 1) 63%,
+        rgba(32, 45, 159, 0) 100%);
     pointer-events: none;
   }
 }
@@ -103,6 +95,13 @@ const handleTabClick = (tab: string) => {
   justify-content: space-between;
   background: url('../../../../assets/imgs/echarts/首页/bg_fxgg.png') no-repeat center center;
   background-size: 100% 100%;
+}
+
+.panel-header-bottom {
+  .panel-header {
+    background: url('../../../../assets/imgs/echarts/检测任务/rwjcfx.png') no-repeat center center !important;
+    background-size: 100% 46px !important;
+  }
 }
 
 /* 中间特殊布局适配 */
@@ -119,6 +118,8 @@ const handleTabClick = (tab: string) => {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    background: url('../../../../assets/imgs/echarts/首页/nclfx_bg.png') no-repeat left center;
+    background-size: 100% 46px;
   }
 }
 

@@ -122,10 +122,34 @@ const categoryPieOption = computed(() => ({
   series: [
     {
       type: 'pie',
-      radius: ['42%', '62%'],
-      center: ['38%', '50%'],
+      radius: ['50%', '62%'],
+      center: ['44%', '50%'],
+      silent: true,
+      z: 0,
+      label: { show: false },
+      labelLine: { show: false },
+      itemStyle: {
+        borderColor: 'rgba(7, 16, 38, 0.96)',
+        borderWidth: 5,
+        opacity: 0.22,
+        shadowBlur: 10,
+        shadowColor: 'rgba(33, 151, 255, 0.38)'
+      },
+      data: pieItems.value.map((item) => ({
+        name: item.name,
+        value: item.value,
+        itemStyle: {
+          color: item.color
+        }
+      }))
+    },
+    {
+      type: 'pie',
+      radius: ['32%', '50%'],
+      center: ['44%', '50%'],
       minAngle: 6,
       avoidLabelOverlap: true,
+      z: 2,
       label: {
         show: true,
         color: '#d6eefe',
@@ -139,8 +163,8 @@ const categoryPieOption = computed(() => ({
       },
       labelLine: {
         show: true,
-        length: 14,
-        length2: 18,
+        length: 10,
+        length2: 14,
         lineStyle: { color: 'rgba(255,255,255,0.85)', width: 1.2 }
       },
       itemStyle: {
@@ -149,14 +173,11 @@ const categoryPieOption = computed(() => ({
         shadowBlur: 10,
         shadowColor: 'rgba(0, 0, 0, 0.2)'
       },
-          data: pieItems.value.map((item) => ({
-            name: item.name,
-            value: item.value,
-            itemStyle: {
-          color: new echarts.graphic.LinearGradient(0, 0, 1, 1, [
-            { offset: 0, color: item.color },
-            { offset: 1, color: 'rgba(15, 52, 95, 0.9)' }
-          ])
+      data: pieItems.value.map((item) => ({
+        name: item.name,
+        value: item.value,
+        itemStyle: {
+          color: item.color
         }
       }))
     }
@@ -388,54 +409,51 @@ onUnmounted(() => {
 }
 
 .category-legend {
-  height: 230px;
+  height: 100%;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  padding: 8px 0;
+  gap: 8px;
   overflow-y: auto;
   padding-right: 6px;
 }
 
 .category-legend::-webkit-scrollbar {
-  width: 6px;
-}
-
-.category-legend::-webkit-scrollbar-thumb {
-  background: rgba(76, 233, 255, 0.35);
-  border-radius: 999px;
-}
-
-.category-legend::-webkit-scrollbar-track {
-  background: rgba(9, 26, 52, 0.35);
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 .legend-row {
   display: grid;
-  grid-template-columns: 12px minmax(0, 1fr) auto;
+  grid-template-columns: 14px minmax(0, 1fr);
   align-items: center;
   gap: 10px;
-  padding: 6px 10px;
-  background: rgba(11, 44, 88, 0.45);
-  border: 1px solid rgba(39, 110, 196, 0.35);
+  min-height: 22px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
 
   .dot {
-    width: 12px;
-    height: 12px;
-    border-radius: 2px;
+    width: 14px;
+    height: 14px;
+    border-radius: 0;
+    box-shadow: 0 0 8px rgba(87, 226, 255, 0.22);
   }
 
   .name {
-    color: #bbdbfa;
-    font-size: 15px;
+    color: #cdd9df;
+    font-size: 14px;
+    font-weight: 600;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
 
   .value {
-    color: #4ce9ff;
-    font-weight: 700;
-    font-size: 15px;
+    display: none;
   }
 }
 

@@ -1,5 +1,10 @@
 <template>
   <header class="screen-header">
+    <button class="back-btn" type="button" aria-label="返回" @click="handleBack">
+      <el-icon class="back-icon">
+        <Back />
+      </el-icon>
+    </button>
     <div class="header-side left">
       <!-- 数据配置 -->
       <div v-if="showDataConfig" class="data-config-btn" @click="toggleConfig">
@@ -10,14 +15,9 @@
         <div class="caret-icon"></div>
       </div>
 
-      <div
-        class="nav-btn"
-        v-for="item in leftMenus"
-        :key="item.key"
-        :class="{ active: activeMenu === item.key }"
+      <div class="nav-btn" v-for="item in leftMenus" :key="item.key" :class="{ active: activeMenu === item.key }"
         :style="{ backgroundImage: `url(${activeMenu === item.key ? item.activeBg : item.bg})` }"
-        @click="handleMenuClick(item.key)"
-      >
+        @click="handleMenuClick(item.key)">
         <span class="btn-label"></span>
       </div>
       <!-- 数据配置弹窗 -->
@@ -34,37 +34,18 @@
           <div class="form-item">
             <div class="item-label">数据时间范围</div>
             <div class="field-shell">
-              <el-date-picker
-                v-model="configForm.timeRange"
-                type="daterange"
-                value-format="YYYY-MM-DD"
-                range-separator="至"
-                start-placeholder="开始日期"
-                end-placeholder="结束日期"
-                size="large"
-                :teleported="false"
-                class="custom-date-picker"
-                popper-class="big-screen-date-popper"
-              />
+              <el-date-picker v-model="configForm.timeRange" type="daterange" value-format="YYYY-MM-DD"
+                range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期" size="large" :teleported="false"
+                class="custom-date-picker" popper-class="big-screen-date-popper" />
             </div>
           </div>
 
           <div class="form-item">
             <div class="item-label">数据地区设置</div>
             <div class="field-shell">
-              <el-cascader
-                v-model="configForm.regionPath"
-                :options="areaOptions"
-                :props="areaCascaderProps"
-                :show-all-levels="false"
-                :teleported="false"
-                separator="-"
-                filterable
-                clearable
-                size="large"
-                class="custom-cascader"
-                popper-class="big-screen-area-popper"
-              />
+              <el-cascader v-model="configForm.regionPath" :options="areaOptions" :props="areaCascaderProps"
+                :show-all-levels="false" :teleported="false" separator="-" filterable clearable size="large"
+                class="custom-cascader" popper-class="big-screen-area-popper" />
             </div>
           </div>
 
@@ -72,13 +53,8 @@
             <div class="item-label">风险公告更新频次</div>
             <div class="frequency-input">
               <span>每</span>
-              <el-input-number
-                v-model="configForm.frequency"
-                :min="1"
-                :controls="false"
-                size="small"
-                class="custom-number-input"
-              />
+              <el-input-number v-model="configForm.frequency" :min="1" :controls="false" size="small"
+                class="custom-number-input" />
               <span>分钟更新一次</span>
             </div>
           </div>
@@ -94,14 +70,9 @@
       <h1>风险监测预警信息化平台</h1>
     </div>
     <div class="header-side right">
-      <div
-        class="nav-btn"
-        v-for="item in rightMenus"
-        :key="item.key"
-        :class="{ active: activeMenu === item.key }"
+      <div class="nav-btn" v-for="item in rightMenus" :key="item.key" :class="{ active: activeMenu === item.key }"
         :style="{ backgroundImage: `url(${activeMenu === item.key ? item.activeBg : item.bg})` }"
-        @click="handleMenuClick(item.key)"
-      >
+        @click="handleMenuClick(item.key)">
         <span class="btn-label"></span>
       </div>
       <div class="assistant-badge">
@@ -119,7 +90,7 @@
 import { computed, onMounted, onUnmounted, reactive, ref, toRefs } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { List, Aim, Checked, Bell } from '@element-plus/icons-vue'
+import { List, Aim, Checked, Bell, Back } from '@element-plus/icons-vue'
 import { getAreaTree } from '@/api/system/area'
 import botImg from '@/assets/imgs/echarts/bot.png'
 import taskBg from '@/assets/imgs/echarts/首页/jcrw_nor.png'
@@ -192,9 +163,12 @@ const ensureAreaOptionsLoaded = async () => {
     const cachedConfig = getBigScreenConfig()
     if (
       !isBigScreenSuperAdmin() &&
-      (!cachedConfig.regionPath.length || !isPathInRootArea(cachedConfig.regionPath, userDeptAreaCode.value))
+      (!cachedConfig.regionPath.length ||
+        !isPathInRootArea(cachedConfig.regionPath, userDeptAreaCode.value))
     ) {
-      configForm.regionPath = userDeptAreaCode.value ? resolvePathByAreaCode(userDeptAreaCode.value) : []
+      configForm.regionPath = userDeptAreaCode.value
+        ? resolvePathByAreaCode(userDeptAreaCode.value)
+        : []
     } else if (cachedConfig.regionPath.length) {
       configForm.regionPath = [...cachedConfig.regionPath]
     }
@@ -261,7 +235,8 @@ const limitTreeByRootArea = (tree: AreaNodeRespVO[], rootAreaCode?: string) => {
   return rootNode ? [rootNode] : tree
 }
 
-const resolvePathByAreaCode = (areaCode: number | string) => findPathById(areaCode, originalAreaOptions.value)
+const resolvePathByAreaCode = (areaCode: number | string) =>
+  findPathById(areaCode, originalAreaOptions.value)
 
 const isPathInRootArea = (path: number[], rootAreaCode?: string) => {
   if (!rootAreaCode) return true
@@ -347,6 +322,14 @@ const handleMenuClick = (key: '' | 'task' | 'inspect' | 'cert' | 'warn') => {
   emit('update:activeMenu', key)
 }
 
+const handleBack = () => {
+  if (window.history.length > 1) {
+    router.back()
+    return
+  }
+  router.push('/index')
+}
+
 onMounted(() => {
   syncConfigForm(getBigScreenConfig())
   startRefreshTimer(getBigScreenConfig().frequency)
@@ -366,6 +349,40 @@ onUnmounted(() => {
   align-items: center;
   background: url('@/assets/imgs/echarts/首页/tiile_bg.png') no-repeat center center;
   background-size: 100% 100%;
+  position: relative;
+}
+
+.back-btn {
+  position: absolute;
+  left: 38px;
+  top: 9px;
+  z-index: 2;
+  width: 76px;
+  height: 56px;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  appearance: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover {
+    .back-icon {
+      filter: drop-shadow(0 0 12px rgba(74, 238, 241, 0.75));
+      transform: translateX(-2px);
+    }
+  }
+}
+
+.back-icon {
+  color: #4aeef1;
+  font-size: 40px;
+  filter: drop-shadow(0 0 8px rgba(31, 234, 241, 0.24));
+  transition:
+    filter 0.18s ease,
+    transform 0.18s ease;
 }
 
 .header-side {
@@ -638,21 +655,17 @@ onUnmounted(() => {
   }
 
   .cancel-btn {
-    background: linear-gradient(
-      180deg,
-      rgba(18, 44, 92, 0.92) 0%,
-      rgba(10, 28, 68, 0.92) 100%
-    ) !important;
+    background: linear-gradient(180deg,
+        rgba(18, 44, 92, 0.92) 0%,
+        rgba(10, 28, 68, 0.92) 100%) !important;
     border: 1px solid rgba(57, 141, 231, 0.75) !important;
     color: #c4e1ff !important;
     box-shadow: inset 0 0 0 1px rgba(67, 196, 255, 0.08);
 
     &:hover {
-      background: linear-gradient(
-        180deg,
-        rgba(22, 56, 114, 0.95) 0%,
-        rgba(13, 36, 84, 0.95) 100%
-      ) !important;
+      background: linear-gradient(180deg,
+          rgba(22, 56, 114, 0.95) 0%,
+          rgba(13, 36, 84, 0.95) 100%) !important;
     }
   }
 }

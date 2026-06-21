@@ -1,12 +1,7 @@
 <template>
   <section class="center-section">
-    <BigPanelCard
-      class="big-panel-center"
-      title="合格证地区分布图"
-      :tabs="['开具', '存证']"
-      v-model:active-tab="mapTab"
-      :bg-image="mapBg"
-    >
+    <BigPanelCard class="big-panel-center" title="合格证地区分布图" :tabs="['开具', '存证']" v-model:active-tab="mapTab"
+      :bg-image="mapBg">
       <div class="map-area">
         <Map mode="certificate" :certificate-tab="mapTab" />
       </div>
@@ -49,7 +44,7 @@ const createTrendOption = (
   traceData: number[]
 ) => ({
   animation: false,
-  grid: { left: 42, right: 88, top: 28, bottom: 24 },
+  grid: { left: 52, right: 96, top: 38, bottom: 36 },
   tooltip: {
     trigger: 'axis',
     backgroundColor: 'rgba(6, 18, 42, 0.92)',
@@ -58,8 +53,8 @@ const createTrendOption = (
   },
   legend: {
     orient: 'vertical',
-    right: 8,
-    top: 30,
+    right: 16,
+    top: 52,
     itemWidth: 18,
     itemHeight: 2,
     textStyle: { color: '#8fb6da', fontSize: 12 },
@@ -75,7 +70,7 @@ const createTrendOption = (
   },
   yAxis: {
     type: 'value',
-    axisLabel: { color: 'rgba(198, 219, 239, 0.76)', fontSize: 12, formatter: '{value}%' },
+    axisLabel: { color: 'rgba(198, 219, 239, 0.76)', fontSize: 12 },
     axisTick: { show: false },
     axisLine: { show: false },
     splitLine: { lineStyle: { color: 'rgba(45, 106, 184, 0.28)', type: 'dashed' } }
@@ -84,7 +79,7 @@ const createTrendOption = (
     {
       name: '开具次数',
       type: 'line',
-      smooth: true,
+      smooth: false,
       symbol: 'circle',
       symbolSize: 6,
       itemStyle: { color: '#55e8ff' },
@@ -100,7 +95,7 @@ const createTrendOption = (
     {
       name: '存证次数',
       type: 'line',
-      smooth: true,
+      smooth: false,
       symbolSize: 5,
       lineStyle: { color: '#7bd644', width: 2 },
       itemStyle: { color: '#7bd644' },
@@ -109,7 +104,7 @@ const createTrendOption = (
     {
       name: '溯源次数',
       type: 'line',
-      smooth: true,
+      smooth: false,
       symbolSize: 5,
       lineStyle: { color: '#7d60ff', width: 2 },
       itemStyle: { color: '#7d60ff' },
@@ -164,10 +159,11 @@ onUnmounted(() => {
 <style scoped lang="scss">
 .center-section {
   display: grid;
-  grid-template-rows: minmax(0, 1fr) 178px;
+  grid-template-rows: minmax(0, 2.18fr) minmax(0, 1fr);
   gap: 10px;
   min-width: 0;
   min-height: 0;
+  height: 100%;
 }
 
 .map-area {
@@ -208,6 +204,10 @@ onUnmounted(() => {
 }
 
 .trend-head {
+  position: absolute;
+  top: 6px;
+  right: 12px;
+  z-index: 2;
   text-align: right;
   height: 16px;
   padding: 2px 12px 0;

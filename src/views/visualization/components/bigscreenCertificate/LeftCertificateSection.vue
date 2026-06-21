@@ -17,7 +17,7 @@
             <div class="metric-content">
               <div class="card-label">{{ item.label }}</div>
               <div class="num-box">
-                <span class="value-text">{{ item.value }}</span>
+                <span class="value-text">{{ item.value ?? 0 }}</span>
                 <span class="unit-text">{{ item.unit }}</span>
               </div>
             </div>
@@ -32,7 +32,7 @@
           <div class="item-inner">
             <p class="label">{{ item.label }}</p>
             <div class="value-container">
-              <span class="value">{{ item.value }}</span>
+              <span class="value">{{ item.value ?? 0 }}</span>
               <img class="holographic-img" src="@/assets/imgs/echarts/合格证/bf67.png" />
             </div>
           </div>
@@ -41,7 +41,7 @@
       </div>
     </BigPanelCard>
 
-    <BigPanelCard title="各品类合格证开具量" :bg-image="leftBg">
+    <BigPanelCard class="category-panel" title="各品类合格证开具量" :bg-image="leftBg">
       <div class="category-layout">
         <div class="pie-container">
           <Echart :options="categoryPieOption" height="100%" width="100%" />
@@ -86,16 +86,27 @@ const subjectArchiveStats = ref({
   personalCount: 0
 })
 const categoryDistribution = ref<CertificateCategoryDistributionRespVO[]>([])
-const categoryColors = [
-  '#3f6dff',
-  '#ffb22c',
-  '#3ba4ff',
-  '#d8efff',
-  '#39e3e7',
-  '#8ad64c',
-  '#7d60ff',
-  '#ff8a34'
-]
+const fallbackCategoryColors = ['#7d60ff', '#ff8a34', '#8ad64c', '#4f7cff', '#b8e3ff']
+const categoryColorMap: Record<string, string> = {
+  蔬菜: '#3f6dff',
+  水果: '#ffb22c',
+  茶叶: '#3ba4ff',
+  畜禽: '#d8efff',
+  水产: '#39e3e7',
+  其他: '#74608c'
+}
+
+const hexToRgba = (hex: string, alpha: number) => {
+  const value = hex.replace('#', '')
+  if (value.length !== 6) return hex
+  const r = Number.parseInt(value.slice(0, 2), 16)
+  const g = Number.parseInt(value.slice(2, 4), 16)
+  const b = Number.parseInt(value.slice(4, 6), 16)
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`
+}
+
+const getCategoryColor = (name: string, index: number) =>
+  categoryColorMap[name] || fallbackCategoryColors[index % fallbackCategoryColors.length]
 
 const overviewData = computed(() => [
   { label: '合格证开具', value: Number(overview.value.issueCount || 0), unit: '份', type: 'blue' },
@@ -131,27 +142,30 @@ const selectorLabel = computed(() => {
   return `${start ? `${start.slice(0, 4)}年度` : '年度'}${region}农产品质量安全风险预警【${start}-${end}】`
 })
 
-const supervisorOrgCount = computed(
-  () =>
-    Number(overview.value.supervisorCount ?? dashboardOverview.value.supervisorCount ?? 0) +
-    Number(overview.value.detectionOrgCount ?? dashboardOverview.value.detectionOrgCount ?? 0)
-)
-const enterpriseCount = computed(() =>
-  Number(
+const supervisorOrgCount = computed(() => {
+  const supervisor = Number(overview.value.supervisorCount ?? dashboardOverview.value.supervisorCount ?? 0)
+  const detection = Number(overview.value.detectionOrgCount ?? dashboardOverview.value.detectionOrgCount ?? 0)
+  const sum = (isNaN(supervisor) ? 0 : supervisor) + (isNaN(detection) ? 0 : detection)
+  return isNaN(sum) ? 0 : sum
+})
+const enterpriseCount = computed(() => {
+  const count = Number(
     overview.value.enterpriseCount ??
       subjectArchiveStats.value.enterpriseCount ??
       dashboardOverview.value.enterpriseCount ??
       0
   )
-)
-const personalCount = computed(() =>
-  Number(
+  return isNaN(count) ? 0 : count
+})
+const personalCount = computed(() => {
+  const count = Number(
     overview.value.personalCount ??
       overview.value.individualCount ??
       subjectArchiveStats.value.personalCount ??
       0
   )
-)
+  return isNaN(count) ? 0 : count
+})
 
 const subjectData = computed(() => [
   {
@@ -200,73 +214,132 @@ const loadOverviewData = async () => {
   }
 }
 
-const categoryItems = computed(() =>
-  [...categoryDistribution.value]
-    .map((item) => ({
-      name: item.category || '--',
-      value: Number(item.issueCount || 0)
-    }))
+const categoryItems = computed(() => {
+  const defaultItems = [
+    { name: '蔬菜', value: 0 },
+    { name: '水果', value: 0 },
+    { name: '茶叶', value: 0 },
+    { name: '畜禽', value: 0 },
+    { name: '水产', value: 0 }
+  ]
+  const realData = categoryDistribution.value.reduce((map, item) => {
+    const name = item.category || '--'
+    if (name !== '其他' && name !== '--') {
+      map[name] = Number(item.issueCount || 0)
+    }
+    return map
+  }, {} as Record<string, number>)
+
+  return defaultItems
+    .map((d) => {
+      const realVal = realData[d.name] || 0
+      return {
+        name: d.name,
+        value: realVal, // 使用真实接口请求的数据，默认为 0
+        color: categoryColorMap[d.name] || '#7d60ff'
+      }
+    })
     .sort((a, b) => b.value - a.value)
-    .map((item, index) => ({
-      ...item,
-      color: categoryColors[index % categoryColors.length]
-    }))
-)
+})
 
 const pieItems = computed(() => categoryItems.value.filter((item) => item.value > 0))
 
-const categoryPieOption = computed(() => ({
-  animation: false,
-  tooltip: {
-    trigger: 'item',
-    backgroundColor: 'rgba(6, 18, 42, 0.92)',
-    borderColor: 'rgba(87, 226, 255, 0.35)',
-    textStyle: { color: '#dff7ff' },
-    formatter: ({ name, value }: { name: string; value: number }) => `${name}<br/>${value}`
-  },
-  series: [
-    {
-      type: 'pie',
-      radius: ['42%', '64%'],
-      center: ['48%', '52%'],
-      minAngle: 6,
-      avoidLabelOverlap: true,
-      label: {
-        show: true,
-        color: '#d6eefe',
+const categoryPieOption = computed(() => {
+  const labelRich = pieItems.value.reduce(
+    (rich, item, index) => ({
+      ...rich,
+      [`value${index}`]: {
+        color: item.color,
         fontSize: 12,
-        formatter: (params: { name: string; value: number }) =>
-          params.value > 0 ? `{name|${params.name}}\n{value|${params.value}}` : '',
-        rich: {
-          name: { color: '#d6eefe', fontSize: 12, lineHeight: 16 },
-          value: { color: '#57e2ff', fontSize: 12, lineHeight: 16, fontWeight: 700 }
-        }
-      },
-      labelLine: {
-        show: true,
-        length: 14,
-        length2: 18,
-        lineStyle: { color: 'rgba(255,255,255,0.85)', width: 1.2 }
-      },
-      itemStyle: {
-        borderColor: 'rgba(7, 16, 38, 0.96)',
-        borderWidth: 4,
-        shadowBlur: 10,
-        shadowColor: 'rgba(0, 0, 0, 0.2)'
-      },
-      data: pieItems.value.map((item) => ({
-        name: item.name,
-        value: item.value,
-        itemStyle: {
-          color: new echarts.graphic.LinearGradient(0, 0, 1, 1, [
-            { offset: 0, color: item.color },
-            { offset: 1, color: 'rgba(15, 52, 95, 0.9)' }
-          ])
-        }
-      }))
+        lineHeight: 16,
+        fontWeight: 700
+      }
+    }),
+    {
+      name: { color: '#d6eefe', fontSize: 12, lineHeight: 16 }
     }
-  ]
-}))
+  )
+
+  return {
+    animation: false,
+    tooltip: {
+      trigger: 'item',
+      backgroundColor: 'rgba(6, 18, 42, 0.92)',
+      borderColor: 'rgba(87, 226, 255, 0.35)',
+      textStyle: { color: '#dff7ff' },
+      formatter: ({ name, value }: { name: string; value: number }) => `${name}<br/>${value}`
+    },
+    series: [
+      {
+        type: 'pie',
+        radius: ['64%', '78%'],
+        center: ['49%', '52%'],
+        minAngle: 6,
+        silent: true,
+        hoverAnimation: false,
+        label: { show: false },
+        labelLine: { show: false },
+        itemStyle: {
+          borderColor: 'rgba(7, 16, 38, 0.96)',
+          borderWidth: 4,
+          shadowBlur: 16
+        },
+        data: pieItems.value.map((item) => ({
+          name: item.name,
+          value: item.value,
+          itemStyle: {
+            color: new echarts.graphic.LinearGradient(0, 0, 1, 1, [
+              { offset: 0, color: hexToRgba(item.color, 0.3) },
+              { offset: 1, color: hexToRgba(item.color, 0.12) }
+            ]),
+            shadowColor: hexToRgba(item.color, 0.26)
+          }
+        })),
+        z: 1
+      },
+      {
+        type: 'pie',
+        radius: ['43%', '64%'],
+        center: ['49%', '52%'],
+        minAngle: 6,
+        avoidLabelOverlap: true,
+        label: {
+          show: true,
+          color: '#d6eefe',
+          fontSize: 12,
+          formatter: (params: { name: string; value: number; dataIndex: number }) =>
+            params.value > 0
+              ? `{name|${params.name}}\n{value${params.dataIndex}|${params.value}}`
+              : '',
+          rich: labelRich
+        },
+        labelLine: {
+          show: true,
+          length: 14,
+          length2: 18,
+          lineStyle: { color: 'rgba(255,255,255,0.85)', width: 1.2 }
+        },
+        itemStyle: {
+          borderColor: 'rgba(7, 16, 38, 0.96)',
+          borderWidth: 4,
+          shadowBlur: 10,
+          shadowColor: 'rgba(0, 0, 0, 0.2)'
+        },
+        data: pieItems.value.map((item) => ({
+          name: item.name,
+          value: item.value,
+          itemStyle: {
+            color: new echarts.graphic.LinearGradient(0, 0, 1, 1, [
+              { offset: 0, color: item.color },
+              { offset: 1, color: hexToRgba(item.color, 0.75) }
+            ])
+          }
+        })),
+        z: 2
+      }
+    ]
+  }
+})
 
 const loadCategoryDistribution = async () => {
   try {
@@ -296,7 +369,14 @@ onUnmounted(() => {
 <style scoped lang="scss">
 .left-section {
   display: grid;
-  grid-template-rows: 42px 10px 345px 20px 233px 20px 302px;
+  grid-template-rows:
+    42px
+    10px
+    minmax(0, 1.18fr)
+    20px
+    minmax(0, 0.79fr)
+    20px
+    minmax(0, 1.03fr);
   row-gap: 0;
   height: 100%;
   min-height: 0;
@@ -312,13 +392,17 @@ onUnmounted(() => {
 
   :deep(.big-screen-selector),
   :deep(.selector-trigger) {
-    width: 455px;
+    width: 100%;
     height: 42px;
   }
 
   :deep(.panel-card) {
     background: transparent;
     box-shadow: none;
+  }
+
+  :deep(.category-panel .panel-body) {
+    overflow: visible;
   }
 
   :deep(.panel-card::after) {
@@ -329,7 +413,9 @@ onUnmounted(() => {
     height: 42px;
     flex-basis: 42px;
     background-image: url('@/assets/imgs/echarts/合格证/erji_bg.png');
-    background-size: 455px 42px;
+    background-repeat: no-repeat;
+    background-position: left center;
+    background-size: 100% 42px;
     padding: 0;
   }
 
@@ -361,8 +447,15 @@ onUnmounted(() => {
 .overview-grid {
   position: relative;
   flex: 1;
-  width: 455px;
+  width: 100%;
   min-height: 0;
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  column-gap: 14px;
+  row-gap: 26px;
+  padding: 32px 18px 28px;
   background:
     linear-gradient(180deg, rgba(0, 2, 31, 0.31) 0%, rgba(0, 2, 31, 0.31) 100%),
     linear-gradient(180deg, rgba(4, 19, 49, 0.18) 0%, rgba(5, 12, 34, 0.04) 100%);
@@ -388,49 +481,45 @@ onUnmounted(() => {
 }
 
 .overview-card {
-  position: absolute;
-  width: 202px;
-  height: 98px;
+  position: relative;
+  width: 100%;
+  height: 100%;
   background-repeat: no-repeat;
-  background-position: 0 0;
-  background-size: 202px 98px;
+  background-position: center center;
+  background-size: 100% 100%;
 
   .card-inner {
-    position: relative;
-    width: 202px;
-    height: 98px;
-    padding: 0;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    height: 100%;
+    box-sizing: border-box;
+    gap: 14px;
   }
 
   .metric-content {
-    position: absolute;
-    left: 54px;
-    top: 10px;
-    width: 148px;
-    height: 87px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 2px;
   }
 
   .card-label {
-    width: 122px;
-    height: 23px;
-    margin: 0 0 0;
+    margin: 0;
     color: #c2d4d4;
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 500;
-    line-height: 23px;
+    line-height: 20px;
     letter-spacing: 0;
     text-align: left;
     text-shadow: none;
   }
 
   .num-box {
-    width: 148px;
-    height: 44px;
     margin-top: 0;
     display: flex;
-    align-items: flex-start;
-    justify-content: flex-start;
-    gap: 0;
+    align-items: baseline;
+    gap: 4px;
 
     .value-text {
       flex: 0 1 auto;
@@ -438,36 +527,32 @@ onUnmounted(() => {
       font-family: 'DIN Black', 'DIN Alternate', 'Inter', sans-serif;
       font-size: 36px;
       font-weight: 900;
-      line-height: 44px;
+      line-height: 40px;
       letter-spacing: 0;
-      background: linear-gradient(180deg, #48c5ff 0%, #e4f5ff 100%);
+      background: linear-gradient(180deg, #8cecff 0%, #2589ff 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       filter: none;
-      margin-left: 0px;
       white-space: nowrap;
     }
 
     .unit-text {
       flex: 0 0 auto;
-      margin-top: 10px;
       color: #c2d4d4;
       font-size: 14px;
       font-weight: 500;
-      line-height: 23px;
+      line-height: 16px;
       opacity: 1;
     }
   }
 
   .icon-box {
-    position: absolute;
-    left: 5px;
-    top: 54px;
     width: 41px;
     height: 23px;
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
 
     img {
       width: 41px;
@@ -480,19 +565,11 @@ onUnmounted(() => {
     .value-text {
       font-size: 32px;
     }
-
-    .unit-text {
-      margin-top: 9px;
-    }
   }
 
   &.value-size-lg {
     .value-text {
       font-size: 28px;
-    }
-
-    .unit-text {
-      margin-top: 8px;
     }
   }
 
@@ -501,33 +578,21 @@ onUnmounted(() => {
     .value-text {
       font-size: 24px;
     }
-
-    .unit-text {
-      margin-top: 7px;
-    }
   }
 
   &.card-1 {
-    left: 18px;
-    top: 32px;
     background-image: url('@/assets/imgs/echarts/合格证/Frame 57_bg.png');
   }
 
   &.card-2 {
-    left: 234px;
-    top: 32px;
     background-image: url('@/assets/imgs/echarts/合格证/Frame 58_bg.png');
   }
 
   &.card-3 {
-    left: 18px;
-    top: 156px;
     background-image: url('@/assets/imgs/echarts/合格证/Frame 59_bg.png');
   }
 
   &.card-4 {
-    left: 234px;
-    top: 156px;
     background-image: url('@/assets/imgs/echarts/合格证/Frame 60_bg.png');
   }
 
@@ -561,32 +626,18 @@ onUnmounted(() => {
   min-height: 0;
   box-sizing: border-box;
   position: relative;
-  display: block;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-content: start;
   height: 100%;
-  padding: 0;
+  padding: 30px 0 0;
   background: url('@/assets/imgs/echarts/合格证/fwzt.png') no-repeat 0 0;
-  background-size: 454px 191px;
+  background-size: 100% 100%;
 }
 
 .subject-item {
-  position: absolute;
-  top: 30px;
+  position: relative;
   height: 87px;
-
-  &:nth-child(1) {
-    left: 0;
-    width: 145px;
-  }
-
-  &:nth-child(2) {
-    left: 174px;
-    width: 101px;
-  }
-
-  &:nth-child(3) {
-    left: 327px;
-    width: 101px;
-  }
 
   .item-inner {
     width: 100%;
@@ -618,57 +669,59 @@ onUnmounted(() => {
     .holographic-img {
       position: absolute;
       top: 37px;
+      left: 50%;
+      width: 115px;
+      height: 68px;
+      transform: translateX(-50%);
       pointer-events: none;
     }
   }
 
   &:nth-child(1) .holographic-img {
-    left: 17px;
     width: 116px;
-    height: 68px;
-  }
-
-  &:nth-child(2) .holographic-img {
-    left: -4px;
-    width: 115px;
-    height: 68px;
-  }
-
-  &:nth-child(3) .holographic-img {
-    left: -7px;
-    width: 115px;
-    height: 68px;
   }
 
   .separator {
     position: absolute;
     top: 34px;
+    right: 0;
     width: 1px;
     height: 59px;
     background: linear-gradient(to bottom, transparent, rgba(255, 255, 255, 0.3), transparent);
-  }
-
-  &:nth-child(1) .separator {
-    left: 145px;
-  }
-
-  &:nth-child(2) .separator {
-    left: 126px;
   }
 }
 
 .category-layout {
   flex: 1;
   box-sizing: border-box;
+  position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 315px) 64px;
+  grid-template-columns: minmax(0, 315px) 76px;
   align-items: stretch;
   gap: 8px;
   height: 100%;
   min-height: 0;
-  padding: 30px 22px 10px;
+  padding: 18px 20px 10px;
   background: url('@/assets/imgs/echarts/合格证/kjl_bg.png') no-repeat 0 0;
-  background-size: 455px 259px;
+  background-size: 100% 100%;
+
+  &::after {
+    content: '';
+    position: absolute;
+    right: 1px;
+    bottom: 0;
+    left: 0;
+    height: 2px;
+    background: linear-gradient(
+      90deg,
+      rgba(32, 51, 159, 0) 0%,
+      rgba(32, 45, 159, 1) 41%,
+      rgba(133, 151, 229, 1) 51%,
+      rgba(32, 62, 159, 1) 63%,
+      rgba(32, 45, 159, 0) 100%
+    );
+    pointer-events: none;
+  }
 }
 
 .pie-container {
@@ -676,17 +729,18 @@ onUnmounted(() => {
   height: 100%;
   min-height: 0;
   padding-top: 0;
+  overflow: visible;
 }
 
 .category-legend {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  height: 128px;
+  height: 142px;
   min-height: 0;
   overflow-y: auto;
   align-self: start;
-  margin-top: 38px;
+  margin-top: 42px;
   padding-right: 0;
 
   &::-webkit-scrollbar {
@@ -732,7 +786,7 @@ onUnmounted(() => {
   text-overflow: ellipsis;
 }
 
-.value {
+.legend-row .value {
   display: none;
 }
 </style>

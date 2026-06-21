@@ -1,18 +1,29 @@
 <template>
   <section class="bottom-section">
-    <BigPanelCard class="big-panel-center" title="任务检测量态势" :bg-image="bottomBg">
-      <Echart :options="leftTrendOption" :height="200" />
+    <BigPanelCard
+      class="big-panel-center"
+      title="任务检测-接收任务工作动态"
+      :tabs="['样品量', '检测量']"
+      v-model:active-tab="leftActiveTab"
+      :bg-image="bottomBg"
+    >
+      <Echart :options="currentLeftTrendOption" :height="200" />
     </BigPanelCard>
 
-    <BigPanelCard class="big-panel-center" title="检测风险态势" :bg-image="bottomBg">
-      <Echart :options="rightTrendOption" :height="200" />
+    <BigPanelCard
+      class="big-panel-center"
+      title="接收任务检测-风险态势"
+      :tabs="['样品阳性率', '检测项阳性率']"
+      v-model:active-tab="rightActiveTab"
+      :bg-image="bottomBg"
+    >
+      <Echart :options="currentRightTrendOption" :height="200" />
     </BigPanelCard>
   </section>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue';
-import echarts from '@/plugins/echarts';
 import { Echart } from '@/components/Echart';
 import BigPanelCard from '../bigscreen/BigPanelCard.vue';
 import bottomBg from '@/assets/imgs/echarts/检测任务/69.png';
@@ -24,10 +35,13 @@ import {
 } from '@/api/agri/dashboard/task';
 import { getBigScreenQueryParams, subscribeBigScreenRefresh } from '../bigscreen/config';
 
+const leftActiveTab = ref('样品量');
+const rightActiveTab = ref('样品阳性率');
 const volumeTrend = ref<TaskVolumeTrendRespVO>({});
 const riskTrend = ref<TaskRiskTrendRespVO>({});
+
 const lineBase = {
-  grid: { left: 52, right: 18, top: 20, bottom: 18 },
+  grid: { left: 48, right: 16, top: 28, bottom: 18 },
   tooltip: {
     trigger: 'axis',
     backgroundColor: 'rgba(6, 18, 42, 0.92)',
@@ -43,7 +57,7 @@ const lineBase = {
   },
   xAxis: {
     type: 'category',
-    boundaryGap: true,
+    boundaryGap: false,
     data: [],
     axisLabel: { color: '#d5e6ff', fontSize: 12, margin: 12 },
     axisTick: {
@@ -74,6 +88,59 @@ const formatMonthLabel = (month?: string) => {
   return monthPart ? `${Number(monthPart)}月` : value;
 };
 
+const createTrendOption = (
+  xAxisData: string[],
+  data: number[],
+  max: number,
+  lineColor: string,
+  formatter?: string
+) => ({
+  grid: { left: 48, right: 16, top: 28, bottom: 18 },
+  tooltip: lineBase.tooltip,
+  xAxis: {
+    ...lineBase.xAxis,
+    data: xAxisData
+  },
+  yAxis: {
+    ...lineBase.yAxis,
+    max,
+    axisLabel: {
+      ...lineBase.yAxis.axisLabel,
+      formatter: (value: number) => {
+        if (formatter) {
+          return formatter.replace('{value}', String(value));
+        }
+        if (value >= 1000) {
+          return `${(value / 1000).toFixed(0)}K`;
+        }
+        return String(value);
+      }
+    }
+  },
+  series: [
+    {
+      type: 'line',
+      smooth: false,
+      symbol: 'circle',
+      symbolSize: 6,
+      lineStyle: {
+        color: lineColor,
+        width: 2,
+        shadowBlur: 6,
+        shadowColor: lineColor
+      },
+      itemStyle: {
+        color: lineColor,
+        borderColor: '#fff',
+        borderWidth: 1,
+        shadowBlur: 6,
+        shadowColor: lineColor
+      },
+      data
+    }
+  ]
+});
+
 const leftTrendXAxis = computed(() => getAxisData(volumeTrend.value.xaxis).map((item) => formatMonthLabel(item)));
 const sampleCounts = computed(() =>
   normalizeSeries(volumeTrend.value.sampleCounts, leftTrendXAxis.value.length)
@@ -90,100 +157,39 @@ const itemPositiveRates = computed(() =>
 );
 
 const leftAxisMax = computed(() => {
-  const maxValue = Math.max(...sampleCounts.value, ...itemCounts.value, 0);
+  const isSample = leftActiveTab.value === '样品量';
+  const data = isSample ? sampleCounts.value : itemCounts.value;
+  const maxValue = Math.max(...data, 0);
   if (maxValue <= 0) return 10;
   return Math.ceil(maxValue / 10) * 10 + 10;
 });
 
 const rightAxisMax = computed(() => {
-  const maxValue = Math.max(...samplePositiveRates.value, ...itemPositiveRates.value, 0);
+  const isSampleRate = rightActiveTab.value === '样品阳性率';
+  const data = isSampleRate ? samplePositiveRates.value : itemPositiveRates.value;
+  const maxValue = Math.max(...data, 0);
   return Math.max(60, Math.ceil(maxValue / 10) * 10);
 });
 
-const leftTrendOption = computed(() => ({
-  ...lineBase,
-  xAxis: {
-    ...lineBase.xAxis,
-    data: leftTrendXAxis.value
-  },
-  yAxis: {
-    ...lineBase.yAxis,
-    max: leftAxisMax.value
-  },
-  legend: { ...lineBase.legend, data: ['样品批次', '检测项次'] },
-  series: [
-    {
-      name: '样品批次',
-      type: 'line',
-      smooth: false,
-      symbol: 'circle',
-      symbolSize: 4,
-      lineStyle: { color: '#83d54b', width: 2 },
-      itemStyle: { color: '#83d54b' },
-      data: sampleCounts.value
-    },
-    {
-      name: '检测项次',
-      type: 'line',
-      smooth: false,
-      symbol: 'circle',
-      symbolSize: 4,
-      lineStyle: { color: '#56e8ff', width: 2 },
-      itemStyle: { color: '#56e8ff', borderColor: 'rgba(255,255,255,0.65)', borderWidth: 1 },
-      areaStyle: {
-        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-          { offset: 0, color: 'rgba(86, 232, 255, 0.45)' },
-          { offset: 0.7, color: 'rgba(86, 232, 255, 0.12)' },
-          { offset: 1, color: 'rgba(86, 232, 255, 0)' }
-        ])
-      },
-      data: itemCounts.value
-    }
-  ]
-}));
+const currentLeftTrendOption = computed(() => {
+  const isSample = leftActiveTab.value === '样品量';
+  const data = isSample ? sampleCounts.value : itemCounts.value;
+  const color = isSample ? '#83d54b' : '#56e8ff';
+  return createTrendOption(leftTrendXAxis.value, data, leftAxisMax.value, color);
+});
 
-const rightTrendOption = computed(() => ({
-  ...lineBase,
-  xAxis: {
-    ...lineBase.xAxis,
-    data: rightTrendXAxis.value
-  },
-  yAxis: {
-    ...lineBase.yAxis,
-    max: rightAxisMax.value,
-    axisLabel: { color: '#b8cce4', formatter: '{value}%', fontSize: 12 }
-  },
-  legend: { ...lineBase.legend, data: ['样品阳性率', '检测项阳性率'] },
-  series: [
-    {
-      name: '样品阳性率',
-      type: 'line',
-      smooth: false,
-      symbol: 'circle',
-      symbolSize: 4,
-      lineStyle: { color: '#83d54b', width: 2 },
-      itemStyle: { color: '#83d54b' },
-      data: samplePositiveRates.value
-    },
-    {
-      name: '检测项阳性率',
-      type: 'line',
-      smooth: false,
-      symbol: 'circle',
-      symbolSize: 4,
-      lineStyle: { color: '#56e8ff', width: 2 },
-      itemStyle: { color: '#56e8ff', borderColor: 'rgba(255,255,255,0.65)', borderWidth: 1 },
-      areaStyle: {
-        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-          { offset: 0, color: 'rgba(86, 232, 255, 0.45)' },
-          { offset: 0.7, color: 'rgba(86, 232, 255, 0.12)' },
-          { offset: 1, color: 'rgba(86, 232, 255, 0)' }
-        ])
-      },
-      data: itemPositiveRates.value
-    }
-  ]
-}));
+const currentRightTrendOption = computed(() => {
+  const isSampleRate = rightActiveTab.value === '样品阳性率';
+  const data = isSampleRate ? samplePositiveRates.value : itemPositiveRates.value;
+  const color = isSampleRate ? '#83d54b' : '#56e8ff';
+  return createTrendOption(
+    rightTrendXAxis.value,
+    data,
+    rightAxisMax.value,
+    color,
+    '{value}%'
+  );
+});
 
 const loadVolumeTrend = async () => {
   try {
