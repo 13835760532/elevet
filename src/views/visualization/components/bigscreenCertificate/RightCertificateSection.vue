@@ -239,22 +239,35 @@ const formatIssueRankList = (list: CertificateIssueTopRespVO[] = []) =>
     value: Number(item.count || 0)
   }))
 
-const loadDashboardData = async () => {
-  try {
-    const [typeDistribution, issueTop10, verificationTop10] = await Promise.all([
-      getCertificateTypeDistribution(getBigScreenQueryParams()),
-      getCertificateIssueTop10(getBigScreenQueryParams()),
-      getCertificateVerificationTop10(getBigScreenQueryParams())
-    ])
-    distributionData.value = Array.isArray(typeDistribution) ? typeDistribution : []
-    issueRank.value = formatIssueRankList(Array.isArray(issueTop10) ? issueTop10 : [])
-    storeRank.value = formatRankList(Array.isArray(verificationTop10) ? verificationTop10 : [])
-  } catch (error) {
-    console.error('加载合格证大屏右侧数据失败', error)
-    distributionData.value = []
-    issueRank.value = []
-    storeRank.value = []
-  }
+const loadDashboardData = () => {
+  const params = getBigScreenQueryParams()
+
+  getCertificateTypeDistribution(params)
+    .then((data) => {
+      distributionData.value = Array.isArray(data) ? data : []
+    })
+    .catch((error) => {
+      console.error('加载合格证出具类型失败', error)
+      distributionData.value = []
+    })
+
+  getCertificateIssueTop10(params)
+    .then((data) => {
+      issueRank.value = formatIssueRankList(Array.isArray(data) ? data : [])
+    })
+    .catch((error) => {
+      console.error('加载合格证开具榜单失败', error)
+      issueRank.value = []
+    })
+
+  getCertificateVerificationTop10(params)
+    .then((data) => {
+      storeRank.value = formatRankList(Array.isArray(data) ? data : [])
+    })
+    .catch((error) => {
+      console.error('加载合格证存证排行榜失败', error)
+      storeRank.value = []
+    })
 }
 
 onMounted(() => {

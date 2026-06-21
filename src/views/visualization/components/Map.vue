@@ -46,6 +46,7 @@ const FAST_MODE = true
 const DRILL_LABEL_LIMIT = FAST_MODE ? 20 : 30
 const ENABLE_HOVER_TOOLTIP = true
 const HOVER_TOOLTIP_DELAY = 120
+const DETAIL_GEO_CACHE_LIMIT = 8
 const state = reactive({
   map: null as any,
   glowLayer: null as any,
@@ -506,6 +507,11 @@ const loadDetailGeoJson = async (geoId: string) => {
     geoJson.__decoded = true
   }
   detailGeoCache.set(geoId, geoJson)
+  while (detailGeoCache.size > DETAIL_GEO_CACHE_LIMIT) {
+    const oldestKey = detailGeoCache.keys().next().value
+    if (!oldestKey) break
+    detailGeoCache.delete(oldestKey)
+  }
   return geoJson
 }
 
@@ -816,7 +822,7 @@ const rollUp = () => {
 }
 
 const renderNationalLabels = () => {
-  if (!state.chinaFullGeo || !state.labelLayer) return
+  if (disposed || !state.chinaFullGeo || !state.labelLayer) return
   if (state.labelLayer.getCount && state.labelLayer.getCount() > 0) {
     state.labelLayer.show()
     return
@@ -844,6 +850,7 @@ const renderNationalLabels = () => {
 }
 
 const scheduleNationalLabels = () => {
+  if (disposed) return
   if (nationalLabelRaf) {
     cancelAnimationFrame(nationalLabelRaf)
   }
@@ -863,7 +870,7 @@ const applyChinaMask = () => {
 }
 
 const initMap = async () => {
-  if (!mapRef.value) return // 确保 echarts 在全局可用
+  if (disposed || !mapRef.value) return // 确保 echarts 在全局可用
   ;(window as any).echarts = echarts
   state.map = new maptalks.Map(mapRef.value, {
     center: HOME_CENTER,
@@ -915,6 +922,7 @@ const initMap = async () => {
   try {
     const initialMapDataPromise = loadInitialMapData()
     state.chinaFullGeo = await loadRemoteGeoJson()
+    if (disposed || !state.map) return
 
     if (state.chinaFullGeo) {
       const geometries = maptalks.GeoJSON.toGeometry(state.chinaFullGeo)
@@ -964,6 +972,7 @@ const initMap = async () => {
           geo.addTo(state.provinceLayer)
         })
         void initialMapDataPromise.then((updated) => {
+          if (disposed) return
           if (updated && !ui.isDrilled) scheduleSyncCurrentMapData(geometries)
         })
         const extent = state.provinceLayer.getExtent?.()
@@ -1108,6 +1117,7 @@ watch(
 
 onMounted(async () => {
   await nextTick()
+  if (disposed) return
   loadingFallbackTimer = window.setTimeout(() => {
     loading.value = false
     loadingFallbackTimer = null
@@ -1151,7 +1161,20 @@ onUnmounted(() => {
     state.glowLayer?.clear?.()
     state.provinceLayer?.clear?.()
     state.map.remove()
+    state.map = null
+    state.detailLayer = null
+    state.detailLabelLayer = null
+    state.labelLayer = null
+    state.hotspotLayer = null
+    state.glowLayer = null
+    state.provinceLayer = null
+    state.chinaFullGeo = null
   }
+  currentMapList.value = []
+  certificateMapData.value = {}
+  fastMapData.value = []
+  dashboardMapData.value = []
+  taskMapData.value = []
 })
 </script>
 

@@ -88,7 +88,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, reactive, ref, toRefs } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { List, Aim, Checked, Bell, Back } from '@element-plus/icons-vue'
 import { getAreaTree } from '@/api/system/area'
@@ -124,6 +124,7 @@ const props = withDefaults(
 const { showDataConfig, activeMenu } = toRefs(props)
 const emit = defineEmits(['update:activeMenu', 'toggleConfig'])
 const router = useRouter()
+const route = useRoute()
 
 interface AreaNodeRespVO {
   id: number
@@ -319,7 +320,6 @@ const handleMenuClick = (key: '' | 'task' | 'inspect' | 'cert' | 'warn') => {
     router.push('/ai-assistant')
     return
   }
-  emit('update:activeMenu', key)
 
   const routeMap: Record<string, string> = {
     task: '/big-screen-task',
@@ -328,12 +328,20 @@ const handleMenuClick = (key: '' | 'task' | 'inspect' | 'cert' | 'warn') => {
     '': '/big-screen'
   }
   const targetPath = routeMap[key]
-  if (targetPath) {
+  if (route.path === '/big-screen') {
+    emit('update:activeMenu', key)
+    return
+  }
+  if (targetPath && route.path !== targetPath) {
     router.push(targetPath)
   }
 }
 
 const handleGoHome = () => {
+  if (route.path === '/big-screen') {
+    emit('update:activeMenu', '')
+    return
+  }
   router.push('/big-screen')
 }
 

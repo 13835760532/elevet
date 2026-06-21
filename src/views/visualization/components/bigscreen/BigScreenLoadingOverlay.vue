@@ -1,12 +1,14 @@
 <template>
-  <transition name="fade">
-    <div v-if="visible" class="screen-loading">
-      <div class="loading-content">
-        <div class="loading-ring"></div>
-        <p class="loading-text">{{ text }}</p>
+  <Teleport to="body">
+    <transition name="fade">
+      <div v-if="visible" class="screen-loading">
+        <div class="loading-content">
+          <div class="loading-ring"></div>
+          <p class="loading-text">{{ text }}</p>
+        </div>
       </div>
-    </div>
-  </transition>
+    </transition>
+  </Teleport>
 </template>
 
 <script setup lang="ts">
@@ -23,9 +25,9 @@ withDefaults(
 
 <style scoped lang="scss">
 .screen-loading {
-  position: absolute;
+  position: fixed;
   inset: 0;
-  z-index: 3000;
+  z-index: 100000;
   background: rgba(2, 6, 23, 0.94);
   backdrop-filter: blur(4px);
   contain: layout paint;

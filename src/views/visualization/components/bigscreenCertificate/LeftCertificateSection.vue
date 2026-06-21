@@ -4,12 +4,8 @@
 
     <BigPanelCard title="合格证概况" :bg-image="leftBg">
       <div class="overview-grid">
-        <div
-          class="overview-card"
-          :class="[item.type, `card-${index + 1}`, getMetricSizeClass(item.value)]"
-          v-for="(item, index) in overviewData"
-          :key="item.label"
-        >
+        <div class="overview-card" :class="[item.type, `card-${index + 1}`, getMetricSizeClass(item.value)]"
+          v-for="(item, index) in overviewData" :key="item.label">
           <div class="card-inner">
             <div class="icon-box">
               <img src="@/assets/imgs/echarts/合格证/icon.png" alt="" />
@@ -41,7 +37,7 @@
       </div>
     </BigPanelCard>
 
-    <BigPanelCard class="category-panel" title="各品类合格证开具量" :bg-image="leftBg">
+    <BigPanelCard class="category-panel" title="各产品品类合格证开具量" :bg-image="leftBg">
       <div class="category-layout">
         <div class="pie-container">
           <Echart :options="categoryPieOption" height="100%" width="100%" />
@@ -151,18 +147,18 @@ const supervisorOrgCount = computed(() => {
 const enterpriseCount = computed(() => {
   const count = Number(
     overview.value.enterpriseCount ??
-      subjectArchiveStats.value.enterpriseCount ??
-      dashboardOverview.value.enterpriseCount ??
-      0
+    subjectArchiveStats.value.enterpriseCount ??
+    dashboardOverview.value.enterpriseCount ??
+    0
   )
   return isNaN(count) ? 0 : count
 })
 const personalCount = computed(() => {
   const count = Number(
     overview.value.personalCount ??
-      overview.value.individualCount ??
-      subjectArchiveStats.value.personalCount ??
-      0
+    overview.value.individualCount ??
+    subjectArchiveStats.value.personalCount ??
+    0
   )
   return isNaN(count) ? 0 : count
 })
@@ -176,42 +172,56 @@ const subjectData = computed(() => [
   { label: '个人', value: personalCount.value }
 ])
 
-const loadOverviewData = async () => {
-  try {
-    const params = getBigScreenQueryParams()
-    const [certificateData, dashboardData, enterprisePage, personalPage] = await Promise.all([
-      getCertificateOverview(params),
-      getDashboardOverview(params),
-      getSubjectPage({
-        pageNo: 1,
-        pageSize: 1,
-        type: 1,
-        provinceCode: params.provinceName,
-        cityCode: params.cityName
-      }),
-      getSubjectPage({
-        pageNo: 1,
-        pageSize: 1,
-        type: 2,
-        provinceCode: params.provinceName,
-        cityCode: params.cityName
+const loadOverviewData = () => {
+  const params = getBigScreenQueryParams()
+
+  getCertificateOverview(params)
+    .then((data) => {
+      overview.value = data || {}
+    })
+    .catch((error) => {
+      console.error('加载合格证概览数据失败', error)
+      overview.value = {}
+    })
+
+  getDashboardOverview(params)
+    .then((data) => {
+      dashboardOverview.value = data || {}
+    })
+    .catch((error) => {
+      console.error('加载合格证服务主体概览失败', error)
+      dashboardOverview.value = {}
+    })
+
+  Promise.allSettled([
+    getSubjectPage({
+      pageNo: 1,
+      pageSize: 1,
+      type: 1,
+      provinceCode: params.provinceName,
+      cityCode: params.cityName
+    }),
+    getSubjectPage({
+      pageNo: 1,
+      pageSize: 1,
+      type: 2,
+      provinceCode: params.provinceName,
+      cityCode: params.cityName
+    })
+  ]).then(([enterpriseResult, personalResult]) => {
+    if (enterpriseResult.status === 'rejected' || personalResult.status === 'rejected') {
+      console.error('加载合格证主体档案统计失败', {
+        enterpriseError: enterpriseResult.status === 'rejected' ? enterpriseResult.reason : undefined,
+        personalError: personalResult.status === 'rejected' ? personalResult.reason : undefined
       })
-    ])
-    overview.value = certificateData || {}
-    dashboardOverview.value = dashboardData || {}
-    subjectArchiveStats.value = {
-      enterpriseCount: Number(enterprisePage?.total || 0),
-      personalCount: Number(personalPage?.total || 0)
     }
-  } catch (error) {
-    console.error('加载合格证概览数据失败', error)
-    overview.value = {}
-    dashboardOverview.value = {}
+
     subjectArchiveStats.value = {
-      enterpriseCount: 0,
-      personalCount: 0
+      enterpriseCount:
+        enterpriseResult.status === 'fulfilled' ? Number(enterpriseResult.value?.total || 0) : 0,
+      personalCount: personalResult.status === 'fulfilled' ? Number(personalResult.value?.total || 0) : 0
     }
-  }
+  })
 }
 
 const categoryItems = computed(() => {
@@ -370,13 +380,7 @@ onUnmounted(() => {
 .left-section {
   display: grid;
   grid-template-rows:
-    42px
-    10px
-    minmax(0, 1.18fr)
-    20px
-    minmax(0, 0.79fr)
-    20px
-    minmax(0, 1.03fr);
+    42px 10px minmax(0, 1.18fr) 20px minmax(0, 0.79fr) 20px minmax(0, 1.03fr);
   row-gap: 0;
   height: 100%;
   min-height: 0;
@@ -468,14 +472,12 @@ onUnmounted(() => {
     bottom: 0;
     left: 0;
     height: 2px;
-    background: linear-gradient(
-      90deg,
-      rgba(32, 51, 159, 0) 0%,
-      rgba(32, 45, 159, 1) 41%,
-      rgba(133, 151, 229, 1) 51%,
-      rgba(32, 62, 159, 1) 63%,
-      rgba(32, 45, 159, 0) 100%
-    );
+    background: linear-gradient(90deg,
+        rgba(32, 51, 159, 0) 0%,
+        rgba(32, 45, 159, 1) 41%,
+        rgba(133, 151, 229, 1) 51%,
+        rgba(32, 62, 159, 1) 63%,
+        rgba(32, 45, 159, 0) 100%);
     pointer-events: none;
   }
 }
@@ -712,14 +714,12 @@ onUnmounted(() => {
     bottom: 0;
     left: 0;
     height: 2px;
-    background: linear-gradient(
-      90deg,
-      rgba(32, 51, 159, 0) 0%,
-      rgba(32, 45, 159, 1) 41%,
-      rgba(133, 151, 229, 1) 51%,
-      rgba(32, 62, 159, 1) 63%,
-      rgba(32, 45, 159, 0) 100%
-    );
+    background: linear-gradient(90deg,
+        rgba(32, 51, 159, 0) 0%,
+        rgba(32, 45, 159, 1) 41%,
+        rgba(133, 151, 229, 1) 51%,
+        rgba(32, 62, 159, 1) 63%,
+        rgba(32, 45, 159, 0) 100%);
     pointer-events: none;
   }
 }

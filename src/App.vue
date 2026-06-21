@@ -16,7 +16,7 @@ const greyMode = computed(() => appStore.getGreyMode)
 const { wsCache } = useCache()
 const route = useRoute()
 const bigScreenAutofitOptions = {
-  el: 'body',
+  el: '.big-screen-shell',
   dh: 1180,
   dw: 1920,
   resize: true
@@ -35,8 +35,10 @@ setDefaultTheme()
 
 // 仅在大屏页面启用 autofit
 const bigScreenRoutes = ['BigScreen', 'BigScreenCertificate', 'BigScreenTask', 'BigScreenQuick']
-const enableBigScreenAutofit = () => {
+const enableBigScreenAutofit = async () => {
   if (isBigScreenAutofitActive) return
+  await nextTick()
+  if (!document.querySelector(bigScreenAutofitOptions.el)) return
   autofit.init(bigScreenAutofitOptions, false)
   isBigScreenAutofitActive = true
 }
@@ -51,7 +53,7 @@ watch(
   () => route.name,
   (newName) => {
     if (bigScreenRoutes.includes(newName as string)) {
-      enableBigScreenAutofit()
+      void enableBigScreenAutofit()
     } else {
       disableBigScreenAutofit()
     }

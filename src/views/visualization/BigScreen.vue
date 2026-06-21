@@ -3,8 +3,8 @@
     <BigScreenHeader v-model:active-menu="activeMenu" />
     <BigScreenLoadingOverlay :visible="entranceLoading" />
 
-    <main class="screen-main" :class="activeMenu">
-      <template v-if="activeMenu === 'cert'">
+    <main class="screen-main" :class="renderMenu">
+      <template v-if="renderMenu === 'cert'">
         <div class="cert-left-panel">
           <LeftCertificateSection v-if="panelVisibility.left" key="LeftCertificateSection" />
         </div>
@@ -15,7 +15,7 @@
           <RightCertificateSection v-if="panelVisibility.right" key="RightCertificateSection" />
         </div>
       </template>
-      <template v-else-if="activeMenu === 'task'">
+      <template v-else-if="renderMenu === 'task'">
         <div class="task-top-layout">
           <div class="task-left-panel">
             <LeftTaskSection v-if="panelVisibility.left" key="LeftTaskSection" />
@@ -31,7 +31,7 @@
           <BottomTaskSection v-if="panelVisibility.bottom" key="BottomTaskSection" />
         </div>
       </template>
-      <template v-else-if="activeMenu === 'inspect'">
+      <template v-else-if="renderMenu === 'inspect'">
         <div class="quick-left-panel">
           <LeftQuickSection v-if="panelVisibility.left" key="LeftQuickSection" />
         </div>
@@ -109,46 +109,158 @@ const RightCertificateSection = defineAsyncComponent(
 defineOptions({ name: 'VisualizationBigScreen' })
 
 type BigScreenMenu = '' | 'task' | 'inspect' | 'cert' | 'warn'
+type BigScreenQueryKey = '' | 'task' | 'quick' | 'cert'
+const INITIAL_LOADING_DELAY = 420
+const SWITCH_LOADING_DELAY = 420
+const SWITCH_RENDER_DELAY = 80
 
-const activeMenu = ref<BigScreenMenu>('')
+const queryKeyToMenu: Record<Exclude<BigScreenQueryKey, ''>, BigScreenMenu> = {
+  task: 'task',
+  quick: 'inspect',
+  cert: 'cert'
+}
+
+const menuToQueryKey: Record<Exclude<BigScreenMenu, '' | 'warn'>, Exclude<BigScreenQueryKey, ''>> = {
+  task: 'task',
+  inspect: 'quick',
+  cert: 'cert'
+}
+
+const getMenuFromRouteKey = (key: unknown): BigScreenMenu => {
+  const queryKey = Array.isArray(key) ? key[0] : key
+  return queryKeyToMenu[String(queryKey || '') as Exclude<BigScreenQueryKey, ''>] || ''
+}
+
+const getRouteKeyFromLocation = () => {
+  if (typeof window === 'undefined') return ''
+  const hash = window.location.hash || ''
+  const queryStartIndex = hash.indexOf('?')
+  if (queryStartIndex < 0) return ''
+  return new URLSearchParams(hash.slice(queryStartIndex + 1)).get('key') || ''
+}
+
+const syncLocationKey = (mode: BigScreenMenu) => {
+  if (typeof window === 'undefined') return
+  const nextKey = mode && mode !== 'warn' ? menuToQueryKey[mode] : ''
+  const currentUrl = new URL(window.location.href)
+  const hashPath = currentUrl.hash.split('?')[0] || '#/big-screen'
+  const hashQuery = new URLSearchParams(
+    currentUrl.hash.includes('?') ? currentUrl.hash.slice(currentUrl.hash.indexOf('?') + 1) : ''
+  )
+
+  if (nextKey) {
+    hashQuery.set('key', nextKey)
+  } else {
+    hashQuery.delete('key')
+  }
+
+  const nextHashQuery = hashQuery.toString()
+  currentUrl.hash = `${hashPath}${nextHashQuery ? `?${nextHashQuery}` : ''}`
+  if (currentUrl.href !== window.location.href) {
+    window.history.replaceState(window.history.state, '', currentUrl)
+  }
+}
+
+const activeMenu = ref<BigScreenMenu>(getMenuFromRouteKey(getRouteKeyFromLocation()))
+const renderMenu = ref<BigScreenMenu>(activeMenu.value)
 const entranceLoading = ref(true)
 const { visibility: panelVisibility, schedule } = useDeferredPanelMount()
 let loadingTimer: number | null = null
+let switchRenderTimer: number | null = null
+let mounted = false
+
+const clearLoadingTimer = () => {
+  if (loadingTimer !== null) {
+    window.clearTimeout(loadingTimer)
+    loadingTimer = null
+  }
+}
+
+const clearSwitchRenderTimer = () => {
+  if (switchRenderTimer !== null) {
+    window.clearTimeout(switchRenderTimer)
+    switchRenderTimer = null
+  }
+}
+
+const showLoadingFor = (delay: number) => {
+  entranceLoading.value = true
+  clearLoadingTimer()
+  loadingTimer = window.setTimeout(() => {
+    entranceLoading.value = false
+    loadingTimer = null
+  }, delay)
+}
 
 const getPanelPlan = (mode: BigScreenMenu): DeferredPanelPlan => {
   if (mode === 'task' || mode === 'inspect') {
     return {
-      immediate: ['left', 'center', 'right'],
-      deferred: [{ key: 'bottom', delay: 120 }]
+      immediate: ['left', 'right'],
+      deferred: [
+        { key: 'center', delay: 60 },
+        { key: 'bottom', delay: 160 }
+      ]
     }
   }
 
   return {
-    immediate: ['left', 'center', 'right'],
-    deferred: []
+    immediate: ['left', 'right'],
+    deferred: [{ key: 'center', delay: 60 }]
+  }
+}
+
+const getSwitchPanelPlan = (mode: BigScreenMenu): DeferredPanelPlan => {
+  if (mode === 'task' || mode === 'inspect') {
+    return {
+      immediate: [],
+      deferred: [
+        { key: 'left', delay: 0 },
+        { key: 'right', delay: 80 },
+        { key: 'center', delay: 180 },
+        { key: 'bottom', delay: 320 }
+      ]
+    }
+  }
+
+  return {
+    immediate: [],
+    deferred: [
+      { key: 'left', delay: 0 },
+      { key: 'right', delay: 80 },
+      { key: 'center', delay: 180 }
+    ]
   }
 }
 
 watch(
   () => activeMenu.value,
   (mode) => {
-    schedule(getPanelPlan(mode))
+    if (mounted) {
+      entranceLoading.value = true
+      clearSwitchRenderTimer()
+      switchRenderTimer = window.setTimeout(() => {
+        renderMenu.value = mode
+        schedule(getSwitchPanelPlan(mode))
+        showLoadingFor(SWITCH_LOADING_DELAY)
+        switchRenderTimer = null
+      }, SWITCH_RENDER_DELAY)
+    } else {
+      renderMenu.value = mode
+      schedule(getPanelPlan(mode))
+    }
+    syncLocationKey(mode)
   }
 )
 
 onMounted(() => {
-  schedule(getPanelPlan(activeMenu.value))
-  loadingTimer = window.setTimeout(() => {
-    entranceLoading.value = false
-    loadingTimer = null
-  }, 520)
+  mounted = true
+  schedule(getPanelPlan(renderMenu.value))
+  showLoadingFor(INITIAL_LOADING_DELAY)
 })
 
 onUnmounted(() => {
-  if (loadingTimer !== null) {
-    window.clearTimeout(loadingTimer)
-    loadingTimer = null
-  }
+  clearLoadingTimer()
+  clearSwitchRenderTimer()
 })
 </script>
 

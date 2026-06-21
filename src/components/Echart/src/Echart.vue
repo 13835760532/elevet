@@ -46,6 +46,10 @@ const styles = computed(() => {
 
 const initChart = () => {
   if (unref(elRef) && props.options) {
+    if (echartRef) {
+      echartRef.dispose?.()
+      echartRef = null
+    }
     echartRef = echarts.init(unref(elRef) as HTMLElement)
     echartRef?.setOption(unref(options), true)
   }
@@ -90,6 +94,10 @@ onBeforeUnmount(() => {
   window.removeEventListener('resize', resizeHandler)
   unref(contentEl) &&
     (unref(contentEl) as Element).removeEventListener('transitionend', contentResizeHandler)
+  resizeHandler.cancel?.()
+  echartRef?.dispose?.()
+  echartRef = null
+  contentEl.value = undefined
 })
 
 onActivated(() => {
