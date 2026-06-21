@@ -30,6 +30,12 @@ const isValidUserInfo = (userInfo: any) => {
   return userInfo && typeof userInfo === 'object' && userInfo.user
 }
 
+const isCachedDeptMatched = (deptInfo: any, deptId?: number) => {
+  if (!deptInfo) return false
+  if (!deptId) return true
+  return String(deptInfo.id) === String(deptId)
+}
+
 export const useUserStore = defineStore('admin-user', {
   state: (): UserInfoVO => ({
     permissions: new Set<string>(),
@@ -61,6 +67,25 @@ export const useUserStore = defineStore('admin-user', {
     }
   },
   actions: {
+    applyUserInfo(userInfo: any) {
+      this.permissions = new Set(userInfo.permissions || []) // 兜底为 [] https://t.zsxq.com/xCJew
+      this.roles = userInfo.roles || []
+      this.user = userInfo.user
+      this.isSetUser = true
+      wsCache.set(CACHE_KEY.USER, userInfo)
+      wsCache.set(CACHE_KEY.ROLE_ROUTERS, userInfo.menus || [])
+    },
+    hydrateUserInfoFromCache() {
+      const userInfo = wsCache.get(CACHE_KEY.USER)
+      if (!isValidUserInfo(userInfo)) return false
+      this.applyUserInfo(userInfo)
+
+      const cachedDeptInfo = wsCache.get(CACHE_KEY.USER_DEPT)
+      this.deptInfo = isCachedDeptMatched(cachedDeptInfo, this.user.deptId)
+        ? cachedDeptInfo
+        : null
+      return true
+    },
     async setUserInfoAction() {
       if (!getAccessToken()) {
         this.resetState()
@@ -83,12 +108,7 @@ export const useUserStore = defineStore('admin-user', {
         throw new Error('登录信息已失效，请重新登录')
       }
 
-      this.permissions = new Set(userInfo.permissions || []) // 兜底为 [] https://t.zsxq.com/xCJew
-      this.roles = userInfo.roles || []
-      this.user = userInfo.user
-      this.isSetUser = true
-      wsCache.set(CACHE_KEY.USER, userInfo)
-      wsCache.set(CACHE_KEY.ROLE_ROUTERS, userInfo.menus || [])
+      this.applyUserInfo(userInfo)
       await this.setUserDeptInfoAction(this.user.deptId)
     },
     async setUserDeptInfoAction(deptId?: number) {

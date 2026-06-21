@@ -1,11 +1,12 @@
+<script lang="ts">
+let sharedRemoteGeoCache: any = null
+const sharedDetailGeoCache = new Map<string, any>()
+</script>
+
 <script setup lang="ts">
 import { ref, onMounted, reactive, nextTick, onUnmounted, computed, watch } from 'vue'
 // @ts-ignore
 import echarts from '@/plugins/echarts'
-// @ts-ignore
-import * as maptalks from 'maptalks'
-// @ts-ignore
-import 'maptalks/dist/maptalks.css'
 import fillImg from '@/assets/imgs/echarts/topographic_fill.png'
 import chinaLiteSafeGeo from '@/assets/data/map/geo/china-lite-safe.json'
 import {
@@ -17,8 +18,26 @@ import { getFastMap, type FastMapDataRespVO } from '@/api/agri/dashboard/fast'
 import { getDashboardMapData, type MapDataRespVO } from '@/api/agri/dashboard'
 import { getTaskMap, type TaskMapDataRespVO } from '@/api/agri/dashboard/task'
 import { getBigScreenQueryParams, subscribeBigScreenRefresh } from './bigscreen/config'
+import { cachedBigScreenRequest } from './bigscreen/requestCache'
 
 defineOptions({ name: 'VisualizationMap' })
+
+let maptalks: any = null
+let maptalksReady: Promise<any> | null = null
+
+const ensureMaptalks = async () => {
+  if (maptalks) return maptalks
+  if (!maptalksReady) {
+    maptalksReady = Promise.all([
+      import('maptalks'),
+      import('maptalks/dist/maptalks.css')
+    ]).then(([module]) => {
+      maptalks = module
+      return module
+    })
+  }
+  return maptalksReady
+}
 
 const props = withDefaults(
   defineProps<{
@@ -47,6 +66,7 @@ const DRILL_LABEL_LIMIT = FAST_MODE ? 20 : 30
 const ENABLE_HOVER_TOOLTIP = true
 const HOVER_TOOLTIP_DELAY = 120
 const DETAIL_GEO_CACHE_LIMIT = 8
+const SHARED_DETAIL_GEO_CACHE_LIMIT = 16
 const state = reactive({
   map: null as any,
   glowLayer: null as any,
@@ -58,7 +78,14 @@ const state = reactive({
   chinaFullGeo: null as any
 })
 
-let remoteGeoCache: any = null
+type DetailGeometryEntry = {
+  geometries: any[]
+  labels: Array<{
+    name: string
+    coordinate: [number, number]
+  }>
+}
+
 const detailGeoCache = new Map<string, any>()
 let nationalLabelRaf = 0
 let syncMapDataRaf = 0
@@ -227,6 +254,39 @@ const getFeatureCandidates = (featureProps: any) => {
   return Array.from(new Set([name, shortName].filter(Boolean)))
 }
 
+const normalizeRegionName = (name?: string | number | null) =>
+  String(name || '')
+    .trim()
+    .replace(/省|市|壮族自治区|回族自治区|维吾尔自治区|自治区|特别行政区/g, '')
+
+const createMapDataIndex = (
+  list: Array<CertificateMapItemVO | FastMapDataRespVO | TaskMapDataRespVO | MapDataRespVO>
+) => {
+  const index = new Map<string, CertificateMapItemVO | FastMapDataRespVO | TaskMapDataRespVO | MapDataRespVO>()
+  list.forEach((item) => {
+    getAreaCandidates(item).forEach((name) => {
+      index.set(name, item)
+      index.set(normalizeRegionName(name), item)
+    })
+  })
+  return index
+}
+
+const getMatchedMapItem = (
+  geoProps: any,
+  dataIndex: Map<
+    string,
+    CertificateMapItemVO | FastMapDataRespVO | TaskMapDataRespVO | MapDataRespVO
+  >
+) => {
+  const candidates = getFeatureCandidates(geoProps)
+  for (const name of candidates) {
+    const matched = dataIndex.get(name) || dataIndex.get(normalizeRegionName(name))
+    if (matched) return matched
+  }
+  return undefined
+}
+
 const formatRegionLabel = (name: string) => {
   return String(name || '').replace(
     /省|市|壮族自治区|回族自治区|维吾尔自治区|自治区|特别行政区/g,
@@ -264,7 +324,7 @@ const getColorByCount = (count: number) => {
   if (count >= 200) return 'rgba(8, 145, 178, 0.72)'
   if (count >= 100) return 'rgba(14, 116, 144, 0.6)'
   if (count >= 1) return 'rgba(21, 94, 117, 0.45)'
-  return 'rgba(2, 6, 23, 0.8)'
+  return 'rgba(0, 0, 0, 0)'
 }
 
 const getActiveMapList = () =>
@@ -348,9 +408,11 @@ const renderHotspots = (geometries: any[]) => {
   })
 }
 
-const applyGeometryDataStyle = (geo: any) => {
+const applyGeometryDataStyle = (geo: any, force = false) => {
   const geoProps = geo.getProperties?.() || {}
   const count = Number(geoProps.count || 0)
+  const styleKey = `${props.mode || 'default'}|${props.certificateTab || ''}|${count}`
+  if (!force && geo.__mapStyleKey === styleKey) return
   geo.setSymbol({
     polygonPatternFile: fillImg,
     polygonFill: getColorByCount(count),
@@ -361,6 +423,7 @@ const applyGeometryDataStyle = (geo: any) => {
     shadowBlur: count > 0 ? 22 : 13,
     shadowColor: count > 0 ? 'rgba(55, 237, 255, 0.66)' : 'rgba(22, 197, 234, 0.36)'
   })
+  geo.__mapStyleKey = styleKey
 }
 
 const applyMapGlowSymbol = (geo: any) => {
@@ -378,7 +441,7 @@ const applyMapGlowSymbol = (geo: any) => {
 const setGeometryHoverState = (geo: any, active: boolean) => {
   if (!geo) return
   if (!active) {
-    applyGeometryDataStyle(geo)
+    applyGeometryDataStyle(geo, true)
     return
   }
 
@@ -409,13 +472,10 @@ const syncCurrentMapData = (geometries?: any[]) => {
     (ui.isDrilled
       ? state.detailLayer?.getGeometries?.() || []
       : state.provinceLayer?.getGeometries?.() || [])
+  const dataIndex = createMapDataIndex(currentMapList.value)
   targetGeometries.forEach((geo: any) => {
     const geoProps = geo.getProperties?.() || {}
-    const matched = currentMapList.value.find((item) =>
-      getFeatureCandidates(geoProps).some((featureName) =>
-        getAreaCandidates(item).includes(featureName)
-      )
-    )
+    const matched = getMatchedMapItem(geoProps, dataIndex)
     geo.setProperties({
       ...geoProps,
       count: Number(
@@ -473,19 +533,46 @@ const cancelScheduledMapSync = () => {
   syncMapDataRaf = 0
 }
 
+const addGeometriesToLayer = (layer: any, geometries: any[]) => {
+  if (!layer || !geometries.length) return
+  if (typeof layer.addGeometry === 'function') {
+    try {
+      layer.addGeometry(geometries)
+      return
+    } catch (error) {
+      console.warn('[Map] Batch add geometry failed, fallback to sequential add:', error)
+    }
+  }
+  geometries.forEach((geo) => geo.addTo(layer))
+}
+
+const trimMapCache = (cache: Map<string, any>, limit: number) => {
+  while (cache.size > limit) {
+    const oldestKey = cache.keys().next().value
+    if (!oldestKey) break
+    cache.delete(oldestKey)
+  }
+}
+
 const loadRemoteGeoJson = async () => {
-  if (remoteGeoCache) return remoteGeoCache
+  if (sharedRemoteGeoCache) return sharedRemoteGeoCache
   const geoJson = structuredClone(chinaLiteSafeGeo) as any
   if (geoJson?.features?.length && !geoJson.__decoded) {
     geoJson.features.forEach((f: any) => decodeFeature(f))
     geoJson.__decoded = true
   }
-  remoteGeoCache = geoJson
+  sharedRemoteGeoCache = geoJson
   return geoJson
 }
 
 const loadDetailGeoJson = async (geoId: string) => {
   if (detailGeoCache.has(geoId)) return detailGeoCache.get(geoId)
+  if (sharedDetailGeoCache.has(geoId)) {
+    const cachedGeoJson = sharedDetailGeoCache.get(geoId)
+    detailGeoCache.set(geoId, cachedGeoJson)
+    trimMapCache(detailGeoCache, DETAIL_GEO_CACHE_LIMIT)
+    return cachedGeoJson
+  }
   const requestUrl = `${REMOTE_GEO_BASE_URL}/${geoId}.json`
   const response = await fetch(requestUrl)
   if (!response.ok) {
@@ -507,31 +594,98 @@ const loadDetailGeoJson = async (geoId: string) => {
     geoJson.__decoded = true
   }
   detailGeoCache.set(geoId, geoJson)
-  while (detailGeoCache.size > DETAIL_GEO_CACHE_LIMIT) {
-    const oldestKey = detailGeoCache.keys().next().value
-    if (!oldestKey) break
-    detailGeoCache.delete(oldestKey)
-  }
+  sharedDetailGeoCache.set(geoId, geoJson)
+  trimMapCache(detailGeoCache, DETAIL_GEO_CACHE_LIMIT)
+  trimMapCache(sharedDetailGeoCache, SHARED_DETAIL_GEO_CACHE_LIMIT)
   return geoJson
 }
 
-const renderDetailLabels = (features: any[]) => {
+const applyBaseDetailGeometryStyle = (geo: any) => {
+  geo.setSymbol({
+    polygonPatternFile: fillImg,
+    polygonFill: 'rgba(3, 42, 67, 0.86)',
+    polygonOpacity: 0.88,
+    lineColor: '#4ef4ff',
+    lineWidth: 1.5,
+    lineOpacity: 1,
+    shadowBlur: 22,
+    shadowColor: 'rgba(71, 242, 255, 0.7)'
+  })
+  geo.__mapStyleKey = ''
+}
+
+const canDrillFurther = () => (!isCertificateMode.value && !isTaskMapMode.value) || currentDrillLevel.value < 2
+
+const bindRegionGeometryEvents = (geo: any) => {
+  if (geo.__mapEventsBound) return
+  if (ENABLE_HOVER_TOOLTIP) {
+    geo.on('mouseenter', (e: any) => {
+      state.map.setCursor('pointer')
+      setGeometryHoverState(e.target, true)
+      showTooltip(e)
+    })
+    geo.on('mousemove', (e: any) => {
+      showTooltip(e)
+    })
+    geo.on('mouseleave', (e: any) => {
+      state.map.setCursor('default')
+      setGeometryHoverState(e.target, false)
+      hideTooltip()
+    })
+  }
+  geo.on('click', (e: any) => {
+    if (canDrillFurther()) drillDown(e.target)
+  })
+  geo.__mapEventsBound = true
+}
+
+const createDetailGeometryEntry = (geoId: string, detailGeo: any): DetailGeometryEntry => {
+  const rawGeometries = maptalks.GeoJSON.toGeometry(detailGeo)
+  const geometries = (Array.isArray(rawGeometries) ? rawGeometries : [rawGeometries]).filter(Boolean)
+  geometries.forEach((geo: any) => {
+    const geoProps = geo.getProperties?.() || {}
+    const featureId = String(geo.getId?.() || geoProps.id || '').trim()
+    geo.setProperties({
+      ...geoProps,
+      geoId: featureId
+    })
+    applyBaseDetailGeometryStyle(geo)
+    bindRegionGeometryEvents(geo)
+  })
+  return {
+    geometries,
+    labels: (detailGeo.features || [])
+      .map((feature: any) => {
+        const { name, cp } = feature.properties || {}
+        return cp && name ? { name, coordinate: cp as [number, number] } : null
+      })
+      .filter(Boolean)
+  }
+}
+
+const getDetailGeometryEntry = async (geoId: string) => {
+  const detailGeo = await loadDetailGeoJson(geoId)
+  if (disposed || !state.map) throw new Error('Map disposed')
+  return createDetailGeometryEntry(geoId, detailGeo)
+}
+
+const renderDetailLabels = (labels: DetailGeometryEntry['labels']) => {
   if (!state.detailLabelLayer) return
   state.detailLabelLayer.clear()
-  features.slice(0, DRILL_LABEL_LIMIT).forEach((feature: any) => {
-    const { name, cp } = feature.properties || {}
-    if (cp && name) {
-      new maptalks.Label(name, cp, {
+  labels.slice(0, DRILL_LABEL_LIMIT).forEach((label) => {
+    if (label.coordinate && label.name) {
+      new maptalks.Label(label.name, label.coordinate, {
         draggable: false,
         interactive: false,
+        boxStyle: null, // 显式置空背景框样式，彻底移除文字标签自带的半透明圆角黑色背景底框
         textSymbol: {
           textFaceName: 'sans-serif',
           textFill: '#f8feff',
           textSize: 12,
           textOpacity: 1,
           textWeight: 'bold',
-          textHaloFill: 'rgba(2, 20, 42, 0.96)',
-          textHaloRadius: 4
+          textHaloFill: 'rgba(0, 0, 0, 0)',
+          textHaloRadius: 0
         }
       }).addTo(state.detailLabelLayer)
     }
@@ -544,16 +698,23 @@ type LoadMapDataOptions = {
   geometries?: any[]
 }
 
+const getMapRequestParams = (context: MapDataRequestContext) => ({
+  ...getBigScreenQueryParams(),
+  provinceName: context.provinceName,
+  cityName: context.cityName
+})
+
 const loadCertificateMapData = async (options: LoadMapDataOptions = {}) => {
   if (!isCertificateMode.value) return
   const context = options.context || createMapDataRequestContext()
+  const params = {
+    ...getMapRequestParams(context),
+    areaLevel: context.drillLevel === 1 ? '1' : context.drillLevel === 2 ? '2' : undefined
+  }
   try {
-    const data = await getCertificateMap({
-      ...getBigScreenQueryParams(),
-      provinceName: context.provinceName,
-      cityName: context.cityName,
-      areaLevel: context.drillLevel === 1 ? '1' : context.drillLevel === 2 ? '2' : undefined
-    })
+    const data = await cachedBigScreenRequest('map-certificate', params, () =>
+      getCertificateMap(params)
+    )
     if (!isCurrentMapDataRequest(context)) return false
     certificateMapData.value = data || {}
     if (options.sync !== false) scheduleSyncCurrentMapData(options.geometries)
@@ -570,13 +731,12 @@ const loadCertificateMapData = async (options: LoadMapDataOptions = {}) => {
 const loadFastMapData = async (options: LoadMapDataOptions = {}) => {
   if (!isFastMapMode.value) return
   const context = options.context || createMapDataRequestContext()
+  const params = {
+    ...getMapRequestParams(context),
+    areaLevel: context.drillLevel === 1 ? '1' : context.drillLevel === 2 ? '2' : undefined
+  }
   try {
-    const data = await getFastMap({
-      ...getBigScreenQueryParams(),
-      provinceName: context.provinceName,
-      cityName: context.cityName,
-      areaLevel: context.drillLevel === 1 ? '1' : context.drillLevel === 2 ? '2' : undefined
-    })
+    const data = await cachedBigScreenRequest('map-fast', params, () => getFastMap(params))
     if (!isCurrentMapDataRequest(context)) return false
     fastMapData.value = Array.isArray(data) ? data : []
     if (options.sync !== false) scheduleSyncCurrentMapData(options.geometries)
@@ -593,13 +753,14 @@ const loadFastMapData = async (options: LoadMapDataOptions = {}) => {
 const loadDashboardMapData = async (options: LoadMapDataOptions = {}) => {
   if (!isDashboardMode.value) return
   const context = options.context || createMapDataRequestContext()
+  const params = {
+    ...getMapRequestParams(context),
+    areaLevel: context.drillLevel === 2 ? '2' : '1'
+  }
   try {
-    const data = await getDashboardMapData({
-      ...getBigScreenQueryParams(),
-      provinceName: context.provinceName,
-      cityName: context.cityName,
-      areaLevel: context.drillLevel === 2 ? '2' : '1'
-    })
+    const data = await cachedBigScreenRequest('map-dashboard', params, () =>
+      getDashboardMapData(params)
+    )
     if (!isCurrentMapDataRequest(context)) return false
     dashboardMapData.value = Array.isArray(data) ? data : []
     if (options.sync !== false) scheduleSyncCurrentMapData(options.geometries)
@@ -616,13 +777,12 @@ const loadDashboardMapData = async (options: LoadMapDataOptions = {}) => {
 const loadTaskMapData = async (options: LoadMapDataOptions = {}) => {
   if (!isTaskMapMode.value) return
   const context = options.context || createMapDataRequestContext()
+  const params = {
+    ...getMapRequestParams(context),
+    areaLevel: context.drillLevel === 1 ? '1' : context.drillLevel === 2 ? '2' : undefined
+  }
   try {
-    const data = await getTaskMap({
-      ...getBigScreenQueryParams(),
-      provinceName: context.provinceName,
-      cityName: context.cityName,
-      areaLevel: context.drillLevel === 1 ? '1' : context.drillLevel === 2 ? '2' : undefined
-    })
+    const data = await cachedBigScreenRequest('map-task', params, () => getTaskMap(params))
     if (!isCurrentMapDataRequest(context)) return false
     taskMapData.value = Array.isArray(data) ? data : []
     if (options.sync !== false) scheduleSyncCurrentMapData(options.geometries)
@@ -672,8 +832,8 @@ const drillDown = async (geometry: any) => {
   invalidateMapDataRequests()
 
   try {
-    const detailGeo = await loadDetailGeoJson(geoId)
-    if (!detailGeo?.features?.length) return
+    const detailEntry = await getDetailGeometryEntry(geoId)
+    if (!detailEntry.geometries.length) return
 
     let mapDataPromise: Promise<boolean | undefined> | null = null
     if (
@@ -705,6 +865,7 @@ const drillDown = async (geometry: any) => {
     }
 
     state.detailLayer.clear()
+    addGeometriesToLayer(state.detailLayer, detailEntry.geometries)
     state.detailLabelLayer?.clear?.()
     state.hotspotLayer?.clear?.()
     setVectorLayerVisible(state.detailLayer, true)
@@ -713,46 +874,7 @@ const drillDown = async (geometry: any) => {
     setVectorLayerVisible(state.provinceLayer, false)
     setVectorLayerVisible(state.labelLayer, false)
 
-    const detailGeometries = maptalks.GeoJSON.toGeometry(detailGeo)
-    detailGeometries.forEach((geo: any) => {
-      const geoProps = geo.getProperties?.() || {}
-      const featureId = String(geo.getId?.() || geoProps.id || '').trim()
-      geo.setProperties({
-        ...geoProps,
-        geoId: featureId
-      })
-      geo.setSymbol({
-        polygonPatternFile: fillImg,
-        polygonFill: 'rgba(3, 42, 67, 0.86)',
-        polygonOpacity: 0.88,
-        lineColor: '#4ef4ff',
-        lineWidth: 1.5,
-        lineOpacity: 1,
-        shadowBlur: 22,
-        shadowColor: 'rgba(71, 242, 255, 0.7)'
-      })
-      if (ENABLE_HOVER_TOOLTIP) {
-        geo.on('mouseenter', (e: any) => {
-          state.map.setCursor('pointer')
-          setGeometryHoverState(e.target, true)
-          showTooltip(e)
-        })
-        geo.on('mousemove', (e: any) => {
-          showTooltip(e)
-        })
-        geo.on('mouseleave', (e: any) => {
-          state.map.setCursor('default')
-          setGeometryHoverState(e.target, false)
-          hideTooltip()
-        })
-      }
-      if ((!isCertificateMode.value && !isTaskMapMode.value) || currentDrillLevel.value < 2) {
-        geo.on('click', (e: any) => drillDown(e.target))
-      }
-      geo.addTo(state.detailLayer)
-    })
-
-    renderDetailLabels(detailGeo.features)
+    renderDetailLabels(detailEntry.labels)
     const extent = state.detailLayer.getExtent?.()
     if (extent) {
       state.map.fitExtent(extent, 0, {
@@ -765,10 +887,10 @@ const drillDown = async (geometry: any) => {
     ui.title = properties.name || '省级详情'
     if (mapDataPromise) {
       void mapDataPromise.then((updated) => {
-        if (updated) scheduleSyncCurrentMapData(detailGeometries)
+        if (updated) scheduleSyncCurrentMapData(detailEntry.geometries)
       })
     } else {
-      scheduleSyncCurrentMapData(detailGeometries)
+      scheduleSyncCurrentMapData(detailEntry.geometries)
     }
   } catch (error) {
     console.error('[Map] Drill down failed:', error)
@@ -821,6 +943,51 @@ const rollUp = () => {
   scheduleRefreshCurrentMapData()
 }
 
+const resetMapViewState = () => {
+  hideTooltip()
+  cancelScheduledMapSync()
+  cancelScheduledMapRefresh()
+  if (state.detailLayer) state.detailLayer.clear()
+  if (state.detailLabelLayer) state.detailLabelLayer.clear()
+  if (state.hotspotLayer) state.hotspotLayer.clear()
+  setVectorLayerVisible(state.detailLayer, false)
+  setVectorLayerVisible(state.detailLabelLayer, false)
+  setVectorLayerVisible(state.glowLayer, true)
+  setVectorLayerVisible(state.provinceLayer, true)
+  setVectorLayerVisible(state.labelLayer, true)
+
+  if (state.map) {
+    if (typeof state.map.setView === 'function') {
+      state.map.setView({
+        center: HOME_CENTER,
+        zoom: HOME_ZOOM,
+        pitch: 0,
+        bearing: 0
+      })
+    } else {
+      state.map.setCenterAndZoom(HOME_CENTER, HOME_ZOOM)
+      state.map.setPitch(0)
+      if (typeof state.map.setBearing === 'function') state.map.setBearing(0)
+    }
+  }
+
+  ui.title = '全国'
+  ui.subtitle = ''
+  ui.isDrilled = false
+  currentDrillLevel.value = 0
+  delete currentRegionParams.provinceName
+  delete currentRegionParams.cityName
+}
+
+const scheduleMapSizeCheck = () => {
+  if (!state.map) return
+  requestAnimationFrame(() => {
+    if (disposed || !state.map) return
+    state.map.checkSize?.()
+    state.map.resize?.()
+  })
+}
+
 const renderNationalLabels = () => {
   if (disposed || !state.chinaFullGeo || !state.labelLayer) return
   if (state.labelLayer.getCount && state.labelLayer.getCount() > 0) {
@@ -833,14 +1000,15 @@ const renderNationalLabels = () => {
       new maptalks.Label(formatRegionLabel(name), cp, {
         draggable: false,
         interactive: false,
+        boxStyle: null, // 显式置空背景框样式，彻底移除文字标签自带的半透明圆角黑色背景底框
         textSymbol: {
           textFaceName: 'sans-serif',
           textFill: '#ffffff',
           textSize: 13,
           textOpacity: 1,
           textWeight: 'bold',
-          textHaloFill: 'rgba(2, 17, 39, 0.98)',
-          textHaloRadius: 4,
+          textHaloFill: 'rgba(0, 0, 0, 0)',
+          textHaloRadius: 0,
           textDx: 0,
           textDy: 0
         }
@@ -860,10 +1028,6 @@ const scheduleNationalLabels = () => {
   })
 }
 
-const loadInitialMapData = () => {
-  return loadCurrentMapData({ sync: false })
-}
-
 // 提取应用全国遮罩的逻辑
 const applyChinaMask = () => {
   // 纯矢量模式下无需对底图切片进行 Mask
@@ -871,6 +1035,8 @@ const applyChinaMask = () => {
 
 const initMap = async () => {
   if (disposed || !mapRef.value) return // 确保 echarts 在全局可用
+  await ensureMaptalks()
+  if (disposed || !mapRef.value) return
   ;(window as any).echarts = echarts
   state.map = new maptalks.Map(mapRef.value, {
     center: HOME_CENTER,
@@ -878,6 +1044,13 @@ const initMap = async () => {
     minZoom: 4,
     maxZoom: 12,
     pitch: 0,
+    devicePixelRatio: 1,
+    maxFPS: 30,
+    layerCanvasLimitOnInteracting: 3,
+    zoomAnimation: false,
+    panAnimation: false,
+    rotateAnimation: false,
+    checkSizeInterval: 1600,
     maxExtent: new maptalks.Extent(73, 15, 135, 55),
     attribution: false,
     background: { fill: '#020b18' }
@@ -920,7 +1093,6 @@ const initMap = async () => {
 
   // 4. 加载数据并渲染
   try {
-    const initialMapDataPromise = loadInitialMapData()
     state.chinaFullGeo = await loadRemoteGeoJson()
     if (disposed || !state.map) return
 
@@ -931,8 +1103,8 @@ const initMap = async () => {
         const glowGeometries = maptalks.GeoJSON.toGeometry(state.chinaFullGeo)
         glowGeometries.forEach((geo: any) => {
           applyMapGlowSymbol(geo)
-          geo.addTo(state.glowLayer)
         })
+        addGeometriesToLayer(state.glowLayer, glowGeometries)
         geometries.forEach((geo: any) => {
           const geoProps = geo.getProperties?.() || {}
           const featureId = String(geo.getId?.() || geoProps.id || '').trim()
@@ -952,26 +1124,10 @@ const initMap = async () => {
             shadowColor: 'rgba(31, 216, 255, 0.48)'
           })
 
-          if (ENABLE_HOVER_TOOLTIP) {
-            geo.on('mouseenter', (e: any) => {
-              state.map.setCursor('pointer')
-              setGeometryHoverState(e.target, true)
-              showTooltip(e)
-            })
-            geo.on('mousemove', (e: any) => {
-              showTooltip(e)
-            })
-            geo.on('mouseleave', (e: any) => {
-              state.map.setCursor('default')
-              setGeometryHoverState(e.target, false)
-              hideTooltip()
-            })
-          }
-          geo.on('click', (e: any) => drillDown(e.target))
-
-          geo.addTo(state.provinceLayer)
+          bindRegionGeometryEvents(geo)
         })
-        void initialMapDataPromise.then((updated) => {
+        addGeometriesToLayer(state.provinceLayer, geometries)
+        void loadCurrentMapData({ sync: false }).then((updated) => {
           if (disposed) return
           if (updated && !ui.isDrilled) scheduleSyncCurrentMapData(geometries)
         })
@@ -1110,6 +1266,8 @@ watch(
       isDashboardMode.value
     ) {
       invalidateMapDataRequests()
+      resetMapViewState()
+      scheduleMapSizeCheck()
       scheduleRefreshCurrentMapData()
     }
   }
@@ -1121,7 +1279,7 @@ onMounted(async () => {
   loadingFallbackTimer = window.setTimeout(() => {
     loading.value = false
     loadingFallbackTimer = null
-  }, 3000)
+  }, 1200)
   try {
     await initMap()
   } finally {
@@ -1170,6 +1328,7 @@ onUnmounted(() => {
     state.provinceLayer = null
     state.chinaFullGeo = null
   }
+  detailGeoCache.clear()
   currentMapList.value = []
   certificateMapData.value = {}
   fastMapData.value = []

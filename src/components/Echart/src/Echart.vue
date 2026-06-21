@@ -31,6 +31,7 @@ const options = computed(() => {
 const elRef = ref<ElRef>()
 
 let echartRef: any = null
+let initRaf = 0
 
 const contentEl = ref<Element>()
 
@@ -51,7 +52,7 @@ const initChart = () => {
       echartRef = null
     }
     echartRef = echarts.init(unref(elRef) as HTMLElement)
-    echartRef?.setOption(unref(options), true)
+    echartRef?.setOption(unref(options), true, true)
   }
 }
 
@@ -59,12 +60,9 @@ watch(
   () => options.value,
   (options) => {
     if (echartRef) {
-      echartRef?.setOption(options, true)
-      echartRef?.resize()
+      echartRef?.setOption(options, true, true)
+      resizeHandler()
     }
-  },
-  {
-    deep: true
   }
 )
 
@@ -81,7 +79,10 @@ const contentResizeHandler = async (e: TransitionEvent) => {
 }
 
 onMounted(() => {
-  initChart()
+  initRaf = window.requestAnimationFrame(() => {
+    initRaf = 0
+    initChart()
+  })
 
   window.addEventListener('resize', resizeHandler)
 
@@ -91,6 +92,10 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+  if (initRaf) {
+    window.cancelAnimationFrame(initRaf)
+    initRaf = 0
+  }
   window.removeEventListener('resize', resizeHandler)
   unref(contentEl) &&
     (unref(contentEl) as Element).removeEventListener('transitionend', contentResizeHandler)

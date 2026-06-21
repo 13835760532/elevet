@@ -40,13 +40,13 @@ let loadingTimer: number | null = null
 
 onMounted(() => {
   schedule({
-    immediate: ['left', 'center', 'right'],
-    deferred: []
+    immediate: ['left', 'right'],
+    deferred: [{ key: 'center', delay: 160 }]
   })
   loadingTimer = window.setTimeout(() => {
     entranceLoading.value = false
     loadingTimer = null
-  }, 420)
+  }, 180)
 })
 
 onUnmounted(() => {

@@ -34,7 +34,13 @@ const setDefaultTheme = () => {
 setDefaultTheme()
 
 // 仅在大屏页面启用 autofit
-const bigScreenRoutes = ['BigScreen', 'BigScreenCertificate', 'BigScreenTask', 'BigScreenQuick']
+const bigScreenRoutes = [
+  'BigScreen',
+  'BigScreenCertificate',
+  'BigScreenTask',
+  'BigScreenTaskReceive',
+  'BigScreenQuick'
+]
 const enableBigScreenAutofit = async () => {
   if (isBigScreenAutofitActive) return
   await nextTick()

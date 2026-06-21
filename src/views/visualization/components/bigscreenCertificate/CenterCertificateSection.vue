@@ -28,6 +28,7 @@ import {
   type CertificateServiceTrendRespVO
 } from '@/api/agri/dashboard/certificate'
 import { getBigScreenQueryParams, subscribeBigScreenRefresh } from '../bigscreen/config'
+import { cachedBigScreenRequest } from '../bigscreen/requestCache'
 
 const mapTab = ref('开具')
 const trendData = ref<CertificateServiceTrendRespVO>({})
@@ -134,8 +135,11 @@ const trendHead = computed(() => {
 })
 
 const loadTrendData = async () => {
+  const params = getBigScreenQueryParams()
   try {
-    const data = await getCertificateServiceTrend(getBigScreenQueryParams())
+    const data = await cachedBigScreenRequest('certificate-service-trend', params, () =>
+      getCertificateServiceTrend(params)
+    )
     trendData.value = data || {}
   } catch (error) {
     console.error('加载合格证服务趋势失败', error)

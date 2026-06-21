@@ -527,25 +527,31 @@ const remainingRouter: AppRouteRecordRaw[] = [
     name: 'BigScreen',
     meta: {
       title: '平台大屏可视化',
-      hidden: true
+      hidden: true,
+      noCache: true,
+      noTagsView: true
     }
   },
   {
     path: '/big-screen-certificate',
-    component: () => import('@/views/visualization/BigScreenCertificate.vue'),
+    redirect: { path: '/big-screen', query: { key: 'cert' } },
     name: 'BigScreenCertificate',
     meta: {
       title: '合格证大屏可视化',
-      hidden: true
+      hidden: true,
+      noCache: true,
+      noTagsView: true
     }
   },
   {
     path: '/big-screen-task',
-    component: () => import('@/views/visualization/BigScreenTask.vue'),
+    redirect: { path: '/big-screen', query: { key: 'task' } },
     name: 'BigScreenTask',
     meta: {
       title: '检测任务大屏可视化',
-      hidden: true
+      hidden: true,
+      noCache: true,
+      noTagsView: true
     }
   },
   {
@@ -554,16 +560,20 @@ const remainingRouter: AppRouteRecordRaw[] = [
     name: 'BigScreenTaskReceive',
     meta: {
       title: '检测任务接收大屏可视化',
-      hidden: true
+      hidden: true,
+      noCache: true,
+      noTagsView: true
     }
   },
   {
     path: '/big-screen-quick',
-    component: () => import('@/views/visualization/BigScreenQuick.vue'),
+    redirect: { path: '/big-screen', query: { key: 'quick' } },
     name: 'BigScreenQuick',
     meta: {
       title: '快速检测大屏可视化',
-      hidden: true
+      hidden: true,
+      noCache: true,
+      noTagsView: true
     }
   },
   {

@@ -74,6 +74,7 @@ import {
   getBigScreenQueryParams,
   subscribeBigScreenRefresh
 } from '../bigscreen/config'
+import { cachedBigScreenRequest } from '../bigscreen/requestCache'
 
 const overview = ref<DashboardCertificateOverviewRespVO>({})
 const dashboardOverview = ref<DashboardOverviewRespVO>({})
@@ -175,16 +176,22 @@ const subjectData = computed(() => [
 const loadOverviewData = () => {
   const params = getBigScreenQueryParams()
 
-  getCertificateOverview(params)
+  cachedBigScreenRequest('certificate-overview', params, () => getCertificateOverview(params))
     .then((data) => {
       overview.value = data || {}
+      if (
+        data?.enterpriseCount === undefined ||
+        (data?.personalCount === undefined && data?.individualCount === undefined)
+      ) {
+        loadSubjectArchiveStats(params)
+      }
     })
     .catch((error) => {
       console.error('加载合格证概览数据失败', error)
       overview.value = {}
     })
 
-  getDashboardOverview(params)
+  cachedBigScreenRequest('dashboard-overview', params, () => getDashboardOverview(params))
     .then((data) => {
       dashboardOverview.value = data || {}
     })
@@ -192,23 +199,27 @@ const loadOverviewData = () => {
       console.error('加载合格证服务主体概览失败', error)
       dashboardOverview.value = {}
     })
+}
 
-  Promise.allSettled([
-    getSubjectPage({
-      pageNo: 1,
-      pageSize: 1,
-      type: 1,
-      provinceCode: params.provinceName,
-      cityCode: params.cityName
-    }),
-    getSubjectPage({
-      pageNo: 1,
-      pageSize: 1,
-      type: 2,
-      provinceCode: params.provinceName,
-      cityCode: params.cityName
-    })
-  ]).then(([enterpriseResult, personalResult]) => {
+const loadSubjectArchiveStats = (params = getBigScreenQueryParams()) => {
+  cachedBigScreenRequest('certificate-subject-archive-stats', params, () =>
+    Promise.allSettled([
+      getSubjectPage({
+        pageNo: 1,
+        pageSize: 1,
+        type: 1,
+        provinceCode: params.provinceName,
+        cityCode: params.cityName
+      }),
+      getSubjectPage({
+        pageNo: 1,
+        pageSize: 1,
+        type: 2,
+        provinceCode: params.provinceName,
+        cityCode: params.cityName
+      })
+    ])
+  ).then(([enterpriseResult, personalResult]) => {
     if (enterpriseResult.status === 'rejected' || personalResult.status === 'rejected') {
       console.error('加载合格证主体档案统计失败', {
         enterpriseError: enterpriseResult.status === 'rejected' ? enterpriseResult.reason : undefined,
@@ -352,8 +363,11 @@ const categoryPieOption = computed(() => {
 })
 
 const loadCategoryDistribution = async () => {
+  const params = getBigScreenQueryParams()
   try {
-    const data = await getCertificateCategoryDistribution(getBigScreenQueryParams())
+    const data = await cachedBigScreenRequest('certificate-category-distribution', params, () =>
+      getCertificateCategoryDistribution(params)
+    )
     categoryDistribution.value = Array.isArray(data) ? data : []
   } catch (error) {
     console.error('加载合格证品类分布失败', error)

@@ -16,9 +16,6 @@ import { setupGlobCom } from '@/components'
 // 引入 element-plus
 import { setupElementPlus } from '@/plugins/elementPlus'
 
-// 引入 form-create
-import { setupFormCreate } from '@/plugins/formCreate'
-
 // 引入全局样式
 import '@/styles/index.scss'
 
@@ -46,21 +43,51 @@ import VueDOMPurifyHTML from 'vue-dompurify-html' // 解决v-html 的安全隐�
 import print from 'vue3-print-nb' // 打印插件
 import pageback from '@/components/PageBack/index.vue'
 
+const lightRoutePrefixes = ['/big-screen']
+const lightRoutes = ['/login', '/register', '/forgotPassword', '/reset-password', '/403', '/404', '/500']
+let formCreateReady: Promise<void> | null = null
+
+const getCurrentHashPath = () => {
+  const hash = window.location.hash || '#/'
+  return hash.replace(/^#/, '').split('?')[0] || '/'
+}
+
+const isLightRoute = (path: string) =>
+  lightRoutes.includes(path) || lightRoutePrefixes.some((prefix) => path.startsWith(prefix))
+
+const ensureFormCreate = (app: ReturnType<typeof createApp>) => {
+  if (!formCreateReady) {
+    formCreateReady = import('@/plugins/formCreate').then(({ setupFormCreate }) => {
+      setupFormCreate(app)
+    })
+  }
+  return formCreateReady
+}
+
 // 创建实例
 const setupAll = async () => {
   const app = createApp(App)
 
-  await setupI18n(app)
-
   setupStore(app)
+
+  await setupI18n(app)
 
   setupGlobCom(app)
 
   setupElementPlus(app)
 
-  setupFormCreate(app)
+  if (!isLightRoute(getCurrentHashPath())) {
+    await ensureFormCreate(app)
+  }
 
   setupRouter(app)
+
+  router.beforeEach(async (to) => {
+    if (!isLightRoute(to.path)) {
+      await ensureFormCreate(app)
+    }
+    return true
+  })
 
   // directives 指令
   setupAuth(app)

@@ -8,12 +8,69 @@ import { usePageLoading } from '@/hooks/web/usePageLoading'
 import { useDictStoreWithOut } from '@/store/modules/dict'
 import { useUserStoreWithOut } from '@/store/modules/user'
 import { usePermissionStoreWithOut } from '@/store/modules/permission'
-import { deleteUserCache } from '@/hooks/web/useCache'
+import { CACHE_KEY, deleteUserCache, useCache } from '@/hooks/web/useCache'
 import { ElMessage } from 'element-plus'
 
 const { start, done } = useNProgress()
 
 const { loadStart, loadDone } = usePageLoading()
+const { wsCache } = useCache()
+let dynamicRoutesReady = false
+let dynamicRoutesPromise: Promise<void> | null = null
+const dynamicRouteReadyMark = '404Page'
+
+const isBigScreenRoute = (path: string) => path.startsWith('/big-screen')
+
+const hasBigScreenUserCache = () => {
+  const userInfo = wsCache.get(CACHE_KEY.USER)
+  return !!userInfo?.user
+}
+
+const addDynamicRoutes = async () => {
+  if (dynamicRoutesReady && router.hasRoute(dynamicRouteReadyMark)) return
+  dynamicRoutesReady = false
+  if (!dynamicRoutesPromise) {
+    dynamicRoutesPromise = (async () => {
+      const permissionStore = usePermissionStoreWithOut()
+      await permissionStore.generateRoutes()
+      permissionStore.getAddRouters.forEach((route) => {
+        const routeName = route.name
+        if (!routeName || !router.hasRoute(routeName)) {
+          router.addRoute(route as unknown as RouteRecordRaw)
+        }
+      })
+      dynamicRoutesReady = true
+    })().finally(() => {
+      dynamicRoutesPromise = null
+    })
+  }
+  await dynamicRoutesPromise
+}
+
+const runAfterFirstPaint = (callback: () => void) => {
+  if (typeof window === 'undefined') {
+    callback()
+    return
+  }
+  window.setTimeout(() => {
+    const requestIdle = (window as any).requestIdleCallback
+    if (typeof requestIdle === 'function') {
+      requestIdle(callback, { timeout: 3000 })
+      return
+    }
+    callback()
+  }, 0)
+}
+
+const refreshBigScreenUserInBackground = (userStore: ReturnType<typeof useUserStoreWithOut>) => {
+  runAfterFirstPaint(() => {
+    void userStore
+      .setUserInfoAction()
+      .catch((error) => {
+        console.error('后台刷新用户信息失败', error)
+      })
+  })
+}
 
 const parseURL = (
   url: string | null | undefined
@@ -70,21 +127,31 @@ router.beforeEach(async (to, from, next) => {
     } else {
       const dictStore = useDictStoreWithOut()
       const userStore = useUserStoreWithOut()
-      const permissionStore = usePermissionStoreWithOut()
       // 异步加载字典
       // 另外，间接 issue：https://gitee.com/yudaocode/yudao-ui-admin-vue3/issues/ID9FLI
       if (!dictStore.getIsSetDict) {
-        dictStore.setDictMap().then()
+        if (isBigScreenRoute(to.path)) {
+          runAfterFirstPaint(() => {
+            void dictStore.setDictMap()
+          })
+        } else {
+          dictStore.setDictMap().then()
+        }
       }
       if (!userStore.getIsSetUser) {
+        if (isBigScreenRoute(to.path) && hasBigScreenUserCache()) {
+          const hydrated = userStore.hydrateUserInfoFromCache()
+          if (hydrated) {
+            next()
+            refreshBigScreenUserInBackground(userStore)
+            return
+          }
+        }
         isRelogin.show = true
         try {
           await userStore.setUserInfoAction()
           // 后端过滤菜单
-          await permissionStore.generateRoutes()
-          permissionStore.getAddRouters.forEach((route) => {
-            router.addRoute(route as unknown as RouteRecordRaw) // 动态添加可访问路由表
-          })
+          await addDynamicRoutes()
           const redirectPath = from.query.redirect || to.path
           // 修复跳转时不带参数的问题
           const redirect = decodeURIComponent(redirectPath as string)
@@ -96,12 +163,15 @@ router.beforeEach(async (to, from, next) => {
           deleteUserCache()
           removeToken()
           userStore.resetState()
-          permissionStore.$reset()
+          usePermissionStoreWithOut().$reset()
           ElMessage.error(error instanceof Error ? error.message : '登录状态已失效，请重新登录')
           next(`/login?redirect=${to.fullPath}`)
         } finally {
           isRelogin.show = false
         }
+      } else if (!dynamicRoutesReady && !isBigScreenRoute(to.path)) {
+        await addDynamicRoutes()
+        next({ ...to, replace: true })
       } else {
         next()
       }

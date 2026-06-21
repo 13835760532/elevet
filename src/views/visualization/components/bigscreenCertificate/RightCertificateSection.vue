@@ -95,6 +95,7 @@ import {
   type CertificateVerificationTopRespVO
 } from '@/api/agri/dashboard/certificate'
 import { getBigScreenQueryParams, subscribeBigScreenRefresh } from '../bigscreen/config'
+import { cachedBigScreenRequest } from '../bigscreen/requestCache'
 
 interface RankItem {
   name: string
@@ -242,7 +243,9 @@ const formatIssueRankList = (list: CertificateIssueTopRespVO[] = []) =>
 const loadDashboardData = () => {
   const params = getBigScreenQueryParams()
 
-  getCertificateTypeDistribution(params)
+  cachedBigScreenRequest('certificate-type-distribution', params, () =>
+    getCertificateTypeDistribution(params)
+  )
     .then((data) => {
       distributionData.value = Array.isArray(data) ? data : []
     })
@@ -251,7 +254,7 @@ const loadDashboardData = () => {
       distributionData.value = []
     })
 
-  getCertificateIssueTop10(params)
+  cachedBigScreenRequest('certificate-issue-top10', params, () => getCertificateIssueTop10(params))
     .then((data) => {
       issueRank.value = formatIssueRankList(Array.isArray(data) ? data : [])
     })
@@ -260,7 +263,9 @@ const loadDashboardData = () => {
       issueRank.value = []
     })
 
-  getCertificateVerificationTop10(params)
+  cachedBigScreenRequest('certificate-verification-top10', params, () =>
+    getCertificateVerificationTop10(params)
+  )
     .then((data) => {
       storeRank.value = formatRankList(Array.isArray(data) ? data : [])
     })

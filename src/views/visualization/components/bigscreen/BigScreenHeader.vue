@@ -321,20 +321,21 @@ const handleMenuClick = (key: '' | 'task' | 'inspect' | 'cert' | 'warn') => {
     return
   }
 
-  const routeMap: Record<string, string> = {
-    task: '/big-screen-task',
-    inspect: '/big-screen-quick',
-    cert: '/big-screen-certificate',
-    '': '/big-screen'
+  const keyMap: Record<string, string | undefined> = {
+    task: 'task',
+    inspect: 'quick',
+    cert: 'cert',
+    '': undefined
   }
-  const targetPath = routeMap[key]
   if (route.path === '/big-screen') {
     emit('update:activeMenu', key)
     return
   }
-  if (targetPath && route.path !== targetPath) {
-    router.push(targetPath)
-  }
+
+  router.push({
+    path: '/big-screen',
+    query: keyMap[key] ? { key: keyMap[key] } : undefined
+  })
 }
 
 const handleGoHome = () => {
