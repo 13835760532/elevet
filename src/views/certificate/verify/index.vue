@@ -78,6 +78,15 @@
                             </span>
                         </template>
                     </el-table-column>
+                    <el-table-column label="出证类型" prop="certificateType" width="100" align="center">
+                        <template #default="{ row }">
+                            <span v-if="row.certificateType" class="type-tag"
+                                :class="row.certificateType === 1 ? 'producer' : (row.certificateType === 2 ? 'buyer' : 'seller')">
+                                {{ row.certificateType === 1 ? '生产者' : (row.certificateType === 2 ? '收购者' : '批发市场') }}
+                            </span>
+                            <span v-else>--</span>
+                        </template>
+                    </el-table-column>
                     <el-table-column label="产品名称" prop="productName" width="110" align="center" />
                     <el-table-column label="产品类别" prop="productCategory" width="110" align="center">
                         <template #default="{ row }">
@@ -262,6 +271,30 @@ const handleCurrentChange = (val: number) => {
 
 <style lang="scss" scoped>
 /* 统一样式，引用 issue 风格 */
+.type-tag {
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+
+    &.producer {
+        background: rgba(0, 179, 237, 0.1);
+        color: #00B3ED;
+        border: 1px solid rgba(0, 179, 237, 0.2);
+    }
+
+    &.seller {
+        background: rgba(103, 194, 58, 0.1);
+        color: #67c23a;
+        border: 1px solid rgba(103, 194, 58, 0.2);
+    }
+
+    &.buyer {
+        background: rgba(255, 149, 0, 0.1);
+        color: #FF9500;
+        border: 1px solid rgba(255, 149, 0, 0.2);
+    }
+}
+
 .source-tag {
     padding: 2px 8px;
     border-radius: 4px;

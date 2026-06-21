@@ -80,7 +80,7 @@
                         <el-table-column label="任务名称" prop="taskName" align="center" min-width="200"
                             show-overflow-tooltip />
                         <el-table-column label="抽检地区" prop="area" align="center" width="100" />
-                        <el-table-column label="任务分发单位" prop="dept" align="center" min-width="150" />
+                        <el-table-column label="任务主管机构" prop="dept" align="center" min-width="150" />
                         <el-table-column label="所属方案" prop="planName" align="center" min-width="180"
                             show-overflow-tooltip />
                         <el-table-column label="已检数/总任务数" align="center" width="150">

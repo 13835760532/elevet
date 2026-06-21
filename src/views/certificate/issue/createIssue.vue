@@ -316,7 +316,7 @@
                                                     <div class="linked-info-value">{{
                                                         upstreamCertificateDetail.productName
                                                         || upstreamCertificateDetail.productDraft?.productName || '--'
-                                                        }}
+                                                    }}
                                                     </div>
                                                 </div>
                                                 <div class="linked-info-row">
@@ -331,7 +331,7 @@
                                                     <div class="linked-info-value">{{
                                                         upstreamCertificateDetail.productionArea ||
                                                         upstreamCertificateDetail.productDraft?.productionArea || '--'
-                                                        }}
+                                                    }}
                                                     </div>
                                                 </div>
                                                 <div class="linked-info-row">
@@ -388,9 +388,9 @@
                     </div>
 
                     <!-- 基本信息预览 -->
-                    <!-- <div class="divider compact"></div>
+                    <div class="divider compact"></div>
                     <div class="basic-info-preview">
-                        <h3 class="preview-title">合格证生成预览</h3>
+                        <h3 class="preview-title">待开具合格证-产品信息预览</h3>
                         <div class="info-grid">
                             <div class="info-row"><span class="label">产品名称</span><span class="value">{{
                                 formData.productName || '--'
@@ -417,7 +417,7 @@
                                     }}</span></div>
                         </div>
                         <p class="info-tip">*电子合格证由链安食检数智服务平台承载展示</p>
-                    </div> -->
+                    </div>
 
 
                     <!-- 底部按钮 -->
@@ -563,7 +563,7 @@
                         <h2 class="cert-subtitle">承诺事项：</h2>
                         <div class="cert-declaration-list">
                             <p v-for="(line, idx) in computedCommitment" :key="idx" class="declaration-line">• {{ line
-                            }}</p>
+                                }}</p>
                         </div>
 
                         <div class="cert-middle-section">
@@ -2246,6 +2246,7 @@ const handlePrint = async (prepared) => {
         color: #333;
         margin-top: 0;
         margin-bottom: 16px;
+        margin-top: 3px;
     }
 
     .info-grid {

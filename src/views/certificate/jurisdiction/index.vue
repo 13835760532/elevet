@@ -75,19 +75,19 @@
                                 </el-form-item>
                                 <el-form-item label="" prop="certificateCode">
                                     <el-input :prefix-icon="Search" v-model="queryParams.certificateCode"
-                                        placeholder="搜索合格证编号" clearable class="custom-input w140" />
+                                        placeholder="合格证编号" clearable class="custom-input w140" />
                                 </el-form-item>
                                 <el-form-item label="" prop="productName">
                                     <el-input :prefix-icon="Search" v-model="queryParams.productName"
-                                        placeholder="搜索产品名称" clearable class="custom-input w140" />
+                                        placeholder="产品名称" clearable class="custom-input w140" />
                                 </el-form-item>
                                 <el-form-item label="" prop="subjectName">
                                     <el-input :prefix-icon="Search" v-model="queryParams.subjectName"
-                                        placeholder="搜索生产经营企业" clearable class="custom-input w140" />
+                                        placeholder="生产经营企业" clearable class="custom-input w140" />
                                 </el-form-item>
                                 <el-form-item v-if="activeTab === 'produce'" label="" prop="status">
                                     <el-select v-model="queryParams.status" placeholder="开具状态" clearable
-                                        class="custom-select w100">
+                                        class="custom-select w140">
                                         <el-option v-for="item in certificateStatusOptions" :key="item.value"
                                             :label="item.label" :value="item.value" />
                                     </el-select>
@@ -95,12 +95,12 @@
                                 <el-form-item label="" prop="productionArea">
                                     <div class="area-selectors">
                                         <AreaCascader v-model="areaIds" @select="handleAreaSelect" placeholder="产品产地"
-                                            style="width: 260px;" />
+                                            style="width: 200px;" />
                                     </div>
                                 </el-form-item>
                                 <el-form-item v-if="activeTab === 'verify'" label="" prop="certificateSource">
                                     <el-select v-model="queryParams.certificateSource" placeholder="来源" clearable
-                                        class="custom-select w100">
+                                        class="custom-select w140">
                                         <el-option label="本平台" :value="1" />
                                         <el-option label="其他平台" :value="2" />
                                     </el-select>
@@ -114,7 +114,7 @@
                                 </el-form-item> -->
                                 <el-form-item label="" prop="contactPhone">
                                     <el-input :prefix-icon="Search" v-model="queryParams.contactPhone"
-                                        placeholder="搜索联系电话" clearable class="custom-input w140" />
+                                        placeholder="联系电话" clearable class="custom-input w140" />
                                 </el-form-item>
 
                                 <div class="query-btns">

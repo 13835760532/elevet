@@ -31,9 +31,9 @@
               <el-option v-for="dict in industryOptions" :key="dict.value" :label="dict.label" :value="dict.value" />
             </el-select>
           </el-form-item> -->
-          <!-- 备案主体类型 -->
-          <el-form-item label="备案主体类型" prop="subjectType">
-            <el-select v-model="formData.subjectType" placeholder="选择备案主体类型" class="full-width"
+          <!-- 建档类型 -->
+          <el-form-item label="建档类型" prop="subjectType">
+            <el-select v-model="formData.subjectType" placeholder="选择建档类型" class="full-width"
               @change="handleSubjectTypeChange">
               <el-option v-for="dict in filingSubjectTypeOptions" :key="dict.value" :label="dict.label"
                 :value="dict.value" />
@@ -170,7 +170,7 @@ const formData = reactive({
 const formRules = {
   name: [{ required: true, message: '请输入机构名称', trigger: 'blur' }],
   deptType: [{ required: true, message: '请选择机构类型', trigger: 'change' }],
-  subjectType: [{ required: true, message: '请选择备案主体类型', trigger: 'change' }],
+  subjectType: [{ required: true, message: '请选择建档类型', trigger: 'change' }],
   contact: [{ required: true, message: '请输入机构联系人信息', trigger: 'blur' }],
   phone: [{ required: true, message: '请输入机构联系人电话', trigger: 'blur' }]
 }
