@@ -53,48 +53,75 @@
         <div class="report-grid" v-loading="riskLoading">
           <article class="report-card">
             <div class="report-brand">
-              <span class="shield-mark"></span>
-              <strong>壹拾智检-农产品质量安全预警</strong>
+              <span class="shield-mark is-alert"></span>
+              <strong>链安食检-农产品质量安全预警</strong>
             </div>
-            <div class="report-divider"></div>
-            <h2>农产品风险日报：{{ dailyReport.code }}</h2>
-            <dl class="report-lines">
-              <div v-for="line in dailyReport.lines" :key="line.label">
-                <dt>{{ line.label }}</dt>
-                <dd>{{ line.value }}</dd>
+
+            <div class="warning-records-list">
+              <div v-for="(item, index) in warningRecords.slice(0, 2)" :key="item.id || index"
+                class="warning-record-item">
+                <div class="warning-record-header">
+                  <span class="record-badge">阳性/不合格</span>
+                  <span class="record-product">{{ item.productName || '未命名产品' }}</span>
+                  <button class="record-view-btn" type="button" @click="handleViewWarningDetail(item)">查看</button>
+                </div>
+                <div class="warning-record-detail">
+                  <div class="detail-row">
+                    <span>检测项目：</span>
+                    <strong>{{ item.parsedItems || '-' }}</strong>
+                  </div>
+                  <div class="detail-row">
+                    <span>抽检地区：</span>
+                    <span>{{ item.detectionArea || '-' }}</span>
+                  </div>
+                  <div class="detail-row">
+                    <span>被检主体：</span>
+                    <span>{{ item.subjectName || '-' }}</span>
+                  </div>
+                  <div class="detail-row">
+                    <span>检测时间：</span>
+                    <span>{{ item.testTime || '-' }}</span>
+                  </div>
+                </div>
               </div>
-            </dl>
-            <button class="report-link" type="button" @click="handleViewReport(dailyReport)">[查看]</button>
+              <el-empty v-if="warningRecords.length < 1" description="当天暂无高风险预警" :image-size="80" />
+            </div>
           </article>
 
           <article class="report-card report-stack">
             <div class="report-brand">
-              <span class="shield-mark"></span>
-              <strong>壹拾智检-农产品质量安全预警</strong>
+              <span class="shield-mark is-alert"></span>
+              <strong>链安食检-农产品质量安全预警</strong>
             </div>
 
-            <div class="mini-report">
-              <h2>农产品风险日报：{{ dailyReport.titleDate }}</h2>
-              <dl class="report-lines compact">
-                <div v-for="line in dailyReport.lines" :key="line.label">
-                  <dt>{{ line.label }}</dt>
-                  <dd>{{ line.value }}</dd>
+            <div class="warning-records-list">
+              <div v-for="(item, index) in warningRecords.slice(2, 4)" :key="item.id || index"
+                class="warning-record-item">
+                <div class="warning-record-header">
+                  <span class="record-badge">阳性/不合格</span>
+                  <span class="record-product">{{ item.productName || '未命名产品' }}</span>
+                  <button class="record-view-btn" type="button" @click="handleViewWarningDetail(item)">查看</button>
                 </div>
-              </dl>
-              <button class="report-link" type="button" @click="handleViewReport(dailyReport)">[查看]</button>
-            </div>
-
-            <div class="stack-divider"></div>
-
-            <div class="mini-report">
-              <h2>农产品风险月报：{{ monthlyReport.titleDate }}</h2>
-              <dl class="report-lines compact">
-                <div v-for="line in monthlyReport.lines" :key="line.label">
-                  <dt>{{ line.label }}</dt>
-                  <dd>{{ line.value }}</dd>
+                <div class="warning-record-detail">
+                  <div class="detail-row">
+                    <span>检测项目：</span>
+                    <strong>{{ item.parsedItems || '-' }}</strong>
+                  </div>
+                  <div class="detail-row">
+                    <span>抽检地区：</span>
+                    <span>{{ item.detectionArea || '-' }}</span>
+                  </div>
+                  <div class="detail-row">
+                    <span>被检主体：</span>
+                    <span>{{ item.subjectName || '-' }}</span>
+                  </div>
+                  <div class="detail-row">
+                    <span>检测时间：</span>
+                    <span>{{ item.testTime || '-' }}</span>
+                  </div>
                 </div>
-              </dl>
-              <button class="report-link" type="button" @click="handleViewReport(monthlyReport)">[查看]</button>
+              </div>
+              <el-empty v-if="warningRecords.length < 3" description="当天暂无更多高风险预警" :image-size="80" />
             </div>
           </article>
         </div>
@@ -195,7 +222,9 @@ import {
   getDetectionSubTaskTree
 } from '@/api/agri/detectionTask'
 import { getHighRiskList, type StaticRiskListVO } from '@/api/agri/staticRiskList'
+import { getDetectionRecordPage } from '@/api/agri/detectionRecord'
 import { formatDate } from '@/utils/formatTime'
+import dayjs from 'dayjs'
 
 interface NoticeItem {
   id?: number
@@ -408,6 +437,109 @@ const getRiskList = async () => {
   }
 }
 
+const warningRecords = ref<any[]>([])
+const isTodayWarning = ref(true)
+
+const getWarningRecordList = async () => {
+  riskLoading.value = true
+  try {
+    const selectedDateStr = `${reportForm.year}-${pad(reportForm.month)}-${pad(reportForm.day)}`
+    const endDate = selectedDateStr
+    const startDate = dayjs(selectedDateStr).subtract(6, 'day').format('YYYY-MM-DD')
+
+    console.log('安全预警接口请求参数:', { startDate, endDate, selectedDateStr })
+    const res = await getDetectionRecordPage({
+      pageNo: 1,
+      pageSize: 50,
+      startDate,
+      endDate,
+      dateType: 1,
+      timeUnit: 'DAY',
+      overallResult: 1 // 1：阳性/不合格
+    })
+
+    const rawList = res?.list || []
+    console.log('安全预警接口返回原始数据列表:', rawList)
+
+    // 1. 全部数据的解析和清洗
+    const parsedList = rawList.map((item: any) => {
+      let testTime = item.detectionDate ? dayjs(item.detectionDate).format('YYYY-MM-DD HH:mm') : ''
+      let parsedItems = '-'
+      if (item.aiRecognitionResult) {
+        try {
+          const aiData = JSON.parse(item.aiRecognitionResult)
+          if (aiData.results && Array.isArray(aiData.results)) {
+            parsedItems = aiData.results.map((r: any) => r.codeName).join(', ')
+          }
+          if (aiData.timestamp) {
+            testTime = dayjs(aiData.timestamp).format('YYYY-MM-DD HH:mm')
+          }
+        } catch (e) {
+          // ignore
+        }
+      }
+      return {
+        ...item,
+        testTime,
+        parsedItems
+      }
+    })
+
+    // 2. 按检测时间由近到远（倒序）排序
+    parsedList.sort((a: any, b: any) => {
+      const timeA = a.testTime ? dayjs(a.testTime).valueOf() : 0
+      const timeB = b.testTime ? dayjs(b.testTime).valueOf() : 0
+      return timeB - timeA
+    })
+
+    // 3. 筛选出当天的数据
+    const filteredToday = parsedList.filter((item: any) => {
+      const dateA = item.detectionDate ? dayjs(item.detectionDate).format('YYYY-MM-DD') : ''
+      const dateB = item.testTime ? dayjs(item.testTime).format('YYYY-MM-DD') : ''
+      return dateA === selectedDateStr || dateB === selectedDateStr
+    })
+
+    // 4. 当天有数据优先展示当天，无数据则展示最近的4条记录
+    if (filteredToday.length > 0) {
+      isTodayWarning.value = true
+      warningRecords.value = filteredToday.slice(0, 4)
+      console.log('展示选定当天的预警数据:', warningRecords.value)
+    } else {
+      isTodayWarning.value = false
+      warningRecords.value = parsedList.slice(0, 4)
+      console.log('当天无数据，降级展示最近的预警记录:', warningRecords.value)
+    }
+  } catch (error) {
+    console.error('获取质量安全预警数据失败:', error)
+    warningRecords.value = []
+  } finally {
+    riskLoading.value = false
+  }
+}
+
+const handleViewWarningDetail = (item: any) => {
+  let dateStr = ''
+  if (item.testTime) {
+    dateStr = item.testTime.split(' ')[0]
+  } else if (item.detectionDate) {
+    dateStr = item.detectionDate.split(' ')[0]
+  }
+
+  if (!dateStr) {
+    dateStr = `${reportForm.year}-${pad(reportForm.month)}-${pad(reportForm.day)}`
+  }
+
+  router.push({
+    path: '/statistics/quick',
+    query: {
+      tab: 'quick', // 默认选中“快速检测”选项卡
+      overallResult: '1', // 阳性/不合格
+      startDate: dateStr,
+      endDate: dateStr
+    }
+  })
+}
+
 const formatTaskTime = (startDate?: string, endDate?: string) => {
   const start = startDate ? String(startDate).split(' ')[0] : ''
   const end = endDate ? String(endDate).split(' ')[0] : ''
@@ -498,6 +630,21 @@ const getTaskTrackList = async (isInit = false) => {
       const res = await getDetectionTaskPage({ pageNo: 1, pageSize: 50, isAuto: false })
       optionRows = res?.list || []
       trackOptionsRows.value = optionRows
+
+      // 默认选中包含“花菜”的方案和任务；如没有，则选中第一个
+      const broccoliTask = optionRows.find(
+        (row: any) =>
+          (row.planName && row.planName.includes('花菜')) ||
+          (row.planInfo?.planName && row.planInfo.planName.includes('花菜')) ||
+          (row.taskName && row.taskName.includes('花菜'))
+      )
+      if (broccoliTask) {
+        trackForm.planName = broccoliTask.planId
+        trackForm.taskName = '' // 任务默认不需要回显
+      } else if (optionRows.length) {
+        trackForm.planName = optionRows[0].planId
+        trackForm.taskName = '' // 任务默认不需要回显
+      }
     }
 
     if (trackForm.planName) params.planId = trackForm.planName
@@ -567,6 +714,7 @@ const handleSubscribe = () => {
 
 const handleReportQuery = () => {
   getRiskList()
+  getWarningRecordList()
 }
 
 const handleViewReport = (report: typeof dailyReport.value) => {
@@ -599,9 +747,18 @@ watch(
   }
 )
 
+watch(
+  () => trackForm.planName,
+  () => {
+    // 方案变化时，任务选择器默认清空，不需要回显具体任务
+    trackForm.taskName = ''
+  }
+)
+
 onMounted(() => {
   getNoticeList()
   getRiskList()
+  getWarningRecordList()
   getTaskList()
   getTaskTrackList(true)
 })
@@ -699,7 +856,8 @@ onMounted(() => {
   background: #f4f8fb;
   border-radius: 8px;
   padding: 20px;
-  flex: 1; /* 使公告列表高度拉伸，与右侧预警区域高度对齐 */
+  flex: 1;
+  /* 使公告列表高度拉伸，与右侧预警区域高度对齐 */
 }
 
 .notice-item {
@@ -836,7 +994,8 @@ onMounted(() => {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 20px;
-  flex: 1; /* 使网格填满父容器高度 */
+  flex: 1;
+  /* 使网格填满父容器高度 */
 }
 
 .report-card {
@@ -847,7 +1006,8 @@ onMounted(() => {
   border: none !important;
   box-shadow: none !important;
   display: flex;
-  flex-direction: column; /* 使用flex布局以实现内部元素的高度对齐 */
+  flex-direction: column;
+  /* 使用flex布局以实现内部元素的高度对齐 */
 }
 
 .report-brand {
@@ -884,7 +1044,8 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  flex: 1; /* 填满剩余高度，将底部的“查看”按钮推至最下方 */
+  flex: 1;
+  /* 填满剩余高度，将底部的“查看”按钮推至最下方 */
 
   div {
     display: flex;
@@ -918,7 +1079,8 @@ onMounted(() => {
   margin-bottom: 24px;
   flex: 1;
   display: flex;
-  flex-direction: column; /* 使内部元素可用 flex 对齐 */
+  flex-direction: column;
+  /* 使内部元素可用 flex 对齐 */
 
   &:last-child {
     margin-bottom: 0;
@@ -1093,6 +1255,101 @@ onMounted(() => {
   :deep(.branch-line),
   :deep(.tree-branch::before) {
     background: #D1D5DB;
+  }
+}
+
+/* Warning Records List */
+.warning-records-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+  max-height: 280px;
+  flex: 1;
+}
+
+.warning-record-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 12px;
+  background: rgba(255, 77, 79, 0.03);
+  border-radius: 6px;
+  border-left: 3px solid #ff4d4f;
+  /* 红色高风险标识 */
+}
+
+.warning-record-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.record-badge {
+  background: #ffeceb;
+  color: #ff4d4f;
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-weight: bold;
+}
+
+.record-product {
+  font-size: 14px;
+  font-weight: bold;
+  color: #111;
+}
+
+.warning-record-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  color: #666;
+}
+
+.detail-row {
+  display: flex;
+  align-items: flex-start;
+  line-height: 1.5;
+
+  span:first-child {
+    color: #999;
+    flex-shrink: 0;
+    width: 70px;
+  }
+
+  span:last-child {
+    color: #333;
+    flex: 1;
+    word-break: break-all;
+  }
+
+  strong {
+    color: #ff4d4f;
+    font-weight: bold;
+    flex: 1;
+    word-break: break-all;
+  }
+}
+
+.shield-mark.is-alert {
+  background: #ff4d4f !important;
+}
+
+.record-view-btn {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: #00B3ED;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: bold;
+  padding: 0;
+
+  &:hover {
+    text-decoration: underline;
+    color: #00a0d6;
   }
 }
 </style>

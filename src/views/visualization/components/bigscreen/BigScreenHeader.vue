@@ -15,11 +15,44 @@
         <div class="caret-icon"></div>
       </div>
 
-      <div class="nav-btn" v-for="item in leftMenus" :key="item.key" :class="{ active: activeMenu === item.key }"
-        :style="{ backgroundImage: `url(${activeMenu === item.key ? item.activeBg : item.bg})` }"
-        @click="handleMenuClick(item.key)">
-        <span class="btn-label"></span>
-      </div>
+      <template v-for="item in leftMenus" :key="item.key">
+        <div v-if="item.key === 'task'" class="task-nav-wrapper">
+          <div
+            class="nav-btn task-nav-btn"
+            :class="{ active: isMenuActive(item.key) }"
+            :style="{ backgroundImage: `url(${isMenuActive(item.key) ? item.activeBg : item.bg})` }"
+            role="button"
+            @click="selectTaskEntry('issue')"
+          >
+            <span class="btn-label"></span>
+          </div>
+          <transition name="task-subnav">
+            <div v-if="isMenuActive(item.key)" class="task-subnav" role="tablist">
+              <button
+                v-for="option in taskEntryOptions"
+                :key="option.key"
+                class="task-subnav-option"
+                :class="{ active: activeTaskEntry === option.key }"
+                type="button"
+                role="tab"
+                :aria-selected="activeTaskEntry === option.key"
+                @click="selectTaskEntry(option.key)"
+              >
+                {{ option.label }}
+              </button>
+            </div>
+          </transition>
+        </div>
+        <div
+          v-else
+          class="nav-btn"
+          :class="{ active: isMenuActive(item.key) }"
+          :style="{ backgroundImage: `url(${isMenuActive(item.key) ? item.activeBg : item.bg})` }"
+          @click="handleMenuClick(item.key)"
+        >
+          <span class="btn-label"></span>
+        </div>
+      </template>
       <!-- 数据配置弹窗 -->
       <div v-if="showConfig" class="data-config-panel">
         <div class="panel-header">
@@ -315,7 +348,43 @@ const rightMenus = [
   { key: 'warn', label: '小壹预警', bg: warnBg, activeBg: warnBgActive, icon: Bell }
 ]
 
+const taskEntryOptions = [
+  { key: 'issue', label: '任务下发' },
+  { key: 'receive', label: '任务接收' }
+] as const
+
+type TaskEntryKey = (typeof taskEntryOptions)[number]['key']
+
+const activeTaskEntry = computed<TaskEntryKey>(() =>
+  route.path === '/big-screen-task-receive' ? 'receive' : 'issue'
+)
+
+const isMenuActive = (key: '' | 'task' | 'inspect' | 'cert' | 'warn') => activeMenu.value === key
+
+const selectTaskEntry = (key: TaskEntryKey) => {
+  if (key === 'receive') {
+    if (route.path !== '/big-screen-task-receive') {
+      router.push('/big-screen-task-receive')
+    }
+    return
+  }
+
+  if (route.path === '/big-screen') {
+    emit('update:activeMenu', 'task')
+    return
+  }
+
+  router.push({
+    path: '/big-screen',
+    query: { key: 'task' }
+  })
+}
+
 const handleMenuClick = (key: '' | 'task' | 'inspect' | 'cert' | 'warn') => {
+  if (key === 'task') {
+    selectTaskEntry('issue')
+    return
+  }
   if (key === 'warn') {
     router.push('/ai-assistant')
     return
@@ -488,6 +557,89 @@ onUnmounted(() => {
     filter: brightness(1.2);
     text-shadow: 0 0 10px rgba(0, 218, 255, 0.8);
   }
+}
+
+.task-nav-wrapper {
+  position: relative;
+  flex: 0 0 178px;
+  height: 46px;
+}
+
+.task-nav-btn {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.task-subnav {
+  position: absolute;
+  top: 52px;
+  left: 4px;
+  z-index: 1100;
+  width: 170px;
+  height: 30px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 2px;
+  padding: 2px;
+  border-top: 1px solid rgba(82, 229, 255, 0.78);
+  background:
+    linear-gradient(180deg, rgba(11, 50, 88, 0.82), rgba(4, 18, 44, 0.9)),
+    rgba(3, 14, 35, 0.88);
+  box-shadow:
+    inset 0 1px 0 rgba(177, 249, 255, 0.12),
+    0 0 16px rgba(34, 217, 255, 0.2);
+
+  &::before {
+    position: absolute;
+    top: -9px;
+    left: 18px;
+    width: 0;
+    height: 0;
+    border-left: 7px solid transparent;
+    border-right: 7px solid transparent;
+    border-top: 8px solid #20e4ff;
+    filter: drop-shadow(0 0 8px rgba(32, 228, 255, 0.82));
+    content: '';
+  }
+}
+
+.task-subnav-option {
+  width: 100%;
+  height: 26px;
+  border: 0;
+  background: transparent;
+  color: rgba(193, 224, 245, 0.84);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-align: center;
+  text-shadow: 0 0 8px rgba(72, 205, 255, 0.22);
+  transition:
+    background 0.16s ease,
+    color 0.16s ease,
+    text-shadow 0.16s ease;
+
+  &:hover,
+  &.active {
+    background: linear-gradient(180deg, rgba(42, 226, 255, 0.24), rgba(19, 117, 180, 0.18));
+    color: #f4fdff;
+    text-shadow: 0 0 12px rgba(72, 231, 255, 0.72);
+  }
+}
+
+.task-subnav-enter-active,
+.task-subnav-leave-active {
+  transition:
+    opacity 0.16s ease,
+    transform 0.16s ease;
+}
+
+.task-subnav-enter-from,
+.task-subnav-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
 }
 
 /* 数据配置面板样式 */

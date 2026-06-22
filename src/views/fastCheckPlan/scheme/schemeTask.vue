@@ -109,7 +109,7 @@
                 <div v-if="activeTab === 'list'" class="tab-content">
                     <div class="task-list-operations">
                         <!-- 查询区域 -->
-                        <div class="query-section" v-if="taskList.length">
+                        <div class="query-section" style="padding: 0;" v-if="allTaskList.length">
                             <el-form :model="queryParams" :inline="true"
                                 class="custom-query-form custom-query-form-row">
                                 <el-form-item label="" style="width: 200px!important">
@@ -147,7 +147,7 @@
                             </el-form>
                         </div>
 
-                        <div class="separator-line" v-if="taskList.length"></div>
+                        <div class="separator-line" v-if="allTaskList.length"></div>
 
                         <!-- 操作按钮区域 -->
                         <div class="action-bar">
@@ -160,7 +160,7 @@
                         </div>
                     </div>
 
-                    <div v-if="taskList.length === 0 && !loading" class="empty-state">
+                    <div v-if="allTaskList.length === 0 && !loading" class="empty-state">
                         <el-icon class="empty-icon" :size="64">
                             <Document />
                         </el-icon>
@@ -189,7 +189,7 @@
                                     <div class="completion-rate-cell">
                                         <span class="rate-pct">{{ scope.row.percentage }}%</span>
                                         <span class="rate-counts">({{ scope.row.completed }}/{{ scope.row.total
-                                        }})</span>
+                                            }})</span>
                                     </div>
                                 </template>
                             </el-table-column>
@@ -204,7 +204,8 @@
                                 <template #default="scope">
                                     <div class="table-operate-action-btns">
                                         <span class="table-view-operate" @click="handleViewTask(scope.row)">查看</span>
-                                        <span class="table-edit-operate" style="color: #00B3ED; margin-left: 10px;"
+                                        <span class="table-edit-operate" v-if="[1, 2].includes(+scope.row.status)"
+                                            style="color: #00B3ED; margin-left: 10px;"
                                             @click="handleCreateSubTask(scope.row)">新建子任务</span>
                                     </div>
                                 </template>
@@ -1194,7 +1195,7 @@ const handleCreateSubTask = (row) => {
 
 /* 任务列表操作区域 */
 .task-list-operations {
-    padding-bottom: 20px;
+    padding-bottom: 14px;
 
     .query-section {
         padding: 10px 0;
@@ -1234,7 +1235,7 @@ const handleCreateSubTask = (row) => {
     .separator-line {
         height: 1px;
         background-color: #f1f5f9;
-        margin: 15px 0;
+        margin: 8px 0;
     }
 
     .action-bar {

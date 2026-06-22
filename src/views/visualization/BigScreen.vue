@@ -104,6 +104,14 @@ const getRouteKeyFromLocation = () => {
   return new URLSearchParams(hash.slice(queryStartIndex + 1)).get('key') || ''
 }
 
+const isThreeRendererRoute = () => {
+  if (typeof window === 'undefined') return true
+  const hash = window.location.hash || ''
+  const queryStartIndex = hash.indexOf('?')
+  if (queryStartIndex < 0) return true
+  return new URLSearchParams(hash.slice(queryStartIndex + 1)).get('renderer') !== 'maptalks'
+}
+
 const syncLocationKey = (mode: BigScreenMenu) => {
   if (typeof window === 'undefined') return
   const nextKey = mode && mode !== 'warn' ? menuToQueryKey[mode] : ''
@@ -159,6 +167,27 @@ const showLoadingFor = (delay: number) => {
 }
 
 const getPanelPlan = (mode: BigScreenMenu): DeferredPanelPlan => {
+  if (isThreeRendererRoute()) {
+    if (mode === 'task' || mode === 'inspect') {
+      return {
+        immediate: ['center'],
+        deferred: [
+          { key: 'left', delay: 80 },
+          { key: 'right', delay: 160 },
+          { key: 'bottom', delay: 260 }
+        ]
+      }
+    }
+
+    return {
+      immediate: ['center'],
+      deferred: [
+        { key: 'left', delay: 80 },
+        { key: 'right', delay: 160 }
+      ]
+    }
+  }
+
   if (mode === 'task' || mode === 'inspect') {
     return {
       immediate: ['left', 'right'],
@@ -176,6 +205,29 @@ const getPanelPlan = (mode: BigScreenMenu): DeferredPanelPlan => {
 }
 
 const getSwitchPanelPlan = (mode: BigScreenMenu): DeferredPanelPlan => {
+  if (isThreeRendererRoute()) {
+    if (mode === 'task' || mode === 'inspect') {
+      return {
+        immediate: [],
+        deferred: [
+          { key: 'center', delay: 0 },
+          { key: 'left', delay: 80 },
+          { key: 'right', delay: 160 },
+          { key: 'bottom', delay: 260 }
+        ]
+      }
+    }
+
+    return {
+      immediate: [],
+      deferred: [
+        { key: 'center', delay: 0 },
+        { key: 'left', delay: 80 },
+        { key: 'right', delay: 160 }
+      ]
+    }
+  }
+
   if (mode === 'task' || mode === 'inspect') {
     return {
       immediate: [],

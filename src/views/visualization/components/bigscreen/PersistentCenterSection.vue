@@ -29,7 +29,13 @@
             </div>
           </div>
         </div>
-        <VisualizationMap :mode="mapMode" :certificate-tab="mapTab" />
+        <ThreeMap
+          v-if="useThreeRenderer"
+          :mode="mapMode"
+          :certificate-tab="mapTab"
+          :task-label="taskLabel"
+        />
+        <VisualizationMap v-else :mode="mapMode" :certificate-tab="mapTab" />
       </div>
     </BigPanelCard>
 
@@ -56,7 +62,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, onMounted, onUnmounted, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import echarts from '@/plugins/echarts'
 import { Echart } from '@/components/Echart'
 import {
@@ -85,12 +92,27 @@ import n3 from '@/assets/imgs/echarts/首页/fgqt3.png'
 
 defineOptions({ name: 'VisualizationPersistentCenterSection' })
 
+const threeMapLoadFailed = ref(false)
+const ThreeMap = defineAsyncComponent({
+  loader: () => import('../ThreeMap.vue'),
+  onError(error, retry, fail, attempts) {
+    console.error('[PersistentCenterSection] ThreeMap load failed:', error)
+    if (attempts <= 1) {
+      retry()
+      return
+    }
+    threeMapLoadFailed.value = true
+    fail()
+  }
+})
+
 type BigScreenMenu = '' | 'task' | 'inspect' | 'cert' | 'warn'
 
 const props = defineProps<{
   activeMenu: BigScreenMenu
 }>()
 
+const route = useRoute()
 const mapTab = ref('开具')
 const trendTab = ref('检测量')
 const dashboardTrendData = ref<TrendRespVO[]>([])
@@ -100,6 +122,7 @@ const certificateTrendData = ref<CertificateServiceTrendRespVO>({})
 const isDefaultMode = computed(() => !props.activeMenu || props.activeMenu === 'warn')
 const isCertificateMode = computed(() => props.activeMenu === 'cert')
 const showTrendPanel = computed(() => isDefaultMode.value || isCertificateMode.value)
+const useThreeRenderer = computed(() => route.query.renderer !== 'maptalks' && !threeMapLoadFailed.value)
 
 const sectionClass = computed(() => {
   if (props.activeMenu === 'cert') return 'cert'
@@ -114,6 +137,8 @@ const mapMode = computed<'default' | 'certificate' | 'fast' | 'task'>(() => {
   if (props.activeMenu === 'task') return 'task'
   return 'default'
 })
+
+const taskLabel = computed(() => '任务下发')
 
 const mapTitle = computed(() => {
   if (props.activeMenu === 'cert') return '合格证地区分布图'

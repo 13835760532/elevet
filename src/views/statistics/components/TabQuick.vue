@@ -1,22 +1,11 @@
 <template>
   <div class="stat-content">
     <!-- 数据范围筛选 -->
-    <StatisticsRangeFilter
-      v-model:range-type="dateRangeType"
-      v-model:date-range="dateRange"
-      description="快速检测统计周期"
-      @search="handleSearch"
-      @reset="handleReset"
-    >
+    <StatisticsRangeFilter v-model:range-type="dateRangeType" v-model:date-range="dateRange" description="快速检测统计周期"
+      @search="handleSearch" @reset="handleReset">
       <template #extra>
-        <AreaCascader
-          v-model="areaIds"
-          placeholder="省/市/县"
-          checkStrictly
-          :root-area-code="userDeptAreaCode"
-          @select="handleAreaSelect"
-          @change="handleAreaChange"
-        />
+        <AreaCascader v-model="areaIds" placeholder="省/市/县" checkStrictly :root-area-code="userDeptAreaCode"
+          @select="handleAreaSelect" @change="handleAreaChange" />
       </template>
     </StatisticsRangeFilter>
 
@@ -44,30 +33,39 @@
     <!-- 检测结果 -->
     <div class="card-section">
       <div class="section-title">检测结果</div>
-      
+
       <!-- 第二层筛选 -->
       <div class="result-filters">
-        <el-input v-model="filters.keyword" placeholder="任务名称/任务编号" class="filter-item input-item" />
-        <el-select v-model="filters.type" placeholder="全部类型" class="filter-item">
-          <el-option label="自主检测" value="1" />
-          <el-option label="任务检测" value="2" />
-        </el-select>
-        <el-input v-model="filters.sample" placeholder="样品名称" class="filter-item" clearable />
-        <el-select v-model="filters.category" placeholder="产品分类" class="filter-item" clearable>
-          <el-option v-for="item in productCategoryOptions" :key="item.value" :label="item.label" :value="item.value" />
-        </el-select>
-        <el-input v-model="filters.area" placeholder="检测地区" class="filter-item" clearable />
-        <el-select v-model="filters.org" placeholder="检测机构" class="filter-item"></el-select>
-        <el-select v-model="filters.result" placeholder="检测结果" class="filter-item" clearable>
-          <el-option label="阴性" :value="0" />
-          <el-option label="阳性" :value="1" />
-          <el-option label="结果异常" :value="2" />
-        </el-select>
-        <el-date-picker v-model="filters.date" type="daterange" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期" class="filter-item date-picker-small" />
-        <div class="filter-actions">
-          <el-button type="primary" class="export-btn" @click="handleSearch">查询</el-button>
-          <el-button type="primary" class="export-btn" @click="resetResultFilters">重置</el-button>
-          <el-button type="primary" class="export-btn" @click="handleExport">导出</el-button>
+        <!-- 第一行：常规选项 -->
+        <div class="filter-row-top">
+          <el-input v-model="filters.keyword" placeholder="任务名称/任务编号" class="filter-item input-item" />
+          <el-select v-model="filters.type" placeholder="全部类型" class="filter-item">
+            <el-option label="自主检测" value="1" />
+            <el-option label="任务检测" value="2" />
+          </el-select>
+          <el-input v-model="filters.sample" placeholder="样品名称" class="filter-item" clearable />
+          <el-select v-model="filters.category" placeholder="产品分类" class="filter-item" clearable>
+            <el-option v-for="item in productCategoryOptions" :key="item.value" :label="item.label"
+              :value="item.value" />
+          </el-select>
+          <el-input v-model="filters.area" placeholder="检测地区" class="filter-item" clearable />
+          <el-select v-model="filters.org" placeholder="检测机构" class="filter-item"></el-select>
+          <el-select v-model="filters.result" placeholder="检测结果" class="filter-item" clearable>
+            <el-option label="阴性" :value="0" />
+            <el-option label="阳性" :value="1" />
+            <el-option label="结果异常" :value="2" />
+          </el-select>
+        </div>
+
+        <!-- 第二行：时间筛选及查询动作 -->
+        <div class="filter-row-bottom">
+          <el-date-picker v-model="filters.date" type="daterange" range-separator="至" start-placeholder="开始日期"
+            end-placeholder="结束日期" class="filter-item date-picker-large" />
+          <div class="filter-actions">
+            <el-button type="primary" class="export-btn" @click="handleSearch">查询</el-button>
+            <el-button type="primary" class="export-btn" @click="resetResultFilters">重置</el-button>
+            <el-button type="primary" class="export-btn" @click="handleExport">导出</el-button>
+          </div>
         </div>
       </div>
 
@@ -81,7 +79,7 @@
           </div>
           <Echart :options="sampleTrendOption" height="320px" />
         </div>
-        
+
         <div class="chart-area-wrapper" style="flex: 1; margin-bottom: 0;">
           <div class="chart-header">
             <div class="chart-legends">
@@ -94,7 +92,8 @@
 
       <!-- 表格区域 -->
       <div class="table-container">
-        <el-table v-loading="loading" :data="tableData" style="width: 100%" border header-cell-class-name="custom-header" empty-text="暂无快速检测记录">
+        <el-table v-loading="loading" :data="tableData" style="width: 100%" border
+          header-cell-class-name="custom-header" empty-text="暂无快速检测记录">
           <el-table-column type="index" label="序号" width="60" align="center" />
           <el-table-column prop="taskNo" label="任务编号" align="center" width="100" />
           <el-table-column prop="taskName" label="任务名称" align="center" show-overflow-tooltip min-width="120" />
@@ -109,17 +108,11 @@
           <el-table-column prop="item" label="检测项目" align="center" width="120" show-overflow-tooltip />
           <el-table-column prop="result" label="检测结果" align="center" width="80" />
         </el-table>
-        
+
         <div class="pagination-container">
           <div class="total-text">合计：{{ total }}条</div>
-          <el-pagination
-            v-model:current-page="pageNo"
-            v-model:page-size="pageSize"
-            background
-            layout="prev, pager, next"
-            :total="total"
-            @current-change="loadTable"
-          />
+          <el-pagination v-model:current-page="pageNo" v-model:page-size="pageSize" background
+            layout="prev, pager, next" :total="total" @current-change="loadTable" />
         </div>
       </div>
     </div>
@@ -128,6 +121,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import StatisticsRangeFilter from './StatisticsRangeFilter.vue'
 import AreaCascader from '@/components/AreaCascader/index.vue'
 import { Echart } from '@/components/Echart'
@@ -150,6 +144,19 @@ import {
   normalizePagedResult
 } from './statisticsData'
 import { ElMessage } from 'element-plus'
+
+const route = useRoute()
+
+const initFiltersFromQuery = () => {
+  // 回显检测结果（将字符串转成数字以匹配下拉框 :value="1" 等选项）
+  if (route.query.overallResult !== undefined && route.query.overallResult !== null && route.query.overallResult !== '') {
+    filters.result = Number(route.query.overallResult)
+  }
+  // 回显日期时间范围
+  if (route.query.startDate && route.query.endDate) {
+    filters.date = [route.query.startDate as string, route.query.endDate as string] as any
+  }
+}
 
 const dateRangeType = ref('近一周')
 const dateRange = ref<string[]>([])
@@ -225,7 +232,7 @@ const positiveTrendOption = computed(() => {
     : positiveTrend.value.xaxis || []
   return {
     grid: { top: 24, right: 36, bottom: 36, left: 48 },
-    tooltip: { 
+    tooltip: {
       trigger: 'axis',
       valueFormatter: (value: any) => value + '%'
     },
@@ -384,8 +391,17 @@ watch([dateRangeType, dateRange], () => {
 })
 
 onMounted(() => {
+  initFiltersFromQuery()
   loadData()
 })
+
+watch(
+  () => route.query,
+  () => {
+    initFiltersFromQuery()
+    loadData()
+  }
+)
 
 </script>
 
@@ -453,7 +469,7 @@ $statistics-control-radius: 6px;
     display: flex;
     align-items: baseline;
     gap: 4px;
-    
+
     .unit {
       font-size: 14px;
       font-weight: normal;
@@ -473,11 +489,24 @@ $statistics-control-radius: 6px;
 /* 结果筛选区 */
 .result-filters {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 12px;
+  flex-direction: column;
+  gap: 16px;
   margin-bottom: 30px;
-  
+
+  .filter-row-top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .filter-row-bottom {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+  }
+
   .filter-actions {
     margin-left: auto;
     display: flex;
@@ -487,17 +516,25 @@ $statistics-control-radius: 6px;
   :deep(.el-button + .el-button) {
     margin-left: 0;
   }
-  
+
   .filter-item {
     width: 130px;
   }
-  
+
   .input-item {
     width: 160px;
   }
-  
-  .date-picker-small {
-    width: 240px;
+
+  .date-picker-large {
+    width: 280px !important;
+    max-width: 280px !important;
+    flex: 0 0 280px !important;
+  }
+
+  :deep(.el-date-editor.date-picker-large) {
+    width: 280px !important;
+    max-width: 280px !important;
+    flex: 0 0 280px !important;
   }
 
   :deep(.el-input__wrapper),
@@ -521,7 +558,7 @@ $statistics-control-radius: 6px;
     height: $statistics-control-height;
     line-height: $statistics-control-height;
   }
-  
+
   .export-btn {
     height: $statistics-control-height;
     border-radius: $statistics-control-radius;
@@ -541,7 +578,7 @@ $statistics-control-radius: 6px;
   align-items: center;
   position: relative;
   margin-bottom: 20px;
-  
+
   .chart-y-title {
     position: absolute;
     left: 0;
@@ -549,12 +586,12 @@ $statistics-control-radius: 6px;
     color: #333;
     font-weight: bold;
   }
-  
+
   .chart-legends {
     display: flex;
     gap: 20px;
   }
-  
+
   .legend-item {
     display: flex;
     align-items: center;
@@ -562,12 +599,12 @@ $statistics-control-radius: 6px;
     font-size: 13px;
     color: #666;
   }
-  
+
   .legend-dot {
     width: 16px;
     height: 16px;
     border-radius: 50%;
-    
+
     &.theme {
       background-color: #00B3ED;
     }
@@ -585,7 +622,8 @@ $statistics-control-radius: 6px;
   flex-direction: column;
   justify-content: space-between;
   padding-right: 12px;
-  padding-bottom: 20px; /* offset for x axis */
+  padding-bottom: 20px;
+  /* offset for x axis */
   font-size: 12px;
   color: #999;
   text-align: right;
@@ -607,7 +645,7 @@ $statistics-control-radius: 6px;
   flex-direction: column;
   justify-content: space-between;
   pointer-events: none;
-  
+
   .grid-line {
     width: 100%;
     height: 1px;
@@ -627,7 +665,7 @@ $statistics-control-radius: 6px;
 /* 表格区域 */
 .table-container {
   margin-top: 10px;
-  
+
   ::v-deep(.custom-header) {
     background-color: #f5f7fa !important;
     color: #333;
@@ -640,7 +678,7 @@ $statistics-control-radius: 6px;
   justify-content: space-between;
   align-items: center;
   margin-top: 20px;
-  
+
   .total-text {
     font-size: 14px;
     color: #333;

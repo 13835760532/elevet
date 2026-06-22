@@ -533,6 +533,20 @@ const remainingRouter: AppRouteRecordRaw[] = [
     }
   },
   {
+    path: '/big-screen-three',
+    redirect: (to) => ({
+      path: '/big-screen',
+      query: { ...to.query, renderer: 'three' }
+    }),
+    name: 'BigScreenThree',
+    meta: {
+      title: 'Three.js 大屏可视化',
+      hidden: true,
+      noCache: true,
+      noTagsView: true
+    }
+  },
+  {
     path: '/big-screen-certificate',
     redirect: { path: '/big-screen', query: { key: 'cert' } },
     name: 'BigScreenCertificate',

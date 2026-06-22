@@ -36,6 +36,7 @@ setDefaultTheme()
 // 仅在大屏页面启用 autofit
 const bigScreenRoutes = [
   'BigScreen',
+  'BigScreenThree',
   'BigScreenCertificate',
   'BigScreenTask',
   'BigScreenTaskReceive',

@@ -115,7 +115,10 @@ const include = [
   'element-plus/es/components/mention/style/css',
   'element-plus/es/components/progress/style/css',
   'maptalks',
-  'maptalks.e3'
+  'maptalks.e3',
+  'three',
+  'd3-geo',
+  'earcut'
 ]
 
 const exclude = ['@iconify/json']

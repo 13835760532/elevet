@@ -148,7 +148,7 @@
                                     <div class="grid-item">
                                         <div class="field-label">信用代码</div>
                                         <div class="field-value">{{ formState.selectedSubject.socialCreditCode || '--'
-                                        }}</div>
+                                            }}</div>
                                     </div>
                                     <div class="grid-item">
                                         <div class="field-label">主体类型</div>
@@ -160,7 +160,7 @@
                                     <div class="grid-item">
                                         <div class="field-label">建档类型</div>
                                         <div class="field-value">{{ getFilingTypeLabel(formState.selectedSubject.type)
-                                        }}</div>
+                                            }}</div>
                                     </div>
                                     <div class="grid-item">
                                         <div class="field-label">联系人</div>
@@ -223,7 +223,8 @@
 
                     <el-form-item label="检测区划">
                         <div class="with-desc">
-                            <el-input v-model="formData.detectionArea" placeholder="读取所属区划" />
+                            <AreaCascader v-model="detectionAreaVal" @select="handleDetectionAreaSelect"
+                                placeholder="请选择检测区划" />
                             <span class="field-desc-red">读取当前用户所属区划，支持用户修改。</span>
                         </div>
                     </el-form-item>
@@ -333,7 +334,7 @@
                             <span class="label">样品来源：</span>
                             <span class="value">{{ Array.isArray(formData.sample.sampleSource) ?
                                 formData.sample.sampleSource.join(', ') : (formData.sample.sampleSource || '--')
-                            }}</span>
+                                }}</span>
                         </div>
                         <div class="info-item">
                             <span class="label">样品状态：</span>
@@ -705,6 +706,25 @@ const handleAreaSelect = (area) => {
     formData.sample.productionArea = `${area.province}-${area.city}-${area.district}`;
     formData.detectionArea = formData.sample.productionArea;
     console.log(formData.sample.productionArea)
+};
+
+const detectionAreaVal = computed({
+    get: () => {
+        if (!formData.detectionArea) return [];
+        return formData.detectionArea.split('-');
+    },
+    set: (val) => {
+        if (Array.isArray(val)) {
+            formData.detectionArea = val.join('-');
+        } else {
+            formData.detectionArea = val || '';
+        }
+    }
+});
+
+const handleDetectionAreaSelect = (area) => {
+    const parts = [area.province, area.city, area.district].filter(Boolean);
+    formData.detectionArea = parts.join('-');
 };
 
 /**
@@ -1395,8 +1415,9 @@ onMounted(async () => {
 
         .field-desc-red {
             font-size: 13px;
-            color: #f56c6c;
+            color: #c9c9c9;
             margin-top: 2px;
+            line-height: 16px !important;
         }
     }
 
