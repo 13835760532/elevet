@@ -342,7 +342,14 @@ import {
 } from '@/api/agri/dashboard/certificate'
 import { getTaskMap } from '@/api/agri/dashboard/task'
 import { getNoticePage, type NoticeVO } from '@/api/system/notice'
-import { buildRangeParams, formatNumber, formatPercent, getStatValue } from './statisticsData'
+import {
+  buildRangeParams,
+  formatNumber,
+  formatPercent,
+  getEffectiveAreaParams,
+  getStatValue,
+  getUserDeptAreaParams
+} from './statisticsData'
 import { formatDate } from '@/utils/formatTime'
 import dayjs from 'dayjs'
 
@@ -353,6 +360,7 @@ const stripRegionSuffix = (name: string) => String(name || '').replace(REGION_SU
 const STATISTICS_CHINA_MAP_NAME = 'statisticsChina'
 const chinaMapFeatures = ((chinaLiteGeo as any)?.features || []) as any[]
 const chinaMapNameLookup = new Map<string, string>()
+const registeredStatisticsMapNames = new Set<string>([STATISTICS_CHINA_MAP_NAME])
 
 chinaMapFeatures.forEach((feature) => {
   const featureName = String(feature?.properties?.name || '').trim()
@@ -362,6 +370,49 @@ chinaMapFeatures.forEach((feature) => {
 })
 
 echarts.registerMap(STATISTICS_CHINA_MAP_NAME, chinaLiteGeo as any)
+
+const getFeatureAreaCode = (feature: any) => String(
+  feature?.id || feature?.properties?.adcode || feature?.properties?.code || ''
+).trim()
+
+const getProvinceFeatureCode = (areaCode?: string | number) => {
+  const value = String(areaCode || '').trim()
+  return /^\d{2}/.test(value) ? `${value.slice(0, 2)}0000` : ''
+}
+
+const getUserDeptMapScope = () => {
+  const { areaCode } = getUserDeptAreaParams()
+  const provinceFeatureCode = getProvinceFeatureCode(areaCode)
+  const feature = provinceFeatureCode
+    ? chinaMapFeatures.find((item) => getFeatureAreaCode(item) === provinceFeatureCode)
+    : null
+
+  if (!feature) {
+    return {
+      mapName: STATISTICS_CHINA_MAP_NAME,
+      geoJson: chinaLiteGeo,
+      featureName: '',
+      scoped: false
+    }
+  }
+
+  const featureName = String(feature?.properties?.name || '').trim()
+  return {
+    mapName: `${STATISTICS_CHINA_MAP_NAME}_${provinceFeatureCode}`,
+    geoJson: {
+      ...(chinaLiteGeo as any),
+      features: [feature]
+    },
+    featureName,
+    scoped: true
+  }
+}
+
+const ensureStatisticsMapRegistered = (scope: ReturnType<typeof getUserDeptMapScope>) => {
+  if (registeredStatisticsMapNames.has(scope.mapName)) return
+  echarts.registerMap(scope.mapName, scope.geoJson as any)
+  registeredStatisticsMapNames.add(scope.mapName)
+}
 
 const resolveMapName = (name: string) => {
   const rawName = String(name || '').trim()
@@ -415,6 +466,11 @@ const certificateOverview = ref<DashboardCertificateOverviewRespVO>({})
 const mapType = ref('检测量分布')
 
 const mapRows = ref<any[]>([])
+const mapScope = computed(() => {
+  const scope = getUserDeptMapScope()
+  ensureStatisticsMapRegistered(scope)
+  return scope
+})
 
 const productRiskType = ref('检测量')
 const testItemRiskType = ref('检测量')
@@ -520,10 +576,10 @@ const mapChartOption = computed(() => ({
     {
       name: mapType.value,
       type: 'map',
-      map: STATISTICS_CHINA_MAP_NAME,
-      mapType: STATISTICS_CHINA_MAP_NAME,
+      map: mapScope.value.mapName,
+      mapType: mapScope.value.mapName,
       roam: false,
-      zoom: 1.08,
+      zoom: mapScope.value.scoped ? 1.18 : 1.08,
       top: '0%',
       bottom: '2%',
       left: '2%',
@@ -581,29 +637,30 @@ const loadMapData = async () => {
   try {
     const isTaskMap = mapType.value === '任务监督分布' || mapType.value === '检测执行分布'
     const isCertificateMap = mapType.value === '合格证分布'
+    const mapParams = {
+      ...queryParams.value,
+      ...getEffectiveAreaParams(),
+      areaLevel: '1'
+    } as const
     const data = isTaskMap
-      ? await getTaskMap({
-        ...queryParams.value,
-        areaLevel: '1'
-      })
+      ? await getTaskMap(mapParams)
       : isCertificateMap
-        ? await getCertificateMap({
-          ...queryParams.value,
-          areaLevel: '1'
-        })
-        : await getDashboardMapData({
-          ...queryParams.value,
-          areaLevel: '1'
-        })
+        ? await getCertificateMap(mapParams)
+        : await getDashboardMapData(mapParams)
     const sourceList = isCertificateMap
       ? (data as any)?.issueList || []
       : Array.isArray(data)
         ? data
         : []
+    const currentMapScope = mapScope.value
     const rows = mergeProvinceRows(
       sourceList.map((item) => ({
-        displayName: getProvinceDisplayName(item),
-        mapName: getProvinceMapName(item),
+        displayName: currentMapScope.scoped
+          ? stripRegionSuffix(currentMapScope.featureName || getProvinceDisplayName(item))
+          : getProvinceDisplayName(item),
+        mapName: currentMapScope.scoped
+          ? currentMapScope.featureName
+          : getProvinceMapName(item),
         value: Number(
           mapType.value === '阳性率分布'
             ? (() => {
