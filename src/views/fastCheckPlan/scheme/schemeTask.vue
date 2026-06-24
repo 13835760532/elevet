@@ -20,7 +20,7 @@
                                     :stroke-width="10" color="#00B3ED" />
                             </div>
                             <p class="progress-label">任务总完成率</p>
-                            <p class="progress-value">{{ schemeInfo.taskCompleted }}/{{ schemeInfo.taskTotal }}</p>
+                            <p class="progress-value">{{ schemeInfo.taskCompleted }}/{{ schemeInfo.sampleCount }}</p>
                         </div>
                     </div>
 
@@ -189,7 +189,7 @@
                                     <div class="completion-rate-cell">
                                         <span class="rate-pct">{{ scope.row.percentage }}%</span>
                                         <span class="rate-counts">({{ scope.row.completed }}/{{ scope.row.total
-                                            }})</span>
+                                        }})</span>
                                     </div>
                                 </template>
                             </el-table-column>

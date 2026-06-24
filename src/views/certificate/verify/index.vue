@@ -183,8 +183,7 @@ const loadData = async () => {
             certificateType: queryParams.certType || undefined,
             contactPhone: queryParams.phone || undefined,
             productionArea: queryParams.productionArea?.length ? queryParams.productionArea.join('/') : undefined,
-            startDate: queryParams.dateRange?.[0] ? queryParams.dateRange[0] + ' 00:00:00' : undefined,
-            endDate: queryParams.dateRange?.[1] ? queryParams.dateRange[1] + ' 23:59:59' : undefined,
+            createTime: queryParams.dateRange && queryParams.dateRange.length === 2 ? [queryParams.dateRange[0] + ' 00:00:00', queryParams.dateRange[1] + ' 23:59:59'] : undefined,
         };
         const data = await CertificateApi.getCertificateVerificationPage(params);
         tableData.value = data.list || [];
@@ -225,8 +224,7 @@ const handleExport = async () => {
             certificateType: queryParams.certType || undefined,
             contactPhone: queryParams.phone || undefined,
             productionArea: queryParams.productionArea?.length ? queryParams.productionArea.join('/') : undefined,
-            startDate: queryParams.dateRange?.[0] ? queryParams.dateRange[0] + ' 00:00:00' : undefined,
-            endDate: queryParams.dateRange?.[1] ? queryParams.dateRange[1] + ' 23:59:59' : undefined,
+            createTime: queryParams.dateRange && queryParams.dateRange.length === 2 ? [queryParams.dateRange[0] + ' 00:00:00', queryParams.dateRange[1] + ' 23:59:59'] : undefined,
         };
         const data = await CertificateApi.exportCertificateVerification(params);
         download.excel(data, '合格证收证记录.xls');

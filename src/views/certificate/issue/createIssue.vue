@@ -304,7 +304,7 @@
                                             </div>
                                             <div class="linked-cert-qr">
                                                 <Qrcode v-if="upstreamQrText" :text="upstreamQrText"
-                                                    :options="{ errorCorrectionLevel: 'L' }" :width="86" />
+                                                    :options="{ errorCorrectionLevel: 'L' }" :width="100" />
                                             </div>
                                         </div>
                                         <div class="linked-cert-divider"></div>
@@ -582,7 +582,7 @@
                             <div class="qr-code-wrapper">
                                 <Qrcode v-if="displayCertNo"
                                     :text="`https://yishizhijian.jikeyun.net/web/index.html#/pages/index?id=${formData.id || ''}&code=${displayCertNo}`"
-                                    :options="{ errorCorrectionLevel: 'L' }" :width="132" />
+                                    :options="{ errorCorrectionLevel: 'L' }" :width="162" />
                             </div>
                         </div>
 
@@ -609,12 +609,12 @@
                                     <div class="value">{{ formData.entity }}</div>
                                 </div>
                                 <div class="info-row">
-                                    <div class="label">联系方式</div>
-                                    <div class="value">{{ formData.contactPhone }}</div>
+                                    <div class="label">开具时间</div>
+                                    <div class="value">{{ formatPrintDate(certStore.certificate.issueDate) }}</div>
                                 </div>
                                 <div class="info-row">
-                                    <div class="label">开具时间</div>
-                                    <div class="value">{{ formatDate(certStore.certificate.issueDate) }}</div>
+                                    <div class="label">打印时间</div>
+                                    <div class="value">{{ printTimeText }}</div>
                                 </div>
                             </div>
                         </div>
@@ -1619,6 +1619,7 @@ const printEffectPreviewSrc = ref(null);
 const preparedPrintBytes = ref(null);
 const captureLoading = ref(false);
 const printEffectLoading = ref(false);
+const printTimeText = ref(formatDate(new Date()));
 const bluetoothConnecting = ref(false);
 const bluetoothPrinting = ref(false);
 const bluetoothReady = ref(false);
@@ -1636,6 +1637,16 @@ const selectedBasisOptions = computed(() => {
     const selected = new Set((formData.basis || []).map(v => Number(v)));
     return basisOptions.filter(item => selected.has(Number(item.value)));
 });
+
+const refreshPrintTime = () => {
+    printTimeText.value = formatDate(new Date());
+};
+
+const formatPrintDate = (value) => {
+    if (!value) return '--';
+    const result = formatDate(new Date(value), 'YYYY-MM-DD');
+    return result === 'Invalid Date' ? String(value).slice(0, 10) || '--' : result;
+};
 
 // 用“改宽度”替代 transform 缩放 0.95（544 * 0.95 ≈ 517，取 8 的倍数 520）
 const PRINT_TARGET_WIDTH = 520;
@@ -1740,6 +1751,8 @@ onUnmounted(() => {
 const captureAreaToImg = async () => {
     const area = printAreaRef.value;
     if (!area) return null;
+    refreshPrintTime();
+    await nextTick();
 
     // 获取可能存在的 no-print 元素并暂时隐藏
     const hiddenNodes = [];
@@ -2714,8 +2727,8 @@ const handlePrint = async (prepared) => {
         }
 
         .info-section {
-            margin-top: 12px !important;
-            padding-top: 8px !important;
+            margin-top: 0px !important;
+            padding-top: 14px !important;
             border-top: 1px dashed #000 !important; // 重新加回黑色虚线分割
 
             .info-title {
@@ -2763,10 +2776,11 @@ const handlePrint = async (prepared) => {
         }
 
         .cert-middle-section {
-            margin: 16px 0 !important;
+            margin: 16px 0 0 !important;
             display: flex !important; // 恢复 Flex 布局，左右排列
             justify-content: space-between !important;
             align-items: flex-start !important; // 改为顶部对齐，方便通过 margin 细调高度
+            gap: 18px !important;
 
             .basis-title {
                 font-size: 20px !important; // 与副标题配套
@@ -2774,9 +2788,20 @@ const handlePrint = async (prepared) => {
         }
 
         .qr-code-wrapper {
-            margin-top: 20px !important; // 二维码往下移动 10px
-            width: 132px !important; // 二维码放大一点
-            height: 132px !important;
+            flex: 0 0 190px !important;
+            width: 190px !important;
+            min-width: 190px !important;
+            height: 162px !important;
+            margin-top: 14px !important; // 二维码往下移动
+            display: flex !important;
+            justify-content: flex-end !important;
+
+            canvas,
+            img,
+            svg {
+                width: 162px !important;
+                height: 162px !important;
+            }
         }
 
         .custom-basis-group {

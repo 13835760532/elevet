@@ -1,5 +1,17 @@
 import request from '@/config/axios'
 
+export interface CertificateStatisticsQueryParams {
+  deptId?: number
+  areaLevel?: number | string
+  areaCode?: string
+}
+
+export interface CertificateStatisticsRespVO {
+  certificateIssueCount?: number
+  verificationOnlyCount?: number
+  archivedCount?: number
+}
+
 /**
  * 本平台合格证查验
  * @param data { certificateCode: string; verificationType: number }
@@ -35,8 +47,11 @@ export const getCertificateVerificationPage = (params: any) => {
  * 辖区统计
  * @param params { deptId?: number, areaLevel?: number, areaCode?: string }
  */
-export const getStatistics = (params?: any) => {
-  return request.get({ url: '/agri/certificate-verification/statistics', params })
+export const getStatistics = (params?: CertificateStatisticsQueryParams) => {
+  return request.get<CertificateStatisticsRespVO>({
+    url: '/agri/certificate-verification/statistics',
+    params
+  })
 }
 
 /**

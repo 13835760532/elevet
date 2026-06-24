@@ -125,10 +125,10 @@
                             <span class="config-label">执行时间：</span>
                             <div class="date-range-group">
                                 <el-date-picker v-model="taskForm.startDate" type="date" placeholder="开始日期"
-                                    format="YYYY-MM-DD" value-format="YYYY-MM-DD" class="date-picker" />
+                                    format="YYYY-MM-DD" value-format="YYYY-MM-DD" class="date-picker" disabled />
                                 <span class="date-separator">至</span>
                                 <el-date-picker v-model="taskForm.endDate" type="date" placeholder="结束日期"
-                                    format="YYYY-MM-DD" value-format="YYYY-MM-DD" class="date-picker" />
+                                    format="YYYY-MM-DD" value-format="YYYY-MM-DD" class="date-picker" disabled />
                             </div>
                         </div>
                     </div>

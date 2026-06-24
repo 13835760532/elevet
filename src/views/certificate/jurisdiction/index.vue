@@ -30,7 +30,7 @@
                     <div class="card-header">
                         <h2 class="card-title">辖区合格证统计</h2>
                     </div>
-                    <p class="page-subtitle">本机构管辖地区合格证开具、查验、存证情况统计</p>
+                    <p class="page-subtitle">本机构管辖{{ currentJurisdictionLabel }}合格证开具、查验、存证情况统计</p>
                 </div>
 
                 <!-- 统计卡片区 -->
@@ -40,11 +40,11 @@
                     </div>
                     <div class="stats-cards">
                         <div class="stat-card">
-                            <div class="stat-label">辖区合格证开具量</div>
+                            <div class="stat-label">{{ currentJurisdictionLabel }}合格证开具量</div>
                             <div class="stat-value">{{ statsData.certificateIssueCount }}</div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-label">辖区合格证收证量</div>
+                            <div class="stat-label">{{ currentJurisdictionLabel }}合格证收证量</div>
                             <div class="stat-value">{{ statsData.archivedCount }}</div>
                         </div>
                     </div>
@@ -95,7 +95,7 @@
                                 <el-form-item label="" prop="productionArea">
                                     <div class="area-selectors">
                                         <AreaCascader v-model="areaIds" @select="handleAreaSelect" placeholder="产品产地"
-                                            style="width: 200px;" />
+                                            :root-area-code="userDeptAreaCode" style="width: 200px;" />
                                     </div>
                                 </el-form-item>
                                 <el-form-item v-if="activeTab === 'verify'" label="" prop="certificateSource">
@@ -223,17 +223,91 @@ import download from '@/utils/download';
 import { dateFormatter } from '@/utils/formatTime';
 import AreaCascader from '@/components/AreaCascader/index.vue';
 import { useTableHeight } from '@/hooks/web/useTableHeight';
+import { CACHE_KEY, useCache } from '@/hooks/web/useCache';
 
 const router = useRouter();
 const tableRef = ref(null);
 const { tableHeight } = useTableHeight(tableRef, 70);
 const exportLoading = ref(false);
+const { wsCache } = useCache();
+
+const normalizeAreaValue = (value: unknown) => {
+    if (value === undefined || value === null || value === '') return '';
+    return String(value);
+};
+
+const isSuperAdmin = () => {
+    const userInfo = wsCache.get(CACHE_KEY.USER);
+    const roles = userInfo?.roles || [];
+    return Array.isArray(roles) && roles.includes('super_admin');
+};
+
+const getUserDeptAreaParams = () => {
+    if (isSuperAdmin()) {
+        return {
+            areaCode: '',
+            areaLevel: ''
+        };
+    }
+
+    const userDept = wsCache.get(CACHE_KEY.USER_DEPT) || {};
+    return {
+        areaCode: normalizeAreaValue(userDept.areaCode),
+        areaLevel: normalizeAreaValue(userDept.areaLevel || userDept.areaType)
+    };
+};
+
+const getUserDeptAreaName = () => {
+    const userDept = wsCache.get(CACHE_KEY.USER_DEPT) || {};
+    return (
+        userDept.districtName ||
+        userDept.cityName ||
+        userDept.provinceName ||
+        userDept.areaName ||
+        userDept.name ||
+        '辖区'
+    );
+};
+
+const userDeptAreaCode = computed(() => getUserDeptAreaParams().areaCode);
+const userDeptAreaName = ref(getUserDeptAreaName());
+
+const findNodeById = (id: any, tree: any[]): any | undefined => {
+    if (!id || !Array.isArray(tree)) return undefined;
+    for (const node of tree) {
+        if (String(node.id) === String(id)) return node;
+        const found = findNodeById(id, node.children || []);
+        if (found) return found;
+    }
+    return undefined;
+};
+
+const findNodePathById = (id: any, tree: any[]): any[] | undefined => {
+    if (!id || !Array.isArray(tree)) return undefined;
+    for (const node of tree) {
+        if (String(node.id) === String(id)) return [node];
+        const path = findNodePathById(id, node.children || []);
+        if (path) return [node, ...path];
+    }
+    return undefined;
+};
+
+const limitTreeByRootArea = (tree: any[], rootAreaCode: any) => {
+    if (!rootAreaCode) return tree || [];
+    const rootNode = findNodeById(rootAreaCode, tree || []);
+    return rootNode ? [rootNode] : tree || [];
+};
 
 // 搜索区域
 const searchRegion = ref('');
 
 // 区域树数据
 const regionTree = ref([]);
+const currentJurisdictionName = computed(() => {
+    if (selectedArea.value?.displayName) return selectedArea.value.displayName;
+    return userDeptAreaName.value || '辖区';
+});
+const currentJurisdictionLabel = computed(() => `辖区（${currentJurisdictionName.value}）`);
 
 const treeProps = {
     children: 'children',
@@ -243,9 +317,14 @@ const treeProps = {
 const getRegionTree = async () => {
     try {
         const data = await AreaApi.getAreaTree();
+        const userDeptPath = findNodePathById(userDeptAreaCode.value, data || []);
+        if (userDeptPath?.length) {
+            userDeptAreaName.value = userDeptPath[userDeptPath.length - 1]?.name || userDeptAreaName.value;
+        }
+        const limitedTree = limitTreeByRootArea(data || [], userDeptAreaCode.value);
         regionTree.value = [
-            { id: '', name: '全部辖区' },
-            ...data
+            { id: '', name: userDeptAreaCode.value ? '全部管理辖区' : '全部辖区' },
+            ...limitedTree
         ];
     } catch (e) {
         console.error('获取区域树失败', e);
@@ -303,7 +382,23 @@ const statsData = reactive({
 
 const selectedArea = ref<any>(null);
 
+const getEffectiveAreaParams = () => {
+    if (selectedArea.value) {
+        return {
+            areaCode: selectedArea.value.areaCode,
+            areaLevel: selectedArea.value.areaLevel
+        };
+    }
+
+    const userDeptAreaParams = getUserDeptAreaParams();
+    return {
+        areaCode: userDeptAreaParams.areaCode || undefined,
+        areaLevel: userDeptAreaParams.areaLevel || undefined
+    };
+};
+
 const buildPageParams = () => {
+    const areaParams = getEffectiveAreaParams();
     const params: any = {
         pageNo: pageNum.value,
         pageSize: pageSize.value,
@@ -314,8 +409,8 @@ const buildPageParams = () => {
         contactPhone: queryParams.contactPhone || undefined,
         startDate: queryParams.dateRange?.[0] || undefined,
         endDate: queryParams.dateRange?.[1] || undefined,
-        areaCode: selectedArea.value?.areaCode,
-        areaLevel: selectedArea.value?.areaLevel
+        areaCode: areaParams.areaCode,
+        areaLevel: areaParams.areaLevel
     };
 
     if (activeTab.value === 'produce') {
@@ -335,11 +430,7 @@ const buildPageParams = () => {
 
 const loadStats = async () => {
     try {
-        const params: any = {};
-        if (selectedArea.value) {
-            params.areaCode = selectedArea.value.areaCode;
-            params.areaLevel = selectedArea.value.areaLevel;
-        }
+        const params = getEffectiveAreaParams();
         const res = await CertificateVerificationApi.getStatistics(params);
         if (res) {
             statsData.certificateIssueCount = res.certificateIssueCount || 0;
@@ -421,7 +512,8 @@ const handleNodeClick = (data: any, node: any) => {
         selectedArea.value = {
             areaCode: data.id,
             areaLevel: data.type || node.level,
-            productionArea: getFullName(node)
+            productionArea: getFullName(node),
+            displayName: data.name || getFullName(node)
         };
     }
     loadStats();

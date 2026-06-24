@@ -1,37 +1,64 @@
 <template>
     <div class="verify-detail-page">
-        <!-- 1. 统一查验头部 -->
-        <pageHeader title="合格证收证" desc="上传合格证照片进行收证" />
-
-        <!-- 2. 统一内容大卡片 -->
         <div class="page-content-card">
-            <!-- Tab 切换区 (仅非编辑模式显示) -->
-            <div v-if="!isEdit" class="content-tabs-wrapper">
-                <el-tabs v-model="activeTab" class="custom-nav-tabs">
-                    <el-tab-pane label="农产品上游合格证为本平台开具" name="internal" />
-                    <el-tab-pane label="其他来源" name="external" />
-                </el-tabs>
+            <div v-if="!isEdit" class="source-tabs">
+                <button
+                    type="button"
+                    class="source-tab"
+                    :class="{ 'is-active': activeTab === 'internal' }"
+                    @click="activeTab = 'internal'"
+                >
+                    待收合格证来源本平台开具
+                </button>
+                <button
+                    type="button"
+                    class="source-tab"
+                    :class="{ 'is-active': activeTab === 'external' }"
+                    @click="activeTab = 'external'"
+                >
+                    待收合格证来源其他平台开具
+                </button>
             </div>
 
             <div class="main-body">
                 <div class="upload-section">
-                    <div class="premium-uploader-wrap">
-                        <el-upload class="premium-uploader" drag action="#" :auto-upload="false" :show-file-list="false"
-                            @change="onFileChange">
-                            <div class="uploader-content">
-                                <el-icon class="plus-icon">
-                                    <Plus />
-                                </el-icon>
-                                <div class="upload-text">
-                                    <span class="main-title">点击或拖拽上传合格证照片（AI识别）</span>
-                                    <p class="sub-tips">支持 JPG、PNG、webp 格式，单个文件不超过 5MB</p>
+                    <h2 class="upload-title">上传合格证照片</h2>
+                    <div class="upload-row">
+                        <div class="prototype-uploader-wrap upload-drag-box">
+                            <el-upload
+                                ref="uploadRef"
+                                class="prototype-uploader"
+                                drag
+                                action="#"
+                                :auto-upload="false"
+                                :show-file-list="false"
+                                accept=".jpg,.jpeg,.png,.webp,.rar,.zip"
+                                multiple
+                                @change="onFileChange"
+                            >
+                                <div class="uploader-content">
+                                    <el-icon class="folder-icon">
+                                        <FolderOpened />
+                                    </el-icon>
+                                    <div class="upload-text">
+                                        <span class="upload-main-title">点击或将图片拖拽到这里上传</span>
+                                        <p class="upload-tips">
+                                            按住Ctrl可同时多选，支持上传rar/zip格式文件，单个文件不能超过500kb<br>
+                                            严禁上传包含色情、暴力、反动等相关违法信息的文件。
+                                        </p>
+                                    </div>
                                 </div>
-                            </div>
-                        </el-upload>
+                            </el-upload>
+                        </div>
+                        <el-button type="primary" class="upload-action-btn" @click="triggerUpload">
+                            上传合格证照片
+                        </el-button>
                     </div>
                 </div>
 
-                <div class="divider-dashed"></div>
+                <div class="flow-divider">
+                    <span class="flow-arrow" />
+                </div>
 
                 <!-- 4. 双栏布局 (表单 + 预览) -->
                 <div class="detail-grid">
@@ -91,8 +118,12 @@
                                     <div class="cert-code">合格证编号—{{ formData.certificateCode || 'HGZ9191991111' }}</div>
                                     <h4 class="cert-title">承诺达标合格证</h4>
                                     <div class="cert-body">
-                                        <p class="promise">我承诺生产销售的食用农产品</p>
-                                        <p class="promise-detail">未使用禁用农兽药、兽药及其他化合物；使用的常规农药、兽药残留不超标。</p>
+                                        <p class="promise" style="font-weight: 700; margin-bottom: 6px;">承诺事项：</p>
+                                        <div class="cert-declaration-list" style="margin-bottom: 12px;">
+                                            <p class="declaration-line" style="font-size: 13px; line-height: 1.6; margin: 4px 0; color: #333;">• 未使用禁用农药兽药、停用兽药和非法添加物</p>
+                                            <p class="declaration-line" style="font-size: 13px; line-height: 1.6; margin: 4px 0; color: #333;">• 使用常规农药兽药残留不超标</p>
+                                            <p class="declaration-line" style="font-size: 13px; line-height: 1.6; margin: 4px 0; color: #333;">• 对承诺的真实性负责</p>
+                                        </div>
                                         <div class="cert-main">
                                             <div class="cert-left">
                                                 <p class="label-item">承诺依据：</p>
@@ -187,7 +218,7 @@
 <script setup>
 import { computed, reactive, ref, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { FolderOpened, Plus } from '@element-plus/icons-vue';
+import { FolderOpened } from '@element-plus/icons-vue';
 import { ElMessage, ElLoading } from 'element-plus';
 import { parseImage, createArchive, getVerification, updateCertificateVerification } from '@/api/agri/certificateVerification/index';
 import {
@@ -200,6 +231,7 @@ const router = useRouter();
 const route = useRoute();
 const activeTab = ref('internal');
 const isEdit = ref(!!route.query.id);
+const uploadRef = ref(null);
 
 const formData = reactive({
     productName: '',
@@ -230,6 +262,12 @@ const measurementUnitOptions = usePreferredAgriMeasurementUnitOptions(
     DEFAULT_AGRI_MEASUREMENT_UNIT,
     computed(() => !isEdit.value)
 );
+
+const triggerUpload = () => {
+    const uploadEl = uploadRef.value?.$el || uploadRef.value;
+    const inputEl = uploadEl?.querySelector?.('input[type="file"]');
+    inputEl?.click();
+};
 
 const onFileChange = async (uploadFile) => {
     const loading = ElLoading.service({
@@ -359,19 +397,20 @@ const handleSubmit = async () => {
 
 <style lang="scss" scoped>
 .verify-detail-page {
-    background-color: #f5f7fa;
-    height: calc(100vh - 86px);
+    min-height: calc(100vh - 86px);
+    background:
+        linear-gradient(180deg, rgba(0, 179, 237, 0.025) 0, rgba(255, 255, 255, 0) 148px),
+        #fff;
     display: flex;
     flex-direction: column;
+    color: #151515;
 
     .page-content-card {
         flex: 1;
         overflow-y: auto;
         background: #fff;
-        padding: 16px;
-        margin-top: 16px;
-        border-radius: 12px;
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+        padding: 0 0 36px;
+        border-top: 3px solid #00B3ED;
 
         &::-webkit-scrollbar {
             display: none;
@@ -379,36 +418,77 @@ const handleSubmit = async () => {
         }
     }
 
-    .content-tabs-wrapper {
-        padding: 0 16px 16px;
+    .source-tabs {
+        display: flex;
+        align-items: flex-start;
+        gap: clamp(44px, 5vw, 84px);
+        padding: 28px 48px 0 56px;
+    }
 
-        .custom-nav-tabs {
-            :deep(.el-tabs__header) {
-                margin-bottom: 0;
-                border-bottom: none;
-            }
+    .source-tab {
+        position: relative;
+        border: 0;
+        background: transparent;
+        padding: 0 0 16px;
+        color: #101010;
+        font-size: 20px;
+        font-weight: 700;
+        line-height: 1.2;
+        letter-spacing: 0;
+        cursor: pointer;
+        transition: color 0.2s ease;
 
-            :deep(.el-tabs__item) {
-                font-size: 15px;
-                color: #64748b;
-                height: 50px;
+        &:hover,
+        &.is-active {
+            color: #06313f;
+        }
 
-                &.is-active {
-                    font-weight: 600;
-                    color: var(--el-color-primary);
-                }
-            }
+        &.is-active::after {
+            content: '';
+            position: absolute;
+            left: 2px;
+            right: 2px;
+            bottom: 0;
+            height: 4px;
+            border-radius: 999px;
+            background: linear-gradient(90deg, #00B3ED 0%, rgba(0, 179, 237, 0.28) 100%);
         }
     }
 
-    .main-body {
-        padding: 0 16px;
-    }
-
     .upload-section {
-        margin-bottom: 24px;
+        padding: 34px 48px 0 56px;
 
-        .premium-uploader-wrap {
+        .upload-title {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            margin: 0 0 18px;
+            color: #101820;
+            font-size: 21px;
+            font-weight: 700;
+            line-height: 1.25;
+            letter-spacing: 0;
+
+            &::before {
+                content: '';
+                width: 4px;
+                height: 20px;
+                border-radius: 999px;
+                background: #00B3ED;
+            }
+        }
+
+        .upload-row {
+            display: flex;
+            align-items: center;
+            gap: clamp(24px, 4vw, 56px);
+        }
+
+        .prototype-uploader-wrap {
+            flex: 0 1 760px;
+            max-width: 760px;
+            min-width: 0;
             width: 100%;
 
             :deep(.el-upload) {
@@ -416,26 +496,27 @@ const handleSubmit = async () => {
 
                 .el-upload-dragger {
                     width: 100%;
-                    height: 180px;
-                    border: 2px dashed #E2E8F0;
-                    background-color: #F8FAFC;
-                    border-radius: 12px;
+                    height: 198px;
+                    border: 1px dashed rgba(0, 179, 237, 0.42);
+                    background:
+                        linear-gradient(180deg, rgba(0, 179, 237, 0.035) 0%, rgba(255, 255, 255, 0.98) 100%),
+                        #fff;
+                    border-radius: 6px;
+                    padding: 0;
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                    box-shadow:
+                        inset 0 0 0 1px rgba(255, 255, 255, 0.8),
+                        0 8px 20px rgba(5, 72, 98, 0.035);
+                    transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 
                     &:hover {
                         border-color: #00B3ED;
-                        background-color: #f0f9ff;
-                        transform: translateY(-2px);
-                        box-shadow: 0 4px 12px rgba(0, 179, 237, 0.08);
-
-                        .uploader-content {
-                            .plus-icon {
-                                color: #00B3ED;
-                            }
-                        }
+                        background-color: #fbfeff;
+                        box-shadow:
+                            inset 0 0 0 1px rgba(255, 255, 255, 0.9),
+                            0 10px 24px rgba(0, 179, 237, 0.08);
                     }
                 }
             }
@@ -444,50 +525,123 @@ const handleSubmit = async () => {
                 display: flex;
                 flex-direction: column;
                 align-items: center;
-                gap: 16px;
-                transition: all 0.3s ease;
+                justify-content: center;
 
-                .plus-icon {
-                    font-size: 48px;
-                    color: #94a3b8;
-                    font-weight: bold;
-                    transition: all 0.3s ease;
+                .folder-icon {
+                    width: 58px;
+                    height: 48px;
+                    margin-bottom: 18px;
+                    color: #00B3ED;
+                    font-size: 46px;
+                    line-height: 1;
                 }
 
                 .upload-text {
                     text-align: center;
 
-                    .main-title {
-                        font-size: 16px;
-                        font-weight: 600;
-                        color: #334155;
+                    .upload-main-title {
                         display: block;
-                        margin-bottom: 8px;
+                        color: #17242b;
+                        font-size: 18px;
+                        font-weight: 700;
+                        line-height: 1.35;
                     }
 
-                    .sub-tips {
-                        font-size: 13px;
-                        color: #94a3b8;
-                        margin: 0;
+                    .upload-tips {
+                        margin: 14px 0 0;
+                        color: #87939a;
+                        font-size: 14px;
+                        font-weight: 500;
+                        line-height: 1.55;
                     }
                 }
             }
         }
+
+        .upload-action-btn {
+            width: 146px;
+            height: 44px;
+            flex: 0 0 146px;
+            border: 0;
+            border-radius: 5px;
+            background: #00B3ED;
+            color: #fff;
+            font-size: 16px;
+            font-weight: 600;
+            letter-spacing: 0;
+            box-shadow: 0 8px 18px rgba(0, 179, 237, 0.18);
+            transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+
+            &:hover,
+            &:focus {
+                background: #00a3d8;
+                color: #fff;
+                box-shadow: 0 10px 20px rgba(0, 179, 237, 0.24);
+                transform: translateY(-1px);
+            }
+        }
     }
 
-    .divider-dashed {
-        height: 1px;
-        background-image: linear-gradient(to right, #e2e8f0 40%, rgba(255, 255, 255, 0) 0%);
-        background-position: bottom;
-        background-size: 8px 1px;
-        background-repeat: repeat-x;
-        margin: 32px 0;
+    .flow-divider {
+        position: relative;
+        height: 86px;
+        margin: 14px 0 0;
+        overflow: hidden;
+
+        &::before {
+            content: '';
+            position: absolute;
+            top: 36px;
+            left: 56px;
+            right: 0;
+            height: 2px;
+            background-image: linear-gradient(to right, rgba(0, 179, 237, 0.32) 0 52%, transparent 52% 100%);
+            background-position: 0 0;
+            background-repeat: repeat-x;
+            background-size: 14px 2px;
+            animation: dashFlow 1.2s linear infinite;
+        }
+
+        .flow-arrow {
+            position: absolute;
+            top: 8px;
+            left: 51.5%;
+            width: 72px;
+            height: 72px;
+            transform: translateX(-50%);
+            animation: arrowFlow 2s ease-in-out infinite;
+
+            &::before,
+            &::after {
+                content: '';
+                position: absolute;
+                left: 50%;
+                width: 0;
+                height: 0;
+                transform: translateX(-50%);
+            }
+
+            &::before {
+                top: 0;
+                border-right: 34px solid transparent;
+                border-left: 34px solid transparent;
+                border-top: 70px solid rgba(0, 179, 237, 0.32);
+            }
+
+            &::after {
+                top: 2px;
+                border-right: 31px solid transparent;
+                border-left: 31px solid transparent;
+                border-top: 64px solid #fff;
+            }
+        }
     }
 
     .detail-grid {
         display: grid;
-        grid-template-columns: 360px 1fr;
-        gap: 60px;
+        grid-template-columns: minmax(320px, 380px) minmax(0, 1fr);
+        gap: 48px;
+        padding: 0 48px 0 56px;
 
         .form-container {
             .group-title {
@@ -618,8 +772,8 @@ const handleSubmit = async () => {
     }
 
     .bottom-actions {
-        margin-top: 32px;
-        padding: 20px 0;
+        margin: 28px 48px 0 56px;
+        padding: 20px 0 0;
         border-top: 1px solid #f1f5f9;
         display: flex;
         justify-content: flex-end;
@@ -627,6 +781,76 @@ const handleSubmit = async () => {
 
         .btn-save {
             padding: 0 40px;
+        }
+    }
+}
+
+@keyframes dashFlow {
+    from {
+        background-position-x: 0;
+    }
+
+    to {
+        background-position-x: 14px;
+    }
+}
+
+@keyframes arrowFlow {
+    0% {
+        transform: translate(-50%, -5px);
+        opacity: 0.55;
+    }
+
+    45% {
+        transform: translate(-50%, 6px);
+        opacity: 1;
+    }
+
+    100% {
+        transform: translate(-50%, 13px);
+        opacity: 0.5;
+    }
+}
+
+@media (max-width: 1180px) {
+    .verify-detail-page {
+        .source-tabs {
+            gap: 48px;
+            padding-right: 32px;
+            padding-left: 40px;
+        }
+
+        .source-tab {
+            font-size: 18px;
+        }
+
+        .upload-section {
+            padding-right: 40px;
+            padding-left: 40px;
+
+            .upload-row {
+                align-items: stretch;
+                flex-direction: column;
+            }
+
+            .upload-action-btn {
+                width: 146px;
+                flex-basis: 44px;
+            }
+        }
+
+        .flow-divider::before {
+            left: 40px;
+        }
+
+        .detail-grid {
+            grid-template-columns: 1fr;
+            padding: 0 40px;
+        }
+
+        .bottom-actions {
+            margin-right: 40px;
+            margin-left: 40px;
         }
     }
 }

@@ -47,7 +47,7 @@
                                 <el-select v-model="formData.sample.productId" filterable remote reserve-keyword
                                     placeholder="输入关键词匹配产品" :remote-method="remoteSearchProduct"
                                     :loading="productLoading" @change="handleProductChange" style="flex: 1">
-                                    <el-option v-for="item in productOptions" :key="item.id" :label="item.productName"
+                                    <el-option v-for="item in productOptions" :key="item.id" :label="item.subjectInfo?.name ? `${item.productName}（${item.subjectInfo.name}）` : item.productName"
                                         :value="item.id" />
                                 </el-select>
                                 <el-button type="primary" class="scan-btn">
@@ -614,7 +614,7 @@ const remoteSearchProduct = async (query) => {
             const data = await ProductApi.getProductPage({
                 productName: queryData ? '' : query,
                 productCode: queryData,
-                pageSize: 20
+                pageSize: 100
             });
             productOptions.value = data.list;
         } finally { productLoading.value = false; }
@@ -978,8 +978,8 @@ const handleSubjectSuccess = (id) => {
 onMounted(async () => {
     // 预加载
     const [pData, sData] = await Promise.all([
-        ProductApi.getProductPage({ pageSize: 10 }),
-        SubjectApi.getSubjectPage({ pageSize: 10 })
+        ProductApi.getProductPage({ pageSize: 100 }),
+        SubjectApi.getSubjectPage({ pageSize: 100 })
     ]);
     productOptions.value = pData.list;
     subjectOptions.value = sData.list;

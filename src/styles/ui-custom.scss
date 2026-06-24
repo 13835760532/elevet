@@ -202,10 +202,10 @@
 }
 
 .el-dialog__header {
-  padding: 0 !important;
   border-bottom: 1px solid var(--el-border-color-lighter);
   margin-right: 0 !important;
   font-weight: bold;
+  padding: 12px 16px!important;
 }
 
 .el-dialog__headerbtn {
@@ -221,7 +221,7 @@
 
 .el-dialog__footer {
   border-top: 1px solid var(--el-border-color-lighter);
-  padding: 12px 16px;
+  padding: 12px 16px!important;
 }
 
 

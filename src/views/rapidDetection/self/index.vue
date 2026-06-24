@@ -324,10 +324,10 @@ const handleSetRule = async () => {
             ruleForm.id = data.id;
             ruleForm.isPublic = data.enabled;
             if (data.startTime && data.endTime) {
-                // 确保日期字符串仅包含 YYYY-MM-DD
+                // 确保日期正确转换并格式化为 YYYY-MM-DD
                 ruleForm.dateRange = [
-                    data.startTime.substring(0, 10),
-                    data.endTime.substring(0, 10)
+                    formatDate(new Date(data.startTime), 'YYYY-MM-DD'),
+                    formatDate(new Date(data.endTime), 'YYYY-MM-DD')
                 ];
             } else {
                 ruleForm.dateRange = [];

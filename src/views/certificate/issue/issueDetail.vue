@@ -12,7 +12,9 @@
 
                 <!-- 作废状态横幅：作废后只读查看，不可恢复 -->
                 <div v-if="certificate?.status === 2" class="void-banner no-print">
-                    <el-icon class="void-icon"><WarningFilled /></el-icon>
+                    <el-icon class="void-icon">
+                        <WarningFilled />
+                    </el-icon>
                     <div class="void-info">
                         <span class="void-label">该合格证已作废，不可恢复</span>
                         <span v-if="certificate?.voidReason" class="void-reason">
@@ -48,7 +50,7 @@
                                 <div class="qr-code">
                                     <Qrcode v-if="certificate?.qrCode"
                                         :text="`https://yishizhijian.jikeyun.net/web/index.html#/pages/index?id=${certificate.id || ''}&code=${certificate.qrCode}`"
-                                        :options="{ errorCorrectionLevel: 'L' }" :width="80" />
+                                        :options="{ errorCorrectionLevel: 'L' }" :width="100" />
                                 </div>
                             </div>
                         </div>
@@ -142,7 +144,7 @@
                                 <div class="qr-code">
                                     <Qrcode v-if="upstreamCertificate?.qrCode"
                                         :text="`https://yishizhijian.jikeyun.net/web/index.html#/pages/index?id=${upstreamCertificate.id || ''}&code=${upstreamCertificate.qrCode}`"
-                                        :options="{ errorCorrectionLevel: 'L' }" :width="80" />
+                                        :options="{ errorCorrectionLevel: 'L' }" :width="100" />
                                 </div>
                             </div>
                         </div>
@@ -285,7 +287,7 @@
                         </div>
                         <div class="qr-code-wrapper">
                             <Qrcode v-if="certificate?.certificateCode" :text="certificate?.certificateCode"
-                                :options="{ errorCorrectionLevel: 'L' }" :width="132" />
+                                :options="{ errorCorrectionLevel: 'L' }" :width="162" />
                         </div>
                     </div>
 
@@ -312,12 +314,12 @@
                                 <div class="value">{{ certificate?.subjectName || '--' }}</div>
                             </div>
                             <div class="info-row">
-                                <div class="label">联系方式</div>
-                                <div class="value">{{ certificate?.contactPhone || '--' }}</div>
+                                <div class="label">开具时间</div>
+                                <div class="value">{{ formatPrintDate(certificate?.issueDate) }}</div>
                             </div>
                             <div class="info-row">
-                                <div class="label">开具时间</div>
-                                <div class="value">{{ certificate?.issueDate || '--' }}</div>
+                                <div class="label">打印时间</div>
+                                <div class="value">{{ printTimeText }}</div>
                             </div>
                         </div>
                     </div>
@@ -368,7 +370,7 @@
                         <div class="qr-code-wrapper">
                             <Qrcode v-if="upstreamCertificate?.certificateCode"
                                 :text="upstreamCertificate?.certificateCode" :options="{ errorCorrectionLevel: 'L' }"
-                                :width="132" />
+                                :width="162" />
                         </div>
                     </div>
 
@@ -395,12 +397,12 @@
                                 <div class="value">{{ upstreamCertificate?.subjectName || '--' }}</div>
                             </div>
                             <div class="info-row">
-                                <div class="label">联系方式</div>
-                                <div class="value">{{ upstreamCertificate?.contactPhone || '--' }}</div>
+                                <div class="label">开具时间</div>
+                                <div class="value">{{ formatPrintDate(upstreamCertificate?.issueDate) }}</div>
                             </div>
                             <div class="info-row">
-                                <div class="label">开具时间</div>
-                                <div class="value">{{ upstreamCertificate?.issueDate || '--' }}</div>
+                                <div class="label">打印时间</div>
+                                <div class="value">{{ printTimeText }}</div>
                             </div>
                         </div>
                     </div>
@@ -451,6 +453,7 @@ import { Qrcode } from '@/components/Qrcode';
 import html2canvas from 'html2canvas';
 import PlatformDetectionSelector from './components/PlatformDetectionSelector.vue';
 import { BluetoothPrinter, getAgriUnitLabel } from '@/utils';
+import { formatDate } from '@/utils/formatTime';
 
 const PRINTER_NAME_PREFIX = 'YSH';
 const PRINTER_SERVICE_UUIDS = [
@@ -573,6 +576,7 @@ const printEffectPreviewSrc = ref<string | null>(null);
 const preparedPrintBytes = ref<Uint8Array | null>(null);
 const captureLoading = ref(false);
 const printEffectLoading = ref(false);
+const printTimeText = ref(formatDate(new Date()));
 const bluetoothConnecting = ref(false);
 const bluetoothPrinting = ref(false);
 const bluetoothReady = ref(false);
@@ -592,6 +596,16 @@ const bluetoothPrinter = new BluetoothPrinter({
         printerName.value = ready ? name : '未连接设备';
     }
 });
+
+const refreshPrintTime = () => {
+    printTimeText.value = formatDate(new Date());
+};
+
+const formatPrintDate = (value: unknown) => {
+    if (!value) return '--';
+    const result = formatDate(new Date(value as string | number | Date), 'YYYY-MM-DD');
+    return result === 'Invalid Date' ? String(value).slice(0, 10) || '--' : result;
+};
 
 // 统一解析承诺依据
 const parseBasisData = (val: any) => {
@@ -823,6 +837,8 @@ onUnmounted(() => {
 const captureAreaToImg = async () => {
     const area = printAreaRef.value;
     if (!area) return null;
+    refreshPrintTime();
+    await nextTick();
 
     const hiddenNodes: Array<{
         el: HTMLElement;
@@ -1137,8 +1153,8 @@ const handlePrint = async (prepared?: string | null) => {
         }
 
         .info-section {
-            margin-top: 12px !important;
-            padding-top: 8px !important;
+            margin-top: 0px !important;
+            padding-top: 14px !important;
             border-top: 1px dashed #000 !important;
 
             .info-title {
@@ -1175,10 +1191,11 @@ const handlePrint = async (prepared?: string | null) => {
         }
 
         .cert-middle-section {
-            margin: 16px 0 !important;
+            margin: 16px 0 0 !important;
             display: flex !important;
             justify-content: space-between !important;
             align-items: flex-start !important;
+            gap: 18px !important;
 
             .basis-title {
                 font-size: 20px !important; // 与副标题配套
@@ -1186,9 +1203,20 @@ const handlePrint = async (prepared?: string | null) => {
         }
 
         .qr-code-wrapper {
-            margin-top: 20px !important;
-            width: 132px !important; // 二维码放大一点
-            height: 132px !important;
+            flex: 0 0 190px !important;
+            width: 190px !important;
+            min-width: 190px !important;
+            height: 162px !important;
+            margin-top: 14px !important;
+            display: flex !important;
+            justify-content: flex-end !important;
+
+            canvas,
+            img,
+            svg {
+                width: 162px !important;
+                height: 162px !important;
+            }
         }
 
         .custom-basis-group {
@@ -1441,6 +1469,7 @@ const handlePrint = async (prepared?: string | null) => {
             margin-bottom: 4px;
             display: flex;
             align-items: center;
+            height: 30px;
 
             .el-checkbox__label {
                 font-size: 12px;
@@ -1451,8 +1480,9 @@ const handlePrint = async (prepared?: string | null) => {
     }
 
     .qr-code {
-        width: 80px;
-        height: 80px;
+        width: 100px;
+        height: 100px;
+        margin-top: 30px;
 
         img {
             width: 100%;
@@ -1609,7 +1639,6 @@ const handlePrint = async (prepared?: string | null) => {
     justify-content: center;
     flex-wrap: wrap;
     align-items: center;
-    gap: 16px;
     margin: 38px 0 20px 0; // 上移 2px
 
     .print-btn {

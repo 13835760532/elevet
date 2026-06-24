@@ -9,10 +9,12 @@
 
                 <div class="cert-body">
                     <h1 class="cert-title">承诺达标合格证</h1>
-                    <h2 class="cert-subtitle">我承诺生产销售的食用农产品</h2>
-                    <p class="cert-declaration">
-                        未使用禁用农药、兽药及其他化合物；使用的常规农药、兽药残留不超标。
-                    </p>
+                    <h2 class="cert-subtitle">承诺事项：</h2>
+                    <div class="cert-declaration-list">
+                        <p class="declaration-line">• 未使用禁用农药兽药、停用兽药和非法添加物</p>
+                        <p class="declaration-line">• 使用常规农药兽药残留不超标</p>
+                        <p class="declaration-line">• 对承诺的真实性负责</p>
+                    </div>
 
                     <div class="cert-middle-section">
                         <div class="cert-basis">
@@ -173,12 +175,17 @@ const handleBack = () => {
     margin: 0 0 8px 0;
 }
 
-.cert-declaration {
+.cert-declaration-list {
+    margin: 0 auto 24px auto;
+    max-width: 500px;
+    text-align: left;
+}
+
+.declaration-line {
     font-size: 14px;
     color: #333;
     line-height: 1.6;
-    margin: 0 auto 24px auto;
-    max-width: 500px;
+    margin: 4px 0;
 }
 
 .cert-middle-section {
@@ -342,7 +349,7 @@ const handleBack = () => {
         font-size: 20px;
     }
 
-    .cert-declaration {
+    .declaration-line {
         font-size: 18px;
     }
 
