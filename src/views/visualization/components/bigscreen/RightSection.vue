@@ -41,7 +41,17 @@
 
     <BigPanelCard title="农产品-检测项风险TOP 10" :tabs="['检测总量', '阳性率']" v-model:active-tab="projectRiskTab"
       :bg-image="riskBg">
-      <div class="project-risk-chart">
+      <div class="project-risk-chart" style="position: relative;">
+        <div class="positive-count-summary">
+          <span v-if="projectRiskTab === '阳性率'">阳性项次/总项次</span>
+          <span v-else>检测总量</span>
+        </div>
+        <div class="project-risk-axis-labels">
+          <div v-for="(label, index) in projectLabels" :key="`${label}-${index}`" class="project-risk-axis-label">
+            <span class="project-risk-axis-text">{{ truncateProjectLabel(label) }}</span>
+            <span class="project-risk-label-tooltip">{{ label }}</span>
+          </div>
+        </div>
         <Echart :options="currentProjectRiskOption" height="100%" />
       </div>
     </BigPanelCard>
@@ -127,9 +137,27 @@ const projectMax = computed(() => {
 const formatProjectValue = (value: number) =>
   projectRiskTab.value === '阳性率' ? Number(value).toFixed(1) : `${Number(value)}`
 
+const formatProjectUnit = computed(() => (projectRiskTab.value === '阳性率' ? '%' : ''))
+
+const truncateProjectLabel = (label: string, maxLength = 7) => {
+  const chars = Array.from(label || '--')
+  return chars.length > maxLength ? `${chars.slice(0, maxLength).join('')}...` : label
+}
+
 const currentProjectRiskOption = computed(() => ({
   animation: false,
-  grid: { left: 128, right: 18, top: 12, bottom: 34 },
+  grid: { left: 128, right: 48, top: 12, bottom: 34 },
+  tooltip: {
+    trigger: 'axis',
+    axisPointer: { type: 'shadow' },
+    backgroundColor: 'rgba(6, 18, 42, 0.92)',
+    borderColor: 'rgba(87, 226, 255, 0.35)',
+    textStyle: { color: '#dff7ff' },
+    formatter: (params: any) => {
+      const item = Array.isArray(params) ? params[0] : params
+      return `${item.name}<br/>${projectRiskTab.value}：${formatProjectValue(Number(item.value))}${formatProjectUnit.value}`
+    }
+  },
   xAxis: {
     type: 'value',
     min: 0,
@@ -164,11 +192,13 @@ const currentProjectRiskOption = computed(() => ({
     axisTick: { show: false },
     axisLine: { show: false },
     axisLabel: {
+      show: false,
       color: 'rgba(235, 241, 252, 0.78)',
       fontSize: 16,
       margin: 10,
       width: 112,
-      overflow: 'truncate'
+      overflow: 'truncate',
+      formatter: (value: string) => truncateProjectLabel(value)
     }
   },
   series: [
@@ -416,9 +446,100 @@ onUnmounted(() => {
 }
 
 .project-risk-chart {
+  position: relative;
   width: 100%;
   height: 100%;
   min-height: 0;
   padding: 10px 0 0;
+}
+
+.project-risk-axis-labels {
+  position: absolute;
+  left: 0;
+  top: 22px;
+  bottom: 34px;
+  z-index: 2;
+  display: grid;
+  grid-template-rows: repeat(10, minmax(0, 1fr));
+  width: 118px;
+  pointer-events: none;
+}
+
+.project-risk-axis-label {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-height: 0;
+  padding-right: 10px;
+  color: rgba(235, 241, 252, 0.78);
+  font-size: 16px;
+  line-height: 20px;
+  pointer-events: auto;
+}
+
+.project-risk-axis-text {
+  display: block;
+  max-width: 108px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.project-risk-label-tooltip {
+  position: absolute;
+  left: calc(100% + 8px);
+  top: 50%;
+  z-index: 20;
+  width: max-content;
+  max-width: 520px;
+  padding: 6px 10px;
+  border: 1px solid rgba(87, 226, 255, 0.35);
+  border-radius: 4px;
+  background: rgba(6, 18, 42, 0.94);
+  color: #dff7ff;
+  font-size: 14px;
+  line-height: 20px;
+  white-space: nowrap;
+  word-break: keep-all;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-shadow: 0 0 12px rgba(67, 228, 255, 0.16);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-50%);
+  transition: opacity 0.15s ease;
+  pointer-events: none;
+}
+
+.project-risk-axis-label:hover {
+  color: #ffffff;
+
+  .project-risk-label-tooltip {
+    opacity: 1;
+    visibility: visible;
+  }
+}
+
+.positive-count-summary {
+  position: absolute;
+  top: 8px;
+  right: 22px;
+  z-index: 3;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  color: rgba(214, 234, 255, 0.78);
+  font-size: 14px;
+  line-height: 18px;
+  pointer-events: none;
+
+  strong {
+    color: #57e2ff;
+    font-size: 16px;
+    font-weight: 700;
+    font-family: 'DIN Alternate', Arial, sans-serif;
+    text-shadow: 0 0 8px rgba(87, 226, 255, 0.4);
+  }
 }
 </style>

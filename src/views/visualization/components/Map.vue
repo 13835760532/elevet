@@ -17,7 +17,12 @@ import {
 import { getFastMap, type FastMapDataRespVO } from '@/api/agri/dashboard/fast'
 import { getDashboardMapData, type MapDataRespVO } from '@/api/agri/dashboard'
 import { getTaskMap, type TaskMapDataRespVO } from '@/api/agri/dashboard/task'
-import { getBigScreenQueryParams, subscribeBigScreenRefresh } from './bigscreen/config'
+import {
+  getBigScreenConfig,
+  getBigScreenQueryParams,
+  getBigScreenUserDeptAreaParams,
+  subscribeBigScreenRefresh
+} from './bigscreen/config'
 import { cachedBigScreenRequest } from './bigscreen/requestCache'
 
 defineOptions({ name: 'VisualizationMap' })
@@ -93,6 +98,7 @@ let refreshMapDataRaf = 0
 let mapDataRequestSeq = 0
 let disposed = false
 let loadingFallbackTimer: number | null = null
+const scopedProvinceCode = ref('')
 const certificateMapData = ref<DashboardCertificateMapRespVO>({})
 const fastMapData = ref<FastMapDataRespVO[]>([])
 const dashboardMapData = ref<MapDataRespVO[]>([])
@@ -111,6 +117,25 @@ const ui = reactive({
   subtitle: '',
   isDrilled: false
 })
+
+const getProvinceFeatureCode = (areaCode?: string | number) => {
+  const value = String(areaCode || '').trim()
+  return /^\d{2}/.test(value) ? `${value.slice(0, 2)}0000` : ''
+}
+
+const getInitialScopedProvinceCode = () => {
+  const config = getBigScreenConfig()
+  const userDeptAreaParams = getBigScreenUserDeptAreaParams()
+  return getProvinceFeatureCode(userDeptAreaParams.areaCode || config.areaCode)
+}
+
+const findChinaFeatureByCode = (provinceCode: string) =>
+  state.chinaFullGeo?.features?.find((feature: any) => {
+    const featureCode = String(
+      feature?.id || feature?.properties?.adcode || feature?.properties?.code || ''
+    ).trim()
+    return featureCode === provinceCode
+  })
 
 type MapDataRequestContext = {
   id: number
@@ -692,6 +717,54 @@ const renderDetailLabels = (labels: DetailGeometryEntry['labels']) => {
   })
 }
 
+const renderScopedProvinceMap = async (provinceCode: string) => {
+  const feature = findChinaFeatureByCode(provinceCode)
+  if (!feature) return false
+
+  const featureProps = feature.properties || {}
+  const geoId = String(feature.id || featureProps.adcode || featureProps.id || provinceCode).trim()
+  if (!geoId) return false
+
+  const detailEntry = await getDetailGeometryEntry(geoId)
+  if (disposed || !state.map || !detailEntry.geometries.length) return false
+
+  scopedProvinceCode.value = provinceCode
+  currentDrillLevel.value = 1
+  currentRegionParams.provinceName = featureProps.name || ''
+  delete currentRegionParams.cityName
+  ui.title = featureProps.name || '省级详情'
+  ui.subtitle = ''
+  ui.isDrilled = true
+
+  state.detailLayer?.clear?.()
+  state.detailLabelLayer?.clear?.()
+  state.hotspotLayer?.clear?.()
+  addGeometriesToLayer(state.detailLayer, detailEntry.geometries)
+  setVectorLayerVisible(state.detailLayer, true)
+  setVectorLayerVisible(state.detailLabelLayer, true)
+  setVectorLayerVisible(state.glowLayer, false)
+  setVectorLayerVisible(state.provinceLayer, false)
+  setVectorLayerVisible(state.labelLayer, false)
+  renderDetailLabels(detailEntry.labels)
+
+  const extent = state.detailLayer?.getExtent?.()
+  if (extent) {
+    state.map.fitExtent(extent, 0, {
+      animation: false,
+      padding: { top: 60, right: 90, bottom: 60, left: 90 }
+    })
+  }
+
+  void loadCurrentMapData({
+    context: createMapDataRequestContext(),
+    sync: false
+  }).then((updated) => {
+    if (updated) scheduleSyncCurrentMapData(detailEntry.geometries)
+  })
+
+  return true
+}
+
 type LoadMapDataOptions = {
   context?: MapDataRequestContext
   sync?: boolean
@@ -900,6 +973,7 @@ const drillDown = async (geometry: any) => {
 }
 
 const rollUp = () => {
+  if (scopedProvinceCode.value) return
   if (isSwitching.value) return
   isSwitching.value = true
   hideTooltip()
@@ -974,9 +1048,32 @@ const resetMapViewState = () => {
   ui.title = '全国'
   ui.subtitle = ''
   ui.isDrilled = false
+  scopedProvinceCode.value = ''
   currentDrillLevel.value = 0
   delete currentRegionParams.provinceName
   delete currentRegionParams.cityName
+}
+
+const refreshMapScopeByConfig = async () => {
+  if (disposed || !state.map || !state.chinaFullGeo) return
+  const nextScopedProvinceCode = getInitialScopedProvinceCode()
+  if (nextScopedProvinceCode === scopedProvinceCode.value) {
+    scheduleRefreshCurrentMapData()
+    return
+  }
+
+  invalidateMapDataRequests()
+  cancelScheduledMapSync()
+  cancelScheduledMapRefresh()
+
+  if (nextScopedProvinceCode) {
+    const scopedRendered = await renderScopedProvinceMap(nextScopedProvinceCode)
+    if (scopedRendered) return
+  }
+
+  resetMapViewState()
+  scheduleNationalLabels()
+  scheduleRefreshCurrentMapData()
 }
 
 const scheduleMapSizeCheck = () => {
@@ -1097,6 +1194,12 @@ const initMap = async () => {
     if (disposed || !state.map) return
 
     if (state.chinaFullGeo) {
+      const initialScopedProvinceCode = getInitialScopedProvinceCode()
+      if (initialScopedProvinceCode) {
+        const scopedRendered = await renderScopedProvinceMap(initialScopedProvinceCode)
+        if (scopedRendered) return
+      }
+
       const geometries = maptalks.GeoJSON.toGeometry(state.chinaFullGeo)
       if (geometries && geometries.length > 0) {
         applyChinaMask()
@@ -1268,7 +1371,7 @@ watch(
       invalidateMapDataRequests()
       resetMapViewState()
       scheduleMapSizeCheck()
-      scheduleRefreshCurrentMapData()
+      void refreshMapScopeByConfig()
     }
   }
 )
@@ -1292,8 +1395,7 @@ onMounted(async () => {
 })
 
 const disposeRefresh = subscribeBigScreenRefresh(() => {
-  invalidateMapDataRequests()
-  scheduleRefreshCurrentMapData()
+  void refreshMapScopeByConfig()
 })
 
 onUnmounted(() => {
@@ -1344,7 +1446,7 @@ onUnmounted(() => {
 
     <!-- 返回全国按钮 -->
     <transition name="fade">
-      <div v-if="ui.isDrilled" class="absolute top-20 left-10 z-40">
+      <div v-if="ui.isDrilled && !scopedProvinceCode" class="absolute top-20 left-10 z-40">
         <div
           @click="rollUp"
           class="back-btn glass-panel px-6 py-2 rounded-xl flex items-center gap-2 text-cyan-400 font-bold hover:text-white cursor-pointer transition-all border border-cyan-400/30 shadow-[0_0_15px_rgba(34,211,238,0.2)]"

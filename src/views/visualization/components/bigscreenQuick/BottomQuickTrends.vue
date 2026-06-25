@@ -2,7 +2,13 @@
   <section class="bottom-quick-trends">
     <BigPanelCard class="big-panel-center panel-header-bottom" title="快检量态势" :tabs="['快检量', '阳性率']"
       v-model:active-tab="leftTrendTab" :bg-image="bottomBg">
-      <Echart :options="currentLeftTrendOption" :height="200" />
+      <div class="quick-trend-chart">
+        <div class="positive-count-summary">
+          <span v-if="leftTrendTab === '阳性率'">阳性项次/总项次</span>
+          <span v-else>检测总量</span>
+        </div>
+        <Echart :options="currentLeftTrendOption" :height="200" />
+      </div>
     </BigPanelCard>
 
     <BigPanelCard class="big-panel-center panel-header-bottom" title="风险态势" :tabs="['自主检测样本量']" :bg-image="bottomBg">
@@ -38,6 +44,15 @@ const getAxisData = (axis?: string[]) =>
   axis?.length ? axis.map((item) => formatMonthLabel(item) || item) : [];
 const normalizeSeries = <T extends number>(list: T[] | undefined, length: number) =>
   Array.from({ length }, (_, index) => Number(list?.[index] || 0));
+const sumSeries = (list?: number[]) => (list || []).reduce((total, item) => total + Number(item || 0), 0);
+const estimatePositiveCount = (rates?: number[], totals?: number[], fallbackTotal = 0) => {
+  if (rates?.length && totals?.length) {
+    return Math.round(
+      rates.reduce((total, rate, index) => total + (Number(totals[index] || 0) * Number(rate || 0)) / 100, 0)
+    );
+  }
+  return Math.round((fallbackTotal * sumSeries(rates)) / Math.max(rates?.length || 0, 1) / 100);
+};
 const calcMax = (data: number[], emptyMax: number) => {
   const max = Math.max(...data, 0);
   if (!max) return emptyMax;
@@ -93,6 +108,7 @@ const selfSampleXAxis = computed(() => getAxisData(selfSampleTrend.value.xaxis))
 const selfSampleData = computed(() =>
   normalizeSeries(selfSampleTrend.value.sampleCounts, selfSampleXAxis.value.length)
 );
+
 
 const currentLeftTrendOption = computed(() =>
   leftTrendTab.value === '阳性率'
@@ -151,5 +167,34 @@ onUnmounted(() => {
   grid-template-columns: 1fr 1fr;
   gap: 10px;
   min-height: 0;
+}
+
+.quick-trend-chart {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+.positive-count-summary {
+  position: absolute;
+  top: 8px;
+  right: 22px;
+  z-index: 3;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  color: rgba(214, 234, 255, 0.78);
+  font-size: 14px;
+  line-height: 18px;
+  pointer-events: none;
+
+  strong {
+    color: #57e2ff;
+    font-size: 16px;
+    font-weight: 700;
+    font-family: 'DIN Alternate', Arial, sans-serif;
+    text-shadow: 0 0 8px rgba(87, 226, 255, 0.4);
+  }
 }
 </style>

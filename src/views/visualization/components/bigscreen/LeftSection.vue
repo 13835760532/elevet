@@ -1,27 +1,27 @@
 <template>
   <section class="left-section">
-    <BigPanelCard
-      title="农产品品类风险分布"
-      :tabs="['检测量', '阳性率']"
-      v-model:active-tab="categoryTab"
-    >
+    <BigPanelCard title="农产品品类风险分布" :tabs="['检测量', '阳性率']" v-model:active-tab="categoryTab">
       <CategoryGauges :mode="categoryTab" />
     </BigPanelCard>
 
-    <BigPanelCard
-      title="农产品风险 TOP 10"
-      :tabs="['检测量', '阳性率']"
-      v-model:active-tab="riskTab"
-    >
-      <Echart class="left-chart" :options="currentRiskTopOption" height="100%" />
+    <BigPanelCard title="农产品风险 TOP 10" :tabs="['检测量', '阳性率']" v-model:active-tab="riskTab">
+      <div class="chart-wrapper-with-summary" style="position: relative; height: 100%;">
+        <div class="positive-count-summary">
+          <span v-if="riskTab === '阳性率'">阳性项次/总项次</span>
+          <span v-else>样品总量</span>
+        </div>
+        <Echart class="left-chart" :options="currentRiskTopOption" height="100%" />
+      </div>
     </BigPanelCard>
 
-    <BigPanelCard
-      title="农药残留风险 TOP 10"
-      :tabs="['检测量', '阳性率']"
-      v-model:active-tab="pesticideTab"
-    >
-      <Echart class="left-chart" :options="currentPesticideTopOption" height="100%" />
+    <BigPanelCard title="农药残留风险 TOP 10" :tabs="['检测量', '阳性率']" v-model:active-tab="pesticideTab">
+      <div class="chart-wrapper-with-summary" style="position: relative; height: 100%;">
+        <div class="positive-count-summary">
+          <span v-if="pesticideTab === '阳性率'">阳性项次/总项次</span>
+          <span v-else>检测总量</span>
+        </div>
+        <Echart class="left-chart" :options="currentPesticideTopOption" height="100%" />
+      </div>
     </BigPanelCard>
   </section>
 </template>
@@ -138,6 +138,7 @@ const formatPesticideLabel = (value: string) => {
 const currentRiskTopOption = computed(() => ({
   animation: false,
   title: {
+    show: false,
     text: riskTab.value === '阳性率' ? '阳性率' : '样品总量',
     right: 32,
     top: 0,
@@ -273,7 +274,8 @@ const currentRiskTopOption = computed(() => ({
 const currentPesticideTopOption = computed(() => ({
   animation: false,
   title: {
-    text: pesticideTab.value === '阳性率' ? '阳性率' : '检测项总量',
+    show: false,
+    text: pesticideTab.value === '阳性率' ? '阳性率' : '检测总量',
     right: 16,
     top: 0,
     textStyle: {
@@ -417,5 +419,27 @@ onUnmounted(() => {
 .left-chart {
   flex: 1;
   min-height: 0;
+}
+
+.positive-count-summary {
+  position: absolute;
+  top: 8px;
+  right: 22px;
+  z-index: 3;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  color: rgba(214, 234, 255, 0.78);
+  font-size: 14px;
+  line-height: 18px;
+  pointer-events: none;
+
+  strong {
+    color: #57e2ff;
+    font-size: 16px;
+    font-weight: 700;
+    font-family: 'DIN Alternate', Arial, sans-serif;
+    text-shadow: 0 0 8px rgba(87, 226, 255, 0.4);
+  }
 }
 </style>

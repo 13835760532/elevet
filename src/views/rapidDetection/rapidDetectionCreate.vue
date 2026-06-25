@@ -248,8 +248,8 @@
                     <el-form-item label="检测标准">
                         <el-select v-model="formData.detectStandard" placeholder="请选择或输入检测标准" filterable allow-create
                             default-first-option style="width: 100%">
-                            <el-option label="GB2763-2021" value="GB2763-2021" />
-                            <el-option label="GB21650-2019" value="GB21650-2019" />
+                            <el-option v-for="dict in taskTestingStandardOptions" :key="dict.value" :label="dict.label"
+                                :value="dict.value" />
                         </el-select>
                     </el-form-item>
 
@@ -460,6 +460,7 @@ const lastSavedRemarks = ref(null);
 const { getLabel: getFilingTypeLabel } = useDict('agri_filing_type', 'int');
 const { getLabel: getSubjectCategoryLabel } = useDict('agri_subject_category', 'str');
 const { options: productCategoryOptions } = useDict('agri_product_category', 'str');
+const { options: taskTestingStandardOptions } = useDict('taskTestingStandard', 'str');
 
 const productLoading = ref(false);
 const productOptions = ref([]);
@@ -1040,6 +1041,63 @@ onMounted(async () => {
         } catch (e) {
             console.error('获取原检测数据失败', e);
             ElMessage.error('无法读取原检测记录，请返回重试');
+        }
+    }
+
+    // 处理通过 taskId 传入任务，全新单条录入的情况，实现数据回显
+    const taskId = route.query.taskId;
+    if (taskId && !id) {
+        try {
+            const task = await DetectionTaskApi.getDetectionTask(Number(taskId));
+            if (task) {
+                formData.taskId = task.id;
+
+                // 1. 回显检测区划和样品产地
+                if (task.detectionArea) {
+                    formData.detectionArea = task.detectionArea;
+                    formData.sample.productionArea = task.detectionArea;
+                    formState.origin = task.detectionArea.split('-');
+                }
+
+                // 2. 回显主体信息
+                if (task.subjectId) {
+                    try {
+                        const subject = await SubjectApi.getSubject(task.subjectId);
+                        if (subject) {
+                            handleSubjectSelect(subject);
+                        }
+                    } catch (e) {
+                        console.warn('获取任务关联主体失败', e);
+                    }
+                } else if (task.subjectName) {
+                    formData.subjectName = task.subjectName;
+                    formState.selectedSubject = { name: task.subjectName };
+                }
+
+                // 3. 回显产品分类 (对应任务中的检测品种)
+                if (task.detectionVarieties) {
+                    formState.productCategory = task.detectionVarieties;
+                    // 如果检测品种只有一个，也可以默认作为样品名称回显
+                    if (!task.detectionVarieties.includes(',')) {
+                        formData.sample.sampleName = task.detectionVarieties;
+                    }
+                }
+
+                // 4. 回显检测标准与方法
+                if (task.detectStandard) {
+                    formData.detectStandard = task.detectStandard;
+                } else if (task.planInfo?.detectStandard) {
+                    formData.detectStandard = task.planInfo.detectStandard;
+                } else if (task.planRequirements) {
+                    formData.detectStandard = task.planRequirements;
+                }
+
+                if (task.detectionMethod) {
+                    formData.detectionMethod = task.detectionMethod;
+                }
+            }
+        } catch (e) {
+            console.error('根据 taskId 获取任务详情失败', e);
         }
     }
 });

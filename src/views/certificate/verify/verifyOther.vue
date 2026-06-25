@@ -56,22 +56,20 @@
                     </div>
                 </div>
 
-                <div class="flow-divider">
+                <div class="top-flow-divider">
                     <span class="flow-arrow" />
                 </div>
 
-                <!-- 4. 双栏布局 (表单 + 预览) -->
-                <div class="detail-grid">
-                    <!-- 左侧表单 -->
-                    <div class="form-container">
-                        <h3 class="group-title">产品信息</h3>
+                <div class="detail-flow-grid">
+                    <div class="form-container sample-panel">
+                        <h3 class="panel-title">样品信息预览</h3>
                         <el-form :model="formData" label-position="top" class="standard-form">
                             <el-form-item label="产品名称">
                                 <el-input v-model="formData.productName" placeholder="白菜" />
                             </el-form-item>
 
                             <el-form-item label="产品产地">
-                                <el-input v-model="formData.productionArea" placeholder="山东-济南" />
+                                <el-input v-model="formData.productionArea" placeholder="山东--济南" />
                             </el-form-item>
 
                             <el-row :gutter="16">
@@ -91,118 +89,97 @@
                             </el-row>
 
                             <el-form-item label="建档日期">
-                                <el-date-picker v-model="formData.issueDate" type="date" placeholder="2025-12-19"
-                                    class="w-full" value-format="YYYY-MM-DD" />
+                                <el-date-picker
+                                    v-model="formData.issueDate"
+                                    type="date"
+                                    placeholder="2025-12-19"
+                                    class="w-full"
+                                    value-format="YYYY-MM-DD"
+                                />
                             </el-form-item>
 
                             <el-form-item label="联系人">
                                 <el-input v-model="formData.contactName" placeholder="输入联系人" />
                             </el-form-item>
 
-                            <el-form-item label="联系电话">
+                            <el-form-item label="联系人">
                                 <el-input v-model="formData.contactPhone" placeholder="输入联系电话" />
                             </el-form-item>
 
                             <el-form-item label="生产经营企业（主体名称）">
-                                <el-input v-model="formData.subjectName" placeholder="输入生产经营企业（主体名称）" />
+                                <el-input v-model="formData.subjectName" placeholder="北京朝阳本来生活大悦城分店" />
                             </el-form-item>
                         </el-form>
                     </div>
 
-                    <!-- 右侧预览 -->
-                    <div class="preview-container">
-                        <template v-if="activeTab === 'internal'">
-                            <div class="preview-card-wrap">
-                                <div class="preview-header">合格证预览</div>
-                                <div class="certificate-mock">
-                                    <div class="cert-code">合格证编号—{{ formData.certificateCode || 'HGZ9191991111' }}</div>
-                                    <h4 class="cert-title">承诺达标合格证</h4>
-                                    <div class="cert-body">
-                                        <p class="promise" style="font-weight: 700; margin-bottom: 6px;">承诺事项：</p>
-                                        <div class="cert-declaration-list" style="margin-bottom: 12px;">
-                                            <p class="declaration-line" style="font-size: 13px; line-height: 1.6; margin: 4px 0; color: #333;">• 未使用禁用农药兽药、停用兽药和非法添加物</p>
-                                            <p class="declaration-line" style="font-size: 13px; line-height: 1.6; margin: 4px 0; color: #333;">• 使用常规农药兽药残留不超标</p>
-                                            <p class="declaration-line" style="font-size: 13px; line-height: 1.6; margin: 4px 0; color: #333;">• 对承诺的真实性负责</p>
-                                        </div>
-                                        <div class="cert-main">
-                                            <div class="cert-left">
-                                                <p class="label-item">承诺依据：</p>
-                                                <div class="check-list">
-                                                    <el-checkbox label="质量安全控制符合要求" checked disabled />
-                                                    <el-checkbox label="自行检测合格" disabled />
-                                                    <el-checkbox label="委托检测合格" disabled />
-                                                </div>
-                                            </div>
-                                            <div class="cert-right">
-                                                <div class="qr-placeholder">
-                                                    <Icon icon="ep:grid" class="qr-icon" />
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="info-table">
-                                            <div class="tr">
-                                                <div class="td-label">产品名称</div>
-                                                <div class="td-value">{{ formData.productName || '--' }}</div>
-                                            </div>
-                                            <div class="tr">
-                                                <div class="td-label">产品数量</div>
-                                                <div class="td-value">{{ formData.quantity }}{{
-                                                    getAgriUnitLabel(formData.unit) }}</div>
-                                            </div>
-                                            <div class="tr">
-                                                <div class="td-label">产品产地</div>
-                                                <div class="td-value">{{ formData.productionArea || '--' }}</div>
-                                            </div>
-                                            <div class="tr">
-                                                <div class="td-label">承诺主体</div>
-                                                <div class="td-value">{{ formData.subjectName || '--' }}</div>
-                                            </div>
-                                            <div class="tr">
-                                                <div class="td-label">联系方式</div>
-                                                <div class="td-value">{{ formData.contactPhone || '--' }}</div>
-                                            </div>
-                                            <div class="tr">
-                                                <div class="td-label">开具时间</div>
-                                                <div class="td-value">{{ formData.issueDate || '--' }}</div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </template>
+                    <div class="side-flow-divider">
+                        <span class="right-flow-arrow" />
+                    </div>
 
-                        <template v-else>
-                            <div class="preview-card-wrap">
-                                <div class="preview-header">上游合格证预览</div>
-                                <div class="external-preview-content">
-                                    <div class="info-list-side">
-                                        <div class="s-item"><span class="s-label">合格证编号</span><span class="s-val">{{
-                                                formData.certificateCode || '--' }}</span></div>
-                                        <div class="s-item"><span class="s-label">出证类型</span><span
-                                                class="s-val">--</span></div>
-                                        <div class="s-item"><span class="s-label">产品档案编号</span><span
-                                                class="s-val">--</span></div>
-                                        <div class="s-item required"><span class="s-label">产品名称</span><span
-                                                class="s-val">{{ formData.productName }}</span></div>
-                                        <div class="s-item required"><span class="s-label">重量/数量</span><span
-                                                class="s-val">{{ formData.quantity }} {{ getAgriUnitLabel(formData.unit)
-                                                }}</span></div>
-                                        <div class="s-item required"><span class="s-label">产品产地</span><span
-                                                class="s-val">{{ formData.productionArea }}</span></div>
-                                        <div class="s-item required"><span class="s-label">生产经营主体</span><span
-                                                class="s-val">{{ formData.subjectName }}</span></div>
-                                    </div>
-                                    <div class="image-preview-side">
-                                        <el-image v-if="formData.certificateImageUrl"
-                                            :src="formData.certificateImageUrl" fit="contain" class="original-img" />
-                                        <div v-else class="img-empty">
-                                            <Icon icon="ep:picture" />
-                                            <span>原始照片预览</span>
+                    <div class="preview-container cert-preview-panel">
+                        <div class="preview-card-wrap">
+                            <div class="preview-header">合格证预览</div>
+                            <div class="cert-code-strip">合格证编号—{{ formData.certificateCode || 'HGZ9191991111' }}</div>
+                            <div class="certificate-mock">
+                                <div class="certificate-paper">
+                                    <h4 class="cert-title">承诺达标合格证</h4>
+                                    <div class="promise-grid">
+                                        <div class="promise-copy">
+                                            <p class="promise-heading">我承诺生产销售的食用农产品</p>
+                                            <p class="promise-desc">
+                                                未使用禁用农药、兽药及其他化合物；使用的常规农药、兽药残留不超标。
+                                            </p>
+                                            <p class="basis-title">承诺依据:</p>
+                                            <div class="basis-list">
+                                                <el-checkbox label="质量安全控制符合要求" disabled />
+                                                <el-checkbox label="自行检测合格" disabled />
+                                                <el-checkbox label="委托检测合格" disabled />
+                                            </div>
+                                        </div>
+                                        <div class="qr-code-mock">
+                                            <Qrcode
+                                                tag="img"
+                                                :text="qrCodeText"
+                                                :options="{ errorCorrectionLevel: 'L', margin: 1 }"
+                                                :width="108"
+                                            />
                                         </div>
                                     </div>
+
+                                    <div class="cert-divider"></div>
+
+                                    <h5 class="cert-section-title">基本信息</h5>
+                                    <div class="cert-info-table">
+                                        <div class="info-row">
+                                            <span>产品名称</span>
+                                            <strong>{{ formData.productName || '' }}</strong>
+                                        </div>
+                                        <div class="info-row">
+                                            <span>产品数量</span>
+                                            <strong>{{ formData.quantity || '' }}{{ formData.quantity ? getAgriUnitLabel(formData.unit) : '' }}</strong>
+                                        </div>
+                                        <div class="info-row">
+                                            <span>产品产地</span>
+                                            <strong>{{ formData.productionArea || '' }}</strong>
+                                        </div>
+                                        <div class="info-row">
+                                            <span>承诺主体</span>
+                                            <strong>{{ formData.subjectName || '' }}</strong>
+                                        </div>
+                                        <div class="info-row">
+                                            <span>联系方式</span>
+                                            <strong>{{ formData.contactPhone || '' }}</strong>
+                                        </div>
+                                        <div class="info-row">
+                                            <span>开具时间</span>
+                                            <strong>{{ formData.issueDate || '' }}</strong>
+                                        </div>
+                                    </div>
+
+                                    <p class="cert-note">*电子合格证由壹拾智检数智服务平台承载展示</p>
                                 </div>
                             </div>
-                        </template>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -220,6 +197,7 @@ import { computed, reactive, ref, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { FolderOpened } from '@element-plus/icons-vue';
 import { ElMessage, ElLoading } from 'element-plus';
+import { Qrcode } from '@/components/Qrcode';
 import { parseImage, createArchive, getVerification, updateCertificateVerification } from '@/api/agri/certificateVerification/index';
 import {
     DEFAULT_AGRI_MEASUREMENT_UNIT,
@@ -244,6 +222,7 @@ const formData = reactive({
     subjectName: '',
     certificateImageUrl: '',
     certificateCode: '',
+    qrCode: '',
     productCategory: '',
     subjectId: null,
     certificateType: null,
@@ -262,6 +241,8 @@ const measurementUnitOptions = usePreferredAgriMeasurementUnitOptions(
     DEFAULT_AGRI_MEASUREMENT_UNIT,
     computed(() => !isEdit.value)
 );
+
+const qrCodeText = computed(() => String(formData.qrCode || formData.certificateCode || 'HGZ9191991111'));
 
 const triggerUpload = () => {
     const uploadEl = uploadRef.value?.$el || uploadRef.value;
@@ -305,6 +286,7 @@ const onFileChange = async (uploadFile) => {
             formData.subjectName = cert.subjectName;
             formData.subjectId = cert.subjectId;
             formData.certificateCode = cert.certificateCode;
+            formData.qrCode = cert.qrCode || data.qrCode || cert.certificateCode || '';
             formData.certificateType = cert.certificateType;
         } else if (data.source === 2 && data.ocrData) {
             const ocr = data.ocrData;
@@ -318,6 +300,7 @@ const onFileChange = async (uploadFile) => {
             formData.contactPhone = ocr.contactPhone || '';
             formData.subjectName = ocr.subjectName || '';
             formData.certificateCode = ocr.certificateCode || '';
+            formData.qrCode = ocr.qrCode || data.qrCode || ocr.certificateCode || '';
             formData.certificateType = ocr.certificateType;
         }
 
@@ -397,20 +380,35 @@ const handleSubmit = async () => {
 
 <style lang="scss" scoped>
 .verify-detail-page {
+    --verify-primary: #00B3ED;
+    --verify-primary-dark: #009fd2;
+    --verify-text: #17212b;
+    --verify-muted: #7e8b96;
+    --verify-border: #dce5ec;
+    --verify-panel: #ffffff;
+    --verify-soft: #f4f8fb;
+    --verify-head: #f1f4f7;
+    --verify-flow: rgba(124, 148, 160, 0.55);
+    --verify-left-column: 520px;
+    --verify-flow-column: 64px;
+
     min-height: calc(100vh - 86px);
-    background:
-        linear-gradient(180deg, rgba(0, 179, 237, 0.025) 0, rgba(255, 255, 255, 0) 148px),
-        #fff;
-    display: flex;
-    flex-direction: column;
-    color: #151515;
+    background: var(--verify-soft);
+    color: var(--verify-text);
+    font-family: inherit;
 
     .page-content-card {
-        flex: 1;
+        min-height: calc(100vh - 118px);
+        margin: 16px 22px;
+        padding-bottom: 30px;
+        overflow-x: hidden;
         overflow-y: auto;
-        background: #fff;
-        padding: 0 0 36px;
-        border-top: 3px solid #00B3ED;
+        background:
+            linear-gradient(180deg, rgba(0, 179, 237, 0.035) 0, rgba(255, 255, 255, 0) 230px),
+            #fff;
+        border-top: 3px solid var(--verify-primary);
+        border-radius: 4px;
+        box-shadow: 0 10px 26px rgba(23, 63, 80, 0.05);
 
         &::-webkit-scrollbar {
             display: none;
@@ -421,103 +419,91 @@ const handleSubmit = async () => {
     .source-tabs {
         display: flex;
         align-items: flex-start;
-        gap: clamp(44px, 5vw, 84px);
-        padding: 28px 48px 0 56px;
+        gap: 52px;
+        max-width: 1368px;
+        margin: 0 auto;
+        padding: 24px 42px 0;
     }
 
     .source-tab {
         position: relative;
+        height: 34px;
+        padding: 0 0 12px;
         border: 0;
         background: transparent;
-        padding: 0 0 16px;
-        color: #101010;
-        font-size: 20px;
+        color: #1d2a34;
+        font-size: 15px;
         font-weight: 700;
-        line-height: 1.2;
+        line-height: 22px;
         letter-spacing: 0;
         cursor: pointer;
-        transition: color 0.2s ease;
+        transition: color 0.18s ease;
 
         &:hover,
         &.is-active {
-            color: #06313f;
+            color: #071d26;
         }
 
         &.is-active::after {
             content: '';
             position: absolute;
-            left: 2px;
-            right: 2px;
+            right: 0;
             bottom: 0;
-            height: 4px;
-            border-radius: 999px;
-            background: linear-gradient(90deg, #00B3ED 0%, rgba(0, 179, 237, 0.28) 100%);
+            left: 0;
+            height: 3px;
+            border-radius: 3px;
+            background: var(--verify-primary);
         }
     }
 
+    .main-body {
+        max-width: 1368px;
+        margin: 0 auto;
+    }
+
     .upload-section {
-        padding: 34px 48px 0 56px;
+        padding: 24px 42px 0;
 
         .upload-title {
-            position: relative;
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            margin: 0 0 18px;
-            color: #101820;
-            font-size: 21px;
+            margin: 0 0 14px;
+            color: #152734;
+            font-size: 16px;
             font-weight: 700;
-            line-height: 1.25;
+            line-height: 22px;
             letter-spacing: 0;
-
-            &::before {
-                content: '';
-                width: 4px;
-                height: 20px;
-                border-radius: 999px;
-                background: #00B3ED;
-            }
         }
 
         .upload-row {
-            display: flex;
+            display: grid;
+            grid-template-columns: minmax(420px, 620px) 136px;
             align-items: center;
-            gap: clamp(24px, 4vw, 56px);
+            gap: 48px;
         }
 
         .prototype-uploader-wrap {
-            flex: 0 1 760px;
-            max-width: 760px;
-            min-width: 0;
             width: 100%;
+            min-width: 0;
 
             :deep(.el-upload) {
                 width: 100%;
+            }
 
-                .el-upload-dragger {
-                    width: 100%;
-                    height: 198px;
-                    border: 1px dashed rgba(0, 179, 237, 0.42);
-                    background:
-                        linear-gradient(180deg, rgba(0, 179, 237, 0.035) 0%, rgba(255, 255, 255, 0.98) 100%),
-                        #fff;
-                    border-radius: 6px;
-                    padding: 0;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    box-shadow:
-                        inset 0 0 0 1px rgba(255, 255, 255, 0.8),
-                        0 8px 20px rgba(5, 72, 98, 0.035);
-                    transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+            :deep(.el-upload-dragger) {
+                width: 100%;
+                height: 156px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 0;
+                border: 1px dashed rgba(0, 179, 237, 0.38);
+                border-radius: 5px;
+                background: rgba(255, 255, 255, 0.92);
+                box-shadow: none;
+                transition: border-color 0.18s ease, background-color 0.18s ease;
 
-                    &:hover {
-                        border-color: #00B3ED;
-                        background-color: #fbfeff;
-                        box-shadow:
-                            inset 0 0 0 1px rgba(255, 255, 255, 0.9),
-                            0 10px 24px rgba(0, 179, 237, 0.08);
-                    }
+                &:hover {
+                    border-color: var(--verify-primary);
+                    background: #fbfdff;
                 }
             }
 
@@ -526,331 +512,536 @@ const handleSubmit = async () => {
                 flex-direction: column;
                 align-items: center;
                 justify-content: center;
+            }
 
-                .folder-icon {
-                    width: 58px;
-                    height: 48px;
-                    margin-bottom: 18px;
-                    color: #00B3ED;
-                    font-size: 46px;
-                    line-height: 1;
-                }
+            .folder-icon {
+                margin-bottom: 14px;
+                color: #168ff1;
+                font-size: 42px;
+                line-height: 1;
+            }
 
-                .upload-text {
-                    text-align: center;
+            .upload-text {
+                text-align: center;
+            }
 
-                    .upload-main-title {
-                        display: block;
-                        color: #17242b;
-                        font-size: 18px;
-                        font-weight: 700;
-                        line-height: 1.35;
-                    }
+            .upload-main-title {
+                display: block;
+                color: #1a2b36;
+                font-size: 14px;
+                font-weight: 700;
+                line-height: 20px;
+            }
 
-                    .upload-tips {
-                        margin: 14px 0 0;
-                        color: #87939a;
-                        font-size: 14px;
-                        font-weight: 500;
-                        line-height: 1.55;
-                    }
-                }
+            .upload-tips {
+                margin: 9px 0 0;
+                color: #8b98a2;
+                font-size: 12px;
+                font-weight: 500;
+                line-height: 1.55;
             }
         }
 
         .upload-action-btn {
-            width: 146px;
-            height: 44px;
-            flex: 0 0 146px;
+            width: 136px;
+            height: 42px;
+            padding: 0;
             border: 0;
             border-radius: 5px;
-            background: #00B3ED;
+            background: var(--verify-primary);
             color: #fff;
-            font-size: 16px;
-            font-weight: 600;
+            font-size: 14px;
+            font-weight: 700;
             letter-spacing: 0;
             box-shadow: 0 8px 18px rgba(0, 179, 237, 0.18);
-            transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 
             &:hover,
             &:focus {
-                background: #00a3d8;
+                background: var(--verify-primary-dark);
                 color: #fff;
-                box-shadow: 0 10px 20px rgba(0, 179, 237, 0.24);
-                transform: translateY(-1px);
             }
         }
     }
 
-    .flow-divider {
+    .top-flow-divider {
         position: relative;
-        height: 86px;
-        margin: 14px 0 0;
-        overflow: hidden;
+        height: 64px;
+        margin: 12px 42px 0;
+        overflow: visible;
 
         &::before {
             content: '';
             position: absolute;
-            top: 36px;
-            left: 56px;
+            top: 31px;
             right: 0;
-            height: 2px;
-            background-image: linear-gradient(to right, rgba(0, 179, 237, 0.32) 0 52%, transparent 52% 100%);
-            background-position: 0 0;
+            left: 0;
+            height: 1px;
+            background-image: linear-gradient(to right, var(--verify-flow) 0 52%, transparent 52% 100%);
             background-repeat: repeat-x;
-            background-size: 14px 2px;
-            animation: dashFlow 1.2s linear infinite;
+            background-size: 12px 1px;
+            animation: verifyDashFlowX 1.15s linear infinite;
         }
 
         .flow-arrow {
             position: absolute;
-            top: 8px;
-            left: 51.5%;
-            width: 72px;
-            height: 72px;
+            top: 4px;
+            left: calc(var(--verify-left-column) + (var(--verify-flow-column) / 2));
+            z-index: 1;
+            width: 48px;
+            height: 56px;
+            background: url("data:image/svg+xml,%3Csvg width='48' height='56' viewBox='0 0 48 56' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M17 3H31V32H45L24 53L3 32H17V3Z' fill='white' stroke='%23A8B6C0' stroke-width='2.5' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
             transform: translateX(-50%);
-            animation: arrowFlow 2s ease-in-out infinite;
+            animation: verifyDownArrowFlow 1.8s ease-in-out infinite;
+        }
+    }
 
-            &::before,
-            &::after {
-                content: '';
-                position: absolute;
-                left: 50%;
-                width: 0;
-                height: 0;
-                transform: translateX(-50%);
+    .detail-flow-grid {
+        display: grid;
+        grid-template-columns: minmax(390px, var(--verify-left-column)) var(--verify-flow-column) minmax(560px, 1fr);
+        align-items: stretch;
+        gap: 0;
+        padding: 0 42px;
+    }
+
+    .sample-panel,
+    .cert-preview-panel {
+        min-width: 0;
+        background: var(--verify-panel);
+        border: 1px solid var(--verify-border);
+        border-radius: 4px;
+        box-shadow: 0 12px 24px rgba(20, 60, 78, 0.045);
+    }
+
+    .panel-title,
+    .preview-header {
+        height: 40px;
+        margin: 0;
+        padding: 0 20px;
+        background: var(--verify-head);
+        border-bottom: 1px solid #e1e8ee;
+        color: #142633;
+        font-size: 16px;
+        font-weight: 800;
+        line-height: 40px;
+        letter-spacing: 0;
+    }
+
+    .preview-header {
+        text-align: center;
+    }
+
+    .sample-panel {
+        .standard-form {
+            padding: 24px 38px 34px;
+
+            :deep(.el-form-item) {
+                margin-bottom: 22px;
             }
 
-            &::before {
-                top: 0;
-                border-right: 34px solid transparent;
-                border-left: 34px solid transparent;
-                border-top: 70px solid rgba(0, 179, 237, 0.32);
+            :deep(.el-form-item__label) {
+                margin-bottom: 8px;
+                padding: 0;
+                color: #182935;
+                font-size: 14px;
+                font-weight: 700;
+                line-height: 20px;
             }
 
-            &::after {
-                top: 2px;
-                border-right: 31px solid transparent;
-                border-left: 31px solid transparent;
-                border-top: 64px solid #fff;
+            :deep(.el-input),
+            :deep(.el-select),
+            :deep(.el-date-editor.el-input) {
+                width: 100%;
+            }
+
+            :deep(.el-input__wrapper),
+            :deep(.el-select__wrapper) {
+                min-height: 44px;
+                border-radius: 4px;
+                background: #fff;
+                box-shadow: 0 0 0 1px var(--verify-border) inset;
+                transition: box-shadow 0.18s ease, background-color 0.18s ease;
+
+                &:hover {
+                    box-shadow: 0 0 0 1px rgba(0, 179, 237, 0.52) inset;
+                }
+
+                &.is-focus,
+                &.is-focused {
+                    box-shadow: 0 0 0 1px var(--verify-primary) inset;
+                }
+            }
+
+            :deep(.el-input__inner),
+            :deep(.el-select__placeholder),
+            :deep(.el-select__selected-item) {
+                color: #1f2d38;
+                font-size: 13px;
+                font-weight: 500;
+            }
+
+            :deep(.el-input__inner::placeholder) {
+                color: #9aa6af;
             }
         }
     }
 
-    .detail-grid {
-        display: grid;
-        grid-template-columns: minmax(320px, 380px) minmax(0, 1fr);
-        gap: 48px;
-        padding: 0 48px 0 56px;
+    .side-flow-divider {
+        position: relative;
+        min-height: 100%;
+        overflow: visible;
 
-        .form-container {
-            .group-title {
-                font-size: 16px;
-                font-weight: 600;
-                margin-bottom: 24px;
-                color: #1e293b;
-            }
+        &::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 50%;
+            width: 1px;
+            background-image: linear-gradient(to bottom, var(--verify-flow) 0 52%, transparent 52% 100%);
+            background-repeat: repeat-y;
+            background-size: 1px 12px;
+            transform: translateX(-50%);
+            animation: verifyDashFlowY 1.15s linear infinite;
+        }
 
-            .standard-form {
-                :deep(.el-form-item) {
-                    margin-bottom: 20px;
-                }
-            }
+        .right-flow-arrow {
+            position: absolute;
+            top: 48%;
+            left: 50%;
+            z-index: 2;
+            display: block;
+            width: 60px;
+            height: 40px;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='40' viewBox='0 0 60 40' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M2 13H36V2L58 20L36 38V27H2V13Z' fill='white' stroke='%23A8B6C0' stroke-width='2.5' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+            transform: translate(-50%, -50%);
+            animation: verifyRightArrowFlow 1.8s ease-in-out infinite;
         }
     }
 
     .preview-container {
-        .preview-card-wrap {
-            border: 1px solid #f1f5f9;
-            border-radius: 8px;
-            overflow: hidden;
+        min-width: 0;
 
-            .preview-header {
-                background: #f1f5f9;
-                padding: 12px;
-                text-align: center;
-                font-weight: 600;
-            }
+        .preview-card-wrap {
+            min-height: 100%;
+            overflow: visible;
+            background: #fff;
+            border: 0;
+            border-radius: 4px;
         }
+    }
+
+    .cert-code-strip {
+        height: 34px;
+        padding: 0 22px;
+        background: #e5f5fe;
+        color: #1d2e38;
+        font-size: 13px;
+        font-weight: 500;
+        line-height: 34px;
     }
 
     .certificate-mock {
-        padding: 24px;
+        padding: 28px 32px 34px;
+        color: #111;
+    }
 
-        .cert-code {
+    .certificate-paper {
+        min-width: 0;
+        max-width: 690px;
+        margin: 0 auto;
+        padding: 28px 36px 24px;
+        border: 1px solid #e3e9ee;
+        background: #fff;
+    }
+
+    .cert-title {
+        margin: 0 0 22px;
+        color: #111;
+        font-size: 18px;
+        font-weight: 800;
+        line-height: 24px;
+        text-align: center;
+    }
+
+    .promise-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 108px;
+        align-items: start;
+        gap: 24px;
+    }
+
+    .promise-heading {
+        margin: 0 0 8px;
+        color: #111;
+        font-size: 14px;
+        font-weight: 800;
+        line-height: 20px;
+    }
+
+    .promise-desc {
+        margin: 0 0 12px;
+        color: #111;
+        font-size: 13px;
+        font-weight: 500;
+        line-height: 1.65;
+    }
+
+    .basis-title,
+    .cert-section-title {
+        margin: 0 0 10px;
+        color: #111;
+        font-size: 14px;
+        font-weight: 800;
+        line-height: 20px;
+    }
+
+    .basis-list {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+
+        :deep(.el-checkbox) {
+            height: 18px;
+            margin-right: 0;
+        }
+
+        :deep(.el-checkbox__input.is-disabled .el-checkbox__inner) {
+            border-color: #d7dfe6;
+            background-color: #fff;
+        }
+
+        :deep(.el-checkbox__input.is-disabled + span.el-checkbox__label) {
+            color: #111;
+        }
+
+        :deep(.el-checkbox__label) {
+            padding-left: 8px;
+            color: #111;
             font-size: 13px;
-            color: #64748b;
-            margin-bottom: 16px;
-        }
-
-        .cert-title {
-            font-size: 18px;
-            font-weight: 700;
-            text-align: center;
-            margin-bottom: 12px;
-        }
-
-        .cert-body {
-            .promise {
-                font-weight: 600;
-                font-size: 15px;
-            }
-
-            .cert-main {
-                display: flex;
-                justify-content: space-between;
-                margin: 20px 0;
-            }
-
-            .info-table {
-                .tr {
-                    display: flex;
-                    border-bottom: 1px solid #f8fafc;
-
-                    .td-label {
-                        width: 90px;
-                        background: #f8fafc;
-                        padding: 10px;
-                    }
-
-                    .td-value {
-                        flex: 1;
-                        padding: 10px;
-                    }
-                }
-            }
+            font-weight: 500;
+            line-height: 18px;
         }
     }
 
-    .external-preview-content {
+    .qr-code-mock {
+        width: 108px;
+        height: 108px;
         display: flex;
-        padding: 20px;
-        gap: 20px;
+        align-items: center;
+        justify-content: center;
+        background: #fff;
 
-        .info-list-side {
-            flex: 1;
-
-            .s-item {
-                display: flex;
-                margin-bottom: 12px;
-                font-size: 13px;
-
-                .s-label {
-                    width: 100px;
-                    color: #64748b;
-                }
-
-                &.required .s-label::before {
-                    content: '*';
-                    color: #ef4444;
-                    margin-right: 4px;
-                }
-            }
+        :deep(.v-qrcode),
+        :deep(img),
+        :deep(canvas) {
+            display: block;
+            width: 108px !important;
+            height: 108px !important;
         }
+    }
 
-        .image-preview-side {
-            width: 240px;
-            height: 320px;
-            border: 1px dashed #e2e8f0;
-            display: flex;
+    .cert-divider {
+        height: 1px;
+        margin: 20px 0 16px;
+        background-image: linear-gradient(to right, #cfd8df 0 52%, transparent 52% 100%);
+        background-repeat: repeat-x;
+        background-size: 10px 1px;
+    }
+
+    .cert-info-table {
+        overflow: hidden;
+        border: 1px solid #e3e7ea;
+
+        .info-row {
+            display: grid;
+            grid-template-columns: 112px minmax(0, 1fr);
+            min-height: 34px;
             align-items: center;
-            justify-content: center;
-
-            .original-img {
-                width: 100%;
-                height: 100%;
-            }
-
-            .img-empty {
-                color: #94a3b8;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                gap: 8px;
-            }
+            background: #f7f8f9;
         }
+
+        .info-row:nth-child(odd) {
+            background: #edf0f2;
+        }
+
+        span,
+        strong {
+            min-width: 0;
+            padding: 0 16px;
+            overflow: hidden;
+            color: #111;
+            font-size: 13px;
+            font-weight: 500;
+            line-height: 18px;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+    }
+
+    .cert-note {
+        margin: 14px 0 0;
+        color: #4d5962;
+        font-size: 12px;
+        font-weight: 500;
+        line-height: 18px;
     }
 
     .bottom-actions {
-        margin: 28px 48px 0 56px;
-        padding: 20px 0 0;
-        border-top: 1px solid #f1f5f9;
         display: flex;
-        justify-content: flex-end;
-        gap: 12px;
+        justify-content: center;
+        gap: 16px;
+        max-width: 1368px;
+        margin: 30px auto 0;
+        padding: 0 42px;
+
+        .btn-cancel,
+        .btn-save {
+            width: 140px;
+            height: 44px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .btn-cancel {
+            border-color: #cfd8df;
+            background: #fff;
+            color: #7c8790;
+        }
 
         .btn-save {
-            padding: 0 40px;
+            border-color: var(--verify-primary);
+            background: var(--verify-primary);
+            color: #fff;
+
+            &:hover,
+            &:focus {
+                border-color: var(--verify-primary-dark);
+                background: var(--verify-primary-dark);
+            }
         }
     }
 }
 
-@keyframes dashFlow {
+@keyframes verifyDashFlowX {
     from {
         background-position-x: 0;
     }
 
     to {
-        background-position-x: 14px;
+        background-position-x: 12px;
     }
 }
 
-@keyframes arrowFlow {
-    0% {
-        transform: translate(-50%, -5px);
-        opacity: 0.55;
+@keyframes verifyDashFlowY {
+    from {
+        background-position-y: 0;
     }
 
-    45% {
-        transform: translate(-50%, 6px);
+    to {
+        background-position-y: 12px;
+    }
+}
+
+@keyframes verifyDownArrowFlow {
+    0%,
+    100% {
+        transform: translate(-50%, -3px);
+        opacity: 0.58;
+    }
+
+    50% {
+        transform: translate(-50%, 5px);
         opacity: 1;
     }
+}
 
+@keyframes verifyRightArrowFlow {
+    0%,
     100% {
-        transform: translate(-50%, 13px);
-        opacity: 0.5;
+        transform: translate(calc(-50% - 4px), -50%);
+        opacity: 0.58;
+    }
+
+    50% {
+        transform: translate(calc(-50% + 6px), -50%);
+        opacity: 1;
     }
 }
 
-@media (max-width: 1180px) {
+@media (max-width: 1280px) {
     .verify-detail-page {
-        .source-tabs {
-            gap: 48px;
-            padding-right: 32px;
-            padding-left: 40px;
-        }
+        --verify-left-column: 470px;
+        --verify-flow-column: 56px;
 
-        .source-tab {
-            font-size: 18px;
-        }
-
-        .upload-section {
-            padding-right: 40px;
-            padding-left: 40px;
-
-            .upload-row {
-                align-items: stretch;
-                flex-direction: column;
-            }
-
-            .upload-action-btn {
-                width: 146px;
-                flex-basis: 44px;
-            }
-        }
-
-        .flow-divider::before {
-            left: 40px;
-        }
-
-        .detail-grid {
-            grid-template-columns: 1fr;
-            padding: 0 40px;
-        }
-
+        .source-tabs,
+        .upload-section,
+        .detail-flow-grid,
         .bottom-actions {
-            margin-right: 40px;
-            margin-left: 40px;
+            padding-right: 32px;
+            padding-left: 32px;
+        }
+
+        .top-flow-divider {
+            margin-right: 32px;
+            margin-left: 32px;
+        }
+
+        .detail-flow-grid {
+            grid-template-columns: minmax(360px, var(--verify-left-column)) var(--verify-flow-column) minmax(500px, 1fr);
+        }
+
+        .certificate-paper {
+            padding-right: 28px;
+            padding-left: 28px;
+        }
+    }
+}
+
+@media (max-width: 1080px) {
+    .verify-detail-page {
+        .upload-row {
+            grid-template-columns: 1fr;
+            align-items: start;
+            gap: 16px;
+        }
+
+        .detail-flow-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .top-flow-divider {
+            .flow-arrow {
+                left: 50%;
+            }
+        }
+
+        .side-flow-divider {
+            height: 62px;
+            min-height: 62px;
+
+            &::before {
+                top: 31px;
+                right: 0;
+                bottom: auto;
+                left: 0;
+                width: 100%;
+                height: 1px;
+                background-image: linear-gradient(to right, var(--verify-flow) 0 52%, transparent 52% 100%);
+                background-size: 12px 1px;
+                transform: none;
+                animation: verifyDashFlowX 1.15s linear infinite;
+            }
+
+            .right-flow-arrow {
+                top: 50%;
+                left: 50%;
+                width: 48px;
+                height: 56px;
+                background-image: url("data:image/svg+xml,%3Csvg width='48' height='56' viewBox='0 0 48 56' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M17 3H31V32H45L24 53L3 32H17V3Z' fill='white' stroke='%23A8B6C0' stroke-width='2.5' stroke-linejoin='round'/%3E%3C/svg%3E");
+                transform: translate(-50%, -50%);
+                animation: none;
+            }
         }
     }
 }

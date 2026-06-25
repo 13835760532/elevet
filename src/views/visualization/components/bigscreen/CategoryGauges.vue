@@ -1,5 +1,8 @@
 <template>
   <div v-if="mode === '阳性率'" class="category-rate-platforms">
+    <div class="positive-count-summary" style="top: -8px; right: 12px;">
+      <span>阳性项次/总项次</span>
+    </div>
     <div class="rate-platform" v-for="(item, index) in ratePlatformItems" :key="item.name"
       :class="`platform-${index + 1}`">
       <div class="rate-value" :style="{ color: item.valueColor }">{{ item.displayValue }}</div>
@@ -212,6 +215,28 @@ onUnmounted(() => {
   position: relative;
   height: 226px;
   padding: 0 32px 10px;
+}
+
+.positive-count-summary {
+  position: absolute;
+  top: 8px;
+  right: 22px;
+  z-index: 3;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  color: rgba(214, 234, 255, 0.78);
+  font-size: 14px;
+  line-height: 18px;
+  pointer-events: none;
+
+  strong {
+    color: #57e2ff;
+    font-size: 16px;
+    font-weight: 700;
+    font-family: 'DIN Alternate', Arial, sans-serif;
+    text-shadow: 0 0 8px rgba(87, 226, 255, 0.4);
+  }
 }
 
 .rate-platform {

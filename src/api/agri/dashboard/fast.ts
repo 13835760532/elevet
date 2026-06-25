@@ -11,6 +11,12 @@ export interface FastDashboardQueryParams {
 
 export interface FastPositiveRateTrendRespVO {
   positiveRates?: number[]
+  positiveCounts?: number[]
+  detectionCounts?: number[]
+  positiveCount?: number
+  detectionCount?: number
+  totalCount?: number
+  total?: number
   xaxis?: string[]
 }
 

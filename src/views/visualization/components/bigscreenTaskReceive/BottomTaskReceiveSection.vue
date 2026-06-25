@@ -17,7 +17,13 @@
       v-model:active-tab="rightActiveTab"
       :bg-image="bottomBg"
     >
-      <Echart :options="currentRightTrendOption" :height="200" />
+      <div class="task-trend-chart">
+        <div class="positive-count-summary">
+          <span>阳性项次/总项次</span>
+          <strong>{{ taskPositiveCountSummary.positive }}/{{ taskPositiveCountSummary.total }}</strong>
+        </div>
+        <Echart :options="currentRightTrendOption" :height="200" />
+      </div>
     </BigPanelCard>
   </section>
 </template>
@@ -80,6 +86,15 @@ const lineBase = {
 const getAxisData = (axis?: string[]) => (axis?.length ? axis : [])
 const normalizeSeries = (list: number[] | undefined, length: number) =>
   Array.from({ length }, (_, index) => Number(list?.[index] || 0))
+const sumSeries = (list?: number[]) => (list || []).reduce((total, item) => total + Number(item || 0), 0)
+const estimatePositiveCount = (rates?: number[], totals?: number[], fallbackTotal = 0) => {
+  if (rates?.length && totals?.length) {
+    return Math.round(
+      rates.reduce((total, rate, index) => total + (Number(totals[index] || 0) * Number(rate || 0)) / 100, 0)
+    )
+  }
+  return Math.round((fallbackTotal * sumSeries(rates)) / Math.max(rates?.length || 0, 1) / 100)
+}
 
 const formatMonthLabel = (month?: string) => {
   if (!month) return '--'
@@ -159,6 +174,26 @@ const samplePositiveRates = computed(() =>
 const itemPositiveRates = computed(() =>
   normalizeSeries(riskTrend.value.itemPositiveRates, rightTrendXAxis.value.length)
 )
+const taskPositiveCountSummary = computed(() => {
+  const isSampleRate = rightActiveTab.value === '样品阳性率'
+  const total =
+    (isSampleRate
+      ? Number(riskTrend.value.sampleDetectionCount || 0) || sumSeries(riskTrend.value.sampleDetectionCounts) || sumSeries(sampleCounts.value)
+      : Number(riskTrend.value.itemDetectionCount || 0) || sumSeries(riskTrend.value.itemDetectionCounts) || sumSeries(itemCounts.value)) ||
+    Number(riskTrend.value.totalCount ?? riskTrend.value.detectionCount ?? riskTrend.value.total ?? 0)
+  const rates = isSampleRate ? riskTrend.value.samplePositiveRates : riskTrend.value.itemPositiveRates
+  const positive =
+    (isSampleRate
+      ? Number(riskTrend.value.samplePositiveCount || 0) || sumSeries(riskTrend.value.samplePositiveCounts)
+      : Number(riskTrend.value.itemPositiveCount || 0) || sumSeries(riskTrend.value.itemPositiveCounts)) ||
+    Number(riskTrend.value.positiveCount || 0) ||
+    estimatePositiveCount(rates, isSampleRate ? sampleCounts.value : itemCounts.value, total)
+
+  return {
+    positive,
+    total
+  }
+})
 
 const leftAxisMax = computed(() => {
   const isSample = leftActiveTab.value === '样品量'
@@ -230,5 +265,34 @@ onUnmounted(() => {
   grid-template-columns: 1fr 1fr;
   gap: 12px;
   min-height: 0;
+}
+
+.task-trend-chart {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+.positive-count-summary {
+  position: absolute;
+  top: 8px;
+  right: 22px;
+  z-index: 3;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  color: rgba(214, 234, 255, 0.78);
+  font-size: 14px;
+  line-height: 18px;
+  pointer-events: none;
+
+  strong {
+    color: #57e2ff;
+    font-size: 16px;
+    font-weight: 700;
+    font-family: 'DIN Alternate', Arial, sans-serif;
+    text-shadow: 0 0 8px rgba(87, 226, 255, 0.4);
+  }
 }
 </style>

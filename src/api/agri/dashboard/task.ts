@@ -63,6 +63,18 @@ export interface TaskVolumeTrendRespVO {
 export interface TaskRiskTrendRespVO {
   samplePositiveRates?: number[]
   itemPositiveRates?: number[]
+  samplePositiveCounts?: number[]
+  itemPositiveCounts?: number[]
+  sampleDetectionCounts?: number[]
+  itemDetectionCounts?: number[]
+  samplePositiveCount?: number
+  itemPositiveCount?: number
+  sampleDetectionCount?: number
+  itemDetectionCount?: number
+  positiveCount?: number
+  detectionCount?: number
+  totalCount?: number
+  total?: number
   xaxis?: string[]
 }
 

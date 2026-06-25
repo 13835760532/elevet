@@ -1,13 +1,7 @@
 <template>
   <section class="persistent-center-section" :class="sectionClass">
-    <BigPanelCard
-      class="big-panel-center map-panel"
-      :title="mapTitle"
-      :tabs="mapTabs"
-      v-model:active-tab="mapTab"
-      :bg-image="mapBgImage"
-      :title-bg-image="mapTitleBgImage"
-    >
+    <BigPanelCard class="big-panel-center map-panel" :title="mapTitle" :tabs="mapTabs" v-model:active-tab="mapTab"
+      :bg-image="mapBgImage" :title-bg-image="mapTitleBgImage">
       <div v-if="isDefaultMode" class="coverage-metrics">
         <div class="metric-card" v-for="item in topMetrics" :key="item.label">
           <div class="pedestal-wrap">
@@ -29,33 +23,21 @@
             </div>
           </div>
         </div>
-        <ThreeMap
-          v-if="useThreeRenderer"
-          :mode="mapMode"
-          :certificate-tab="mapTab"
-          :task-label="taskLabel"
-        />
+        <ThreeMap v-if="useThreeRenderer" :mode="mapMode" :certificate-tab="mapTab" :task-label="taskLabel" />
         <VisualizationMap v-else :mode="mapMode" :certificate-tab="mapTab" />
       </div>
     </BigPanelCard>
 
-    <BigPanelCard
-      v-if="showTrendPanel"
-      class="big-panel-center trend-panel"
-      :title="trendTitle"
-      :tabs="trendTabs"
-      v-model:active-tab="trendTab"
-      :bg-image="trendBgImage"
-      :title-bg-image="trendTitleBgImage"
-    >
+    <BigPanelCard v-if="showTrendPanel" class="big-panel-center trend-panel" :title="trendTitle" :tabs="trendTabs"
+      v-model:active-tab="trendTab" :bg-image="trendBgImage" :title-bg-image="trendTitleBgImage">
       <div v-if="isCertificateMode" class="trend-head">{{ certificateTrendHead }}</div>
-      <div class="trend-chart-wrap">
-        <Echart
-          v-if="isCertificateMode"
-          :options="certificateTrendOption"
-          height="100%"
-        />
-        <Echart v-else :options="dashboardTrendOption" height="100%" />
+      <div class="trend-chart-wrap" style="position: relative;">
+        <div class="positive-count-summary">
+          <span v-if="trendTab === '阳性率'">阳性项次/总项次</span>
+          <span v-else>检测总量</span>
+        </div>
+        <Echart v-if="isCertificateMode" :options="certificateTrendOption" height="100%" />
+        <Echart v-else :key="`dashboard-trend-${trendTab}`" :options="dashboardTrendOption" height="100%" />
       </div>
     </BigPanelCard>
   </section>
@@ -156,7 +138,7 @@ const mapBgImage = computed(() => {
 const mapTitleBgImage = computed(() => (isDefaultMode.value ? fgqtBg : ''))
 
 const trendTitle = computed(() =>
-  isCertificateMode.value ? '合格证服务趋势图' : '检测量动态 | 阳性率态势(检测项)'
+  isCertificateMode.value ? '合格证服务趋势图' : '检测态势'
 )
 const trendTabs = computed(() => (isDefaultMode.value ? ['检测量', '阳性率'] : []))
 const trendBgImage = computed(() =>
@@ -227,7 +209,7 @@ const dashboardMaxPointIndex = computed(() => {
 const dashboardYAxisMax = computed(() => {
   const maxValue = Math.max(...dashboardLineValues.value, 0)
   if (trendTab.value === '阳性率') {
-    return Math.max(25, Math.ceil(maxValue / 5) * 5)
+    return 100
   }
   if (maxValue <= 0) return 25
   return Math.max(25, Math.ceil(maxValue / 5) * 5)
@@ -242,7 +224,16 @@ const getDashboardMarkerLabel = (index: number) => {
   return `${item.statValue || 0}项次`
 }
 
-const createDashboardTrendOption = (data: number[], max: number, formatter?: string) => ({
+const createDashboardTrendOption = (
+  data: number[],
+  max: number,
+  formatter?: string,
+  unitText = '（项次）',
+  rightTitle = '样品总量',
+  interval = 5,
+  yAxisFontSize = 18,
+  markerPosition: 'top' | 'right' = 'top'
+) => ({
   animation: false,
   grid: { left: 86, right: 100, top: 54, bottom: 58 },
   graphic: [
@@ -251,21 +242,25 @@ const createDashboardTrendOption = (data: number[], max: number, formatter?: str
       left: 42,
       top: 20,
       style: {
-        text: '（项次）',
+        text: unitText,
         fill: 'rgba(228, 235, 245, 0.72)',
         font: '16px sans-serif'
       }
     },
-    {
-      type: 'text',
-      right: 26,
-      top: 20,
-      style: {
-        text: '样品总量',
-        fill: 'rgba(228, 235, 245, 0.72)',
-        font: '16px sans-serif'
-      }
-    },
+    ...(rightTitle
+      ? [
+          {
+            type: 'text',
+            right: 26,
+            top: 20,
+            style: {
+              text: rightTitle,
+              fill: 'rgba(228, 235, 245, 0.72)',
+              font: '16px sans-serif'
+            }
+          }
+        ]
+      : []),
     {
       type: 'text',
       right: 10,
@@ -312,10 +307,10 @@ const createDashboardTrendOption = (data: number[], max: number, formatter?: str
     type: 'value',
     min: 0,
     max,
-    interval: 5,
+    interval,
     axisLabel: {
       color: 'rgba(228, 235, 245, 0.72)',
-      fontSize: 18,
+      fontSize: yAxisFontSize,
       margin: 22,
       formatter: formatter || '{value}'
     },
@@ -368,7 +363,7 @@ const createDashboardTrendOption = (data: number[], max: number, formatter?: str
             value: getDashboardMarkerLabel(dashboardMaxPointIndex.value),
             label: {
               show: true,
-              position: 'top',
+              position: markerPosition,
               distance: 12,
               color: '#57e2ff',
               fontSize: 16,
@@ -403,9 +398,20 @@ const dashboardTrendOption = computed(() =>
     ? createDashboardTrendOption(
         dashboardLineValues.value,
         dashboardYAxisMax.value,
-        '{value}%'
+        '{value}%',
+        '（%）',
+        '',
+        20,
+        15,
+        'right'
       )
-    : createDashboardTrendOption(dashboardLineValues.value, dashboardYAxisMax.value)
+    : createDashboardTrendOption(
+        dashboardLineValues.value,
+        dashboardYAxisMax.value,
+        undefined,
+        undefined,
+        ''
+      )
 )
 
 const normalizeSeries = (series?: number[], length = 0) =>
@@ -725,15 +731,12 @@ onUnmounted(() => {
   padding: 8px;
   background: rgba(0, 29, 27, 0.4);
   border-bottom: 1px solid;
-  border-image: linear-gradient(
-      90deg,
+  border-image: linear-gradient(90deg,
       rgba(52, 166, 208, 0),
       rgba(52, 164, 208, 1),
       rgba(255, 255, 255, 1),
       rgba(52, 179, 208, 1),
-      rgba(52, 158, 208, 0)
-    )
-    1 1;
+      rgba(52, 158, 208, 0)) 1 1;
 
   &:first-child {
     padding: 8px;
@@ -771,5 +774,27 @@ onUnmounted(() => {
   padding: 2px 12px 0;
   color: #9ec2e5;
   font-size: 12px;
+}
+
+.positive-count-summary {
+  position: absolute;
+  top: 8px;
+  right: 22px;
+  z-index: 3;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  color: rgba(214, 234, 255, 0.78);
+  font-size: 14px;
+  line-height: 18px;
+  pointer-events: none;
+
+  strong {
+    color: #57e2ff;
+    font-size: 16px;
+    font-weight: 700;
+    font-family: 'DIN Alternate', Arial, sans-serif;
+    text-shadow: 0 0 8px rgba(87, 226, 255, 0.4);
+  }
 }
 </style>

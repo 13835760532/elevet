@@ -8,9 +8,14 @@
     <div class="header-side left">
       <!-- 数据配置 -->
       <div v-if="showDataConfig" class="data-config-btn" @click="toggleConfig">
-        <div class="hexagon-icon">
-          <div class="inner-dot"></div>
-        </div>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="computer-icon" style="filter: drop-shadow(0 0 5px rgba(0, 218, 255, 0.85));">
+          <!-- 电脑屏幕外框 -->
+          <rect x="2" y="3" width="20" height="13" rx="1.5" fill="rgba(0, 218, 255, 0.1)" stroke="#00daff" stroke-width="1.5"/>
+          <!-- 电脑底座支架 -->
+          <path d="M12,16 L10,21 L14,21 Z" fill="rgba(0, 218, 255, 0.25)" stroke="#00daff" stroke-width="1.2" stroke-linejoin="round"/>
+          <!-- 屏幕内发光指示点 -->
+          <circle cx="12" cy="9.5" r="1.5" fill="#00daff" style="filter: drop-shadow(0 0 3px #00daff);"/>
+        </svg>
         <span class="btn-label">数据配置</span>
         <div class="caret-icon"></div>
       </div>
@@ -505,25 +510,6 @@ onUnmounted(() => {
   letter-spacing: 1px;
   cursor: pointer;
   gap: 10px;
-
-  .hexagon-icon {
-    width: 24px;
-    height: 24px;
-    background: rgba(0, 218, 255, 0.1);
-    clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
-    border: 1px solid rgba(0, 218, 255, 0.8);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    .inner-dot {
-      width: 6px;
-      height: 6px;
-      background: #00daff;
-      border-radius: 50%;
-      box-shadow: 0 0 8px #00daff;
-    }
-  }
 
   .caret-icon {
     width: 0;

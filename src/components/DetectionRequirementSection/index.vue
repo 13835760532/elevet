@@ -114,6 +114,10 @@ const props = defineProps({
     defaultTimeRange: {
         type: Array,
         default: () => []
+    },
+    defaultVarieties: {
+        type: String,
+        default: ''
     }
 });
 
@@ -260,7 +264,7 @@ const handleAddTaskRow = () => {
         quantity: 0,
         executionTime: defaultExecutionTime,
         timeRange: defaultTimeRange,
-        varieties: '',
+        varieties: props.defaultVarieties || '',
         items: ''
     });
     taskList.value = newList;

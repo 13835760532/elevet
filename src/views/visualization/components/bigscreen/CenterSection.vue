@@ -26,15 +26,13 @@
       </div>
     </BigPanelCard>
 
-    <BigPanelCard
-      class="big-panel-center"
-      title="检测量动态 | 阳性率态势(检测项)"
-      :tabs="['检测量', '阳性率']"
-      v-model:active-tab="trendTab"
-      :bg-image="trendBg"
-      :title-bg-image="fgqtBg"
-    >
-      <div class="trend-chart-wrap">
+    <BigPanelCard class="big-panel-center" title="检测态势" :tabs="['检测量', '阳性率']" v-model:active-tab="trendTab"
+      :bg-image="trendBg" :title-bg-image="fgqtBg">
+      <div class="trend-chart-wrap" style="position: relative;">
+        <div class="positive-count-summary">
+          <span v-if="trendTab === '阳性率'">阳性项次/总项次</span>
+          <span v-else>检测总量</span>
+        </div>
         <Echart :options="currentLineTrendOption" height="100%" />
       </div>
     </BigPanelCard>
@@ -150,32 +148,22 @@ const createLineTrendOption = (data: number[], max: number, formatter?: string) 
       left: 42,
       top: 20,
       style: {
-        text: '（项次）',
-        fill: 'rgba(228, 235, 245, 0.72)',
-        font: '16px sans-serif'
+        text: trendTab.value === '阳性率' ? '（%）' : '（项次）',
+          fill: 'rgba(228, 235, 245, 0.72)',
+          font: '16px sans-serif'
+        }
+      },
+      {
+        type: 'text',
+        right: 10,
+        bottom: 18,
+        style: {
+          text: '（月份）',
+          fill: 'rgba(228, 235, 245, 0.86)',
+          font: '20px sans-serif'
+        }
       }
-    },
-    {
-      type: 'text',
-      right: 26,
-      top: 20,
-      style: {
-        text: '样品总量',
-        fill: 'rgba(228, 235, 245, 0.72)',
-        font: '16px sans-serif'
-      }
-    },
-    {
-      type: 'text',
-      right: 10,
-      bottom: 18,
-      style: {
-        text: '（月份）',
-        fill: 'rgba(228, 235, 245, 0.86)',
-        font: '20px sans-serif'
-      }
-    }
-  ],
+    ],
   tooltip: {
     trigger: 'axis',
     backgroundColor: 'rgba(6, 18, 42, 0.92)',
@@ -456,15 +444,12 @@ onUnmounted(() => {
   padding: 8px;
   background: rgba(0, 29, 27, 0.4);
   border-bottom: 1px solid;
-  border-image: linear-gradient(
-      90deg,
+  border-image: linear-gradient(90deg,
       rgba(52, 166, 208, 0),
       rgba(52, 164, 208, 1),
       rgba(255, 255, 255, 1),
       rgba(52, 179, 208, 1),
-      rgba(52, 158, 208, 0)
-    )
-    1 1;
+      rgba(52, 158, 208, 0)) 1 1;
 
   &:first-child {
     padding: 8px;
@@ -489,6 +474,28 @@ onUnmounted(() => {
     font-family: 'Din Alternate', sans-serif;
     line-height: 1;
     text-shadow: 0 0 8px rgba(67, 228, 255, 0.35);
+  }
+}
+
+.positive-count-summary {
+  position: absolute;
+  top: 8px;
+  right: 22px;
+  z-index: 3;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  color: rgba(214, 234, 255, 0.78);
+  font-size: 14px;
+  line-height: 18px;
+  pointer-events: none;
+
+  strong {
+    color: #57e2ff;
+    font-size: 16px;
+    font-weight: 700;
+    font-family: 'DIN Alternate', Arial, sans-serif;
+    text-shadow: 0 0 8px rgba(87, 226, 255, 0.4);
   }
 }
 </style>

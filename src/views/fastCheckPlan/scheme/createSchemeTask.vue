@@ -136,7 +136,8 @@
 
                 <DetectionRequirementSection v-model="taskList" :sample-count="schemeInfo.sampleCount"
                     :distribution-type="taskForm.distributionType" :org-options="selectedOrgOptions"
-                    :default-time-range="[taskForm.startDate, taskForm.endDate]" />
+                    :default-time-range="[taskForm.startDate, taskForm.endDate]"
+                    :default-varieties="schemeInfo.category !== '--' ? schemeInfo.category : ''" />
 
                 <!-- 底部按钮 -->
                 <div class="footer-actions">
@@ -189,6 +190,14 @@ const loadSchemeDetail = async () => {
         schemeInfo.dept = data.issuerDeptName || `部门ID: ${data.issuerDeptId}`
         schemeInfo.type = getPlanTypeLabel(data.planType)
         schemeInfo.category = data.targetCategory ? getProductCategoryLabel(data.targetCategory) : '--'
+        // 同步已选的 taskList 品种
+        if (taskList.value.length) {
+            taskList.value.forEach(item => {
+                if (!item.varieties || item.varieties === '待设置') {
+                    item.varieties = schemeInfo.category !== '--' ? schemeInfo.category : '待设置'
+                }
+            })
+        }
         schemeInfo.executionTime = `${data.planStartDate || ''} 至 ${data.planEndDate || ''}`
         schemeInfo.sampleCount = data.sampleCount || 0
 
@@ -332,7 +341,7 @@ const buildTaskRowsBySelectedOrgs = () => {
             region,
             quantity: String(Math.max(0, quantity)),
             executionTime,
-            varieties: '待设置',
+            varieties: schemeInfo.category !== '--' ? schemeInfo.category : '待设置',
             items: '待设置'
         }
     })
@@ -395,7 +404,7 @@ watch(
                     region: buildDefaultDetectionArea() || '待设置',
                     quantity: 0,
                     executionTime: buildDefaultExecutionTime(),
-                    varieties: '待设置',
+                    varieties: schemeInfo.category !== '--' ? schemeInfo.category : '待设置',
                     items: '待设置'
                 })
             }
@@ -403,6 +412,20 @@ watch(
         taskList.value = filteredList
     },
     { deep: true }
+)
+
+// 监听异步方案分类加载完毕，并自动同步到当前任务列表行的品种
+watch(
+    () => schemeInfo.category,
+    (newVal) => {
+        if (newVal && newVal !== '--' && taskList.value.length) {
+            taskList.value.forEach((item) => {
+                if (!item.varieties || item.varieties === '待设置') {
+                    item.varieties = newVal
+                }
+            })
+        }
+    }
 )
 
 // 监听任务列表变化，手动分配时同步汇总检测总量

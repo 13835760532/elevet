@@ -1,7 +1,11 @@
 <template>
   <section class="right-quick-section">
     <BigPanelCard title="快速检测分析" :tabs="['检测量', '阳性率']" v-model:active-tab="topTab" :bg-image="rightBg">
-      <div class="right-block">
+      <div class="right-block" style="position: relative;">
+        <div class="positive-count-summary">
+          <span v-if="topTab === '阳性率'">阳性项次/总项次</span>
+          <span v-else>检测总量</span>
+        </div>
         <p class="block-title">检测农产品高风险top</p>
         <Echart :options="currentTopColumnOption" :height="200" />
       </div>
@@ -377,6 +381,28 @@ watch(topTab, () => {
     flex: 1;
     height: 0 !important;
     min-height: 0;
+  }
+}
+
+.positive-count-summary {
+  position: absolute;
+  top: 8px;
+  right: 22px;
+  z-index: 3;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  color: rgba(214, 234, 255, 0.78);
+  font-size: 14px;
+  line-height: 18px;
+  pointer-events: none;
+
+  strong {
+    color: #57e2ff;
+    font-size: 16px;
+    font-weight: 700;
+    font-family: 'DIN Alternate', Arial, sans-serif;
+    text-shadow: 0 0 8px rgba(87, 226, 255, 0.4);
   }
 }
 </style>
