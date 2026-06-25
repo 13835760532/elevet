@@ -108,7 +108,7 @@ const getCategoryColor = (name: string, index: number) =>
 const overviewData = computed(() => [
   { label: '合格证开具', value: Number(overview.value.issueCount || 0), unit: '份', type: 'blue' },
   {
-    label: '合格证存证',
+    label: '合格证收证',
     value: Number(overview.value.verificationCount || 0),
     unit: '份',
     type: 'green'

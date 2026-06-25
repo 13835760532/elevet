@@ -82,8 +82,12 @@
             <div class="item-label">数据地区设置</div>
             <div class="field-shell">
               <el-cascader v-model="configForm.regionPath" :options="areaOptions" :props="areaCascaderProps"
-                :show-all-levels="false" :teleported="false" separator="-" filterable clearable size="large"
-                class="custom-cascader" popper-class="big-screen-area-popper" />
+                :show-all-levels="true" :teleported="false" separator="" filterable clearable size="large"
+                class="custom-cascader" popper-class="big-screen-area-popper">
+                <template #default="{ data }">
+                  <span>{{ data.name || data.originalName }}</span>
+                </template>
+              </el-cascader>
             </div>
           </div>
 
@@ -167,6 +171,7 @@ const route = useRoute()
 interface AreaNodeRespVO {
   id: number
   name: string
+  originalName?: string
   children?: AreaNodeRespVO[]
 }
 
@@ -192,13 +197,29 @@ const areaCascaderProps = {
 
 const userDeptAreaCode = computed(() => getBigScreenUserDeptAreaParams().areaCode)
 
+const formatCascaderAreaTree = (tree: AreaNodeRespVO[] = [], parentName = ''): AreaNodeRespVO[] =>
+  tree.map((item) => {
+    const node = { ...item }
+    const isDuplicate = parentName && node.name === parentName
+    const nodeName = node.name
+    if (isDuplicate) {
+      node.originalName = node.name
+      node.name = ''
+    }
+    if (node.children?.length) {
+      node.children = formatCascaderAreaTree(node.children, nodeName)
+    }
+    return node
+  })
+
 const ensureAreaOptionsLoaded = async () => {
   if (areaOptionsLoaded.value || areaOptionsLoading.value) return
   areaOptionsLoading.value = true
   try {
     const data = await getAreaTree()
     originalAreaOptions.value = formatAreaTree((data || []) as AreaNodeRespVO[])
-    areaOptions.value = limitTreeByRootArea(originalAreaOptions.value, userDeptAreaCode.value)
+    const limitedTree = limitTreeByRootArea(originalAreaOptions.value, userDeptAreaCode.value)
+    areaOptions.value = formatCascaderAreaTree(limitedTree)
     const cachedConfig = getBigScreenConfig()
     if (
       !isBigScreenSuperAdmin() &&
@@ -282,9 +303,10 @@ const isPathInRootArea = (path: number[], rootAreaCode?: string) => {
   return Array.isArray(path) && path.some((id) => String(id) === String(rootAreaCode))
 }
 
-const resolveRegionMetaByPath = (path: number[]) => {
+const resolveRegionMetaByPath = (path?: number[] | null) => {
   const labels: string[] = []
-  const fullPath = path.length ? resolvePathByAreaCode(path[path.length - 1]) || path : []
+  const safePath = path || []
+  const fullPath = safePath.length ? resolvePathByAreaCode(safePath[safePath.length - 1]) || safePath : []
   let currentTree = originalAreaOptions.value
   for (const id of fullPath) {
     const current = currentTree.find((item) => item.id === id)
@@ -323,9 +345,13 @@ const startRefreshTimer = (frequency: number) => {
 }
 
 const saveConfig = () => {
+  const timeRange = configForm.timeRange && configForm.timeRange.length === 2
+    ? configForm.timeRange
+    : getDefaultBigScreenConfig().timeRange
+
   const regionMeta = resolveRegionMetaByPath(configForm.regionPath)
   const nextConfig: BigScreenDataConfig = {
-    timeRange: [...configForm.timeRange] as [string, string],
+    timeRange: [...timeRange] as [string, string],
     regionPath: [...regionMeta.regionPath],
     regionLabel: regionMeta.regionLabel,
     provinceName: regionMeta.provinceName,
@@ -717,6 +743,8 @@ onUnmounted(() => {
   width: 100% !important;
   --el-date-editor-width: 100%;
 
+  &.el-input__wrapper,
+  &.el-range-editor,
   .el-input__wrapper,
   .el-range-editor.el-input__wrapper {
     min-height: 54px !important;
@@ -906,21 +934,43 @@ onUnmounted(() => {
 .big-screen-date-popper {
   z-index: 1200 !important;
 
-  .el-picker-panel {
-    border: 1px solid rgba(57, 141, 231, 0.55);
-    background: rgba(8, 20, 54, 0.98);
-    box-shadow: 0 10px 30px rgba(4, 18, 45, 0.5);
+  // Set CSS variables for internal Element Plus elements (arrows, borders, inputs)
+  --el-bg-color-overlay: rgba(8, 20, 54, 0.98) !important;
+  --el-border-color-light: rgba(57, 141, 231, 0.55) !important;
+  --el-text-color-regular: #d4eaff !important;
+  --el-text-color-primary: #d4eaff !important;
+  --el-datepicker-text-color: #d4eaff !important;
+  --el-datepicker-off-text-color: rgba(196, 225, 255, 0.35) !important;
+  --el-datepicker-header-text-color: #d4eaff !important;
+  --el-fill-color-blank: rgba(8, 20, 54, 0.98) !important;
+
+  &.el-popper,
+  &.el-datepicker__popper {
+    background: rgba(8, 20, 54, 0.98) !important;
+    border: 1px solid rgba(57, 141, 231, 0.55) !important;
+    box-shadow: 0 10px 30px rgba(4, 18, 45, 0.5) !important;
+  }
+
+  // Clear white background of panels and bodies
+  .el-picker-panel,
+  .el-date-range-picker,
+  .el-picker-panel__body,
+  .el-date-range-picker__content {
+    background: transparent !important;
+    background-color: transparent !important;
+    border: none !important;
+    color: #d4eaff !important;
   }
 
   .el-date-range-picker__header {
-    color: #d4eaff;
+    color: #d4eaff !important;
 
     div {
-      color: #d4eaff;
+      color: #d4eaff !important;
     }
 
     button {
-      color: #4ce9ff;
+      color: #4ce9ff !important;
     }
   }
 
@@ -928,21 +978,51 @@ onUnmounted(() => {
   .el-date-table th,
   .el-month-table td .cell,
   .el-year-table td .cell {
-    color: #c4e1ff;
+    color: #c4e1ff !important;
   }
 
+  // Clear white background of calendar table, rows, and cells
+  .el-date-table,
+  .el-date-table tr,
+  .el-date-table td,
+  .el-date-table td .el-date-table-cell,
   .el-date-table td .cell {
-    color: #d4eaff;
+    background: transparent !important;
+    background-color: transparent !important;
+    color: #d4eaff !important;
   }
 
+  // Disabled cells
+  .el-date-table td.disabled,
+  .el-date-table td.disabled .el-date-table-cell,
+  .el-date-table td.disabled .cell {
+    background: rgba(255, 255, 255, 0.03) !important;
+    color: rgba(196, 225, 255, 0.25) !important;
+  }
+
+  // Hover state for available cells
+  .el-date-table td.available:hover,
+  .el-date-table td.available:hover .el-date-table-cell,
+  .el-date-table td.available:hover .cell {
+    background: rgba(67, 196, 255, 0.12) !important;
+    color: #4ce9ff !important;
+  }
+
+  // In-range state
+  .el-date-table td.in-range,
+  .el-date-table td.in-range .el-date-table-cell,
   .el-date-table td.in-range .cell {
-    background: rgba(67, 196, 255, 0.16);
+    background: rgba(67, 196, 255, 0.16) !important;
+    color: #d4eaff !important;
   }
 
+  // Start date / End date selected state
+  .el-date-table td.start-date .el-date-table-cell,
   .el-date-table td.start-date .cell,
+  .el-date-table td.end-date .el-date-table-cell,
   .el-date-table td.end-date .cell {
-    background: #1ca9e8;
-    color: #fff;
+    background: #1ca9e8 !important;
+    color: #fff !important;
   }
 }
 

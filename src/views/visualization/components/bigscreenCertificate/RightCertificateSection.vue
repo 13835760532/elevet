@@ -18,18 +18,13 @@
       </div>
     </BigPanelCard>
 
-    <BigPanelCard
-      class="rank-panel"
-      title="合格证开具榜单"
-      :tabs="['累计']"
-      active-tab="累计"
-    >
+    <BigPanelCard class="rank-panel" title="合格证开具榜单" :tabs="['累计']" active-tab="累计">
       <div class="rank-container">
         <table class="rank-table">
           <thead>
             <tr>
               <th width="92">排行</th>
-              <th>开具主体</th>
+              <th>开具服务主体</th>
               <th width="104">份数</th>
             </tr>
           </thead>
@@ -48,18 +43,13 @@
       </div>
     </BigPanelCard>
 
-    <BigPanelCard
-      class="rank-panel"
-      title="合格证存证排行榜"
-      :tabs="['累计']"
-      active-tab="累计"
-    >
+    <BigPanelCard class="rank-panel" title="合格证收证排行榜" :tabs="['累计']" active-tab="累计">
       <div class="rank-container">
         <table class="rank-table">
           <thead>
             <tr>
               <th width="92">排行</th>
-              <th>存证主体</th>
+              <th>存证服务主体</th>
               <th width="104">份数</th>
             </tr>
           </thead>

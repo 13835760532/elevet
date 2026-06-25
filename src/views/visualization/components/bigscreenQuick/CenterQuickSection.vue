@@ -1,6 +1,6 @@
 <template>
   <section class="center-quick-section">
-    <BigPanelCard class="big-panel-center" title="自主检测地域分布图" :bg-image="centerBg">
+    <BigPanelCard class="big-panel-center" title="快速检测地域分布图" :bg-image="centerBg">
       <div class="map-area">
         <VisualizationMap class="quick-map" mode="fast" />
       </div>

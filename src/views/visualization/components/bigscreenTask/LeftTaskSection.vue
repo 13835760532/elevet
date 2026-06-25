@@ -34,7 +34,7 @@
       </div>
     </BigPanelCard>
 
-    <BigPanelCard title="下发检测产品品类" :bg-image="leftBg">
+    <BigPanelCard title="检测样品品类" :bg-image="leftBg">
       <div class="category-layout">
         <div class="pie-container">
           <Echart :options="categoryPieOption" height="230px" width="100%" />
@@ -73,11 +73,11 @@ const categoryDistribution = ref<TaskCategoryDistributionRespVO[]>([]);
 const categoryColors = ['#3f6dff', '#ffb22c', '#3ba4ff', '#d8efff', '#39e3e7', '#8ad64c', '#7d60ff', '#ff8a34'];
 
 const formatCount = (value?: number) => Number(value || 0);
-const formatRate = (value?: number) => `${Number(value || 0).toFixed(2)}%`;
+const formatRate = (value?: number) => `${Number(value || 0).toFixed(0)}%`;
 
 const summaryData = computed(() => [
-  { label: '任务下发', value: formatCount(overview.value.taskIssuedCount) },
-  { label: '任务完成', value: formatCount(overview.value.taskCompletedCount) },
+  { label: '任务下发量', value: formatCount(overview.value.taskIssuedCount) },
+  { label: '任务完成量', value: formatCount(overview.value.taskCompletedCount) },
   { label: '任务完成率', value: formatRate(overview.value.taskCompletionRate) }
 ]);
 

@@ -124,7 +124,7 @@ const taskLabel = computed(() => '任务下发')
 
 const mapTitle = computed(() => {
   if (props.activeMenu === 'cert') return '合格证地区分布图'
-  if (props.activeMenu === 'inspect') return '自主检测地域分布图'
+  if (props.activeMenu === 'inspect') return '快速检测地域分布图'
   if (props.activeMenu === 'task') return '检测任务地域发布'
   return '覆盖群体'
 })
@@ -159,7 +159,7 @@ const sideStats = computed(() => [
   { label: '检测样品量', value: `${Number(dashboardOverview.value.sampleCount || 0)}` },
   { label: '检测项次', value: `${Number(dashboardOverview.value.detectionItemCount || 0)}` },
   { label: '合格证开具份', value: `${Number(dashboardOverview.value.certificateIssueCount || 0)}` },
-  { label: '合格证校证份', value: `${Number(dashboardOverview.value.certificateVerifyCount || 0)}` }
+  { label: '合格证收证份', value: `${Number(dashboardOverview.value.certificateVerifyCount || 0)}` }
 ])
 
 const monthLabels = Array.from({ length: 12 }, (_, index) => `${index + 1}月`)

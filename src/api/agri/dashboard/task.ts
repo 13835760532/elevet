@@ -94,7 +94,7 @@ export const getTaskMap = (params?: TaskDashboardQueryParams & { areaLevel?: str
   })
 }
 
-// 检测任务大屏 - 下发检测产品品类分布
+// 检测任务大屏 - 检测样品品类分布
 export const getTaskCategoryDistribution = (params?: TaskDashboardQueryParams) => {
   return request.get<TaskCategoryDistributionRespVO[]>({
     url: '/agri/dashboard/task/category-distribution',

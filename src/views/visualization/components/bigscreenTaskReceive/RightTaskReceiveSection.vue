@@ -64,7 +64,7 @@ const loadAnalysisPage = async () => {
     const data = await getTaskAnalysisPage({
       ...getBigScreenQueryParams(),
       pageNo: 1,
-      pageSize: 10
+      pageSize: 15
     })
     analysisList.value = Array.isArray(data?.list) ? data.list : []
   } catch (error) {
@@ -174,12 +174,12 @@ onUnmounted(() => {
     color: #8fb7dc;
     font-weight: 600;
     font-size: 14px;
-    height: 32px;
+    height: 54px;
     background: rgba(13, 45, 96, 0.5);
   }
 
   tbody td {
-    height: 32px;
+    height: 40px;
   }
 
   td.left {

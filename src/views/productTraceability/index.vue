@@ -554,7 +554,7 @@ const traceRecords = computed(() => {
                 { label: '样品名称', value: traceData.value.certificate.productName },
                 { label: '重量/数量', value: `${traceData.value.certificate.quantity} (${getAgriUnitLabel(traceData.value.certificate.unit)})` },
                 { label: '产品产地', value: traceData.value.certificate.productionArea },
-                { label: '开具主体', value: traceData.value.certificate.subjectName }
+                { label: '开具服务主体', value: traceData.value.certificate.subjectName }
             ]
         });
     }

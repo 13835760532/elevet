@@ -76,7 +76,7 @@ const sideStats = computed(() => [
   { label: '检测样品量', value: `${Number(overview.value.sampleCount || 0)}` },
   { label: '检测项次', value: `${Number(overview.value.detectionItemCount || 0)}` },
   { label: '合格证开具份', value: `${Number(overview.value.certificateIssueCount || 0)}` },
-  { label: '合格证校证份', value: `${Number(overview.value.certificateVerifyCount || 0)}` }
+  { label: '合格证收证份', value: `${Number(overview.value.certificateVerifyCount || 0)}` }
 ])
 
 const monthLabels = Array.from({ length: 12 }, (_, index) => `${index + 1}月`)

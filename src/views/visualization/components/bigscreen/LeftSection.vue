@@ -1,6 +1,6 @@
 <template>
   <section class="left-section">
-    <BigPanelCard title="农产品品类风险分布" :tabs="['检测量', '阳性率']" v-model:active-tab="categoryTab">
+    <BigPanelCard title="农产品类别风险分布" :tabs="['检测量', '阳性率']" v-model:active-tab="categoryTab">
       <CategoryGauges :mode="categoryTab" />
     </BigPanelCard>
 
@@ -14,7 +14,7 @@
       </div>
     </BigPanelCard>
 
-    <BigPanelCard title="农药残留风险 TOP 10" :tabs="['检测量', '阳性率']" v-model:active-tab="pesticideTab">
+    <BigPanelCard title="检测项风险 TOP 10" :tabs="['检测量', '阳性率']" v-model:active-tab="pesticideTab">
       <div class="chart-wrapper-with-summary" style="position: relative; height: 100%;">
         <div class="positive-count-summary">
           <span v-if="pesticideTab === '阳性率'">阳性项次/总项次</span>

@@ -1,6 +1,6 @@
 <template>
   <section class="bottom-quick-trends">
-    <BigPanelCard class="big-panel-center panel-header-bottom" title="快检量态势" :tabs="['快检量', '阳性率']"
+    <BigPanelCard class="big-panel-center panel-header-bottom" title="检测量态势" :tabs="['检测量', '阳性率']"
       v-model:active-tab="leftTrendTab" :bg-image="bottomBg">
       <div class="quick-trend-chart">
         <div class="positive-count-summary">
@@ -31,7 +31,7 @@ import {
 } from '@/api/agri/dashboard/fast';
 import { getBigScreenQueryParams, subscribeBigScreenRefresh } from '../bigscreen/config';
 
-const leftTrendTab = ref('快检量');
+const leftTrendTab = ref('检测量');
 const positiveRateTrend = ref<FastPositiveRateTrendRespVO>({});
 const selfSampleTrend = ref<FastSelfSampleTrendRespVO>({});
 
@@ -59,9 +59,21 @@ const calcMax = (data: number[], emptyMax: number) => {
   return Math.ceil(max * 1.2);
 };
 
-const createTrendOption = (xAxisData: string[], data: number[], max: number, formatter?: string) => ({
+const createTrendOption = (
+  xAxisData: string[],
+  data: number[],
+  max: number,
+  formatter?: string,
+  tooltipFormatter?: (params: any) => string
+) => ({
   grid: { left: 40, right: 16, top: 18, bottom: 24 },
-  tooltip: { trigger: 'axis' },
+  tooltip: {
+    trigger: 'axis',
+    backgroundColor: 'rgba(6, 18, 42, 0.92)',
+    borderColor: 'rgba(87, 226, 255, 0.35)',
+    textStyle: { color: '#dff7ff' },
+    formatter: tooltipFormatter
+  },
   xAxis: {
     type: 'category',
     boundaryGap: false,
@@ -109,6 +121,46 @@ const selfSampleData = computed(() =>
   normalizeSeries(selfSampleTrend.value.sampleCounts, selfSampleXAxis.value.length)
 );
 
+const leftTooltipFormatter = (params: any) => {
+  if (!params || params.length === 0) return '';
+  const dataIndex = params[0].dataIndex;
+  const month = params[0].axisValue;
+
+  const positiveRates = positiveRateTrend.value.positiveRates || [];
+  const positiveCounts = positiveRateTrend.value.positiveCounts || [];
+  const detectionCounts = positiveRateTrend.value.detectionCounts || [];
+
+  const rateVal = positiveRates[dataIndex] !== undefined ? `${Number(positiveRates[dataIndex]).toFixed(2)}%` : '--%';
+  const posVal = positiveCounts[dataIndex] !== undefined ? positiveCounts[dataIndex] : '--';
+  const detVal = detectionCounts[dataIndex] !== undefined ? detectionCounts[dataIndex] : '--';
+
+  if (leftTrendTab.value === '阳性率') {
+    return `${month}<br/>` +
+           `<span style="display:inline-block;margin-right:4px;border-radius:10px;width:10px;height:10px;background-color:#ff4d4f;"></span>阳性率：${rateVal}<br/>` +
+           `<span style="display:inline-block;margin-right:4px;border-radius:10px;width:10px;height:10px;background-color:#ff7875;"></span>阳性数量：${posVal}项次<br/>` +
+           `<span style="display:inline-block;margin-right:4px;border-radius:10px;width:10px;height:10px;background-color:#4deaff;"></span>检测总量：${detVal}项次`;
+  } else {
+    return `${month}<br/>` +
+           `<span style="display:inline-block;margin-right:4px;border-radius:10px;width:10px;height:10px;background-color:#ff7875;"></span>阳性数量：${posVal}项次<br/>` +
+           `<span style="display:inline-block;margin-right:4px;border-radius:10px;width:10px;height:10px;background-color:#4deaff;"></span>检测总量：${detVal}项次`;
+  }
+};
+
+const rightTooltipFormatter = (params: any) => {
+  if (!params || params.length === 0) return '';
+  const dataIndex = params[0].dataIndex;
+  const month = params[0].axisValue;
+
+  const positiveCounts = positiveRateTrend.value.positiveCounts || [];
+  const detectionCounts = positiveRateTrend.value.detectionCounts || [];
+
+  const posVal = positiveCounts[dataIndex] !== undefined ? positiveCounts[dataIndex] : '--';
+  const detVal = detectionCounts[dataIndex] !== undefined ? detectionCounts[dataIndex] : '--';
+
+  return `${month}<br/>` +
+         `<span style="display:inline-block;margin-right:4px;border-radius:10px;width:10px;height:10px;background-color:#ff4d4f;"></span>阳性数量：${posVal}项次<br/>` +
+         `<span style="display:inline-block;margin-right:4px;border-radius:10px;width:10px;height:10px;background-color:#4deaff;"></span>检测总量：${detVal}项次`;
+};
 
 const currentLeftTrendOption = computed(() =>
   leftTrendTab.value === '阳性率'
@@ -116,12 +168,15 @@ const currentLeftTrendOption = computed(() =>
       positiveRateXAxis.value,
       positiveRateData.value,
       Math.min(calcMax(positiveRateData.value, 60), 100),
-      '{value}%'
+      '{value}%',
+      leftTooltipFormatter
     )
     : createTrendOption(
       selfSampleXAxis.value,
       selfSampleData.value,
-      calcMax(selfSampleData.value, 60000)
+      calcMax(selfSampleData.value, 60000),
+      undefined,
+      leftTooltipFormatter
     )
 );
 
@@ -129,7 +184,9 @@ const currentRightTrendOption = computed(() =>
   createTrendOption(
     selfSampleXAxis.value,
     selfSampleData.value,
-    calcMax(selfSampleData.value, 60000)
+    calcMax(selfSampleData.value, 60000),
+    undefined,
+    rightTooltipFormatter
   )
 );
 
