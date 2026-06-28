@@ -79,35 +79,12 @@
                         </table>
                     </div>
 
-                    <!-- 右侧：承诺小样 -->
-                    <div class="hg-card-preview">
-                        <div class="hg-border-box">
-                            <div class="hg-side-title">承诺达标合格证</div>
-                            <div class="hg-main-box">
-                                <div class="hg-promise-text">
-                                    <p class="promise-header">我承诺对生产销售的食用农产品：</p>
-                                    <div class="promise-items">
-                                        <div v-for="(line, idx) in previewCommitmentLines" :key="idx">
-                                            （{{ idx + 1 }}）{{ line }}
-                                        </div>
-                                    </div>
-                                    <p class="basis-header">承诺依据：</p>
-                                    <div class="basis-items">
-                                        <span v-for="opt in basisOptions" :key="opt.value" style="margin-right: 8px;">
-                                            {{ isBasisSelected(opt.value) ? '●' : '○' }} {{ opt.label }}
-                                        </span>
-                                    </div>
-                                </div>
-                                <div class="hg-fields-grid">
-                                    <div class="f-row">品名：{{ traceData.certificate?.productName }}</div>
-                                    <div class="f-row">日期：{{ traceData.certificate?.issueDate }}</div>
-                                    <div class="f-row">数量：{{ traceData.certificate?.quantity }}{{
-                                        getAgriUnitLabel(traceData.certificate?.unit) }}</div>
-                                    <div class="f-row">产地：{{ traceData.certificate?.productionArea }}</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <!-- 右侧：公共合格证预览 -->
+                    <CertificatePreview
+                        class="trace-certificate-preview"
+                        :certificate="traceData.certificate"
+                        :basis-options="basisOptions"
+                    />
                 </div>
             </section>
 
@@ -118,40 +95,42 @@
                 </div>
 
                 <div class="opt-timeline">
-                    <div v-for="(node, index) in traceRecords" :key="index" class="tl-node">
-                        <!-- 时戳部分：分行排列 -->
+                    <div
+                        v-for="(node, index) in traceRecords"
+                        :key="index"
+                        class="tl-node"
+                        :class="{
+                            'is-last': index === traceRecords.length - 1,
+                            'is-single': traceRecords.length === 1
+                        }"
+                    >
                         <div class="tl-time">
-                            <div class="date">{{ node.time.split(' ')[0] }}</div>
-                            <div class="hour">{{ node.time.split(' ')[1] }}</div>
+                            {{ formatTimelineTime(node.time) }}
                         </div>
 
-                        <!-- 轨道部分：双环点 -->
                         <div class="tl-rail">
                             <div class="tl-dot" :class="node.status">
-                                <div class="dot-inner"></div>
                             </div>
-                            <div v-if="index !== traceRecords.length - 1" class="tl-line"></div>
                         </div>
 
-                        <!-- 卡片部分：严格遵循原型结构 -->
                         <div class="tl-main-card">
                             <div class="node-header">
-                                <div class="node-id">{{ node.typeLabel }}编号：{{ node.code }}</div>
+                                <div class="node-id">{{ node.typeLabel }}编号：<span>{{ node.code || '--' }}</span></div>
                                 <div class="node-actions">
-                                    <el-button v-if="node.type === 'certificate'" type="primary" size="small"
+                                    <el-button v-if="node.type === 'certificate'" type="primary"
                                         class="theme-flat-btn"
                                         @click="handleViewCert(node.originData)">查看合格证图片</el-button>
-                                    <el-button v-if="node.type === 'certificate'" type="primary" size="small"
+                                    <el-button v-if="node.type === 'certificate'" type="primary"
                                         class="theme-flat-btn"
                                         @click="handleOpenPrintPreview(node.originData)">打印合格证</el-button>
-                                    <el-button v-if="node.type === 'report'" type="primary" size="small"
+                                    <el-button v-if="node.type === 'report'" type="primary"
                                         class="theme-flat-btn"
                                         @click="handleViewReport(node.originData)">查看检测报告</el-button>
                                 </div>
                             </div>
 
                             <div class="node-table-wrapper">
-                                <table class="proto-table mini">
+                                <table class="proto-table mini trace-node-table">
                                     <tr v-for="(detail, dIdx) in node.details" :key="dIdx">
                                         <td class="label">{{ detail.label }}</td>
                                         <td class="value">{{ detail.value }}</td>
@@ -365,11 +344,12 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, nextTick } from 'vue';
 import { useRoute } from 'vue-router';
-import { Search, VideoPlay, Monitor, Check, Connection } from '@element-plus/icons-vue';
+import { Search, Monitor, Check, Connection, Picture } from '@element-plus/icons-vue';
 import { ElMessage } from 'element-plus';
 import * as CertificateApi from '@/api/agri/certificate/index';
 import { useDict } from '@/hooks/web/useDict';
 import RapidDetectionReport from '../rapidDetection/components/RapidDetectionReport.vue';
+import { CertificatePreview } from '@/components/CertificatePreview';
 import { Qrcode } from '@/components/Qrcode';
 import html2canvas from 'html2canvas';
 import { BluetoothPrinter } from '@/utils';
@@ -499,23 +479,9 @@ const printQrText = computed(() =>
     activePrintCertData.value?.qrCode || activePrintCertData.value?.certificateCode || ''
 );
 
-// 为预览小样计算承诺行
-const previewCommitmentLines = computed(() => {
-    const content = traceData.value?.certificate?.commitmentContent;
-    const fallback = [
-        '已按规定收取并保存该批次产品的承诺达标合格证或者其他质量安全合格证明；',
-        '未违规使用保鲜剂、防腐剂、添加剂等。',
-        '对承诺的真实性负责'
-    ].map(l => ({ label: l }));
-    return parseCommitmentLines(content, fallback);
-});
-
-// 判断预览小样的依据是否选中
-const isBasisSelected = (val: number) => {
-    const basisStr = traceData.value?.certificate?.commitmentBasis;
-    if (!basisStr) return false;
-    const selected = parseBasisData(basisStr);
-    return selected.includes(val);
+const formatTimelineTime = (value: any) => {
+    const [date = '--', hour = ''] = String(value || '').split(' ');
+    return `${date}${hour ? `  ${hour}` : ''}`;
 };
 
 const parseBasisData = (val: any) => {
@@ -770,7 +736,6 @@ $theme-color: #00B3ED;
 $text-dark: #1e293b;
 $text-sub: #64748b;
 $bg-color: #f8fafc;
-$green-hg: #558B2F;
 
 .trace-explorer {
     min-height: 100vh;
@@ -953,212 +918,271 @@ $green-hg: #558B2F;
     }
 }
 
-/* 合格证图样 */
-.hg-card-preview {
-    width: 440px;
+/* 公共合格证预览在当前页面中的布局宽度 */
+.trace-certificate-preview {
+    flex: 0 0 470px;
 }
 
-.hg-border-box {
-    border: 1.5px solid $green-hg;
-    border-radius: 4px;
-    display: flex;
-    background: #fff;
-    min-height: 240px;
-}
-
-.hg-side-title {
-    width: 44px;
-    background: #f1f8e9;
-    border-right: 1.5px solid $green-hg;
-    writing-mode: vertical-rl;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: $green-hg;
-    font-weight: 800;
-    font-size: 18px;
-    letter-spacing: 6px;
-}
-
-.hg-main-box {
-    flex: 1;
-    padding: 12px;
-    position: relative;
-}
-
-.hg-promise-text {
-    font-size: 10px;
-    color: #444;
-
-    .promise-header {
-        font-weight: 700;
-        margin-bottom: 4px;
+@media (max-width: 1080px) {
+    .basic-info-layout {
+        flex-direction: column;
     }
 
-    .promise-items {
-        line-height: 1.6;
-        margin-bottom: 12px;
+    .trace-certificate-preview {
+        width: 100%;
+        max-width: 520px;
+        flex-basis: auto;
     }
 }
 
-.hg-fields-grid {
-    font-size: 10px;
-
-    .f-row {
-        margin-bottom: 4px;
-        color: #666;
-    }
-}
-
-.hg-qr-box {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    font-size: 24px;
-    color: #e5e7eb;
-}
-
-/* 优化后的时间轴样式：恢复 Prototype 位置同时保留视觉优化 */
+/* 产品溯源时间轴：贴近原型的开放式纵向流 */
 .opt-timeline {
-    padding-left: 150px;
-    margin-top: 40px;
+    position: relative;
+    margin-top: 22px;
+    padding: 14px 0 0;
 }
 
 .tl-node {
-    display: flex;
-    gap: 40px;
-    margin-bottom: 40px;
     position: relative;
+    display: grid;
+    grid-template-columns: 210px 44px minmax(0, 1fr);
+    column-gap: 0;
+    align-items: start;
+    min-height: 228px;
+    padding-bottom: 34px;
 }
 
 .tl-time {
-    width: 130px;
-    position: absolute;
-    left: -170px;
+    padding-top: 9px;
     text-align: right;
-    top: 6px;
-
-    .date {
-        font-size: 15px;
-        font-weight: 800;
-        color: $text-dark;
-        margin-bottom: 4px;
-    }
-
-    .hour {
-        font-size: 12px;
-        color: $text-sub;
-    }
+    color: #0f172a;
+    font-size: 17px;
+    font-weight: 500;
+    line-height: 30px;
+    white-space: nowrap;
 }
 
 .tl-rail {
-    width: 24px;
     position: relative;
     display: flex;
-    flex-direction: column;
-    align-items: center;
+    justify-content: center;
+    align-self: stretch;
+    min-height: 100%;
+
+    &::before {
+        content: '';
+        position: absolute;
+        top: 34px;
+        bottom: -10px;
+        left: 50%;
+        width: 2px;
+        transform: translateX(-50%);
+        background-image: repeating-linear-gradient(
+            to bottom,
+            #d8dee9 0,
+            #d8dee9 8px,
+            transparent 8px,
+            transparent 16px
+        );
+    }
 
     .tl-dot {
+        position: relative;
+        z-index: 2;
         width: 20px;
         height: 20px;
-        background: #fff;
+        margin-top: 13px;
         border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 10;
-        box-shadow: 0 0 0 4px #fff, 0 2px 8px rgba(0, 0, 0, 0.1);
-
-        .dot-inner {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-        }
+        background: $theme-color;
+        box-shadow: inset 0 0 0 3px #fff, 0 0 0 5px #fff, 0 0 0 7px rgba(0, 179, 237, 0.22);
 
         &.primary {
-            border: 2px solid $theme-color;
-
-            .dot-inner {
-                background: $theme-color;
-            }
+            background: $theme-color;
         }
 
         &.success {
-            border: 2px solid #8bc34a;
-
-            .dot-inner {
-                background: #8bc34a;
-            }
+            background: #6fc14f;
+            box-shadow: inset 0 0 0 3px #fff, 0 0 0 5px #fff, 0 0 0 7px rgba(111, 193, 79, 0.22);
         }
     }
+}
 
-    .tl-line {
-        position: absolute;
-        top: 24px;
-        bottom: -40px;
-        width: 1.5px;
-        background: #e2e8f0;
-    }
+.tl-node.is-last .tl-rail::before,
+.tl-node.is-single .tl-rail::before {
+    bottom: -66px;
 }
 
 .tl-main-card {
-    flex: 1;
-    border: 1px solid #eef2f6;
-    border-radius: 12px;
-    overflow: hidden;
-    transition: all 0.2s;
-
-    &:hover {
-        border-color: $theme-color;
-        box-shadow: 0 4px 12px rgba(0, 179, 237, 0.08);
-    }
+    min-width: 0;
+    padding: 0 0 28px 22px;
+    background: transparent;
+    border-bottom: 1px dashed #d8dee9;
 }
 
 .node-header {
-    background: #f8fafc;
-    padding: 12px 20px;
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid #f1f5f9;
+    align-items: flex-start;
+    gap: 28px;
+    min-height: 76px;
+    padding: 0 0 18px;
 
     .node-id {
-        font-size: 16px;
-        font-weight: 700;
-        color: $text-dark;
+        min-width: 0;
+        padding-top: 6px;
+        color: #111827;
+        font-size: 20px;
+        font-weight: 800;
+        line-height: 32px;
+        letter-spacing: 0;
+
+        span {
+            margin-left: 8px;
+            font-weight: 500;
+        }
     }
 }
 
 .node-actions {
     display: flex;
     align-items: center;
-    gap: 8px;
+    justify-content: flex-end;
+    gap: 14px;
     flex-wrap: wrap;
+    flex: 0 0 auto;
 }
 
 .theme-flat-btn {
+    min-width: 128px;
+    height: 48px;
+    padding: 0 18px;
+    border-radius: 2px !important;
     background: $theme-color !important;
     border: none !important;
-    font-weight: 600;
+    color: #fff !important;
+    font-size: 14px;
+    font-weight: 800;
+    box-shadow: none !important;
+
+    &:hover,
+    &:focus {
+        background: #009fd4 !important;
+    }
 }
 
 .node-table-wrapper {
-    padding: 20px;
+    max-width: 700px;
+    padding: 0;
+}
+
+.trace-node-table {
+    border: none !important;
+
+    tr {
+        border-bottom: 1px solid #cfcfcf;
+    }
+
+    td {
+        height: 38px;
+        padding: 0 10px;
+        color: #111;
+        font-size: 13px;
+        line-height: 38px;
+
+        &.label {
+            width: 145px !important;
+            padding-right: 6px !important;
+            color: #111;
+            font-weight: 700;
+            text-align: right;
+        }
+
+        &.value {
+            color: #111;
+            font-weight: 600;
+        }
+    }
 }
 
 .tl-end {
     display: flex;
     align-items: center;
     gap: 12px;
-    margin-left: 7px;
-    color: #cbd5e1;
-    font-size: 12px;
+    margin-left: 227px;
+    color: #94a3b8;
+    font-size: 13px;
 
     .end-dot {
         width: 10px;
         height: 10px;
         border-radius: 50%;
         background: #e2e8f0;
+    }
+}
+
+@media (max-width: 1080px) {
+    .tl-node {
+        grid-template-columns: 120px 36px minmax(0, 1fr);
+        min-height: 0;
+        padding-bottom: 34px;
+    }
+
+    .tl-time {
+        font-size: 15px;
+        line-height: 26px;
+    }
+
+    .tl-rail {
+        &::before {
+            top: 32px;
+        }
+
+        .tl-dot {
+            width: 16px;
+            height: 16px;
+            box-shadow: inset 0 0 0 3px #fff, 0 0 0 4px #fff, 0 0 0 6px rgba(0, 179, 237, 0.2);
+        }
+    }
+
+    .tl-main-card {
+        padding-left: 12px;
+    }
+
+    .node-header {
+        flex-direction: column;
+        gap: 14px;
+        min-height: 0;
+    }
+
+    .node-header .node-id {
+        font-size: 18px;
+        line-height: 28px;
+    }
+
+    .node-actions {
+        justify-content: flex-start;
+        gap: 10px;
+    }
+
+    .theme-flat-btn {
+        min-width: 118px;
+        height: 44px;
+        padding: 0 14px;
+        font-size: 13px;
+    }
+
+    .trace-node-table td {
+        height: 38px;
+        font-size: 13px;
+        line-height: 38px;
+
+        &.label {
+            width: 100px !important;
+        }
+    }
+
+    .tl-end {
+        margin-left: 134px;
     }
 }
 

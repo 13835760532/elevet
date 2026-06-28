@@ -92,6 +92,16 @@
           </div>
 
           <div class="form-item">
+            <div class="item-label">统计数据范围</div>
+            <div class="field-shell">
+              <el-select v-model="configForm.dataScope" size="large" :teleported="false"
+                class="custom-select" popper-class="big-screen-select-popper">
+                <el-option v-for="item in dataScopeOptions" :key="item.value" :label="item.label" :value="item.value" />
+              </el-select>
+            </div>
+          </div>
+
+          <div class="form-item">
             <div class="item-label">风险公告更新频次</div>
             <div class="frequency-input">
               <span>每</span>
@@ -148,6 +158,7 @@ import {
   getBigScreenConfig,
   getBigScreenUserDeptAreaParams,
   getDefaultBigScreenConfig,
+  formatBigScreenRegionLabel,
   isBigScreenSuperAdmin,
   saveBigScreenConfig,
   type BigScreenDataConfig
@@ -183,9 +194,15 @@ const areaOptionsLoading = ref(false)
 let refreshTimer: number | null = null
 const configForm = reactive({
   timeRange: getDefaultBigScreenConfig().timeRange as [string, string],
+  dataScope: getDefaultBigScreenConfig().dataScope,
   regionPath: [] as number[],
   frequency: 5
 })
+
+const dataScopeOptions = [
+  { label: '本辖区监管采集检测数据（默认）', value: 'jurisdiction' },
+  { label: '本辖区全部检测数据', value: 'all' }
+]
 
 const areaCascaderProps = {
   value: 'id',
@@ -250,6 +267,7 @@ const toggleConfig = () => {
 
 const syncConfigForm = (config: BigScreenDataConfig) => {
   configForm.timeRange = [...config.timeRange] as [string, string]
+  configForm.dataScope = config.dataScope || getDefaultBigScreenConfig().dataScope
   configForm.regionPath = [...config.regionPath]
   configForm.frequency = config.frequency
 }
@@ -317,7 +335,7 @@ const resolveRegionMetaByPath = (path?: number[] | null) => {
   const selectedCode = fullPath[fullPath.length - 1]
   return {
     regionPath: fullPath,
-    regionLabel: labels.join('-'),
+    regionLabel: formatBigScreenRegionLabel(labels.join('-')),
     provinceName: labels[0] || '',
     cityName: labels[1] || '',
     districtName: labels[2] || '',
@@ -352,6 +370,7 @@ const saveConfig = () => {
   const regionMeta = resolveRegionMetaByPath(configForm.regionPath)
   const nextConfig: BigScreenDataConfig = {
     timeRange: [...timeRange] as [string, string],
+    dataScope: configForm.dataScope || getDefaultBigScreenConfig().dataScope,
     regionPath: [...regionMeta.regionPath],
     regionLabel: regionMeta.regionLabel,
     provinceName: regionMeta.provinceName,
@@ -802,6 +821,29 @@ onUnmounted(() => {
   }
 }
 
+:deep(.custom-select) {
+  width: 100% !important;
+
+  .el-select__wrapper {
+    min-height: 54px !important;
+    background: rgba(13, 35, 75, 0.72) !important;
+    box-shadow: 0 0 0 1px #3a87e3 inset !important;
+    border-radius: 3px !important;
+    padding: 0 14px !important;
+  }
+
+  .el-select__selected-item,
+  .el-select__placeholder {
+    color: #d4eaff !important;
+    font-size: 18px !important;
+  }
+
+  .el-select__caret {
+    color: #00daff !important;
+    font-size: 20px;
+  }
+}
+
 :deep(.custom-number-input) {
   width: 100px !important;
 
@@ -1045,6 +1087,24 @@ onUnmounted(() => {
     color: #c4e1ff;
 
     &.is-active,
+    &:hover {
+      background: rgba(41, 112, 201, 0.18);
+      color: #4ce9ff;
+    }
+  }
+}
+
+.big-screen-select-popper {
+  z-index: 1200 !important;
+  border: 1px solid rgba(57, 141, 231, 0.55) !important;
+  background: rgba(8, 20, 54, 0.98) !important;
+  box-shadow: 0 10px 30px rgba(4, 18, 45, 0.5) !important;
+
+  .el-select-dropdown__item {
+    color: #c4e1ff;
+    font-size: 16px;
+
+    &.is-selected,
     &:hover {
       background: rgba(41, 112, 201, 0.18);
       color: #4ce9ff;

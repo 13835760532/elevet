@@ -106,7 +106,23 @@ const ratePlatformItems = computed(() =>
   }))
 )
 
-const pieItems = computed(() => displayItems.value.filter((item) => item.value > 0))
+const isEmptyPieData = computed(() =>
+  displayItems.value.length > 0 && displayItems.value.every((item) => Number(item.value || 0) <= 0)
+)
+
+const pieItems = computed(() =>
+  isEmptyPieData.value
+    ? displayItems.value.map((item) => ({
+      ...item,
+      pieValue: 1
+    }))
+    : displayItems.value
+      .filter((item) => item.value > 0)
+      .map((item) => ({
+        ...item,
+        pieValue: item.value
+      }))
+)
 
 const pieOption = computed(() => ({
   animation: false,
@@ -115,8 +131,11 @@ const pieOption = computed(() => ({
     backgroundColor: 'rgba(6, 18, 42, 0.92)',
     borderColor: 'rgba(87, 226, 255, 0.35)',
     textStyle: { color: '#dff7ff' },
-    formatter: ({ name, value }: { name: string; value: number }) =>
-      `${name}<br/>${props.mode === '阳性率' ? `${Number(value).toFixed(2)}%` : value}`
+    formatter: ({ name }: { name: string }) => {
+      const item = pieItems.value.find((pieItem) => pieItem.name === name)
+      const realValue = Number(item?.value || 0)
+      return `${name}<br/>${props.mode === '阳性率' ? `${realValue.toFixed(2)}%` : realValue}`
+    }
   },
   series: [
     {
@@ -135,7 +154,7 @@ const pieOption = computed(() => ({
       emphasis: { disabled: true },
       data: pieItems.value.map((item, index) => ({
         name: item.name,
-        value: item.value,
+        value: item.pieValue,
         itemStyle: {
           color: outerColors[index % outerColors.length]
         }
@@ -158,7 +177,7 @@ const pieOption = computed(() => ({
       },
       data: pieItems.value.map((item) => ({
         name: item.name,
-        value: item.value,
+        value: item.pieValue,
         itemStyle: {
           color: item.color
         }

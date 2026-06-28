@@ -2,6 +2,10 @@
   <div id="big-screen-shell" class="big-screen-shell">
     <BigScreenHeader v-model:active-menu="activeMenu" />
     <BigScreenLoadingOverlay :visible="entranceLoading" />
+    <div class="screen-data-summary" :class="renderMenu" :title="dataSummaryText">
+      <span class="summary-label">当前数据</span>
+      <span class="summary-value">{{ dataSummaryText }}</span>
+    </div>
 
     <main class="screen-main" :class="renderMenu">
       <div class="screen-left-panel">
@@ -33,10 +37,16 @@
 </template>
 
 <script setup lang="ts">
-import { defineAsyncComponent, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, onMounted, onUnmounted, ref, watch } from 'vue'
 import BigScreenHeader from './components/bigscreen/BigScreenHeader.vue'
 import BigScreenLoadingOverlay from './components/bigscreen/BigScreenLoadingOverlay.vue'
 import { useDeferredPanelMount, type DeferredPanelPlan } from './useDeferredPanelMount'
+import {
+  formatBigScreenDataSummary,
+  getBigScreenConfig,
+  subscribeBigScreenRefresh,
+  type BigScreenDataConfig
+} from './components/bigscreen/config'
 
 const LeftSection = defineAsyncComponent(() => import('./components/bigscreen/LeftSection.vue'))
 const RightSection = defineAsyncComponent(() => import('./components/bigscreen/RightSection.vue'))
@@ -137,11 +147,14 @@ const syncLocationKey = (mode: BigScreenMenu) => {
 const activeMenu = ref<BigScreenMenu>(getMenuFromRouteKey(getRouteKeyFromLocation()))
 const renderMenu = ref<BigScreenMenu>(activeMenu.value)
 const entranceLoading = ref(true)
+const dataConfig = ref<BigScreenDataConfig>(getBigScreenConfig())
 const { visibility: panelVisibility, schedule } = useDeferredPanelMount()
 const centerPanelMounted = ref(false)
 let loadingTimer: number | null = null
 let switchRenderTimer: number | null = null
 let mounted = false
+
+const dataSummaryText = computed(() => formatBigScreenDataSummary(dataConfig.value))
 
 const clearLoadingTimer = () => {
   if (loadingTimer !== null) {
@@ -283,9 +296,14 @@ onMounted(() => {
   showLoadingFor(INITIAL_LOADING_DELAY)
 })
 
+const disposeRefresh = subscribeBigScreenRefresh(() => {
+  dataConfig.value = getBigScreenConfig()
+})
+
 onUnmounted(() => {
   clearLoadingTimer()
   clearSwitchRenderTimer()
+  disposeRefresh()
 })
 </script>
 
@@ -331,10 +349,52 @@ onUnmounted(() => {
   }
 }
 
+.screen-data-summary {
+  position: absolute;
+  left: 10px;
+  top: 96px;
+  z-index: 2;
+  width: 470px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px;
+  border: 1px solid rgba(55, 220, 255, 0.18);
+  background: linear-gradient(90deg, rgba(2, 20, 54, 0.82), rgba(5, 35, 76, 0.42), rgba(2, 20, 54, 0.1));
+  box-shadow: inset 0 0 14px rgba(34, 161, 255, 0.12);
+  color: rgba(206, 230, 255, 0.86);
+  pointer-events: none;
+}
+
+.screen-data-summary.task,
+.screen-data-summary.inspect {
+  left: 12px;
+}
+
+.screen-data-summary.cert {
+  left: 20px;
+}
+
+.summary-label {
+  flex: 0 0 auto;
+  color: #57e2ff;
+  font-size: 14px;
+}
+
+.summary-value {
+  min-width: 0;
+  overflow: hidden;
+  color: rgba(226, 241, 255, 0.9);
+  font-size: 15px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
 .screen-main {
   flex: 1;
   min-height: 0;
-  padding: 10px;
+  padding: 10px 10px 0;
   padding-bottom: 0;
   display: grid;
   grid-template-columns: 470px 1fr 470px;
@@ -343,7 +403,7 @@ onUnmounted(() => {
 }
 
 .screen-main.cert {
-  padding: 0 20px 10px;
+  padding: 10px 20px 10px;
   grid-template-columns:
     minmax(0, 0.49fr)
     minmax(0, 1fr)
@@ -355,6 +415,7 @@ onUnmounted(() => {
   grid-area: left;
   display: flex;
   min-height: 0;
+  padding-top: 34px;
 
   > * {
     flex: 1;

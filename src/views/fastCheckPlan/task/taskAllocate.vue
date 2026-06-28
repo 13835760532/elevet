@@ -4,33 +4,41 @@
         <div style="flex: 1; overflow: auto;">
             <div class="task-detail-card" v-loading="detailLoading">
                 <div class="card-left">
-                    <div class="info-item">
-                        <span class="label">任务名称：</span>
-                        <span class="value">{{ taskDetail.taskName || '--' }}</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="label">任务编号：</span>
-                        <span class="value">{{ taskDetail.taskCode || '--' }}</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="label">承担单位：</span>
-                        <span class="value">{{ getDeptLabel(taskDetail.assignDeptId) }}</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="label">检测品种：</span>
-                        <div class="品种-wrapper">
+                    <div class="left-info-col">
+                        <div class="info-item">
+                            <span class="label">任务名称：</span>
+                            <span class="value">{{ taskDetail.taskName || '--' }}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">任务编号：</span>
+                            <span class="value">{{ taskDetail.taskCode || '--' }}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">主管单位：</span>
+                            <span class="value">{{ getDeptLabel(taskDetail.assignDeptId) }}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">检测品种：</span>
                             <span class="value">{{ taskDetail.detectionVarieties || '--' }}</span>
                         </div>
+                        <!-- <div class="info-item">
+                            <span class="label">检测项目：</span>
+                            <span class="value">{{ taskDetail.detectionItems || '--' }}</span>
+                        </div> -->
+                        <div class="info-item">
+                            <span class="label">执行时间：</span>
+                            <span class="value">
+                                {{ taskDetail.startDate ? (taskDetail.startDate + ' 至 ' + taskDetail.endDate) : '--' }}
+                            </span>
+                        </div>
                     </div>
-                    <!-- <div class="info-item">
-                        <span class="label">检测项目：</span>
-                        <span class="value">{{ taskDetail.detectionItems || '--' }}</span>
-                    </div> -->
-                    <div class="info-item">
-                        <span class="label">执行时间：</span>
-                        <span class="value">
-                            {{ taskDetail.startDate ? (taskDetail.startDate + ' 至 ' + taskDetail.endDate) : '--' }}
-                        </span>
+                    <div class="progress-col">
+                        <el-progress type="circle" :percentage="taskDetail.sampleCompletionRate || 0" :width="120"
+                            color="#00B3ED" :stroke-width="10" />
+                        <div class="progress-label">方案完成率</div>
+                        <div class="progress-info">
+                            ({{ taskDetail.sampleCompletedCount || 0 }}/{{ taskDetail.sampleCount || 0 }})
+                        </div>
                     </div>
                 </div>
 
@@ -60,14 +68,6 @@
                                     {{ taskDetail.startDate ? (taskDetail.startDate + ' 至 ' + taskDetail.endDate) : '--'
                                     }}
                                 </span>
-                            </div>
-                        </div>
-                        <div class="progress-col">
-                            <el-progress type="circle" :percentage="taskDetail.sampleCompletionRate || 0" :width="120"
-                                color="#00B3ED" :stroke-width="10" />
-                            <div class="progress-label">任务完成率</div>
-                            <div class="progress-info">
-                                ({{ taskDetail.sampleCompletedCount || 0 }}/{{ taskDetail.sampleCount || 0 }})
                             </div>
                         </div>
                     </div>
@@ -502,7 +502,7 @@ function handleProgressReset() {
     padding: 30px;
     border-radius: 10px;
     display: grid;
-    grid-template-columns: 1fr 1.5fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 40px;
     box-shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.05);
     margin-bottom: 12px;
@@ -527,55 +527,41 @@ function handleProgressReset() {
 
 
     .card-left {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 28px;
         border-right: 1px solid #eeeeee;
         padding-right: 40px;
 
-        .品种-wrapper {
-            position: relative;
-            display: inline-block;
+        .left-info-col {
+            min-width: 0;
         }
 
-        .sticky-note {
-            position: absolute;
-            top: -60px;
-            left: 100px;
-            width: 180px;
-            background: #FFD25E;
-            padding: 10px;
-            border-radius: 2px;
-            box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.1);
-            z-index: 10;
+        .progress-col {
+            flex: 0 0 150px;
+        }
+    }
 
-            &::before {
-                content: '';
-                position: absolute;
-                left: -40px;
-                top: 50%;
-                width: 40px;
-                height: 1px;
-                background: #FFD25E;
-            }
+    .progress-col {
+        width: 150px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding-top: 20px;
 
-            .note-header {
-                font-size: 12px;
-                margin-bottom: 8px;
-            }
+        .progress-label {
+            font-size: 14px;
+            color: #333;
+            margin-top: 15px;
+            font-weight: bold;
+        }
 
-            .note-content {
-                background: #ffffff;
-                padding: 5px;
-                min-height: 60px;
-                font-size: 12px;
-                color: #666;
-                border-radius: 2px;
-            }
-
-            .note-footer {
-                font-size: 10px;
-                margin-top: 5px;
-                text-align: right;
-                color: #666;
-            }
+        .progress-info {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
         }
     }
 
@@ -588,28 +574,6 @@ function handleProgressReset() {
 
         .info-col {
             flex: 1;
-        }
-
-        .progress-col {
-            width: 150px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding-top: 20px;
-
-            .progress-label {
-                font-size: 14px;
-                color: #333;
-                margin-top: 15px;
-                font-weight: bold;
-            }
-
-            .progress-info {
-                font-size: 12px;
-                color: #666;
-                margin-top: 5px;
-            }
         }
     }
 }

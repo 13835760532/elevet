@@ -30,6 +30,12 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { CaretBottom } from '@element-plus/icons-vue';
+import {
+  formatBigScreenDataSummary,
+  getBigScreenConfig,
+  subscribeBigScreenRefresh,
+  type BigScreenDataConfig
+} from './config';
 
 interface SelectorOption {
   label: string
@@ -57,11 +63,18 @@ const emit = defineEmits<{
 const isOpen = ref(false);
 const selectorRef = ref<HTMLElement | null>(null);
 const currentValue = ref(props.modelValue || '');
+const dataConfig = ref<BigScreenDataConfig>(getBigScreenConfig());
+
+const selectedDataLabel = computed(() => formatBigScreenDataSummary(dataConfig.value));
+
+const defaultOptionLabel = computed(() =>
+  selectedDataLabel.value ? `${props.label}｜${selectedDataLabel.value}` : props.label
+);
 
 const normalizedOptions = computed<SelectorOption[]>(() =>
   props.options.length
     ? props.options
-    : [{ label: props.label, value: props.label }]
+    : [{ label: defaultOptionLabel.value, value: defaultOptionLabel.value }]
 );
 
 const hasMultipleOptions = computed(() => normalizedOptions.value.length > 1);
@@ -113,6 +126,14 @@ onMounted(() => {
 
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside);
+});
+
+const disposeRefresh = subscribeBigScreenRefresh(() => {
+  dataConfig.value = getBigScreenConfig();
+});
+
+onUnmounted(() => {
+  disposeRefresh();
 });
 </script>
 

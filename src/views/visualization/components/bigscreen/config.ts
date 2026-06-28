@@ -6,6 +6,7 @@ export const BIG_SCREEN_REFRESH_EVENT = 'big-screen-refresh'
 
 export interface BigScreenDataConfig {
   timeRange: [string, string]
+  dataScope: string
   regionPath: number[]
   regionLabel: string
   provinceName: string
@@ -21,6 +22,7 @@ const defaultStart = dayjs().startOf('year').format('YYYY-MM-DD')
 
 export const getDefaultBigScreenConfig = (): BigScreenDataConfig => ({
   timeRange: [defaultStart, today],
+  dataScope: 'jurisdiction',
   regionPath: [],
   regionLabel: '',
   provinceName: '',
@@ -89,6 +91,28 @@ export const saveBigScreenConfig = (config: BigScreenDataConfig) => {
   window.localStorage.setItem(BIG_SCREEN_CONFIG_STORAGE_KEY, JSON.stringify(config))
 }
 
+export const formatBigScreenRegionLabel = (label?: string) => {
+  const value = String(label || '').trim()
+  if (!value) return '全部地区'
+  const parts = value
+    .split('-')
+    .map((item) => item.trim())
+    .filter((item) => item && item !== '市辖区')
+
+  return parts
+    .filter((item, index) => item !== parts[index - 1])
+    .join('')
+}
+
+export const formatBigScreenDataSummary = (config = getBigScreenConfig()) => {
+  const [startDate, endDate] = config.timeRange || []
+  const regionLabel = formatBigScreenRegionLabel(config.regionLabel)
+  const timeLabel = startDate && endDate ? `${startDate} 至 ${endDate}` : '默认时间'
+  const scopeLabel =
+    config.dataScope === 'all' ? '本辖区全部检测数据' : '本辖区监管采集检测数据'
+  return `${regionLabel}｜${timeLabel}｜${scopeLabel}`
+}
+
 export const getBigScreenQueryParams = () => {
   const config = getBigScreenConfig()
   const userDeptAreaParams = getBigScreenUserDeptAreaParams()
@@ -98,7 +122,8 @@ export const getBigScreenQueryParams = () => {
     provinceName: config.provinceName || undefined,
     cityName: config.cityName || undefined,
     areaType: config.areaType || userDeptAreaParams.areaType || undefined,
-    areaCode: config.areaCode || userDeptAreaParams.areaCode || undefined
+    areaCode: config.areaCode || userDeptAreaParams.areaCode || undefined,
+    dataScope: config.dataScope || undefined
   }
 }
 

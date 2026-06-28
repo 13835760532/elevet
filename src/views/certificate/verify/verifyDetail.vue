@@ -59,56 +59,14 @@
                                 {{ formData.source === 1 ? '本平台合格证快照' : '合格证原始照片' }}
                             </div>
                             
-                            <!-- A. 本平台样式预览 -->
-                            <div v-if="formData.source === 1" class="certificate-mock">
-                                <div class="cert-code">合格证编号：{{ formData.certificateCode }}</div>
-                                <h2 class="cert-title">承诺达标合格证</h2>
-                                <div class="cert-body">
-                                    <p class="promise">我承诺对生产销售的食用农产品：</p>
-                                    <p class="promise-detail">不使用禁限用农药兽药及非法添加物，常规农药兽药残留不超标，对承诺的真实性负责。</p>
-                                    
-                                    <div class="cert-main">
-                                        <div class="left-checks">
-                                            <p class="label-item">承诺依据：</p>
-                                            <div class="check-list">
-                                                <el-checkbox :model-value="true" disabled>质量安全控制符合要求</el-checkbox>
-                                                <el-checkbox :model-value="false" disabled>自行检测合格</el-checkbox>
-                                                <el-checkbox :model-value="false" disabled>委托检测合格</el-checkbox>
-                                            </div>
-                                        </div>
-                                        <div class="right-qr">
-                                            <div class="qr-placeholder">
-                                                <Qrcode :text="formData.certificateCode"
-                                                :options="{ errorCorrectionLevel: 'M', margin: 0 }" 
-                                                :width="110" />
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="info-table">
-                                        <div class="tr">
-                                            <div class="td-label">产品名称</div>
-                                            <div class="td-value">{{ formData.productName }}</div>
-                                        </div>
-                                        <div class="tr">
-                                            <div class="td-label">重量/数量</div>
-                                            <div class="td-value">{{ formData.quantity }}{{ getAgriUnitLabel(formData.unit) }}</div>
-                                        </div>
-                                        <div class="tr">
-                                            <div class="td-label">产地</div>
-                                            <div class="td-value">{{ formData.productionArea }}</div>
-                                        </div>
-                                        <div class="tr">
-                                            <div class="td-label">经营主体</div>
-                                            <div class="td-value">{{ formData.subjectName }}</div>
-                                        </div>
-                                        <div class="tr">
-                                            <div class="td-label">开具日期</div>
-                                            <div class="td-value">{{ formData.issueDate }}</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                            <!-- A. 本平台合格证公共预览 -->
+                            <CertificatePreview
+                                v-if="formData.source === 1"
+                                class="verify-certificate-preview"
+                                :certificate="formData"
+                                :basis-options="basisOptions"
+                                :qr-text="certificateQrText"
+                            />
 
                             <!-- B. 三方原始照片预览 -->
                             <div v-else class="external-preview-content">
@@ -144,12 +102,11 @@ import { computed, reactive, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { Picture } from '@element-plus/icons-vue';
 import { ElLoading } from 'element-plus';
-import { Qrcode } from '@/components/Qrcode';
+import { CertificatePreview } from '@/components/CertificatePreview';
 import { getVerification } from '@/api/agri/certificateVerification/index';
 import { dateFormatter } from '@/utils/formatTime';
 import {
     DEFAULT_AGRI_MEASUREMENT_UNIT,
-    getAgriUnitLabel,
     usePreferredAgriMeasurementUnitOptions
 } from '@/utils/agriUnit';
 
@@ -168,6 +125,9 @@ const formData = reactive({
     subjectName: '',
     certificateImageUrl: '',
     certificateCode: '',
+    qrCode: '',
+    commitmentBasis: '',
+    productImageUrl: '',
     verificationTime: ''
 });
 
@@ -179,6 +139,29 @@ const unitRef = computed({
 });
 const measurementUnitOptions = usePreferredAgriMeasurementUnitOptions(unitRef, ['千克', 'kg'], DEFAULT_AGRI_MEASUREMENT_UNIT, false);
 
+const basisOptions = [
+    { label: '质量安全控制符合要求', value: 1 },
+    { label: '自行检测合格', value: 2 },
+    { label: '委托检测合格', value: 3 }
+];
+
+const certificateQrText = computed(() => formData.qrCode || formData.certificateCode || '');
+
+const normalizeVerificationData = (data) => {
+    const cert = data?.certificate || {};
+    const source = data?.certificateSource || data?.source || 1;
+    return {
+        ...cert,
+        ...data,
+        source,
+        certificateCode: data?.certificateCode || cert.certificateCode || data?.externalCertificateCode || '',
+        qrCode: data?.qrCode || cert.qrCode || '',
+        commitmentBasis: data?.commitmentBasis || cert.commitmentBasis || '',
+        productImageUrl: data?.productImageUrl || cert.productImageUrl || '',
+        certificateImageUrl: data?.certificateImageUrl || cert.certificateImageUrl || ''
+    };
+};
+
 onMounted(async () => {
     const id = route.query.id;
     if (!id) return;
@@ -187,12 +170,11 @@ onMounted(async () => {
     try {
         const data = await getVerification(Number(id));
         if (data) {
-            // 兼容性映射：后端可能会返回 certificateSource
-            const source = data.certificateSource || data.source || 1;
-            Object.assign(formData, data, { source });
+            const normalizedData = normalizeVerificationData(data);
+            Object.assign(formData, normalizedData);
             
             // 针对三方平台，如果 certificateCode 为空，取 externalCertificateCode
-            if (source === 2 && !data.certificateCode) {
+            if (normalizedData.source === 2 && !normalizedData.certificateCode) {
                 formData.certificateCode = data.externalCertificateCode || '';
             }
 
@@ -299,39 +281,10 @@ export default {
         }
     }
 
-    /* 合格证快照预览 */
-    .certificate-mock {
-        padding: 24px;
-        max-width: 500px;
+    .verify-certificate-preview {
+        width: 470px;
+        max-width: calc(100% - 48px);
         margin: 0 auto;
-        
-        .cert-code { font-size: 12px; color: #94a3b8; margin-bottom: 16px; }
-        .cert-title { font-size: 20px; font-weight: 700; text-align: center; margin-bottom: 24px; color: #1e293b; }
-        
-        .cert-body {
-            .promise { font-weight: 600; font-size: 14px; margin-bottom: 8px; }
-            .promise-detail { font-size: 12px; line-height: 1.6; color: #64748b; margin-bottom: 20px; }
-            
-            .cert-main {
-                display: flex; justify-content: space-between; align-items: flex-end;
-                margin-bottom: 24px;
-                .label-item { font-weight: 600; font-size: 13px; margin-bottom: 8px; }
-                .check-list {
-                    display: flex; flex-direction: column; gap: 6px;
-                    :deep(.el-checkbox__label) { font-size: 12px; }
-                }
-            }
-
-            .info-table {
-                border: 1px solid #f1f5f9;
-                .tr {
-                    display: flex; border-bottom: 1px solid #f1f5f9;
-                    &:last-child { border-bottom: none; }
-                    .td-label { width: 90px; background: #f8fafc; padding: 12px; font-size: 12px; color: #64748b; border-right: 1px solid #f1f5f9; }
-                    .td-value { flex: 1; padding: 12px; font-size: 13px; font-weight: 500; color: #1e293b; }
-                }
-            }
-        }
     }
 
     /* 三方预览样式 */

@@ -23,168 +23,43 @@
                     </div>
                 </div>
 
-                <div class="cert-display-box" v-loading="loading">
-                    <!-- 合格证票据样式 (左侧) -->
-                    <div class="cert-ticket">
-                        <div class="cert-header">
-                            <span class="cert-id-tag">合格证编号－{{ certificate?.certificateCode || '--' }}</span>
-                        </div>
-                        <div class="cert-body">
-                            <h2 class="main-title">承诺事项</h2>
-                            <div class="commitment-list">
-                                <div v-for="(line, idx) in (certificate?.commitmentContent || '').split('\n')"
-                                    :key="idx" class="commitment-item">
-                                    {{ line }}
-                                </div>
-                            </div>
-
-                            <div class="middle-flex">
-                                <div class="basis-info">
-                                    <h4 class="small-title">承诺依据：</h4>
-                                    <el-checkbox-group v-model="commitmentBasis" disabled>
-                                        <el-checkbox :label="1">质量安全控制符合要求</el-checkbox>
-                                        <el-checkbox :label="2">自行检测合格</el-checkbox>
-                                        <el-checkbox :label="3">委托检测合格</el-checkbox>
-                                    </el-checkbox-group>
-                                </div>
-                                <div class="qr-code">
-                                    <Qrcode v-if="certificate?.qrCode"
-                                        :text="`https://yishizhijian.jikeyun.net/web/index.html#/pages/index?id=${certificate.id || ''}&code=${certificate.qrCode}`"
-                                        :options="{ errorCorrectionLevel: 'L' }" :width="100" />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 基本信息表格 (右侧) -->
-                    <div class="info-table-side">
-                        <div class="table-title">基本信息</div>
-                        <div class="custom-table">
-                            <div class="table-row">
-                                <div class="label">产品名称</div>
-                                <div class="val">{{ certificate?.productName || '--' }}</div>
-                            </div>
-                            <div class="table-row">
-                                <div class="label">产品数量</div>
-                                <div class="val">
-                                    {{ certificate?.quantity ?? '--' }}{{ getAgriUnitLabel(certificate?.unit) }}
-                                </div>
-                            </div>
-                            <div class="table-row">
-                                <div class="label">产品产地</div>
-                                <div class="val">{{ certificate?.productionArea || '--' }}</div>
-                            </div>
-                            <div class="table-row">
-                                <div class="label">承诺主体</div>
-                                <div class="val">{{ certificate?.subjectName || '--' }}</div>
-                            </div>
-                            <div class="table-row">
-                                <div class="label">联系方式</div>
-                                <div class="val">{{ certificate?.contactPhone || '--' }}</div>
-                            </div>
-                            <div class="table-row">
-                                <div class="label">开具时间</div>
-                                <div class="val">{{ certificate?.issueDate || '--' }}</div>
-                            </div>
-                        </div>
-                        <p class="footer-tip">*电子合格证由壹拾智检数智服务平台承载展示</p>
-                    </div>
-                </div>
-
-                <div class="divider"></div>
-
-                <!-- 产品图片区域 -->
-                <div class="images-section">
-                    <div class="section-title" v-if="certificate?.productImageUrl">产品图片</div>
-                    <div class="image-grid" v-if="certificate?.productImageUrl">
-                        <div v-if="certificate?.productImageUrl" class="image-box">
-                            <img :src="certificate.productImageUrl" class="product-img" />
-                        </div>
-                        <div v-else class="image-placeholder">
-                            <el-icon class="icon">
-                                <Picture />
-                            </el-icon>
-                        </div>
-                    </div>
-                    <div class="reports-link">
+                <div class="certificate-preview-section" v-loading="loading">
+                    <CertificatePreview
+                        class="detail-certificate-preview"
+                        :certificate="certificate"
+                        :basis-options="basisOptions"
+                        :qr-text="getCertificateQrText(certificate)"
+                    />
+                    <div class="reports-link detail-report-link">
                         检测报告 <el-button link type="primary" @click="handlePreview">预览</el-button>
                     </div>
                 </div>
             </div>
 
             <!-- 已关联的上游合格证 -->
-            <div class="info-card mt-20" v-if="certificate?.upstreamCertificateSource"
+            <div class="info-card mt-20" v-if="hasUpstreamCertificate"
                 :class="{ 'no-print-section': !isSelected2 }">
                 <div class="card-title-row no-print">
                     <h2 class="card-inner-title">已关联的上游合格证</h2>
-                    <el-checkbox v-model="isSelected2" v-if="certificate?.upstreamCertificateSource === 1"
+                    <el-checkbox v-model="isSelected2" v-if="canPrintUpstream"
                         @change="handleSelect2">打印此联</el-checkbox>
                 </div>
 
                 <!-- 1. 本平台来源：展示票据详情 -->
-                <div class="cert-display-box"
-                    v-if="certificate?.upstreamCertificateSource === 1 && upstreamCertificate">
-                    <!-- 合格证票据样式 (左侧) -->
-                    <div class="cert-ticket orange-border">
-                        <div class="cert-header">
-                            <span class="cert-id-tag">合格证编号－{{ upstreamCertificate?.certificateCode || '--' }}</span>
-                        </div>
-                        <div class="cert-body">
-                            <h2 class="main-title">承诺事项</h2>
-                            <h3 class="sub-title">{{ upstreamCertificate?.commitmentContent }}</h3>
-                            <div class="middle-flex">
-                                <div class="basis-info">
-                                    <h4 class="small-title">承诺依据：</h4>
-                                    <el-checkbox-group v-model="upstreamCommitmentBasis" disabled>
-                                        <el-checkbox :label="1">质量安全控制符合要求</el-checkbox>
-                                        <el-checkbox :label="2">自行检测合格</el-checkbox>
-                                        <el-checkbox :label="3">委托检测合格</el-checkbox>
-                                    </el-checkbox-group>
-                                </div>
-                                <div class="qr-code">
-                                    <Qrcode v-if="upstreamCertificate?.qrCode"
-                                        :text="`https://yishizhijian.jikeyun.net/web/index.html#/pages/index?id=${upstreamCertificate.id || ''}&code=${upstreamCertificate.qrCode}`"
-                                        :options="{ errorCorrectionLevel: 'L' }" :width="100" />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 基本信息表格 (右侧) -->
-                    <div class="info-table-side">
-                        <div class="table-title">基本信息</div>
-                        <div class="custom-table">
-                            <div class="table-row">
-                                <div class="label">产品名称</div>
-                                <div class="val">{{ upstreamCertificate?.productName || '--' }}</div>
-                            </div>
-                            <div class="table-row">
-                                <div class="label">产品数量</div>
-                                <div class="val">{{ upstreamCertificate?.quantity ?? '--' }}{{
-                                    getAgriUnitLabel(upstreamCertificate?.unit) }}</div>
-                            </div>
-                            <div class="table-row">
-                                <div class="label">产品产地</div>
-                                <div class="val">{{ upstreamCertificate?.productionArea || '--' }}</div>
-                            </div>
-                            <div class="table-row">
-                                <div class="label">承诺主体</div>
-                                <div class="val">{{ upstreamCertificate?.subjectName || '--' }}</div>
-                            </div>
-                            <div class="table-row">
-                                <div class="label">联系方式</div>
-                                <div class="val">{{ upstreamCertificate?.contactPhone || '--' }}</div>
-                            </div>
-                            <div class="table-row">
-                                <div class="label">开具时间</div>
-                                <div class="val">{{ upstreamCertificate?.issueDate || '--' }}</div>
-                            </div>
-                        </div>
+                <div class="certificate-preview-section" v-if="canPrintUpstream">
+                    <CertificatePreview
+                        class="detail-certificate-preview"
+                        :certificate="upstreamCertificate"
+                        :basis-options="basisOptions"
+                        :qr-text="getCertificateQrText(upstreamCertificate)"
+                    />
+                    <div class="reports-link detail-report-link">
+                        检测报告 <el-button link type="primary" @click="handlePreview()">预览</el-button>
                     </div>
                 </div>
 
                 <!-- 2. 其他平台来源：展示原件照片 -->
-                <div v-else-if="certificate?.upstreamCertificateSource === 2 && certificate?.upstreamCertificateImageUrl"
+                <div v-else-if="isOtherPlatformUpstream && upstreamCertificateImageUrl"
                     class="other-upstream-snapshot">
                     <div class="snapshot-header">
                         <div class="header-left">
@@ -195,34 +70,8 @@
                         </div>
                     </div>
                     <div class="snapshot-body">
-                        <el-image :src="certificate.upstreamCertificateImageUrl" fit="contain" class="upstream-full-img"
-                            :preview-src-list="[certificate.upstreamCertificateImageUrl]" />
-                    </div>
-                </div>
-
-                <div v-else-if="loading && certificate?.upstreamCertificateSource === 1" class="loading-placeholder">
-                    正在加载本平台上游合格证详情...
-                </div>
-
-                <div v-else class="empty-tip">暂无关联的上游合格证数据</div>
-
-                <div class="divider"></div>
-
-                <!-- 产品图片区域 -->
-                <div class="images-section">
-                    <div class="section-title" v-if="upstreamCertificate?.productImageUrl">产品图片</div>
-                    <div class="image-grid" v-if="upstreamCertificate?.productImageUrl">
-                        <div v-if="upstreamCertificate?.productImageUrl" class="image-box">
-                            <img :src="upstreamCertificate.productImageUrl" class="product-img" />
-                        </div>
-                        <div v-else class="image-placeholder">
-                            <el-icon class="icon">
-                                <Picture />
-                            </el-icon>
-                        </div>
-                    </div>
-                    <div class="reports-link" v-if="certificate?.upstreamCertificateSource != 2">
-                        检测报告 <el-button link type="primary" @click="handlePreview()">预览</el-button>
+                        <el-image :src="upstreamCertificateImageUrl" fit="contain" class="upstream-full-img"
+                            :preview-src-list="[upstreamCertificateImageUrl]" />
                     </div>
                 </div>
             </div>
@@ -339,7 +188,7 @@
             </div>
 
             <!-- 仅在本平台来源且勾选时显示打印联 -->
-            <div v-if="isSelected2 && certificate?.upstreamCertificateSource === 1 && upstreamCertificate"
+            <div v-if="isSelected2 && canPrintUpstream"
                 class="certificate-document print-doc-gap">
                 <div class="cert-header">
                     <span class="cert-no-tag">合格证编号－{{ upstreamCertificate?.certificateCode || '--' }}</span>
@@ -450,6 +299,7 @@ import * as CertificateApi from '@/api/agri/certificate';
 import * as DetectionReportApi from '@/api/agri/detectionReport';
 import * as DetectionRecordApi from '@/api/agri/detectionRecord';
 import { Qrcode } from '@/components/Qrcode';
+import { CertificatePreview } from '@/components/CertificatePreview';
 import html2canvas from 'html2canvas';
 import PlatformDetectionSelector from './components/PlatformDetectionSelector.vue';
 import { BluetoothPrinter, getAgriUnitLabel } from '@/utils';
@@ -494,6 +344,10 @@ const handleSelect1 = (val) => {
     if (val) isSelected2.value = false;
 };
 const handleSelect2 = (val) => {
+    if (val && !canPrintUpstream.value) {
+        isSelected2.value = false;
+        return;
+    }
     if (val) isSelected1.value = false;
 };
 
@@ -520,6 +374,24 @@ const selectedUpstreamBasisOptions = computed(() => {
     const selected = new Set(upstreamCommitmentBasis.value.map(v => Number(v)));
     return basisOptions.filter(item => selected.has(Number(item.value)));
 });
+
+const getCertificateQrText = (data: any) => {
+    if (!data?.qrCode) return data?.certificateCode || '';
+    return `https://yishizhijian.jikeyun.net/web/index.html#/pages/index?id=${data.id || ''}&code=${data.qrCode}`;
+};
+
+const isPlatformUpstream = computed(() => certificate.value?.upstreamCertificateSource === 1);
+
+const isOtherPlatformUpstream = computed(() => certificate.value?.upstreamCertificateSource === 2);
+
+const upstreamCertificateImageUrl = computed(() => String(certificate.value?.upstreamCertificateImageUrl || '').trim());
+
+const canPrintUpstream = computed(() => !!upstreamCertificate.value);
+
+const hasUpstreamCertificate = computed(() =>
+    canPrintUpstream.value ||
+    (isOtherPlatformUpstream.value && !!upstreamCertificateImageUrl.value)
+);
 
 const parseCommitmentLines = (content: any, fallbackBasis: Array<{ label: string }>) => {
     const stripCommitmentPrefix = (line: string) => {
@@ -620,6 +492,11 @@ const parseBasisData = (val: any) => {
     }
 };
 
+const setUpstreamCertificate = (data: any | null) => {
+    upstreamCertificate.value = data || null;
+    upstreamCommitmentBasis.value = data ? parseBasisData(data.commitmentBasis) : [];
+};
+
 const unwrapApiData = (payload: any) => {
     if (Array.isArray(payload)) return payload;
     if (Array.isArray(payload?.data)) return payload.data;
@@ -718,6 +595,9 @@ const hydrateLinkedDetectionRecords = async (recordIds: number[]) => {
 const loadDetail = async (id: number) => {
     loading.value = true;
     try {
+        upstreamCertificate.value = null;
+        upstreamCommitmentBasis.value = [];
+        isSelected2.value = false;
         const data = await CertificateApi.getCertificate(id);
         certificate.value = data;
         commitmentBasis.value = parseBasisData(data.commitmentBasis);
@@ -734,12 +614,14 @@ const loadDetail = async (id: number) => {
         } else {
             thirdPartyType.value = 'third'; // 默认
         }
-        // if (data.upstreamCertificate) {
-        //    upstreamCertificate.value = data.upstreamCertificate;
-        //    upstreamCommitmentBasis.value = parseBasisData(data.upstreamCertificate.commitmentBasis);
-        // } 
-        if (data.upstreamCertificateSource === 1 && data.upstreamCertificateCode) {
+        if (data.upstreamCertificate) {
+            setUpstreamCertificate(data.upstreamCertificate);
+        } else if (isPlatformUpstream.value && data.upstreamCertificateCode) {
             await loadUpstreamDetail(data.upstreamCertificateCode);
+        }
+        if (!canPrintUpstream.value) {
+            isSelected1.value = true;
+            isSelected2.value = false;
         }
     } catch {
         message.error('获取合格证详情失败');
@@ -752,11 +634,9 @@ const loadUpstreamDetail = async (code: string) => {
     try {
         const cleanedCode = String(code || '').replace(/[－—\-]/g, '').trim();
         const data = await CertificateApi.queryUpstreamCertificate(cleanedCode);
-        if (data) {
-            upstreamCertificate.value = data;
-            upstreamCommitmentBasis.value = parseBasisData(data.commitmentBasis);
-        }
+        setUpstreamCertificate(data);
     } catch (e) {
+        setUpstreamCertificate(null);
         console.error('获取上游合格证详情失败', e);
     }
 };
@@ -900,6 +780,10 @@ const captureAreaToImg = async () => {
 };
 
 const handlePreview = async () => {
+    if (isSelected2.value && !canPrintUpstream.value) {
+        isSelected2.value = false;
+        isSelected1.value = true;
+    }
     if (!isSelected1.value && !isSelected2.value) {
         message.warning('请至少选择一联用于打印');
         return;
@@ -932,6 +816,10 @@ const handlePreview = async () => {
 };
 
 const handlePrint = async (prepared?: string | null) => {
+    if (isSelected2.value && !canPrintUpstream.value) {
+        isSelected2.value = false;
+        isSelected1.value = true;
+    }
     if (!isSelected1.value && !isSelected2.value) {
         message.warning('请至少选择一联用于打印');
         return;
@@ -1373,170 +1261,25 @@ const handlePrint = async (prepared?: string | null) => {
     }
 }
 
-.cert-display-box {
+.certificate-preview-section {
+    width: 470px;
+    max-width: 100%;
+}
+
+.detail-certificate-preview {
+    width: 100%;
+}
+
+.detail-report-link {
     display: flex;
-    gap: 40px;
-    align-items: flex-start;
-}
+    align-items: center;
+    gap: 10px;
+    margin-top: 16px;
+    color: #333;
+    font-size: 13px;
 
-/* 合格证票据样式 */
-.cert-ticket {
-    flex: 1;
-    background: #fff;
-    border: 1px solid #E5E7EB;
-    border-radius: 4px;
-    padding: 16px;
-    position: relative;
-
-    &.orange-border {
-        border-color: #FACC15;
-    }
-
-    .cert-header {
-        margin-bottom: 16px;
-
-        .cert-id-tag {
-            background: #F0F7FF;
-            color: #333;
-            padding: 4px 10px;
-            font-size: 12px;
-            border-radius: 2px;
-        }
-    }
-
-    .cert-body {
-        text-align: center;
-
-        .main-title {
-            font-size: 22px;
-            font-weight: 800;
-            margin: 0 0 8px 0;
-            letter-spacing: 1px;
-        }
-
-        .commitment-list {
-            margin-bottom: 20px;
-
-            .commitment-item {
-                font-size: 16px;
-                font-weight: 700;
-                color: #333;
-                line-height: 1.5;
-                margin-bottom: 2px;
-                display: flex;
-                align-items: flex-start;
-
-                &::before {
-                    content: '';
-                    display: inline-block;
-                    width: 6px;
-                    height: 6px;
-                    background-color: #333;
-                    border-radius: 50%;
-                    margin-right: 10px;
-                    margin-top: 9px;
-                    flex-shrink: 0;
-                }
-            }
-        }
-
-        .declaration {
-            font-size: 12px;
-            color: #666;
-            line-height: 1.6;
-            margin-bottom: 20px;
-            text-align: left;
-        }
-    }
-
-    .middle-flex {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        text-align: left;
-    }
-
-    .basis-info {
-        .small-title {
-            font-size: 14px;
-            font-weight: 700;
-            margin-bottom: 10px;
-        }
-
-
-        :deep(.el-checkbox) {
-            display: block;
-            margin-bottom: 4px;
-            display: flex;
-            align-items: center;
-            height: 30px;
-
-            .el-checkbox__label {
-                font-size: 12px;
-                font-weight: 600;
-                color: #333;
-            }
-        }
-    }
-
-    .qr-code {
-        width: 100px;
-        height: 100px;
-        margin-top: 30px;
-
-        img {
-            width: 100%;
-            height: 100%;
-        }
-    }
-}
-
-/* 右侧信息表 */
-.info-table-side {
-    flex: 1;
-    text-align: left;
-
-    .table-title {
-        font-size: 15px;
-        font-weight: 700;
-        color: #000;
-        margin-bottom: 16px;
-    }
-
-    .custom-table {
-        border: 1px solid #EDEDED;
-
-        .table-row {
-            display: flex;
-            border-bottom: 1px solid #EDEDED;
-
-            &:last-child {
-                border-bottom: none;
-            }
-
-            .label {
-                width: 120px;
-                background: #F9FAFB;
-                padding: 10px 16px;
-                font-size: 13px;
-                font-weight: 600;
-                border-right: 1px solid #EDEDED;
-                color: #333;
-            }
-
-            .val {
-                flex: 1;
-                padding: 10px 16px;
-                font-size: 13px;
-                color: #333;
-            }
-        }
-    }
-
-    .footer-tip {
-        font-size: 11px;
-        color: #999;
-        margin-top: 12px;
+    .el-button {
+        font-weight: 600;
     }
 }
 
@@ -1590,46 +1333,6 @@ const handlePrint = async (prepared?: string | null) => {
     margin: 32px 0;
 }
 
-/* 图片区域 */
-.images-section {
-    text-align: left;
-
-    .section-title {
-        font-size: 14px;
-        font-weight: 700;
-        color: #000;
-        margin-bottom: 16px;
-    }
-
-    .image-placeholder {
-        width: 250px;
-        height: 160px;
-        background: #F3F4F6;
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-
-        .icon {
-            font-size: 40px;
-            color: #D1D5DB;
-        }
-    }
-
-    .reports-link {
-        margin-top: 16px;
-        font-size: 13px;
-        color: #333;
-        display: flex;
-        align-items: center;
-
-        .el-button {
-            margin-left: 8px;
-            font-weight: 600;
-        }
-    }
-}
-
 .mt-20 {
     margin-top: 20px;
 }
@@ -1664,31 +1367,6 @@ const handlePrint = async (prepared?: string | null) => {
     border-color: #00B3ED !important;
     color: #00B3ED !important;
     background: #F0F9FF !important;
-}
-
-.image-box {
-    max-width: 100%;
-    border-radius: 8px;
-    overflow: hidden;
-    display: inline-block;
-
-    .product-img {
-        display: block;
-        max-width: 320px;
-        max-height: 240px;
-        width: auto;
-        height: auto;
-        border-radius: 8px;
-    }
-}
-
-.empty-tip {
-    text-align: center;
-    padding: 40px;
-    color: #999;
-    font-size: 14px;
-    background: #f9fafb;
-    border-radius: 8px;
 }
 
 .print-preview-dialog {

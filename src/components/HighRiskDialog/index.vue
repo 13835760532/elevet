@@ -61,8 +61,8 @@
     <!-- 底部按钮 -->
     <template #footer>
       <div class="dialog-footer">
-        <el-button class="action-btn" @click="handleSetAsTarget">设为检测品种及检测项</el-button>
-        <el-button class="action-btn" @click="handleClose">了解并关闭</el-button>
+        <el-button class="action-btn action-btn-secondary" @click="handleSetAsTarget">设为检测品种及检测项</el-button>
+        <el-button class="action-btn action-btn-primary" @click="handleClose">了解并关闭</el-button>
       </div>
     </template>
   </el-dialog>
@@ -300,16 +300,30 @@ watch(
     border-radius: 8px;
     font-weight: 500;
     transition: all 0.2s;
+  }
 
-    &:first-child {
-      background-color: #00b3ed;
+  .action-btn-secondary {
+    background-color: #fff;
+    border-color: #dcdfe6;
+    color: #606266;
+
+    &:hover,
+    &:focus {
+      color: #00b3ed;
       border-color: #00b3ed;
-      color: #fff;
+      background-color: #f0fbff;
+    }
+  }
 
-      &:hover {
-        background-color: #0099cc;
-        opacity: 0.9;
-      }
+  .action-btn-primary {
+    background-color: #00b3ed;
+    border-color: #00b3ed;
+    color: #fff;
+
+    &:hover,
+    &:focus {
+      background-color: #0099cc;
+      border-color: #0099cc;
     }
   }
 }
