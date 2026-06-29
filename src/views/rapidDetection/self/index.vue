@@ -232,6 +232,48 @@ const pageParams = reactive({
 const total = ref(0);
 const tableList = ref([]);
 
+const formatDetectionTime = (value: any) => {
+    if (!value) return '-';
+    if (typeof value === 'string') return value;
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '-';
+    return formatDate(date, 'YYYY-MM-DD HH:mm:ss');
+};
+
+const parseAiRecognition = (raw: any, fallbackTime?: any) => {
+    if (!raw) {
+        return {
+            items: '-',
+            testTime: formatDetectionTime(fallbackTime)
+        };
+    }
+
+    try {
+        const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+        const resultList =
+            parsed?.results ||
+            parsed?.detentionResult ||
+            parsed?.detectionResult ||
+            parsed?.result ||
+            [];
+        const resultArray = Array.isArray(resultList) ? resultList : [];
+        const items = resultArray
+            .map((item: any) => item?.codeName || item?.detectionItem || item?.name || item?.itemName)
+            .filter(Boolean)
+            .join(', ');
+
+        return {
+            items: items || '-',
+            testTime: formatDetectionTime(parsed?.timestamp || parsed?.detectionDate || fallbackTime)
+        };
+    } catch (error) {
+        return {
+            items: '-',
+            testTime: formatDetectionTime(fallbackTime)
+        };
+    }
+};
+
 const getList = async () => {
     loading.value = true;
     try {
@@ -247,14 +289,9 @@ const getList = async () => {
             sampleName: queryParams.productName // 映射为名称搜索
         });
         data.list.forEach(item => {
-            if (item.aiRecognitionResult) {
-                let data = JSON.parse(item.aiRecognitionResult)
-                item.aiRecognitionResult = data.results.map(item => item.codeName).join(', ');
-                item.testTime = data.timestamp || '-';
-            } else {
-                item.testTime = '-';
-                item.aiRecognitionResult = '-';
-            }
+            const parsed = parseAiRecognition(item.aiRecognitionResult, item.detectionDate);
+            item.aiRecognitionResult = parsed.items;
+            item.testTime = parsed.testTime;
             return item
         });
         tableList.value = data.list;
@@ -268,16 +305,7 @@ const getList = async () => {
 
 /** 解析检测项目 */
 const getDetectionItems = (aiRecognitionResult: string) => {
-    if (!aiRecognitionResult) return '-';
-    try {
-        const aiRes = JSON.parse(aiRecognitionResult);
-        if (aiRes.results && Array.isArray(aiRes.results)) {
-            return aiRes.results.map(item => item.timestamp).join(', ');
-        }
-    } catch (e) {
-        return '-';
-    }
-    return '-';
+    return parseAiRecognition(aiRecognitionResult).items;
 };
 
 
