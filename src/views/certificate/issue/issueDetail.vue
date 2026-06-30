@@ -84,169 +84,28 @@
             </div>
         </div>
 
-        <div ref="printAreaRef" class="print-template-source">
-            <div v-if="isSelected1" class="certificate-document">
-                <div class="cert-header">
-                    <span class="cert-no-tag">合格证编号－{{ certificate?.certificateCode || '--' }}</span>
-                </div>
-
-                <div class="cert-body">
-                    <h1 class="cert-title">承诺达标合格证</h1>
-                    <h2 class="cert-subtitle">承诺事项：</h2>
-                    <div class="cert-declaration-list">
-                        <p v-for="(line, idx) in primaryCommitmentLines" :key="`p-${idx}`" class="declaration-line">• {{
-                            line }}</p>
-                    </div>
-
-                    <div class="cert-middle-section">
-                        <div class="cert-basis">
-                            <h3 class="basis-title" style="margin-bottom: 12px;">承诺依据：</h3>
-                            <div class="custom-basis-group">
-                                <div class="basis-item" v-for="item in selectedCommitmentBasisOptions"
-                                    :key="`pb-${item.value}`">
-                                    <span class="basis-box checked">✔</span>
-                                    <span class="basis-label">
-                                        <span class="basis-index">{{ item.indexLabel }}</span>
-                                        {{ item.label }}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="qr-code-wrapper">
-                            <Qrcode v-if="certificate?.certificateCode" :text="certificate?.certificateCode"
-                                :options="{ errorCorrectionLevel: 'L' }" :width="162" />
-                        </div>
-                    </div>
-
-                    <div class="divider"></div>
-
-                    <div class="info-section">
-                        <h3 class="info-title">基本信息：</h3>
-                        <div class="info-table">
-                            <div class="info-row">
-                                <div class="label">产品名称</div>
-                                <div class="value">{{ certificate?.productName || '--' }}</div>
-                            </div>
-                            <div class="info-row">
-                                <div class="label">数量/重量</div>
-                                <div class="value">{{ certificate?.quantity ?? '--' }} {{
-                                    getAgriUnitLabel(certificate?.unit) }}</div>
-                            </div>
-                            <div class="info-row">
-                                <div class="label">产品产地</div>
-                                <div class="value">{{ certificate?.productionArea || '--' }}</div>
-                            </div>
-                            <div class="info-row">
-                                <div class="label">承诺主体</div>
-                                <div class="value">{{ certificate?.subjectName || '--' }}</div>
-                            </div>
-                            <div class="info-row">
-                                <div class="label">开具时间</div>
-                                <div class="value">{{ formatPrintDate(certificate?.issueDate) }}</div>
-                            </div>
-                            <div class="info-row">
-                                <div class="label">打印时间</div>
-                                <div class="value">{{ printTimeText }}</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="divider no-print"></div>
-                    <div class="image-section no-print print-keep-space">
-                        <h3 class="info-title">产品图片</h3>
-                        <div class="image-preview-box">
-                            <img v-if="certificate?.productImageUrl" :src="certificate?.productImageUrl"
-                                class="cert-product-img" alt="产品图片" />
-                            <el-icon v-else class="placeholder-icon">
-                                <Picture />
-                            </el-icon>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <div ref="printAreaRef" class="certificate-print-source">
+            <CertificatePrintTemplate
+                v-if="isSelected1"
+                :certificate="certificate"
+                :basis-options="selectedCommitmentBasisOptions"
+                :commitment-lines="primaryCommitmentLines"
+                :qr-text="certificate?.certificateCode || ''"
+                :issue-date-text="formatPrintDate(certificate?.issueDate)"
+                :print-time-text="printTimeText"
+            />
 
             <!-- 仅在本平台来源且勾选时显示打印联 -->
-            <div v-if="isSelected2 && canPrintUpstream"
-                class="certificate-document print-doc-gap">
-                <div class="cert-header">
-                    <span class="cert-no-tag">合格证编号－{{ upstreamCertificate?.certificateCode || '--' }}</span>
-                </div>
-
-                <div class="cert-body">
-                    <h1 class="cert-title">承诺达标合格证</h1>
-                    <h2 class="cert-subtitle">承诺事项：</h2>
-                    <div class="cert-declaration-list">
-                        <p v-for="(line, idx) in upstreamCommitmentLines" :key="`u-${idx}`" class="declaration-line">•
-                            {{ line }}</p>
-                    </div>
-
-                    <div class="cert-middle-section">
-                        <div class="cert-basis">
-                            <h3 class="basis-title" style="margin-bottom: 12px;">承诺依据：</h3>
-                            <div class="custom-basis-group">
-                                <div class="basis-item" v-for="item in selectedUpstreamBasisOptions"
-                                    :key="`ub-${item.value}`">
-                                    <span class="basis-box checked">✔</span>
-                                    <span class="basis-label">
-                                        <span class="basis-index">{{ item.indexLabel }}</span>
-                                        {{ item.label }}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="qr-code-wrapper">
-                            <Qrcode v-if="upstreamCertificate?.certificateCode"
-                                :text="upstreamCertificate?.certificateCode" :options="{ errorCorrectionLevel: 'L' }"
-                                :width="162" />
-                        </div>
-                    </div>
-
-                    <div class="divider"></div>
-
-                    <div class="info-section">
-                        <h3 class="info-title">基本信息：</h3>
-                        <div class="info-table">
-                            <div class="info-row">
-                                <div class="label">产品名称</div>
-                                <div class="value">{{ upstreamCertificate?.productName || '--' }}</div>
-                            </div>
-                            <div class="info-row">
-                                <div class="label">数量/重量</div>
-                                <div class="value">{{ upstreamCertificate?.quantity ?? '--' }} {{
-                                    getAgriUnitLabel(upstreamCertificate?.unit) }}</div>
-                            </div>
-                            <div class="info-row">
-                                <div class="label">产品产地</div>
-                                <div class="value">{{ upstreamCertificate?.productionArea || '--' }}</div>
-                            </div>
-                            <div class="info-row">
-                                <div class="label">承诺主体</div>
-                                <div class="value">{{ upstreamCertificate?.subjectName || '--' }}</div>
-                            </div>
-                            <div class="info-row">
-                                <div class="label">开具时间</div>
-                                <div class="value">{{ formatPrintDate(upstreamCertificate?.issueDate) }}</div>
-                            </div>
-                            <div class="info-row">
-                                <div class="label">打印时间</div>
-                                <div class="value">{{ printTimeText }}</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="divider no-print"></div>
-                    <div class="image-section no-print print-keep-space">
-                        <h3 class="info-title">产品图片</h3>
-                        <div class="image-preview-box">
-                            <img v-if="upstreamCertificate?.productImageUrl" :src="upstreamCertificate?.productImageUrl"
-                                class="cert-product-img" alt="产品图片" />
-                            <el-icon v-else class="placeholder-icon">
-                                <Picture />
-                            </el-icon>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <CertificatePrintTemplate
+                v-if="isSelected2 && canPrintUpstream"
+                class="print-doc-gap"
+                :certificate="upstreamCertificate"
+                :basis-options="selectedUpstreamBasisOptions"
+                :commitment-lines="upstreamCommitmentLines"
+                :qr-text="upstreamCertificate?.certificateCode || ''"
+                :issue-date-text="formatPrintDate(upstreamCertificate?.issueDate)"
+                :print-time-text="printTimeText"
+            />
         </div>
 
 
@@ -274,11 +133,17 @@ import { useRoute } from 'vue-router';
 import { Picture, WarningFilled } from '@element-plus/icons-vue';
 import { useMessage } from '@/hooks/web/useMessage';
 import * as CertificateApi from '@/api/agri/certificate';
-import { Qrcode } from '@/components/Qrcode';
 import { CertificatePreview } from '@/components/CertificatePreview';
-import html2canvas from 'html2canvas';
-import { BluetoothPrinter, getAgriUnitLabel } from '@/utils';
+import { CertificatePrintTemplate } from '@/components/CertificatePrintTemplate';
+import { BluetoothPrinter } from '@/utils';
 import { formatDate } from '@/utils/formatTime';
+import {
+    captureCertificatePrintArea,
+    certificatePrintImageOptions,
+    getSelectedCertificateBasisOptions,
+    parseCertificateBasis,
+    resolveCertificateCommitmentLines
+} from '@/utils/certificatePrint';
 
 const PRINTER_NAME_PREFIX = 'YSH';
 const PRINTER_SERVICE_UUIDS = [
@@ -291,23 +156,6 @@ const PRINTER_CHARACTERISTIC_UUIDS = [
     '0000ffe1-0000-1000-8000-00805f9b34fb',
     '49535343-8841-43f4-a8d4-ecbe34729bb3'
 ];
-const PRINT_TARGET_WIDTH = 520;
-
-const printImageOptions = {
-    rotate90: false,
-    cropWhitespace: false,
-    fitToWidth: true,
-    maxWidth: PRINT_TARGET_WIDTH,
-    threshold: 220,
-    contrast: 2.2,
-    align: 'center',
-    feedLines: 2,
-    feedDots: 0,
-    cut: false,
-    widthUnit: 'bytes',
-    command: 'gs-v-0'
-} as const;
-
 const isSelected1 = ref(true);
 const isSelected2 = ref(false);
 
@@ -340,15 +188,13 @@ const basisOptions = [
     { indexLabel: '(3)', label: '委托检测合格', value: 3 }
 ];
 
-const selectedCommitmentBasisOptions = computed(() => {
-    const selected = new Set(commitmentBasis.value.map(v => Number(v)));
-    return basisOptions.filter(item => selected.has(Number(item.value)));
-});
+const selectedCommitmentBasisOptions = computed(() =>
+    getSelectedCertificateBasisOptions(basisOptions, commitmentBasis.value)
+);
 
-const selectedUpstreamBasisOptions = computed(() => {
-    const selected = new Set(upstreamCommitmentBasis.value.map(v => Number(v)));
-    return basisOptions.filter(item => selected.has(Number(item.value)));
-});
+const selectedUpstreamBasisOptions = computed(() =>
+    getSelectedCertificateBasisOptions(basisOptions, upstreamCommitmentBasis.value)
+);
 
 const getCertificateQrText = (data: any) => {
     if (!data?.qrCode) return data?.certificateCode || '';
@@ -368,43 +214,12 @@ const hasUpstreamCertificate = computed(() =>
     (isOtherPlatformUpstream.value && !!upstreamCertificateImageUrl.value)
 );
 
-const parseCommitmentLines = (content: any, fallbackBasis: Array<{ label: string }>) => {
-    const stripCommitmentPrefix = (line: string) => {
-        let cleaned = String(line || '').trim();
-        const seqRegex = /^(\d+[.、]|[（(]\d+[）)])\s*/;
-        while (seqRegex.test(cleaned)) {
-            cleaned = cleaned.replace(seqRegex, '').trim();
-        }
-        return cleaned;
-    };
-    const normalizeForMatch = (line: string) => String(line || '').replace(/\s+/g, '').trim();
-
-    const raw = String(content || '').trim();
-    if (raw) {
-        const normalized = raw
-            .split(/[\r\n]+|[；;。]/)
-            .map(item => stripCommitmentPrefix(item))
-            .filter(Boolean);
-        if (normalized.length > 1) return normalized;
-
-        const compactRaw = normalizeForMatch(raw);
-        const basisMatched = fallbackBasis
-            .map(item => stripCommitmentPrefix(item.label))
-            .filter(Boolean)
-            .filter((label, index, arr) => arr.indexOf(label) === index)
-            .filter(label => compactRaw.includes(normalizeForMatch(label)));
-        if (basisMatched.length >= 2) return basisMatched;
-        if (normalized.length === 1) return normalized;
-    }
-    return fallbackBasis.map(item => item.label);
-};
-
 const primaryCommitmentLines = computed(() =>
-    parseCommitmentLines(certificate.value?.commitmentContent, selectedCommitmentBasisOptions.value)
+    resolveCertificateCommitmentLines(certificate.value?.commitmentContent, selectedCommitmentBasisOptions.value)
 );
 
 const upstreamCommitmentLines = computed(() =>
-    parseCommitmentLines(upstreamCertificate.value?.commitmentContent, selectedUpstreamBasisOptions.value)
+    resolveCertificateCommitmentLines(upstreamCertificate.value?.commitmentContent, selectedUpstreamBasisOptions.value)
 );
 
 const printAreaRef = ref<HTMLElement | null>(null);
@@ -445,22 +260,9 @@ const formatPrintDate = (value: unknown) => {
     return result === 'Invalid Date' ? String(value).slice(0, 10) || '--' : result;
 };
 
-// 统一解析承诺依据
-const parseBasisData = (val: any) => {
-    if (!val) return [];
-    if (Array.isArray(val)) return val.map(Number);
-    if (typeof val === 'number') return [val];
-    try {
-        const parsed = JSON.parse(val);
-        return Array.isArray(parsed) ? parsed.map(Number) : [Number(parsed)];
-    } catch (e) {
-        return String(val).split(',').map(s => Number(s.trim())).filter(n => !isNaN(n));
-    }
-};
-
 const setUpstreamCertificate = (data: any | null) => {
     upstreamCertificate.value = data || null;
-    upstreamCommitmentBasis.value = data ? parseBasisData(data.commitmentBasis) : [];
+    upstreamCommitmentBasis.value = data ? parseCertificateBasis(data.commitmentBasis) : [];
 };
 
 const loadDetail = async (id: number) => {
@@ -471,7 +273,7 @@ const loadDetail = async (id: number) => {
         isSelected2.value = false;
         const data = await CertificateApi.getCertificate(id);
         certificate.value = data;
-        commitmentBasis.value = parseBasisData(data.commitmentBasis);
+        commitmentBasis.value = parseCertificateBasis(data.commitmentBasis);
 
         if (data.upstreamCertificate) {
             setUpstreamCertificate(data.upstreamCertificate);
@@ -574,68 +376,9 @@ onUnmounted(() => {
 });
 
 const captureAreaToImg = async () => {
-    const area = printAreaRef.value;
-    if (!area) return null;
     refreshPrintTime();
     await nextTick();
-
-    const hiddenNodes: Array<{
-        el: HTMLElement;
-        display: string;
-        visibility: string;
-        height: string;
-        minHeight: string;
-        overflow: string;
-    }> = [];
-    area.querySelectorAll<HTMLElement>('.no-print, .no-print-section').forEach(el => {
-        hiddenNodes.push({
-            el,
-            display: el.style.display,
-            visibility: el.style.visibility,
-            height: el.style.height,
-            minHeight: el.style.minHeight,
-            overflow: el.style.overflow
-        });
-        if (el.classList.contains('print-keep-space')) {
-            // 打印时保留空白，进一步减半
-            const reservedHeight = Math.max(0, Math.round(el.offsetHeight / 8) - 20);
-            el.style.visibility = 'hidden';
-            el.style.height = `${reservedHeight}px`;
-            el.style.minHeight = `${reservedHeight}px`;
-            el.style.overflow = 'hidden';
-        } else {
-            el.style.display = 'none';
-        }
-    });
-    const activeDocs: HTMLElement[] = [];
-    area.querySelectorAll<HTMLElement>('.certificate-document').forEach((el) => {
-        activeDocs.push(el);
-        el.classList.add('printing-active');
-    });
-
-    try {
-        const canvas = await html2canvas(area, {
-            scale: 1.5,
-            useCORS: true,
-            backgroundColor: '#fff',
-            scrollX: 0,
-            scrollY: 0,
-            width: PRINT_TARGET_WIDTH,
-            windowWidth: PRINT_TARGET_WIDTH
-        });
-        return canvas.toDataURL('image/png');
-    } finally {
-        activeDocs.forEach((el) => {
-            el.classList.remove('printing-active');
-        });
-        hiddenNodes.forEach(({ el, display, visibility, height, minHeight, overflow }) => {
-            el.style.display = display;
-            el.style.visibility = visibility;
-            el.style.height = height;
-            el.style.minHeight = minHeight;
-            el.style.overflow = overflow;
-        });
-    }
+    return captureCertificatePrintArea(printAreaRef.value);
 };
 
 const handlePreview = async () => {
@@ -661,7 +404,7 @@ const handlePreview = async () => {
         const img = await captureAreaToImg();
         previewSrc.value = img;
         if (img) {
-            const payload = await bluetoothPrinter.buildPrintImagePayload(img, printImageOptions);
+            const payload = await bluetoothPrinter.buildPrintImagePayload(img, certificatePrintImageOptions);
             printEffectPreviewSrc.value = payload.previewDataUrl;
             preparedPrintBytes.value = payload.bytes;
         }
@@ -696,7 +439,7 @@ const handlePrint = async (prepared?: string | null) => {
     pauseBluetoothKeepAlive();
     try {
         if (!preparedPrintBytes.value) {
-            const payload = await bluetoothPrinter.buildPrintImagePayload(dataUrl, printImageOptions);
+            const payload = await bluetoothPrinter.buildPrintImagePayload(dataUrl, certificatePrintImageOptions);
             preparedPrintBytes.value = payload.bytes;
             if (!printEffectPreviewSrc.value) {
                 printEffectPreviewSrc.value = payload.previewDataUrl;
@@ -830,272 +573,6 @@ const handlePrint = async (prepared?: string | null) => {
     border-radius: 12px;
     flex: 1;
     overflow-y: auto;
-}
-
-/* 打印专用离屏模板：使用 createIssue 同款排版 */
-.print-template-source {
-    position: fixed;
-    left: -99999px;
-    top: 0;
-    width: 520px;
-    background: #fff;
-    z-index: -1;
-
-    .print-doc-gap {
-        margin-top: 20px;
-    }
-}
-
-.certificate-document {
-    background: #fff;
-    border: 1px solid #E5E7EB;
-    padding: 24px;
-    border-radius: 8px;
-    width: 100%;
-    margin: 0 auto;
-
-    &.printing-active {
-        width: 520px !important;
-        padding: 6px 7px 10px 17px !important; // 底部留白减半
-        margin: 0 !important;
-        border: none !important;
-        box-shadow: none !important;
-        background: transparent !important;
-        box-sizing: border-box !important;
-
-        .cert-header {
-            margin-top: 0 !important;
-            margin-bottom: 12px !important;
-            overflow: visible !important;
-
-            .cert-no-tag {
-                font-size: 31px !important; // 放大 1.3 倍
-                font-weight: 800 !important;
-                background: none !important;
-                color: #000 !important;
-                padding: 0 !important;
-            }
-        }
-
-        .cert-title {
-            font-size: 47px !important; // 放大 1.3 倍
-            margin: 4px 0 !important;
-        }
-
-        .cert-subtitle {
-            font-size: 20px !important; // 与承诺依据模板统一
-        }
-
-        .cert-declaration-list {
-            text-align: left !important;
-            margin: 8px 0 !important;
-
-            .declaration-line {
-                font-size: 21px !important; // 放大 1.3 倍
-                margin: 4px 0 !important;
-                line-height: 1.4 !important;
-                font-weight: 600 !important;
-                color: #000 !important;
-            }
-        }
-
-        .info-section {
-            margin-top: 0px !important;
-            padding-top: 14px !important;
-            border-top: 1px dashed #000 !important;
-
-            .info-title {
-                font-size: 23px !important; // 18 * 1.3
-                margin-bottom: 6px !important;
-                padding: 0 !important;
-            }
-        }
-
-        .info-table {
-            border: none !important;
-
-            .info-row {
-                border: none !important;
-                display: flex !important;
-
-                .label,
-                .value {
-                    font-size: 23px !important; // 放大 1.3 倍
-                    padding: 4px 0 !important;
-                    background: none !important;
-                    border: none !important;
-                    box-shadow: none !important;
-                }
-
-                .label {
-                    width: 130px !important;
-                }
-            }
-        }
-
-        .divider {
-            display: none !important;
-        }
-
-        .cert-middle-section {
-            margin: 16px 0 0 !important;
-            display: flex !important;
-            justify-content: space-between !important;
-            align-items: flex-start !important;
-            gap: 18px !important;
-
-            .basis-title {
-                font-size: 20px !important; // 与副标题配套
-            }
-        }
-
-        .qr-code-wrapper {
-            flex: 0 0 190px !important;
-            width: 190px !important;
-            min-width: 190px !important;
-            height: 162px !important;
-            margin-top: 14px !important;
-            display: flex !important;
-            justify-content: flex-end !important;
-
-            canvas,
-            img,
-            svg {
-                width: 162px !important;
-                height: 162px !important;
-            }
-        }
-
-        .custom-basis-group {
-            .basis-item {
-                display: flex !important;
-                align-items: center !important;
-                margin-bottom: 8px !important;
-
-                .basis-box {
-                    width: 32px !important;
-                    height: 32px !important;
-                    border: 3px solid #333 !important;
-                    margin-right: 16px !important;
-                    font-size: 26px !important;
-                    line-height: 26px !important;
-                    text-align: center !important;
-                }
-
-                .basis-label {
-                    font-size: 23px !important; // 放大 1.3 倍
-                    color: #000 !important;
-
-                    .basis-index {
-                        display: none !important;
-                    }
-                }
-            }
-        }
-    }
-
-    .custom-basis-group {
-        .basis-item {
-            display: flex;
-            align-items: center;
-            margin-bottom: 12px;
-
-            .basis-box {
-                width: 18px;
-                height: 18px;
-                border: 1px solid #DCDFE6;
-                margin-right: 8px;
-                display: inline-block;
-                border-radius: 2px;
-                text-align: center;
-                line-height: 16px;
-                font-size: 14px;
-                background: #F5F7FA;
-
-                &.checked {
-                    background: #fff;
-                    border-color: #00B3ED;
-                    color: #00B3ED;
-                }
-            }
-
-            .basis-label {
-                font-size: 14px;
-                color: #606266;
-
-                .basis-index {
-                    margin-right: 4px;
-                    color: inherit;
-                }
-            }
-        }
-    }
-
-    .cert-header {
-        margin-bottom: 24px;
-
-        .cert-no-tag {
-            background: #F0F7FF;
-            color: #333;
-            padding: 6px 12px;
-            border-radius: 2px;
-        }
-    }
-
-    .cert-title {
-        font-size: 28px;
-        font-weight: 800;
-        margin: 20px 0;
-    }
-
-    .cert-subtitle {
-        font-size: 20px;
-        font-weight: 700;
-    }
-}
-
-.cert-middle-section {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    text-align: left;
-    margin: 32px 0;
-}
-
-.qr-code-wrapper {
-    width: 120px;
-    height: 120px;
-
-    img {
-        width: 100%;
-    }
-}
-
-.info-table {
-    border: 1px solid #EDEDED;
-    text-align: left;
-
-    .info-row {
-        display: flex;
-        border-bottom: 1px solid #EDEDED;
-
-        &:last-child {
-            border-bottom: none;
-        }
-
-        .label {
-            width: 140px;
-            background: #F9FAFB;
-            padding: 12px;
-            font-weight: 600;
-            border-right: 1px solid #EDEDED;
-        }
-
-        .value {
-            flex: 1;
-            padding: 12px;
-        }
-    }
 }
 
 .info-card {

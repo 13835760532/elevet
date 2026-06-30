@@ -390,7 +390,7 @@
                     <!-- 基本信息预览 -->
                     <div class="divider compact"></div>
                     <div class="basic-info-preview">
-                        <h3 class="preview-title">待开具合格证-产品信息预览</h3>
+                        <h3 class="preview-title" style="margin-bottom: 4px;">待开具合格证-产品信息预览</h3>
                         <div class="info-grid">
                             <div class="info-row"><span class="label">产品名称</span><span class="value">{{
                                 formData.productName || '--'
@@ -553,11 +553,11 @@
 
             <!-- 第三步：查看合格证 -->
             <div v-if="currentStep === 3" class="step-content">
-                <div ref="printAreaRef" class="certificate-document">
-                    <CertificatePreview
-                        class="step-three-certificate-preview"
+                <div ref="printAreaRef" class="step-three-print-source">
+                    <CertificatePrintTemplate
                         :certificate="generatedCertificatePreview"
-                        :basis-options="basisOptions"
+                        :basis-options="selectedGeneratedBasisOptions"
+                        :commitment-lines="generatedCommitmentLines"
                         :qr-text="generatedCertificateQrText"
                     />
                 </div>
@@ -632,15 +632,19 @@ import { useMessage } from '@/hooks/web/useMessage';
 import { useDict } from '@/hooks/web/useDict';
 import { DICT_TYPE, getIntDictOptions, getDictOptions, getDictLabel } from '@/utils/dict';
 import { formatDate } from '@/utils/formatTime';
-import html2canvas from 'html2canvas';
 import { Qrcode } from '@/components/Qrcode';
-import { CertificatePreview } from '@/components/CertificatePreview';
+import { CertificatePrintTemplate } from '@/components/CertificatePrintTemplate';
 import SubjectFormDrawer from '@/views/filing/subject/components/SubjectFormDrawer.vue';
 import PlatformDetectionSelector from './components/PlatformDetectionSelector.vue';
 import { BluetoothPrinter } from '@/utils';
 import { parseImage } from '@/api/agri/certificateVerification/index';
 import { uploadFile } from '@/api/common/index';
 import { ElLoading } from 'element-plus';
+import {
+    captureCertificatePrintArea,
+    certificatePrintImageOptions,
+    getSelectedCertificateBasisOptions
+} from '@/utils/certificatePrint';
 import {
     DEFAULT_AGRI_MEASUREMENT_UNIT,
     getAgriUnitLabel,
@@ -863,6 +867,12 @@ const generatedCertificatePreview = computed(() => ({
     productImageUrl: formData.productImageUrl
 }));
 
+const selectedGeneratedBasisOptions = computed(() =>
+    getSelectedCertificateBasisOptions(basisOptions, formData.basis)
+);
+
+const generatedCommitmentLines = computed(() => computedCommitment.value);
+
 const STEP1_FIELD_KEYS = [
     'linkProfile',
     'searchProfile',
@@ -1083,7 +1093,7 @@ watch(
                 const res = await SubjectApi.getSubject(newVal);
                 selectedSubjectDetail.value = res;
                 if (res) {
-                    formData.contactPhone = res.contactPhone || '';
+                    // formData.contactPhone = res.contactPhone || '';
                     formData.entity = res.name || '';
                 }
             } catch (error) {
@@ -1544,14 +1554,14 @@ const handleDownload = async () => {
         return;
     }
     try {
-        const canvas = await html2canvas(area, {
-            useCORS: true,
-            scale: 2,
-            backgroundColor: '#ffffff'
-        });
+        const dataUrl = await captureAreaToImg();
+        if (!dataUrl) {
+            message.warning('预览区域未加载');
+            return;
+        }
         const link = document.createElement('a');
         link.download = `合格证_${displayCertNo.value || Date.now()}.png`;
-        link.href = canvas.toDataURL();
+        link.href = dataUrl;
         link.click();
         message.success('已启动下载');
     } catch (e) {
@@ -1589,24 +1599,6 @@ const formatPrintDate = (value) => {
     if (!value) return '--';
     const result = formatDate(new Date(value), 'YYYY-MM-DD');
     return result === 'Invalid Date' ? String(value).slice(0, 10) || '--' : result;
-};
-
-// 用“改宽度”替代 transform 缩放 0.95（544 * 0.95 ≈ 517，取 8 的倍数 520）
-const PRINT_TARGET_WIDTH = 520;
-
-const printImageOptions = {
-    rotate90: false,
-    cropWhitespace: false,
-    fitToWidth: true,
-    maxWidth: PRINT_TARGET_WIDTH,
-    threshold: 220,
-    contrast: 2.2,
-    align: 'center',
-    feedLines: 2,
-    feedDots: 0,
-    cut: false,
-    widthUnit: 'bytes',
-    command: 'gs-v-0'
 };
 
 const bluetoothPrinter = new BluetoothPrinter({
@@ -1692,38 +1684,8 @@ onUnmounted(() => {
 });
 
 const captureAreaToImg = async () => {
-    const area = printAreaRef.value;
-    if (!area) return null;
     await nextTick();
-
-    // 获取可能存在的 no-print 元素并暂时隐藏
-    const hiddenNodes = [];
-    area.querySelectorAll('.no-print').forEach(el => {
-        hiddenNodes.push({ el, display: el.style.display });
-        el.style.display = 'none';
-    });
-
-    try {
-        // 关键步骤：添加特定类名以强制大字号和窄布局
-        area.classList.add('printing-active');
-
-        const canvas = await html2canvas(area, {
-            scale: 1.5, // 回退到2，避免超大像素反而导致不兼容
-            useCORS: true,
-            backgroundColor: '#fff',
-            scrollX: 0,
-            scrollY: 0,
-            width: PRINT_TARGET_WIDTH,
-            windowWidth: PRINT_TARGET_WIDTH
-        });
-        return canvas.toDataURL('image/png');
-    } finally {
-        // 恢复原始外观
-        area.classList.remove('printing-active');
-        hiddenNodes.forEach(({ el, display }) => {
-            el.style.display = display;
-        });
-    }
+    return captureCertificatePrintArea(printAreaRef.value);
 };
 
 const handlePreview = async () => {
@@ -1743,7 +1705,7 @@ const handlePreview = async () => {
         const img = await captureAreaToImg();
         previewSrc.value = img;
         if (img) {
-            const payload = await bluetoothPrinter.buildPrintImagePayload(img, printImageOptions);
+            const payload = await bluetoothPrinter.buildPrintImagePayload(img, certificatePrintImageOptions);
             printEffectPreviewSrc.value = payload.previewDataUrl;
             preparedPrintBytes.value = payload.bytes;
         }
@@ -1770,7 +1732,7 @@ const handlePrint = async (prepared) => {
     pauseBluetoothKeepAlive();
     try {
         if (!preparedPrintBytes.value) {
-            const payload = await bluetoothPrinter.buildPrintImagePayload(dataUrl, printImageOptions);
+            const payload = await bluetoothPrinter.buildPrintImagePayload(dataUrl, certificatePrintImageOptions);
             preparedPrintBytes.value = payload.bytes;
             if (!printEffectPreviewSrc.value) {
                 printEffectPreviewSrc.value = payload.previewDataUrl;
@@ -2591,259 +2553,12 @@ const handlePrint = async (prepared) => {
     }
 }
 
-/* 步骤三：合格证大页面样式 */
-.certificate-document {
-    background: #fff;
+
+.step-three-print-source {
     width: 470px;
     max-width: 100%;
     margin: 0 auto;
-    border-radius: 8px;
-
-    .info-section {
-        margin-top: 24px;
-
-        .info-title {
-            font-size: 16px;
-            font-weight: 700;
-            margin-bottom: 16px;
-            /* 增加标题与下方表格的间距 */
-            color: #333;
-            text-align: left;
-        }
-    }
-
-    // 核心：截图时刻激发的类，强制窄屏大字
-    &.printing-active {
-        width: 520px !important; // 与 PRINT_TARGET_WIDTH 保持一致，避免左右偏移
-        padding: 6px 7px 10px 17px !important; // 底部留白减半
-        margin: 0px !important; // 彻底无外边距
-        border: none !important;
-        box-shadow: none !important;
-        background: transparent !important; // 让外部没有背景
-        box-sizing: border-box !important;
-
-        .step-three-certificate-preview {
-            width: 100% !important;
-            border: none !important;
-            box-shadow: none !important;
-        }
-
-        .cert-header {
-            margin-top: 0 !important;
-            margin-bottom: 12px !important; // 编号与标题间距缩小一半
-            overflow: visible !important;
-
-            .cert-no-tag {
-                font-size: 31px !important; // 放大 1.3 倍
-                font-weight: 800 !important; // 加粗
-                background: none !important; // 去除背景，直接文字加粗更清晰
-                color: #000 !important;
-                padding: 0 !important;
-            }
-        }
-
-        .cert-title {
-            font-size: 47px !important; // 放大 1.3 倍
-            margin: 4px 0 !important; // 标题上下间距缩小一半
-        }
-
-        .cert-subtitle {
-            font-size: 20px !important; // 与承诺依据模板统一
-        }
-
-        .cert-declaration-list {
-            text-align: left !important;
-            margin: 8px 0 !important;
-
-            .declaration-line {
-                font-size: 21px !important; // 放大 1.3 倍
-                margin: 4px 0 !important;
-                line-height: 1.4 !important;
-                font-weight: 600 !important;
-                color: #000 !important;
-                text-align: left !important;
-            }
-
-            &.mini {
-                .declaration-line {
-                    font-size: 16px !important; // 放大 1.3 倍
-                    margin: 2px 0 !important;
-                    text-align: left;
-                }
-            }
-        }
-
-        .info-section {
-            margin-top: 0px !important;
-            padding-top: 14px !important;
-            border-top: 1px dashed #000 !important; // 重新加回黑色虚线分割
-
-            .info-title {
-                font-size: 23px !important; // 18 * 1.3
-                margin-bottom: 6px !important;
-                padding: 0 !important;
-            }
-        }
-
-        .image-section {
-            margin-top: 12px !important;
-            padding-top: 8px !important;
-            border-top: 1px dashed #000 !important; // 重新加回黑色虚线分割
-
-            .info-title {
-                margin-bottom: 6px !important;
-            }
-        }
-
-        .info-table {
-            border: none !important;
-
-            .info-row {
-                border: none !important;
-                display: flex !important; // 使用 flex 替代 table-row 行为，彻底杜绝边框重叠
-
-                .label,
-                .value {
-                    font-size: 23px !important; // 放大 1.3 倍
-                    padding: 4px 0 !important;
-                    background: none !important;
-                    border: none !important; // 彻底移除所有边框（包括竖线）
-                    box-shadow: none !important;
-                }
-
-                .label {
-                    width: 130px !important;
-                }
-            }
-        }
-
-        // 隐藏模板中自带的虚线
-        .divider {
-            display: none !important;
-        }
-
-        .cert-middle-section {
-            margin: 16px 0 0 !important;
-            display: flex !important; // 恢复 Flex 布局，左右排列
-            justify-content: space-between !important;
-            align-items: flex-start !important; // 改为顶部对齐，方便通过 margin 细调高度
-            gap: 18px !important;
-
-            .basis-title {
-                font-size: 20px !important; // 与副标题配套
-            }
-        }
-
-        .qr-code-wrapper {
-            flex: 0 0 190px !important;
-            width: 190px !important;
-            min-width: 190px !important;
-            height: 162px !important;
-            margin-top: 14px !important; // 二维码往下移动
-            display: flex !important;
-            justify-content: flex-end !important;
-
-            canvas,
-            img,
-            svg {
-                width: 162px !important;
-                height: 162px !important;
-            }
-        }
-
-        .custom-basis-group {
-            .basis-item {
-                display: flex !important;
-                align-items: center !important;
-                margin-bottom: 8px !important;
-
-                .basis-box {
-                    width: 32px !important;
-                    height: 32px !important;
-                    border: 3px solid #333 !important;
-                    margin-right: 16px !important;
-                    font-size: 26px !important;
-                    line-height: 26px !important;
-                    text-align: center !important;
-                }
-
-                .basis-label {
-                    font-size: 23px !important; // 放大 1.3 倍
-                    color: #000 !important;
-
-                    .basis-index {
-                        display: none !important;
-                    }
-                }
-            }
-        }
-    }
-
-    .custom-basis-group {
-        .basis-item {
-            display: flex;
-            align-items: center;
-            margin-bottom: 12px;
-
-            .basis-box {
-                width: 18px;
-                height: 18px;
-                border: 1px solid #DCDFE6;
-                margin-right: 8px;
-                display: inline-block;
-                border-radius: 2px;
-                text-align: center;
-                line-height: 16px;
-                font-size: 14px;
-                background: #F5F7FA;
-
-                &.checked {
-                    background: #fff;
-                    border-color: #00B3ED;
-                    color: #00B3ED;
-                }
-            }
-
-            .basis-label {
-                font-size: 14px;
-                color: #606266;
-
-                .basis-index {
-                    margin-right: 4px;
-                    color: inherit;
-                }
-            }
-        }
-    }
-
-    .cert-header {
-        margin-bottom: 24px;
-
-        .cert-no-tag {
-            background: #F0F7FF;
-            color: #333;
-            padding: 6px 12px;
-            border-radius: 2px;
-        }
-    }
-
-    .cert-title {
-        font-size: 28px;
-        font-weight: 800;
-        margin: 20px 0;
-    }
-
-    .cert-subtitle {
-        font-size: 20px;
-        font-weight: 700;
-    }
-
-    .cert-declaration {
-        font-size: 14px;
-        color: #666;
-        max-width: 600px;
-        margin: 12px auto;
-    }
+    background: #fff;
 }
 
 .cert-middle-section {

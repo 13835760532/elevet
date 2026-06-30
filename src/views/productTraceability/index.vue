@@ -80,11 +80,8 @@
                     </div>
 
                     <!-- 右侧：公共合格证预览 -->
-                    <CertificatePreview
-                        class="trace-certificate-preview"
-                        :certificate="traceData.certificate"
-                        :basis-options="basisOptions"
-                    />
+                    <CertificatePreview class="trace-certificate-preview" :certificate="traceData.certificate"
+                        :basis-options="basisOptions" />
                 </div>
             </section>
 
@@ -95,15 +92,10 @@
                 </div>
 
                 <div class="opt-timeline">
-                    <div
-                        v-for="(node, index) in traceRecords"
-                        :key="index"
-                        class="tl-node"
-                        :class="{
-                            'is-last': index === traceRecords.length - 1,
-                            'is-single': traceRecords.length === 1
-                        }"
-                    >
+                    <div v-for="(node, index) in traceRecords" :key="index" class="tl-node" :class="{
+                        'is-last': index === traceRecords.length - 1,
+                        'is-single': traceRecords.length === 1
+                    }">
                         <div class="tl-time">
                             {{ formatTimelineTime(node.time) }}
                         </div>
@@ -117,14 +109,9 @@
                             <div class="node-header">
                                 <div class="node-id">{{ node.typeLabel }}编号：<span>{{ node.code || '--' }}</span></div>
                                 <div class="node-actions">
-                                    <el-button v-if="node.type === 'certificate'" type="primary"
-                                        class="theme-flat-btn"
+                                    <el-button v-if="node.type === 'certificate'" type="primary" class="theme-flat-btn"
                                         @click="handleViewCert(node.originData)">查看合格证图片</el-button>
-                                    <el-button v-if="node.type === 'certificate'" type="primary"
-                                        class="theme-flat-btn"
-                                        @click="handleOpenPrintPreview(node.originData)">打印合格证</el-button>
-                                    <el-button v-if="node.type === 'report'" type="primary"
-                                        class="theme-flat-btn"
+                                    <el-button type="primary" class="theme-flat-btn"
                                         @click="handleViewReport(node.originData)">查看检测报告</el-button>
                                 </div>
                             </div>
@@ -175,63 +162,10 @@
             </div>
         </div>
         <!-- 合格证预览弹窗 -->
-        <el-dialog v-model="showCertVisible" title="合格证预览" width="800px" append-to-body destroy-on-close
+        <el-dialog v-model="showCertVisible" title="合格证预览" width="720px" append-to-body destroy-on-close
             class="cert-preview-dialog">
-            <div class="cert-preview-container" v-if="activeCertData">
-                <div class="cert-ticket">
-                    <div class="cert-header">
-                        <span class="cert-id-tag">合格证编号－{{ activeCertData.certificateCode }}</span>
-                    </div>
-                    <div class="cert-body">
-                        <h2 class="main-title">承诺事项</h2>
-                        <h3 class="sub-title">{{ activeCertData.commitmentContent ||
-                            '（1）已按规定收取并保存该批次产品的承诺达标合格证或者其他质量安全合格证明；（2）未违规使用保鲜剂、防腐剂、添加剂等。（3）对承诺的真实性负责' }}</h3>
-                        <div class="middle-flex">
-                            <div class="basis-info">
-                                <h4 class="small-title">承诺依据：</h4>
-                                <div class="basis-text-list">
-                                    <div>● 质量安全控制符合要求</div>
-                                    <div>● 自行检测合格</div>
-                                </div>
-                            </div>
-                            <div class="qr-code">
-                                <Qrcode v-if="activeCertData.qrCode" :text="activeCertData.qrCode"
-                                    :options="{ errorCorrectionLevel: 'L' }" :width="80" />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="cert-info-table">
-                    <div class="table-title">基本信息</div>
-                    <div class="mini-table">
-                        <div class="m-row">
-                            <div class="m-label">产品名称</div>
-                            <div class="m-val">{{ activeCertData.productName }}</div>
-                        </div>
-                        <div class="m-row">
-                            <div class="m-label">重量/数量</div>
-                            <div class="m-val">{{ activeCertData.quantity }}{{ getAgriUnitLabel(activeCertData.unit) }}
-                            </div>
-                        </div>
-                        <div class="m-row">
-                            <div class="m-label">产品产地</div>
-                            <div class="m-val">{{ activeCertData.productionArea }}</div>
-                        </div>
-                        <div class="m-row">
-                            <div class="m-label">承诺主体</div>
-                            <div class="m-val">{{ activeCertData.subjectName }}</div>
-                        </div>
-                        <div class="m-row">
-                            <div class="m-label">联系方式</div>
-                            <div class="m-val">{{ activeCertData.contactPhone }}</div>
-                        </div>
-                        <div class="m-row">
-                            <div class="m-label">开具日期</div>
-                            <div class="m-val">{{ activeCertData.issueDate }}</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <CertificatePreview v-if="activeCertData" class="dialog-certificate-preview" :certificate="activeCertData"
+                :basis-options="basisOptions" />
         </el-dialog>
 
         <!-- 检测报告预览弹窗 -->
@@ -260,83 +194,10 @@
             </template>
         </el-dialog>
 
-        <div ref="printAreaRef" class="print-template-source">
-            <div v-if="activePrintCertData" class="certificate-document">
-                <div class="cert-header">
-                    <span class="cert-no-tag">合格证编号－{{ activePrintCertData.certificateCode || '--' }}</span>
-                </div>
-
-                <div class="cert-body">
-                    <h1 class="cert-title">承诺达标合格证</h1>
-                    <h2 class="cert-subtitle">承诺事项：</h2>
-                    <div class="cert-declaration-list">
-                        <p v-for="(line, idx) in printCommitmentLines" :key="`trace-print-${idx}`"
-                            class="declaration-line">
-                            • {{ line }}
-                        </p>
-                    </div>
-
-                    <div class="cert-middle-section">
-                        <div class="cert-basis">
-                            <h3 class="basis-title" style="margin-bottom: 12px;">承诺依据：</h3>
-                            <div class="custom-basis-group">
-                                <div class="basis-item" v-for="item in selectedPrintBasisOptions"
-                                    :key="`trace-print-basis-${item.value}`">
-                                    <span class="basis-box checked">✔</span>
-                                    <span class="basis-label">{{ item.label }}</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="qr-code-wrapper">
-                            <Qrcode v-if="printQrText" :options="{ errorCorrectionLevel: 'L' }" :text="printQrText"
-                                :width="132" />
-                        </div>
-                    </div>
-
-                    <div class="info-section">
-                        <h3 class="info-title">基本信息：</h3>
-                        <div class="info-table">
-                            <div class="info-row">
-                                <div class="label">产品名称</div>
-                                <div class="value">{{ activePrintCertData.productName || '--' }}</div>
-                            </div>
-                            <div class="info-row">
-                                <div class="label">数量/重量</div>
-                                <div class="value">{{ activePrintCertData.quantity ?? '--' }} {{
-                                    getAgriUnitLabel(activePrintCertData.unit) }}</div>
-                            </div>
-                            <div class="info-row">
-                                <div class="label">产品产地</div>
-                                <div class="value">{{ activePrintCertData.productionArea || '--' }}</div>
-                            </div>
-                            <div class="info-row">
-                                <div class="label">承诺主体</div>
-                                <div class="value">{{ activePrintCertData.subjectName || '--' }}</div>
-                            </div>
-                            <div class="info-row">
-                                <div class="label">联系方式</div>
-                                <div class="value">{{ activePrintCertData.contactPhone || '--' }}</div>
-                            </div>
-                            <div class="info-row">
-                                <div class="label">开具时间</div>
-                                <div class="value">{{ activePrintCertData.issueDate || '--' }}</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="divider no-print"></div>
-                    <div class="image-section no-print print-keep-space">
-                        <h3 class="info-title">产品图片</h3>
-                        <div class="image-preview-box">
-                            <img v-if="activePrintCertData.productImageUrl" :src="activePrintCertData.productImageUrl"
-                                class="cert-product-img" alt="产品图片" />
-                            <el-icon v-else class="placeholder-icon">
-                                <Picture />
-                            </el-icon>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <div ref="printAreaRef" class="certificate-print-source">
+            <CertificatePrintTemplate v-if="activePrintCertData" :certificate="activePrintCertData"
+                :basis-options="selectedPrintBasisOptions" :commitment-lines="printCommitmentLines"
+                :qr-text="printQrText" />
         </div>
     </div>
 </template>
@@ -344,16 +205,22 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, nextTick } from 'vue';
 import { useRoute } from 'vue-router';
-import { Search, Monitor, Check, Connection, Picture } from '@element-plus/icons-vue';
+import { Search, Monitor, Check, Connection } from '@element-plus/icons-vue';
 import { ElMessage } from 'element-plus';
 import * as CertificateApi from '@/api/agri/certificate/index';
 import { useDict } from '@/hooks/web/useDict';
 import RapidDetectionReport from '../rapidDetection/components/RapidDetectionReport.vue';
 import { CertificatePreview } from '@/components/CertificatePreview';
-import { Qrcode } from '@/components/Qrcode';
-import html2canvas from 'html2canvas';
 import { BluetoothPrinter } from '@/utils';
 import { getAgriUnitLabel } from '@/utils/agriUnit';
+import { CertificatePrintTemplate } from '@/components/CertificatePrintTemplate';
+import {
+    captureCertificatePrintArea,
+    certificatePrintImageOptions,
+    getSelectedCertificateBasisOptions,
+    parseCertificateBasis,
+    resolveCertificateCommitmentLines
+} from '@/utils/certificatePrint';
 
 defineOptions({
     name: 'ProductTraceability'
@@ -396,23 +263,6 @@ const PRINTER_CHARACTERISTIC_UUIDS = [
     '0000ffe1-0000-1000-8000-00805f9b34fb',
     '49535343-8841-43f4-a8d4-ecbe34729bb3'
 ];
-const PRINT_TARGET_WIDTH = 520;
-
-const printImageOptions = {
-    rotate90: false,
-    cropWhitespace: false,
-    fitToWidth: true,
-    maxWidth: PRINT_TARGET_WIDTH,
-    threshold: 220,
-    contrast: 2.2,
-    align: 'center',
-    feedLines: 2,
-    feedDots: 0,
-    cut: false,
-    widthUnit: 'bytes',
-    command: 'gs-v-0'
-} as const;
-
 const basisOptions = [
     { label: '质量安全控制符合要求', value: 1 },
     { label: '自行检测合格', value: 2 },
@@ -432,44 +282,12 @@ const bluetoothPrinter = new BluetoothPrinter({
     }
 });
 
-const selectedPrintBasisOptions = computed(() => {
-    const selected = new Set(printBasis.value.map(v => Number(v)));
-    return basisOptions.filter(item => selected.has(item.value));
-});
-
-const parseCommitmentLines = (content: any, fallbackBasis: Array<{ label: string }>) => {
-    const stripCommitmentPrefix = (line: string) => {
-        let cleaned = String(line || '').trim();
-        const seqRegex = /^(\d+[.、]|[（(]\d+[）)])\s*/;
-        while (seqRegex.test(cleaned)) {
-            cleaned = cleaned.replace(seqRegex, '').trim();
-        }
-        return cleaned;
-    };
-    const normalizeForMatch = (line: string) => String(line || '').replace(/\s+/g, '').trim();
-
-    const raw = String(content || '').trim();
-    if (raw) {
-        const normalized = raw
-            .split(/[\r\n]+|[；;。]/)
-            .map(item => stripCommitmentPrefix(item))
-            .filter(Boolean);
-        if (normalized.length > 1) return normalized;
-
-        const compactRaw = normalizeForMatch(raw);
-        const basisMatched = fallbackBasis
-            .map(item => stripCommitmentPrefix(item.label))
-            .filter(Boolean)
-            .filter((label, index, arr) => arr.indexOf(label) === index)
-            .filter(label => compactRaw.includes(normalizeForMatch(label)));
-        if (basisMatched.length >= 2) return basisMatched;
-        if (normalized.length === 1) return normalized;
-    }
-    return fallbackBasis.map(item => item.label);
-};
+const selectedPrintBasisOptions = computed(() =>
+    getSelectedCertificateBasisOptions(basisOptions, printBasis.value)
+);
 
 const printCommitmentLines = computed(() =>
-    parseCommitmentLines(
+    resolveCertificateCommitmentLines(
         activePrintCertData.value?.commitmentContent,
         selectedPrintBasisOptions.value.length ? selectedPrintBasisOptions.value : basisOptions
     )
@@ -482,25 +300,6 @@ const printQrText = computed(() =>
 const formatTimelineTime = (value: any) => {
     const [date = '--', hour = ''] = String(value || '').split(' ');
     return `${date}${hour ? `  ${hour}` : ''}`;
-};
-
-const parseBasisData = (val: any) => {
-    if (Array.isArray(val)) return val.map((item) => Number(item)).filter((item) => Number.isFinite(item));
-    if (typeof val === 'number') return [val];
-    if (typeof val === 'string') {
-        try {
-            const parsed = JSON.parse(val);
-            if (Array.isArray(parsed)) {
-                return parsed.map((item) => Number(item)).filter((item) => Number.isFinite(item));
-            }
-        } catch (error) {
-            return val
-                .split(',')
-                .map((item) => Number(item.trim()))
-                .filter((item) => Number.isFinite(item));
-        }
-    }
-    return [];
 };
 
 const traceRecords = computed(() => {
@@ -565,8 +364,16 @@ const handleViewCert = (data: any) => {
 };
 
 const handleViewReport = (data: any) => {
+    if (!data) {
+        ElMessage.warning('暂无检测报告');
+        return;
+    }
     activeReportData.value = data;
     showReportVisible.value = true;
+};
+
+const handleViewTraceReport = () => {
+    handleViewReport(traceData.value?.detectionReport);
 };
 
 const connectBluetoothPrinter = async () => {
@@ -586,66 +393,8 @@ const connectBluetoothPrinter = async () => {
 };
 
 const captureAreaToImg = async () => {
-    const area = printAreaRef.value;
-    if (!area || !activePrintCertData.value) return null;
-
-    const hiddenNodes: Array<{
-        el: HTMLElement;
-        display: string;
-        visibility: string;
-        height: string;
-        minHeight: string;
-        overflow: string;
-    }> = [];
-    area.querySelectorAll<HTMLElement>('.no-print, .no-print-section').forEach(el => {
-        hiddenNodes.push({
-            el,
-            display: el.style.display,
-            visibility: el.style.visibility,
-            height: el.style.height,
-            minHeight: el.style.minHeight,
-            overflow: el.style.overflow
-        });
-        if (el.classList.contains('print-keep-space')) {
-            // 打印时保留空白，进一步减半
-            const reservedHeight = Math.max(0, Math.round(el.offsetHeight / 8) - 20);
-            el.style.visibility = 'hidden';
-            el.style.height = `${reservedHeight}px`;
-            el.style.minHeight = `${reservedHeight}px`;
-            el.style.overflow = 'hidden';
-        } else {
-            el.style.display = 'none';
-        }
-    });
-
-    const activeDocs: HTMLElement[] = [];
-    area.querySelectorAll<HTMLElement>('.certificate-document').forEach((el) => {
-        activeDocs.push(el);
-        el.classList.add('printing-active');
-    });
-    try {
-        const canvas = await html2canvas(area, {
-            scale: 1.5,
-            useCORS: true,
-            backgroundColor: '#fff',
-            scrollX: 0,
-            scrollY: 0,
-            width: PRINT_TARGET_WIDTH,
-            windowWidth: PRINT_TARGET_WIDTH
-        });
-        return canvas.toDataURL('image/png');
-    } finally {
-        activeDocs.forEach((el) => {
-            el.classList.remove('printing-active');
-        });
-        hiddenNodes.forEach(({ el, display, visibility, height, minHeight, overflow }) => {
-            el.style.display = display;
-            el.style.visibility = visibility;
-            el.style.height = height;
-            el.style.minHeight = minHeight;
-            el.style.overflow = overflow;
-        });
-    }
+    if (!activePrintCertData.value) return null;
+    return captureCertificatePrintArea(printAreaRef.value);
 };
 
 const handleOpenPrintPreview = async (data: any) => {
@@ -654,7 +403,7 @@ const handleOpenPrintPreview = async (data: any) => {
         return;
     }
     activePrintCertData.value = data;
-    printBasis.value = parseBasisData(data.commitmentBasis);
+    printBasis.value = parseCertificateBasis(data.commitmentBasis);
     previewSrc.value = null;
     printEffectPreviewSrc.value = null;
     preparedPrintBytes.value = null;
@@ -668,7 +417,7 @@ const handleOpenPrintPreview = async (data: any) => {
         const img = await captureAreaToImg();
         previewSrc.value = img;
         if (img) {
-            const payload = await bluetoothPrinter.buildPrintImagePayload(img, printImageOptions);
+            const payload = await bluetoothPrinter.buildPrintImagePayload(img, certificatePrintImageOptions);
             printEffectPreviewSrc.value = payload.previewDataUrl;
             preparedPrintBytes.value = payload.bytes;
         }
@@ -693,7 +442,7 @@ const handlePrint = async (prepared?: string | null) => {
     bluetoothPrinting.value = true;
     try {
         if (!preparedPrintBytes.value) {
-            const payload = await bluetoothPrinter.buildPrintImagePayload(dataUrl, printImageOptions);
+            const payload = await bluetoothPrinter.buildPrintImagePayload(dataUrl, certificatePrintImageOptions);
             preparedPrintBytes.value = payload.bytes;
             if (!printEffectPreviewSrc.value) {
                 printEffectPreviewSrc.value = payload.previewDataUrl;
@@ -977,13 +726,11 @@ $bg-color: #f8fafc;
         left: 50%;
         width: 2px;
         transform: translateX(-50%);
-        background-image: repeating-linear-gradient(
-            to bottom,
-            #d8dee9 0,
-            #d8dee9 8px,
-            transparent 8px,
-            transparent 16px
-        );
+        background-image: repeating-linear-gradient(to bottom,
+                #d8dee9 0,
+                #d8dee9 8px,
+                transparent 8px,
+                transparent 16px);
     }
 
     .tl-dot {
@@ -1246,102 +993,8 @@ $bg-color: #f8fafc;
 }
 
 /* 合格证预览弹窗样式 */
-.cert-preview-container {
-    display: flex;
-    gap: 30px;
-    align-items: flex-start;
-    padding: 10px;
-
-    .cert-ticket {
-        flex: 1.2;
-        border: 1.5px solid #558B2F;
-        border-radius: 4px;
-        padding: 20px;
-
-        .cert-header {
-            margin-bottom: 20px;
-
-            .cert-id-tag {
-                background: #f1f8e9;
-                color: #558B2F;
-                font-size: 12px;
-                padding: 4px 8px;
-                border-radius: 2px;
-            }
-        }
-
-        .main-title {
-            font-size: 24px;
-            font-weight: 800;
-            text-align: center;
-            margin-bottom: 15px;
-        }
-
-        .sub-title {
-            font-size: 14px;
-            font-weight: 600;
-            line-height: 1.6;
-            margin-bottom: 20px;
-        }
-
-        .middle-flex {
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .small-title {
-            font-size: 14px;
-            font-weight: 700;
-            margin-bottom: 10px;
-        }
-
-        .basis-text-list {
-            font-size: 12px;
-            color: #666;
-
-            div {
-                margin-bottom: 4px;
-            }
-        }
-    }
-
-    .cert-info-table {
-        flex: 1;
-
-        .table-title {
-            font-size: 16px;
-            font-weight: 700;
-            margin-bottom: 15px;
-        }
-
-        .mini-table {
-            border: 1px solid #eee;
-
-            .m-row {
-                display: flex;
-                border-bottom: 1px solid #eee;
-
-                &:last-child {
-                    border-bottom: none;
-                }
-
-                .m-label {
-                    width: 100px;
-                    background: #fafafa;
-                    padding: 12px;
-                    font-size: 13px;
-                    font-weight: 600;
-                    border-right: 1px solid #eee;
-                }
-
-                .m-val {
-                    flex: 1;
-                    padding: 12px;
-                    font-size: 13px;
-                }
-            }
-        }
-    }
+.dialog-certificate-preview {
+    width: 100%;
 }
 
 .report-preview-wrap {
@@ -1394,286 +1047,5 @@ $bg-color: #f8fafc;
 .preview-placeholder {
     color: #666;
     font-size: 14px;
-}
-
-.print-template-source {
-    position: fixed;
-    left: -99999px;
-    top: 0;
-    width: 520px;
-    background: #fff;
-    z-index: -1;
-}
-
-.certificate-document {
-    background: #fff;
-    border: 1px solid #E5E7EB;
-    padding: 24px;
-    border-radius: 8px;
-    width: 100%;
-    margin: 0 auto;
-
-    &.printing-active {
-        width: 520px !important;
-        padding: 6px 7px 10px 17px !important; // 底部留白减半
-        margin: 0 !important;
-        border: none !important;
-        box-shadow: none !important;
-        background: transparent !important;
-        box-sizing: border-box !important;
-
-        .cert-header {
-            margin-top: 0 !important;
-            margin-bottom: 12px !important;
-            overflow: visible !important;
-
-            .cert-no-tag {
-                font-size: 31px !important; // 放大 1.3 倍
-                font-weight: 800 !important;
-                background: none !important;
-                color: #000 !important;
-                padding: 0 !important;
-            }
-        }
-
-        .cert-title {
-            font-size: 47px !important; // 放大 1.3 倍
-            margin: 4px 0 !important;
-        }
-
-        .cert-subtitle {
-            font-size: 20px !important; // 与承诺依据模板统一
-        }
-
-        .cert-declaration-list {
-            text-align: left !important;
-            margin: 8px 0 !important;
-
-            .declaration-line {
-                font-size: 21px !important; // 放大 1.3 倍
-                margin: 4px 0 !important;
-                line-height: 1.4 !important;
-                font-weight: 600 !important;
-                color: #000 !important;
-            }
-        }
-
-        .info-section {
-            margin-top: 12px !important;
-            padding-top: 8px !important;
-            border-top: 1px dashed #000 !important;
-
-            .info-title {
-                font-size: 23px !important; // 18 * 1.3
-                margin-bottom: 6px !important;
-                padding: 0 !important;
-            }
-        }
-
-        .info-table {
-            border: none !important;
-
-            .info-row {
-                border: none !important;
-                display: flex !important;
-
-                .label,
-                .value {
-                    font-size: 23px !important; // 放大 1.3 倍
-                    padding: 4px 0 !important;
-                    background: none !important;
-                    border: none !important;
-                    box-shadow: none !important;
-                    color: #000 !important;
-                }
-
-                .label {
-                    width: 130px !important;
-                }
-            }
-        }
-
-        .image-section {
-            margin-top: 12px !important;
-
-            .info-title {
-                margin-bottom: 8px !important;
-            }
-
-            .image-preview-box {
-                width: 100% !important;
-                background: none !important;
-                padding: 0 !important;
-                border: none !important;
-                display: flex !important;
-                justify-content: center !important;
-
-                .cert-product-img {
-                    max-width: 380px !important;
-                    max-height: 280px !important;
-                    width: auto !important;
-                    height: auto !important;
-                    border-radius: 4px !important;
-                    object-fit: contain !important;
-                }
-
-                .placeholder-icon {
-                    display: none !important;
-                }
-            }
-        }
-
-        .divider {
-            display: none !important;
-        }
-
-        .cert-middle-section {
-            margin: 16px 0 !important;
-            display: flex !important;
-            justify-content: space-between !important;
-            align-items: flex-start !important;
-
-            .basis-title {
-                font-size: 20px !important; // 与副标题配套
-            }
-        }
-
-        .qr-code-wrapper {
-            margin-top: 20px !important;
-            width: 132px !important; // 二维码放大一点
-            height: 132px !important;
-        }
-
-        .custom-basis-group {
-            .basis-item {
-                display: flex !important;
-                align-items: center !important;
-                margin-bottom: 8px !important;
-
-                .basis-box {
-                    width: 32px !important;
-                    height: 32px !important;
-                    border: 3px solid #333 !important;
-                    margin-right: 16px !important;
-                    font-size: 26px !important;
-                    line-height: 26px !important;
-                    text-align: center !important;
-                }
-
-                .basis-label {
-                    font-size: 23px !important; // 放大 1.3 倍
-                    color: #000 !important;
-                }
-            }
-        }
-    }
-
-    .custom-basis-group {
-        .basis-item {
-            display: flex;
-            align-items: center;
-            margin-bottom: 12px;
-
-            .basis-box {
-                width: 18px;
-                height: 18px;
-                border: 1px solid #DCDFE6;
-                margin-right: 8px;
-                display: inline-block;
-                border-radius: 2px;
-                text-align: center;
-                line-height: 16px;
-                font-size: 14px;
-                background: #F5F7FA;
-
-                &.checked {
-                    background: #fff;
-                    border-color: #00B3ED;
-                    color: #00B3ED;
-                }
-            }
-
-            .basis-label {
-                font-size: 14px;
-                color: #606266;
-            }
-        }
-    }
-
-    .cert-header {
-        margin-bottom: 24px;
-
-        .cert-no-tag {
-            background: #F0F7FF;
-            color: #333;
-            padding: 6px 12px;
-            border-radius: 2px;
-        }
-    }
-
-    .cert-title {
-        font-size: 28px;
-        font-weight: 800;
-        margin: 20px 0;
-    }
-
-    .cert-subtitle {
-        font-size: 20px;
-        font-weight: 700;
-    }
-}
-
-.cert-middle-section {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    text-align: left;
-    margin: 32px 0;
-}
-
-.qr-code-wrapper {
-    width: 120px;
-    height: 120px;
-
-    img {
-        width: 100%;
-    }
-}
-
-.info-table {
-    border: 1px solid #EDEDED;
-    text-align: left;
-
-    .info-row {
-        display: flex;
-        border-bottom: 1px solid #EDEDED;
-
-        &:last-child {
-            border-bottom: none;
-        }
-
-        .label {
-            width: 140px;
-            background: #F9FAFB;
-            padding: 12px;
-            font-weight: 600;
-            border-right: 1px solid #EDEDED;
-        }
-
-        .value {
-            flex: 1;
-            padding: 12px;
-        }
-    }
-}
-
-.divider {
-    height: 1px;
-    border-top: 1px dashed #D1D5DB;
-    margin: 32px 0;
-}
-
-.print-footer-space {
-    height: 80px;
 }
 </style>

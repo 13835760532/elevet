@@ -742,6 +742,10 @@ const getSubmitData = () => {
     if (Array.isArray(submitData.sample.sampleSource)) {
         submitData.sample.sampleSource = submitData.sample.sampleSource.join(',');
     }
+    // 非自主检测
+    if (route.query.id) {
+        submitData.taskId = route.query.id;
+    }
     // 写入整体判定结论 (0-阴性/合格, 1-阳性/不合格, 2-结果异常)
     submitData.overallResult = overallStatusValue.value === '异常' ? 2 : (overallStatusValue.value === '阳性' ? 1 : 0);
     return submitData;
