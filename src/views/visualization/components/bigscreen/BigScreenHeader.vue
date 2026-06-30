@@ -8,13 +8,16 @@
     <div class="header-side left">
       <!-- 数据配置 -->
       <div v-if="showDataConfig" class="data-config-btn" @click="toggleConfig">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="computer-icon" style="filter: drop-shadow(0 0 5px rgba(0, 218, 255, 0.85));">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"
+          class="computer-icon" style="filter: drop-shadow(0 0 5px rgba(0, 218, 255, 0.85));">
           <!-- 电脑屏幕外框 -->
-          <rect x="2" y="3" width="20" height="13" rx="1.5" fill="rgba(0, 218, 255, 0.1)" stroke="#00daff" stroke-width="1.5"/>
+          <rect x="2" y="3" width="20" height="13" rx="1.5" fill="rgba(0, 218, 255, 0.1)" stroke="#00daff"
+            stroke-width="1.5" />
           <!-- 电脑底座支架 -->
-          <path d="M12,16 L10,21 L14,21 Z" fill="rgba(0, 218, 255, 0.25)" stroke="#00daff" stroke-width="1.2" stroke-linejoin="round"/>
+          <path d="M12,16 L10,21 L14,21 Z" fill="rgba(0, 218, 255, 0.25)" stroke="#00daff" stroke-width="1.2"
+            stroke-linejoin="round" />
           <!-- 屏幕内发光指示点 -->
-          <circle cx="12" cy="9.5" r="1.5" fill="#00daff" style="filter: drop-shadow(0 0 3px #00daff);"/>
+          <circle cx="12" cy="9.5" r="1.5" fill="#00daff" style="filter: drop-shadow(0 0 3px #00daff);" />
         </svg>
         <span class="btn-label">数据配置</span>
         <div class="caret-icon"></div>
@@ -22,39 +25,24 @@
 
       <template v-for="item in leftMenus" :key="item.key">
         <div v-if="item.key === 'task'" class="task-nav-wrapper">
-          <div
-            class="nav-btn task-nav-btn"
-            :class="{ active: isMenuActive(item.key) }"
-            :style="{ backgroundImage: `url(${isMenuActive(item.key) ? item.activeBg : item.bg})` }"
-            role="button"
-            @click="selectTaskEntry('issue')"
-          >
+          <div class="nav-btn task-nav-btn" :class="{ active: isMenuActive(item.key) }"
+            :style="{ backgroundImage: `url(${isMenuActive(item.key) ? item.activeBg : item.bg})` }" role="button"
+            @click="selectTaskEntry('issue')">
             <span class="btn-label"></span>
           </div>
           <transition name="task-subnav">
             <div v-if="isMenuActive(item.key)" class="task-subnav" role="tablist">
-              <button
-                v-for="option in taskEntryOptions"
-                :key="option.key"
-                class="task-subnav-option"
-                :class="{ active: activeTaskEntry === option.key }"
-                type="button"
-                role="tab"
-                :aria-selected="activeTaskEntry === option.key"
-                @click="selectTaskEntry(option.key)"
-              >
+              <button v-for="option in taskEntryOptions" :key="option.key" class="task-subnav-option"
+                :class="{ active: activeTaskEntry === option.key }" type="button" role="tab"
+                :aria-selected="activeTaskEntry === option.key" @click="selectTaskEntry(option.key)">
                 {{ option.label }}
               </button>
             </div>
           </transition>
         </div>
-        <div
-          v-else
-          class="nav-btn"
-          :class="{ active: isMenuActive(item.key) }"
+        <div v-else class="nav-btn" :class="{ active: isMenuActive(item.key) }"
           :style="{ backgroundImage: `url(${isMenuActive(item.key) ? item.activeBg : item.bg})` }"
-          @click="handleMenuClick(item.key)"
-        >
+          @click="handleMenuClick(item.key)">
           <span class="btn-label"></span>
         </div>
       </template>
@@ -94,8 +82,8 @@
           <div class="form-item">
             <div class="item-label">统计数据范围</div>
             <div class="field-shell">
-              <el-select v-model="configForm.dataScope" size="large" :teleported="false"
-                class="custom-select" popper-class="big-screen-select-popper">
+              <el-select v-model="configForm.dataScope" size="large" :teleported="false" class="custom-select"
+                popper-class="big-screen-select-popper">
                 <el-option v-for="item in dataScopeOptions" :key="item.value" :label="item.label" :value="item.value" />
               </el-select>
             </div>
@@ -119,7 +107,9 @@
       </div>
     </div>
     <div class="header-center">
-      <h1 @click="handleGoHome">风险监测预警信息化平台</h1>
+      <h1 @click="handleGoHome">
+        <img src="@/assets/imgs/echarts/首页/title.png" height="72px" alt="" />
+      </h1>
     </div>
     <div class="header-side right">
       <div class="nav-btn" v-for="item in rightMenus" :key="item.key" :class="{ active: activeMenu === item.key }"
