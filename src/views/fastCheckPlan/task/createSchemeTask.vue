@@ -47,8 +47,8 @@
                 <div class="step-section">
                     <h4 class="step-title">1、选择任务承担单位</h4>
 
-                    <el-form label-width="80px" label-position="right" class="filter-form-inline">
-                        <!-- <el-form-item label="所属区域" style="margin-bottom: 0; align-items: center">
+                    <el-form class="filter-form-inline">
+                        <el-form-item style="margin-bottom: 0; margin-right: 16px;">
                             <AreaCascader class="filter-select" v-model="areaPath" placeholder="请选择所属地区" checkStrictly
                                 @select="
                                     (val) => {
@@ -61,8 +61,8 @@
                                         loadOrgOptions()
                                     }
                                 " />
-                        </el-form-item> -->
-                        <el-form-item label="选择机构类型" label-width="110px">
+                        </el-form-item>
+                        <el-form-item style="margin-bottom: 0;">
                             <el-select v-model="taskForm.deptType" placeholder="选择机构类型" class="filter-select"
                                 :disabled="false" clearable @change="loadOrgOptions">
                                 <el-option label="监管机构" :value="1" />
@@ -190,7 +190,7 @@ const { getLabel: getProductCategoryLabel } = useDict(DICT_TYPE.AGRI_PRODUCT_CAT
 const loadSchemeDetail = async () => {
     try {
         let data = JSON.parse(window.sessionStorage.getItem('planInfo'))
-        
+
         // 缓存为空或缺少方案数据时，通过路由任务ID重新请求后端接口拉取完整数据
         if (!data || !data.planInfo) {
             const id = Number(route.query.id) || planId
@@ -209,10 +209,10 @@ const loadSchemeDetail = async () => {
         schemeInfo.planName = planInfo.planName || data.planName || '--'
         schemeInfo.dept = planInfo.issuerDeptName || data.issuerDeptName || (planInfo.issuerDeptId || data.issuerDeptId ? `部门ID: ${planInfo.issuerDeptId || data.issuerDeptId}` : '--')
         schemeInfo.type = getPlanTypeLabel(planInfo.planType !== undefined ? planInfo.planType : data.planType)
-        
+
         const targetCategory = planInfo.targetCategory !== undefined ? planInfo.targetCategory : data.targetCategory
         schemeInfo.category = targetCategory ? getProductCategoryLabel(targetCategory) : '--'
-        
+
         schemeInfo.executionTime = `${data.startDate || ''} 至 ${data.endDate || ''}`
         schemeInfo.executionTimeLabel =
             data.startDate && data.endDate
@@ -656,7 +656,7 @@ onMounted(() => {
 .filter-form-inline {
     display: flex;
     flex-wrap: wrap;
-    margin-bottom: 20px;
+    margin-bottom: 14px;
 }
 
 .filter-select {
@@ -665,14 +665,14 @@ onMounted(() => {
 
 /* 搜索框 */
 .search-box {
-    margin-bottom: 24px;
+    margin-bottom: 14px;
 
     .search-input {
-        max-width: 500px;
+        max-width: 430px;
 
         :deep(.el-input__wrapper) {
             border-width: 0px !important;
-            height: 36px !important;
+            height: 40px !important;
             background: #fff;
             box-shadow: 0 0 0 1px #dcdfe6 inset !important;
 

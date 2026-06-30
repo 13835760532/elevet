@@ -47,7 +47,8 @@
                                 <el-select v-model="formData.sample.productId" filterable remote reserve-keyword
                                     placeholder="输入关键词匹配产品" :remote-method="remoteSearchProduct"
                                     :loading="productLoading" @change="handleProductChange" style="flex: 1">
-                                    <el-option v-for="item in productOptions" :key="item.id" :label="item.subjectInfo?.name ? `${item.productName}（${item.subjectInfo.name}）` : item.productName"
+                                    <el-option v-for="item in productOptions" :key="item.id"
+                                        :label="item.subjectInfo?.name ? `${item.productName}（${item.subjectInfo.name}）` : item.productName"
                                         :value="item.id" />
                                 </el-select>
                                 <el-button type="primary" class="scan-btn">
@@ -148,7 +149,7 @@
                                     <div class="grid-item">
                                         <div class="field-label">信用代码</div>
                                         <div class="field-value">{{ formState.selectedSubject.socialCreditCode || '--'
-                                            }}</div>
+                                        }}</div>
                                     </div>
                                     <div class="grid-item">
                                         <div class="field-label">主体类型</div>
@@ -160,7 +161,7 @@
                                     <div class="grid-item">
                                         <div class="field-label">建档类型</div>
                                         <div class="field-value">{{ getFilingTypeLabel(formState.selectedSubject.type)
-                                            }}</div>
+                                        }}</div>
                                     </div>
                                     <div class="grid-item">
                                         <div class="field-label">联系人</div>
@@ -195,7 +196,7 @@
                         <div class="public-notice">
                             <div class="notice-icon">!</div>
                             <div class="notice-content">
-                                <p>当前政府对此类检测结果是否面向公开，不公开则不计入任务统计数据量。</p>
+                                <p>{{ formData.publicFlag ? '当前检测结果授权政府主管部门查看、使用；' : '检测数据企业自有使用，任何机构含监管部门无权查看；' }}</p>
                             </div>
                         </div>
                     </el-form-item>
@@ -334,7 +335,7 @@
                             <span class="label">样品来源：</span>
                             <span class="value">{{ Array.isArray(formData.sample.sampleSource) ?
                                 formData.sample.sampleSource.join(', ') : (formData.sample.sampleSource || '--')
-                                }}</span>
+                            }}</span>
                         </div>
                         <div class="info-item">
                             <span class="label">样品状态：</span>
@@ -365,7 +366,8 @@
                             <template #default="scope">
                                 {{
                                     scope.row.result !== null && scope.row.result !== undefined && scope.row.result !== ''
-                                        ? (isNaN(Number(scope.row.result)) ? scope.row.result : Number(scope.row.result).toFixed(2))
+                                        ? (isNaN(Number(scope.row.result)) ? scope.row.result :
+                                            Number(scope.row.result).toFixed(2))
                                         : '--'
                                 }}
                             </template>
@@ -1323,6 +1325,7 @@ onMounted(async () => {
 
 .public-notice {
     display: flex;
+    align-items: center;
     gap: 12px;
     background: #FFF8DC;
     border: 1px solid #FFD700;

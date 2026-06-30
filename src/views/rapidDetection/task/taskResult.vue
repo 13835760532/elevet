@@ -79,8 +79,10 @@
                         <template #default="scope">
                             <span>
                                 {{
-                                    scope.row.tcValue !== null && scope.row.tcValue !== undefined && scope.row.tcValue !== ''
-                                        ? (isNaN(Number(scope.row.tcValue)) ? scope.row.tcValue : Number(scope.row.tcValue).toFixed(2))
+                                    scope.row.tcValue !== null && scope.row.tcValue !== undefined && scope.row.tcValue !==
+                                        ''
+                                        ? (isNaN(Number(scope.row.tcValue)) ? scope.row.tcValue :
+                                            Number(scope.row.tcValue).toFixed(2))
                                         : '--'
                                 }}
                             </span>
@@ -90,7 +92,7 @@
                     <el-table-column label="检测时间" prop="detectionDate" width="160" align="center">
                         <template #default="scope">
                             {{ scope.row.detectionDate ? formatDate(scope.row.detectionDate, 'YYYY-MM-DD HH:mm:ss') :
-                            '--' }}
+                                '--' }}
                         </template>
                     </el-table-column>
                     <el-table-column label="检测结果" prop="result" width="140" align="center">
@@ -420,7 +422,7 @@ const handleDownloadReport = () => {
     max-width: 800px;
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 16px 40px;
+    gap: 8px 40px;
 
     .info-row {
         display: flex;
@@ -428,26 +430,29 @@ const handleDownloadReport = () => {
         font-size: 14px;
 
         .label {
-            min-width: 100px;
             color: #666;
-            text-align: right;
-            padding-right: 12px;
             font-weight: 500;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            box-sizing: border-box;
 
             &::after {
                 content: '：';
+                margin-left: auto;
+                padding-right: 12px;
             }
         }
 
         .value {
             color: #333;
             flex: 1;
+            align-self: center;
         }
 
         &.photo-row {
             grid-column: span 2;
             align-items: flex-start;
-            margin-top: 8px;
 
             .photo-preview {
                 width: 80px;
