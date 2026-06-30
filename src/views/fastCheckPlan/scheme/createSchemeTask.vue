@@ -103,7 +103,9 @@
                     <div class="allocation-config">
                         <div class="config-row">
                             <span class="config-label">任务检测量：</span>
-                            <el-input v-model="taskForm.quantity" placeholder="任务检测量" type="number"
+                            <el-input v-model="taskForm.quantity" placeholder="任务检测量" type="number" :disabled="true"
+                                class="quantity-input" />
+                            <!-- <el-input v-model="taskForm.quantity" placeholder="任务检测量" type="number"
                                 :disabled="taskForm.distributionType === 'manual'" class="quantity-input"
                                 :class="{ 'error-input': isExceedLimit }" />
                             <span class="warning-text" :class="{ 'error-text': isExceedLimit }">
@@ -112,7 +114,7 @@
                                         ? `超出可用总量（剩余可用：${schemeInfo.sampleCount}）`
                                 : '取值规则方案检测总量-已分发量'
                                 }}
-                            </span>
+                            </span> -->
                         </div>
                         <div class="config-row">
                             <span class="config-label">分发方式：</span>
@@ -429,31 +431,31 @@ watch(
 )
 
 // 监听任务列表变化，手动分配时同步汇总检测总量
-watch(
-    taskList,
-    (newVal) => {
-        if (taskForm.distributionType === 'manual') {
-            const total = (newVal || []).reduce((sum, item) => sum + (Number(item.quantity) || 0), 0)
-            taskForm.quantity = total > 0 ? total : 0
-        }
-    },
-    { deep: true, immediate: true }
-)
+// watch(
+//     taskList,
+//     (newVal) => {
+//         if (taskForm.distributionType === 'manual') {
+//             const total = (newVal || []).reduce((sum, item) => sum + (Number(item.quantity) || 0), 0)
+//             taskForm.quantity = total > 0 ? total : 0
+//         }
+//     },
+//     { deep: true, immediate: true }
+// )
 
 // 切换分配方式时的处理
-watch(
-    () => taskForm.distributionType,
-    (val) => {
-        if (val === 'manual') {
-            // 切换到手动时，根据当前列表重新计算总量
-            const total = taskList.value.reduce((sum, item) => sum + (Number(item.quantity) || 0), 0)
-            taskForm.quantity = total
-        } else {
-            // 切换回平均分配时，通常恢复为原始可用总量
-            taskForm.quantity = schemeInfo.sampleCount || 0
-        }
-    }
-)
+// watch(
+//     () => taskForm.distributionType,
+//     (val) => {
+//         if (val === 'manual') {
+//             // 切换到手动时，根据当前列表重新计算总量
+//             const total = taskList.value.reduce((sum, item) => sum + (Number(item.quantity) || 0), 0)
+//             taskForm.quantity = total
+//         } else {
+//             // 切换回平均分配时，通常恢复为原始可用总量
+//             taskForm.quantity = schemeInfo.sampleCount || 0
+//         }
+//     }
+// )
 
 const handleCancel = () => {
     router.back()
@@ -679,7 +681,7 @@ onMounted(() => {
 .allocation-config {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 10px;
 }
 
 .config-row {
