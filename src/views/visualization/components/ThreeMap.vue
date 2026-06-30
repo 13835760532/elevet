@@ -13,11 +13,7 @@
       {{ backButtonText }}
     </button>
 
-    <div
-      v-show="tooltip.show"
-      class="map-tooltip"
-      :style="{ left: `${tooltip.x}px`, top: `${tooltip.y}px` }"
-    >
+    <div v-show="tooltip.show" class="map-tooltip" :style="{ left: `${tooltip.x}px`, top: `${tooltip.y}px` }">
       <b>{{ tooltip.name }}</b>
       <div class="tooltip-line" v-for="item in tooltipLines" :key="item.label">
         <span>{{ item.label }}</span>
@@ -221,6 +217,82 @@ const getTerrainTexture = () => {
   terrainTexture.offset.set(0.08, 0.12)
   terrainTexture.colorSpace = THREE.SRGBColorSpace
   return terrainTexture
+}
+
+// 程序化生成不规则发光纹理：多层偏移渐变 + 噪点扰动，模拟自然光晕
+let radialGlowTexture: THREE.Texture | null = null
+const getRadialGlowTexture = () => {
+  if (radialGlowTexture) return radialGlowTexture
+  const size = 512
+  const canvas = document.createElement('canvas')
+  canvas.width = size
+  canvas.height = size
+  const ctx = canvas.getContext('2d')!
+
+  // 简易伪随机数生成器（固定种子，保证每次一致）
+  let seed = 42
+  const rand = () => {
+    seed = (seed * 16807 + 0) % 2147483647
+    return (seed - 1) / 2147483646
+  }
+
+  // 黑色底
+  ctx.fillStyle = 'rgba(0, 0, 0, 1)'
+  ctx.fillRect(0, 0, size, size)
+
+  // 叠加多层偏移径向渐变，产生不规则的光斑分布
+  ctx.globalCompositeOperation = 'lighter'
+  const layers = [
+    // 主光源：略微偏离中心
+    { cx: 0.48, cy: 0.52, r: 0.42, alpha: 0.7 },
+    { cx: 0.55, cy: 0.45, r: 0.35, alpha: 0.5 },
+    // 次级光源：分散在不同位置
+    { cx: 0.35, cy: 0.38, r: 0.28, alpha: 0.35 },
+    { cx: 0.62, cy: 0.6, r: 0.25, alpha: 0.3 },
+    { cx: 0.4, cy: 0.65, r: 0.22, alpha: 0.25 },
+    // 小型随机光点
+    { cx: 0.3, cy: 0.55, r: 0.15, alpha: 0.2 },
+    { cx: 0.65, cy: 0.35, r: 0.18, alpha: 0.22 },
+    { cx: 0.5, cy: 0.3, r: 0.2, alpha: 0.18 },
+  ]
+
+  layers.forEach(({ cx, cy, r, alpha }) => {
+    const x = cx * size
+    const y = cy * size
+    const radius = r * size
+    const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius)
+    const a1 = Math.round(alpha * 255)
+    const a2 = Math.round(alpha * 0.5 * 255)
+    gradient.addColorStop(0, `rgba(220, 245, 255, ${alpha})`)
+    gradient.addColorStop(0.3, `rgba(150, 220, 255, ${alpha * 0.6})`)
+    gradient.addColorStop(0.65, `rgba(60, 160, 230, ${alpha * 0.2})`)
+    gradient.addColorStop(1, 'rgba(0, 80, 180, 0)')
+    ctx.fillStyle = gradient
+    ctx.fillRect(0, 0, size, size)
+  })
+
+  // 叠加噪点扰动：使像素级的亮度不均匀，增加有机质感
+  const imageData = ctx.getImageData(0, 0, size, size)
+  const data = imageData.data
+  for (let i = 0; i < data.length; i += 4) {
+    const noise = (rand() - 0.5) * 30
+    data[i] = Math.max(0, Math.min(255, data[i] + noise))
+    data[i + 1] = Math.max(0, Math.min(255, data[i + 1] + noise))
+    data[i + 2] = Math.max(0, Math.min(255, data[i + 2] + noise))
+  }
+  ctx.putImageData(imageData, 0, 0)
+
+  // 高斯模糊柔化噪点边缘（用多次半透明重绘模拟）
+  ctx.globalCompositeOperation = 'source-over'
+  ctx.globalAlpha = 0.4
+  for (let pass = 0; pass < 3; pass++) {
+    ctx.drawImage(canvas, -1, -1, size + 2, size + 2)
+  }
+  ctx.globalAlpha = 1
+
+  radialGlowTexture = new THREE.CanvasTexture(canvas)
+  radialGlowTexture.needsUpdate = true
+  return radialGlowTexture
 }
 
 const decodeFeature = (feature: GeoFeature) => {
@@ -550,6 +622,45 @@ const createGlowMaterial = (opacity = 0.2, color = 0x37ffc2) =>
     side: THREE.DoubleSide
   })
 
+// 区域内发光材质：使用不规则渐变纹理 + 叠加混合，产生柔和的内部光晕
+const createInnerGlowMaterial = (intensity: number = 0.5) =>
+  new THREE.MeshBasicMaterial({
+    color: new THREE.Color(0x30d5ff).lerp(new THREE.Color(0x80eeff), intensity * 0.5),
+    map: getRadialGlowTexture(),
+    transparent: true,
+    opacity: 0.25 + intensity * 0.17,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+    side: THREE.DoubleSide
+  })
+
+// 为每个区域创建以其中心为原点的发光几何体（让径向渐变纹理正确居中映射）
+const createCenteredGlowGeometry = (sourceGeometry: THREE.BufferGeometry) => {
+  const geo = sourceGeometry.clone()
+  const posAttr = geo.getAttribute('position') as THREE.BufferAttribute
+  // 计算该区域几何体的包围盒中心和尺寸
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity
+  for (let i = 0; i < posAttr.count; i++) {
+    const x = posAttr.getX(i)
+    const y = posAttr.getY(i)
+    if (x < minX) minX = x
+    if (x > maxX) maxX = x
+    if (y < minY) minY = y
+    if (y > maxY) maxY = y
+  }
+  const cx = (minX + maxX) / 2
+  const cy = (minY + maxY) / 2
+  const span = Math.max(maxX - minX, maxY - minY) || 1
+  // 以区域中心为原点重新计算 UV，映射到 [0,1] 范围
+  const uvArray = new Float32Array(posAttr.count * 2)
+  for (let i = 0; i < posAttr.count; i++) {
+    uvArray[i * 2] = (posAttr.getX(i) - cx) / span + 0.5
+    uvArray[i * 2 + 1] = (posAttr.getY(i) - cy) / span + 0.5
+  }
+  geo.setAttribute('uv', new THREE.BufferAttribute(uvArray, 2))
+  return geo
+}
+
 const createDepthMaterial = () =>
   new THREE.MeshBasicMaterial({
     color: 0x031a3d,
@@ -746,6 +857,16 @@ const renderGeo = async (geo: GeoJson, level: LevelState) => {
       terrainMesh.userData.hoverOpacity = 1
       region.add(terrainMesh)
 
+      // 区域内发光层：叠加在表面上方，径向渐变以区域中心为原点
+      const innerGlowIntensity = Math.min(value / 600, 1)
+      const glowGeo = createCenteredGlowGeometry(built.geometry)
+      const innerGlowMesh = new THREE.Mesh(glowGeo, createInnerGlowMaterial(innerGlowIntensity))
+      innerGlowMesh.position.z = 1.2
+      innerGlowMesh.userData.innerGlow = true
+      innerGlowMesh.userData.baseOpacity = 0.25 + innerGlowIntensity * 0.17
+      innerGlowMesh.userData.hoverOpacity = 0.4 + innerGlowIntensity * 0.15
+      region.add(innerGlowMesh)
+
       const depthMesh = new THREE.Mesh(built.geometry.clone(), createDepthMaterial())
       depthMesh.position.set(0, -2.8, -9)
       depthMesh.scale.set(1.018, 1.018, 1)
@@ -847,20 +968,24 @@ const canDrillFurther = () =>
 
 const setHovered = (region: RegionGroup | null) => {
   if (hovered === region) return
+  // 标记离开旧区域
   if (hovered) {
-    hovered.children.forEach((child: any) => {
-      if (child.isMesh) child.material.opacity = child.userData.baseOpacity ?? 1
-      if (child.isLine) setLineState(child, false)
-    })
+    hovered.userData.hoverTarget = 0
   }
   hovered = region
   if (!hovered) {
     tooltip.show = false
+    // 所有区域恢复正常
+    mapGroup?.children.forEach((r: any) => {
+      r.userData.hoverTarget = 0
+      r.userData.dimTarget = 0
+    })
     return
   }
-  hovered.children.forEach((child: any) => {
-    if (child.isMesh) child.material.opacity = child.userData.hoverOpacity ?? 1
-    if (child.isLine) setLineState(child, true)
+  // 标记进入新区域，其余区域标记为暗化
+  hovered.userData.hoverTarget = 1
+  mapGroup?.children.forEach((r: any) => {
+    r.userData.dimTarget = r === hovered ? 0 : 1
   })
 }
 
@@ -942,6 +1067,9 @@ const animate = () => {
   if (!renderer || !scene || !camera) return
   frameId = requestAnimationFrame(animate)
   const elapsed = clock.getElapsedTime()
+  const dt = Math.min(clock.getDelta(), 0.05)
+  const lerpSpeed = 6 // 插值速度
+
   if (glowGroup) {
     glowGroup.position.z = Math.sin(elapsed * 1.2) * 0.6
     glowGroup.children.forEach((child: any, index) => {
@@ -952,6 +1080,54 @@ const animate = () => {
       }
     })
   }
+
+  // 区域交互动画：平滑过渡 hover/dim 状态
+  if (mapGroup) {
+    mapGroup.children.forEach((region: any) => {
+      // 平滑插值 hover 进度 (0→1)
+      const hTarget = region.userData.hoverTarget ?? 0
+      const hCurrent = region.userData.hoverProgress ?? 0
+      const hNew = hCurrent + (hTarget - hCurrent) * Math.min(lerpSpeed * dt, 1)
+      region.userData.hoverProgress = hNew
+
+      // 平滑插值 dim 进度 (0→1)
+      const dTarget = region.userData.dimTarget ?? 0
+      const dCurrent = region.userData.dimProgress ?? 0
+      const dNew = dCurrent + (dTarget - dCurrent) * Math.min(lerpSpeed * dt, 1)
+      region.userData.dimProgress = dNew
+
+      // hover 时区域微微上浮
+      region.position.z = hNew * 3
+
+      region.children?.forEach((child: any) => {
+        if (!child.material) return
+
+        if (child.userData.innerGlow) {
+          // 内发光层：呼吸 + hover 增亮
+          const base = Number(child.userData.baseOpacity || 0.25)
+          const hoverBoost = hNew * 0.18
+          const breath = Math.sin(elapsed * 0.8) * base * 0.2
+          child.material.opacity = base + breath + hoverBoost
+        } else if (child.userData.surface) {
+          // 表面层：hover 提亮，dim 微暗
+          const base = Number(child.userData.baseOpacity ?? 1)
+          const dimFactor = 1 - dNew * 0.15
+          child.material.opacity = base * dimFactor
+        } else if (child.isLine) {
+          // 边界线：hover 时高亮
+          const mat = child.material as THREE.LineBasicMaterial
+          if (hNew > 0.01) {
+            mat.color.lerp(new THREE.Color(0xfffbac), hNew * 0.8)
+            mat.opacity = 0.5 + hNew * 0.5
+          } else {
+            mat.color.lerp(new THREE.Color(0x1b8dbf), Math.min(lerpSpeed * dt, 1))
+            mat.opacity = 0.5
+          }
+        }
+      })
+    })
+  }
+
   renderer.render(scene, camera)
   updateLabels()
 }
@@ -1271,5 +1447,4 @@ onBeforeUnmount(() => {
     box-shadow: 0 0 8px rgba(54, 245, 202, 0.34);
   }
 }
-
 </style>

@@ -244,9 +244,20 @@ const measurementUnitOptions = usePreferredAgriMeasurementUnitOptions(
 
 const qrCodeText = computed(() => String(formData.qrCode || formData.certificateCode || 'HGZ9191991111'));
 
-const triggerUpload = () => {
+const getUploadInput = () => {
     const uploadEl = uploadRef.value?.$el || uploadRef.value;
-    const inputEl = uploadEl?.querySelector?.('input[type="file"]');
+    return uploadEl?.querySelector?.('input[type="file"]');
+};
+
+const resetUploadSelection = () => {
+    uploadRef.value?.clearFiles?.();
+    const inputEl = getUploadInput();
+    if (inputEl) inputEl.value = '';
+};
+
+const triggerUpload = () => {
+    resetUploadSelection();
+    const inputEl = getUploadInput();
     inputEl?.click();
 };
 
@@ -310,6 +321,7 @@ const onFileChange = async (uploadFile) => {
         ElMessage.error(e.msg || e.message || '识别服务异常，请手动填写');
     } finally {
         loading.close();
+        resetUploadSelection();
     }
 };
 
