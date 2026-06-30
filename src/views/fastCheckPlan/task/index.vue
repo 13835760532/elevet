@@ -65,10 +65,10 @@
       <div class="table-wrapper">
         <el-table :data="tableList" :border="false" v-loading="loading" height="100%">
           <el-table-column label="序号" type="index" width="60" align="center" />
-          <el-table-column label="任务编码" prop="taskCode" width="160" align="center" />
-          <el-table-column label="任务名称" prop="taskName" min-width="180" show-overflow-tooltip />
-          <el-table-column label="检测地区" prop="detectionArea" width="120" align="center" />
-          <el-table-column label="检测品种" prop="detectionVarieties" min-width="120" show-overflow-tooltip />
+          <el-table-column label="任务编码" prop="taskCode" width="160" align="center" :formatter="tableColumnFormatter" />
+          <el-table-column label="任务名称" prop="taskName" min-width="180" show-overflow-tooltip :formatter="tableColumnFormatter" />
+          <el-table-column label="检测地区" prop="detectionArea" width="120" align="center" :formatter="tableColumnFormatter" />
+          <el-table-column label="检测品种" prop="detectionVarieties" min-width="120" show-overflow-tooltip :formatter="tableColumnFormatter" />
           <el-table-column label="检测进度" width="180" align="center">
             <template #default="scope">
               <div class="progress-box">
@@ -80,7 +80,10 @@
           </el-table-column>
           <el-table-column label="时间范围" width="200" align="center">
             <template #default="scope">
-              {{ scope.row.startDate }} ~ {{ scope.row.endDate }}
+              <span v-if="scope.row.startDate && scope.row.endDate">
+                {{ scope.row.startDate }} ~ {{ scope.row.endDate }}
+              </span>
+              <span v-else>-</span>
             </template>
           </el-table-column>
           <!-- <el-table-column label="最后催办" prop="lastUrgeTime" width="160" align="center">
@@ -142,6 +145,11 @@ defineOptions({
 
 const router = useRouter()
 const { options: taskStatusOptions } = useDict('agri_task_status', 'int')
+
+// 格式化表格中无内容的值为 -
+const tableColumnFormatter = (row, column, cellValue) => {
+  return cellValue !== null && cellValue !== undefined && cellValue !== '' ? cellValue : '-'
+}
 
 // 过滤掉已撤回(4)状态
 const filteredTaskStatusOptions = computed(() => {

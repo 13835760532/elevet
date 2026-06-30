@@ -76,28 +76,6 @@
                 </div>
             </div>
 
-            <div class="info-card mt-20 no-print">
-                <div class="card-title-row">
-                    <h2 class="card-inner-title">关联样品检测结果{{ thirdPartyType === 'third' ? '第三方' : '平台' }}</h2>
-                </div>
-
-                <!-- 平台检测结果展示 -->
-                <PlatformDetectionSelector v-if="thirdPartyType === 'platform'" v-model="linkedDetectionRecordIds"
-                    v-model:linked-records="linkedPlatformRecords" :search-method="searchPlatformRecords"
-                    :readonly="true" @update:active-record="handlePlatformActiveRecordChange" />
-
-                <!-- 第三方检测报告图片展示 -->
-                <div v-else class="third-party-content">
-                    <div v-if="thirdPartyReportUrls.length > 0" class="image-preview-grid">
-                        <div v-for="(url, idx) in thirdPartyReportUrls" :key="idx" class="preview-box">
-                            <el-image :src="url" class="preview-img" :preview-src-list="thirdPartyReportUrls"
-                                :initial-index="idx" :preview-teleported="true" fit="contain" />
-                        </div>
-                    </div>
-                    <el-empty v-else description="暂无关联检测报告" :image-size="64" />
-                </div>
-            </div>
-
             <!-- 底部操作按钮 -->
             <div class="footer-actions no-print">
                 <el-button type="primary" class="print-btn" :loading="captureLoading"
@@ -296,12 +274,9 @@ import { useRoute } from 'vue-router';
 import { Picture, WarningFilled } from '@element-plus/icons-vue';
 import { useMessage } from '@/hooks/web/useMessage';
 import * as CertificateApi from '@/api/agri/certificate';
-import * as DetectionReportApi from '@/api/agri/detectionReport';
-import * as DetectionRecordApi from '@/api/agri/detectionRecord';
 import { Qrcode } from '@/components/Qrcode';
 import { CertificatePreview } from '@/components/CertificatePreview';
 import html2canvas from 'html2canvas';
-import PlatformDetectionSelector from './components/PlatformDetectionSelector.vue';
 import { BluetoothPrinter, getAgriUnitLabel } from '@/utils';
 import { formatDate } from '@/utils/formatTime';
 
@@ -432,15 +407,6 @@ const upstreamCommitmentLines = computed(() =>
     parseCommitmentLines(upstreamCertificate.value?.commitmentContent, selectedUpstreamBasisOptions.value)
 );
 
-// 平台检测关联信息（详情页展示/打印前检查）
-const linkedDetectionRecordIds = ref<number[]>([]);
-const linkedPlatformRecords = ref<any[]>([]);
-const currentPlatformRecord = ref<any | null>(null);
-
-// 第三方关联信息
-const thirdPartyType = ref<'third' | 'platform'>('platform');
-const thirdPartyReportUrls = ref<string[]>([]);
-
 const printAreaRef = ref<HTMLElement | null>(null);
 const previewVisible = ref(false);
 const previewSrc = ref<string | null>(null);
@@ -497,101 +463,6 @@ const setUpstreamCertificate = (data: any | null) => {
     upstreamCommitmentBasis.value = data ? parseBasisData(data.commitmentBasis) : [];
 };
 
-const unwrapApiData = (payload: any) => {
-    if (Array.isArray(payload)) return payload;
-    if (Array.isArray(payload?.data)) return payload.data;
-    return payload?.data || payload || null;
-};
-
-const mapReportOption = (item: any) => {
-    const linkId = Number(item?.recordId || item?.id || 0);
-    let rDate = '-';
-    try {
-        if (item.aiRecognitionResult) {
-            const parsed = typeof item.aiRecognitionResult === 'string' ? JSON.parse(item.aiRecognitionResult) : item.aiRecognitionResult;
-            rDate = parsed.timestamp || '-';
-        }
-    } catch (e) { }
-
-    return {
-        ...item,
-        linkId,
-        sampleCode: item?.sampleCode || item?.recordCode || item?.reportCode || '-',
-        sampleName: item?.sampleName || item?.productName || '',
-        reportDate: rDate
-    };
-};
-
-const normalizeDetectionRecordIds = (value: any): number[] => {
-    if (!value) return [];
-    if (Array.isArray(value)) {
-        return value.map((id) => Number(id)).filter((id) => Number.isFinite(id) && id > 0);
-    }
-    if (typeof value === 'string') {
-        return value.split(',').map((id) => Number(id.trim())).filter((id) => Number.isFinite(id) && id > 0);
-    }
-    const singleId = Number(value);
-    return Number.isFinite(singleId) && singleId > 0 ? [singleId] : [];
-};
-
-const searchPlatformRecords = async (query: string) => {
-    const keyword = String(query || '').trim().toLowerCase();
-    if (!keyword) return [];
-    try {
-        const response = await DetectionReportApi.getDetectionReportListBySampleCode(keyword);
-        const sourceList = unwrapApiData(response);
-        return Array.isArray(sourceList) ? sourceList.map(mapReportOption).filter(item => item.linkId) : [];
-    } catch (error) {
-        console.error('查询平台检测报告失败', error);
-        return [];
-    }
-};
-
-const handlePlatformActiveRecordChange = (record: any) => {
-    currentPlatformRecord.value = record || null;
-};
-
-const hydrateLinkedDetectionRecords = async (recordIds: number[]) => {
-    if (!recordIds.length) {
-        linkedDetectionRecordIds.value = [];
-        linkedPlatformRecords.value = [];
-        currentPlatformRecord.value = null;
-        return;
-    }
-    try {
-        const detailResponses = await Promise.all(
-            recordIds.map(async (recordId) => {
-                try {
-                    const record = await DetectionRecordApi.getDetectionRecord(Number(recordId));
-                    if (record) return record;
-                } catch (error) {
-                    console.warn('加载检测记录详情失败，尝试检测报告详情', recordId, error);
-                }
-                try {
-                    const report = await DetectionReportApi.getDetectionReportByRecordId(Number(recordId));
-                    return unwrapApiData(report);
-                } catch (error) {
-                    console.warn('加载检测报告详情失败', recordId, error);
-                    return null;
-                }
-            })
-        );
-        const mappedList = detailResponses
-            .filter(Boolean)
-            .map((detail) => mapReportOption(detail));
-
-        console.log(mappedList)
-
-        if (mappedList.length) {
-            linkedPlatformRecords.value = mappedList;
-            linkedDetectionRecordIds.value = mappedList.map((item) => Number(item.linkId));
-            currentPlatformRecord.value = mappedList[0];
-        }
-    } catch (error) {
-        console.error('加载关联检测记录失败', error);
-    }
-};
-
 const loadDetail = async (id: number) => {
     loading.value = true;
     try {
@@ -602,18 +473,6 @@ const loadDetail = async (id: number) => {
         certificate.value = data;
         commitmentBasis.value = parseBasisData(data.commitmentBasis);
 
-        // 解析检测结果类型
-        thirdPartyReportUrls.value = data.thirdPartyReportUrl ? data.thirdPartyReportUrl.split(',').filter(Boolean) : [];
-        const recordIds = normalizeDetectionRecordIds(data?.detectionRecordId);
-
-        if (thirdPartyReportUrls.value.length > 0) {
-            thirdPartyType.value = 'third';
-        } else if (recordIds.length > 0) {
-            thirdPartyType.value = 'platform';
-            await hydrateLinkedDetectionRecords(recordIds);
-        } else {
-            thirdPartyType.value = 'third'; // 默认
-        }
         if (data.upstreamCertificate) {
             setUpstreamCertificate(data.upstreamCertificate);
         } else if (isPlatformUpstream.value && data.upstreamCertificateCode) {

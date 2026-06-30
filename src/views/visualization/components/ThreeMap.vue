@@ -10,7 +10,7 @@
 
     <button v-if="drilled" class="back-button" type="button" @click="goHome()">
       <span>←</span>
-      返回全国
+      {{ backButtonText }}
     </button>
 
     <div
@@ -53,7 +53,12 @@ import {
 import { getFastMap, type FastMapDataRespVO } from '@/api/agri/dashboard/fast'
 import { getDashboardMapData, type MapDataRespVO } from '@/api/agri/dashboard'
 import { getTaskMap, type TaskMapDataRespVO } from '@/api/agri/dashboard/task'
-import { getBigScreenQueryParams, subscribeBigScreenRefresh } from './bigscreen/config'
+import {
+  getBigScreenConfig,
+  getBigScreenQueryParams,
+  getBigScreenUserDeptAreaParams,
+  subscribeBigScreenRefresh
+} from './bigscreen/config'
 import { cachedBigScreenRequest } from './bigscreen/requestCache'
 
 defineOptions({ name: 'VisualizationThreeMap' })
@@ -104,6 +109,13 @@ type LevelState = {
   geoId: string
 }
 
+type HomeScopeState = {
+  level: LevelState
+  drillLevel: 0 | 1 | 2
+  regionParams: { provinceName?: string; cityName?: string }
+  label: string
+}
+
 type LabelItem = {
   el: HTMLDivElement
   position: THREE.Vector3
@@ -122,6 +134,7 @@ const loading = ref(true)
 const webglError = ref('')
 const webglDebugInfo = ref('')
 const drilled = ref(false)
+const homeScopeLabel = ref('全国')
 const tooltip = reactive({
   show: false,
   x: 0,
@@ -145,6 +158,12 @@ let hovered: RegionGroup | null = null
 let currentLevel: LevelState = HOME_LEVEL
 let currentDrillLevel: 0 | 1 | 2 = 0
 let currentRegionParams: { provinceName?: string; cityName?: string } = {}
+let homeScope: HomeScopeState = {
+  level: HOME_LEVEL,
+  drillLevel: 0,
+  regionParams: {},
+  label: '全国'
+}
 let dataRequestSeq = 0
 let renderSeq = 0
 let disposed = false
@@ -173,6 +192,8 @@ const tooltipLabel = computed(() => {
 const tooltipLines = computed(() =>
   tooltip.lines.length ? tooltip.lines : [{ label: tooltipLabel.value, value: tooltip.value }]
 )
+
+const backButtonText = computed(() => `返回${homeScopeLabel.value || '全国'}`)
 
 const legendTitle = computed(() => {
   if (isCertificateMode.value) return props.certificateTab === '存证' ? '存证分布' : '开具分布'
@@ -245,6 +266,66 @@ const cloneAndDecodeGeo = (geo: GeoJson) => {
 }
 
 const loadHomeGeo = () => cloneAndDecodeGeo(chinaLiteSafeGeo as GeoJson)
+
+const getProvinceFeatureCode = (areaCode?: string | number) => {
+  const value = String(areaCode || '').trim()
+  return /^\d{2}/.test(value) ? `${value.slice(0, 2)}0000` : ''
+}
+
+const findChinaFeatureByCode = (provinceCode?: string) => {
+  const code = String(provinceCode || '').trim()
+  if (!code) return undefined
+  return loadHomeGeo().features?.find((feature) => {
+    const featureCode = String(
+      feature?.id || feature?.properties?.adcode || feature?.properties?.code || ''
+    ).trim()
+    return featureCode === code
+  })
+}
+
+const resolveInitialHomeScope = (): HomeScopeState => {
+  const config = getBigScreenConfig()
+  const userDeptAreaParams = getBigScreenUserDeptAreaParams()
+  const provinceCode = getProvinceFeatureCode(userDeptAreaParams.areaCode || config.areaCode)
+  const feature = findChinaFeatureByCode(provinceCode)
+  if (!feature) {
+    return {
+      level: HOME_LEVEL,
+      drillLevel: 0,
+      regionParams: {},
+      label: '全国'
+    }
+  }
+
+  const featureProps = feature.properties || {}
+  const geoId = String(feature.id || featureProps.geoId || featureProps.adcode || provinceCode).trim()
+  const provinceName = String(featureProps.name || config.provinceName || '').trim()
+  if (!geoId || !provinceName) {
+    return {
+      level: HOME_LEVEL,
+      drillLevel: 0,
+      regionParams: {},
+      label: '全国'
+    }
+  }
+
+  return {
+    level: { geoId },
+    drillLevel: 1,
+    regionParams: { provinceName },
+    label: provinceName
+  }
+}
+
+const getHomeScopeKey = (scope: HomeScopeState) =>
+  [scope.level.geoId, scope.drillLevel, scope.regionParams.provinceName || '', scope.regionParams.cityName || ''].join('|')
+
+const syncHomeScope = () => {
+  const previousKey = getHomeScopeKey(homeScope)
+  homeScope = resolveInitialHomeScope()
+  homeScopeLabel.value = homeScope.label
+  return previousKey !== getHomeScopeKey(homeScope)
+}
 
 const loadDetailGeo = async (geoId: string) => {
   const cacheKey = geoId
@@ -625,7 +706,7 @@ const renderGeo = async (geo: GeoJson, level: LevelState) => {
   pickableMeshes = []
   currentGeo = geo
   currentLevel = level
-  drilled.value = !!level.geoId
+  drilled.value = currentDrillLevel > homeScope.drillLevel
 
   const dataList = await loadCurrentMapData()
   if (disposed || renderId !== renderSeq) return
@@ -836,11 +917,12 @@ const handleClick = () => {
 const goHome = async (force = false) => {
   if (loading.value && !force) return
   loading.value = true
-  currentDrillLevel = 0
-  currentRegionParams = {}
-  currentLevel = HOME_LEVEL
+  currentDrillLevel = homeScope.drillLevel
+  currentRegionParams = { ...homeScope.regionParams }
+  currentLevel = homeScope.level
   try {
-    await renderGeo(loadHomeGeo(), HOME_LEVEL)
+    const geo = currentLevel.geoId ? await loadDetailGeo(currentLevel.geoId) : loadHomeGeo()
+    await renderGeo(geo, currentLevel)
   } finally {
     loading.value = false
   }
@@ -887,6 +969,7 @@ const reloadCurrentLevel = async () => {
 watch(
   () => props.mode,
   () => {
+    syncHomeScope()
     void goHome(true)
   }
 )
@@ -914,11 +997,17 @@ onMounted(async () => {
     resizeObserver = new ResizeObserver(resizeRenderer)
     resizeObserver.observe(canvasRef.value.parentElement)
   }
+  syncHomeScope()
   await goHome(true)
   animate()
 })
 
 const disposeRefresh = subscribeBigScreenRefresh(() => {
+  const homeScopeChanged = syncHomeScope()
+  if (homeScopeChanged || currentDrillLevel <= homeScope.drillLevel) {
+    void goHome(true)
+    return
+  }
   void reloadCurrentLevel()
 })
 

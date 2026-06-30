@@ -261,7 +261,7 @@ const loadNoticeList = async () => {
       pageSize: 10,
       status: 0 // 开启状态
     } as PageParam & { status: number })
-    noticeList.value = data?.list || []
+    noticeList.value = data?.list.filter(item => item.type == 3) || []
   } catch (error) {
     console.error('加载风险公告失败', error)
     noticeList.value = []

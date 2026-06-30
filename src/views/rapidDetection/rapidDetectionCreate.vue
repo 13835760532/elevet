@@ -363,7 +363,11 @@
                         <el-table-column property="codeName" label="检测项目" />
                         <el-table-column property="result" label="检测值（T/C值）">
                             <template #default="scope">
-                                {{ Number(scope.row.result).toFixed(3) || 0 }}
+                                {{
+                                    scope.row.result !== null && scope.row.result !== undefined && scope.row.result !== ''
+                                        ? (isNaN(Number(scope.row.result)) ? scope.row.result : Number(scope.row.result).toFixed(2))
+                                        : '--'
+                                }}
                             </template>
                         </el-table-column>
                         <el-table-column property="concentration" label="浓度值（单位 ppb）">

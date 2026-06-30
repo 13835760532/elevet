@@ -87,28 +87,35 @@
             <div class="table-wrapper">
                 <el-table ref="tableRef" :data="tableList" v-loading="loading" :height="tableHeight">
                     <el-table-column label="序号" type="index" width="70" align="center" />
-                    <el-table-column label="合格证编号" prop="certificateCode" width="160" align="center" />
+                    <el-table-column label="合格证编号" prop="certificateCode" width="160" align="center"
+                        :formatter="tableColumnFormatter" />
                     <el-table-column label="出证类型" prop="certificateType" width="100" align="center">
                         <template #default="scope">
-                            <span class="type-tag"
+                            <span v-if="scope.row.certificateType !== null && scope.row.certificateType !== undefined"
+                                class="type-tag"
                                 :class="scope.row.certificateType === 1 ? 'producer' : (scope.row.certificateType === 2 ? 'buyer' : 'seller')">
                                 {{ scope.row.certificateType === 1 ? '生产者' : (scope.row.certificateType === 2 ? '收购者' :
                                     '批发市场') }}
                             </span>
+                            <span v-else>-</span>
                         </template>
                     </el-table-column>
-                    <el-table-column label="产品名称" prop="productName" width="110" align="center" />
+                    <el-table-column label="产品名称" prop="productName" width="110" align="center"
+                        :formatter="tableColumnFormatter" />
                     <el-table-column label="产品类别" prop="productCategory" width="160" align="center"
                         show-overflow-tooltip>
                         <template #default="scope">
                             <el-tag v-if="scope.row.productCategory" effect="light" type="primary" class="truncate-tag">
-                                {{productCategoryOptions.find(item => item.value === scope.row.productCategory)?.label || scope.row.productCategory}}
+                                {{productCategoryOptions.find(item => item.value === scope.row.productCategory)?.label
+                                    || scope.row.productCategory}}
                             </el-tag>
-                            <span v-else>--</span>
+                            <span v-else>-</span>
                         </template>
                     </el-table-column>
-                    <el-table-column label="产地" prop="productionArea" min-width="150" show-overflow-tooltip />
-                    <el-table-column label="生产经营主体" prop="subjectName" min-width="200" show-overflow-tooltip />
+                    <el-table-column label="产地" prop="productionArea" min-width="150" show-overflow-tooltip
+                        :formatter="tableColumnFormatter" />
+                    <el-table-column label="生产经营主体" prop="subjectName" min-width="120" show-overflow-tooltip
+                        :formatter="tableColumnFormatter" />
                     <el-table-column min-width="180" align="center">
                         <template #header>
                             <div>联系人</div>
@@ -151,8 +158,12 @@
                             </el-tag>
                         </template>
                     </el-table-column>
-                    <el-table-column label="开具日期" prop="issueDate" width="160" align="center"
-                        :formatter="dateFormatter2" />
+                    <el-table-column label="开具日期" prop="issueDate" width="160" align="center">
+                        <template #default="scope">
+                            {{ scope.row.issueDate ? scope.row.issueDate : '-' }}
+                        </template>
+                    </el-table-column>
+
                     <el-table-column label="操作" width="200" align="center" fixed="right">
                         <template #default="scope">
                             <div class="table-operate-action-btns">
@@ -223,6 +234,11 @@ const hidePhone = (phone: string) => {
     if (!phone) return '-';
     return phone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2');
 };
+
+// 格式化表格中无内容的值为 -
+const tableColumnFormatter = (row: any, column: any, cellValue: any) => {
+    return cellValue !== null && cellValue !== undefined && cellValue !== '' ? cellValue : '-'
+}
 
 const areaIds = ref<string[]>([]);
 const queryParams = reactive({

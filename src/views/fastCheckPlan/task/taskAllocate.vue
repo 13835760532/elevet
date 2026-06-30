@@ -15,16 +15,16 @@
                         </div>
                         <div class="info-item">
                             <span class="label">主管单位：</span>
-                            <span class="value">{{ getDeptLabel(taskDetail.assignDeptId) }}</span>
+                            <span class="value">{{ getTaskDeptLabel(taskDetail) }}</span>
                         </div>
                         <div class="info-item">
                             <span class="label">检测品种：</span>
                             <span class="value">{{ taskDetail.detectionVarieties || '--' }}</span>
                         </div>
-                        <!-- <div class="info-item">
+                        <div class="info-item">
                             <span class="label">检测项目：</span>
-                            <span class="value">{{ taskDetail.detectionItems || '--' }}</span>
-                        </div> -->
+                            <span class="value">{{ getDetectionItemsLabel(taskDetail) }}</span>
+                        </div>
                         <div class="info-item">
                             <span class="label">执行时间：</span>
                             <span class="value">
@@ -57,6 +57,10 @@
                                 <span class="label">检测分类：</span>
                                 <span class="value">{{ taskDetail.taskType === 1 ? '快速检测' : (taskDetail.taskType ||
                                     '--') }}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="label">产品分类：</span>
+                                <span class="value">{{ getTaskCategoryLabel(taskDetail) }}</span>
                             </div>
                             <div class="info-item">
                                 <span class="label">检测地区：</span>
@@ -156,14 +160,18 @@
                                         show-overflow-tooltip />
                                     <el-table-column label="承担单位" prop="assignDeptId" align="center" min-width="120">
                                         <template #default="{ row }">
-                                            {{ row.issuerDeptName || getDeptLabel(row.assignDeptId) }}
+                                            {{ getTaskDeptLabel(row) }}
                                         </template>
                                     </el-table-column>
                                     <el-table-column label="检测区域范围" prop="detectionArea" align="center" width="120" />
                                     <el-table-column label="检测品种" prop="detectionVarieties" align="center"
                                         min-width="120" show-overflow-tooltip />
-                                    <!-- <el-table-column label="检测项目" prop="detectionItems" align="center" min-width="120"
-                                        show-overflow-tooltip /> -->
+                                    <el-table-column label="检测项目" prop="detectionItems" align="center" min-width="120"
+                                        show-overflow-tooltip>
+                                        <template #default="{ row }">
+                                            {{ getDetectionItemsLabel(row) }}
+                                        </template>
+                                    </el-table-column>
                                     <el-table-column label="执行时间" align="center" width="200">
                                         <template #default="{ row }">
                                             {{ row.startDate ? (row.startDate + ' 至 ' + row.endDate) : '--' }}
@@ -242,12 +250,7 @@ const tableData = ref([])
 const queryRef = ref()
 
 const deptMap = ref({})
-const getDeptLabel = (value) => {
-    return deptMap.value[value] || value || '--'
-}
-
-
-const { getLabel: getProductCategoryLabel, options: productCategoryOptions } = useDict(DICT_TYPE.AGRI_PRODUCT_CATEGORY);
+const { getLabel: getProductCategoryLabel } = useDict(DICT_TYPE.AGRI_PRODUCT_CATEGORY, 'str');
 const tabs = [
     { label: '子任务列表', key: 'subtask' },
     { label: '检测结果', key: 'result' },
@@ -260,6 +263,44 @@ const queryParams = reactive({
     status: '',
     dateRange: []
 })
+
+const resolveFirstValue = (...values) => {
+    return values.find(value => value !== undefined && value !== null && value !== '' && value !== '--')
+}
+
+const getDeptLabel = (value) => {
+    if (!value) return '--'
+    return deptMap.value[value] || '--'
+}
+
+const getTaskDeptLabel = (task = {}) => {
+    return resolveFirstValue(
+        task.issuerDeptName,
+        task.assignDeptName,
+        task.deptName,
+        task.planInfo?.issuerDeptName,
+        getDeptLabel(task.issuerDeptId),
+        getDeptLabel(task.assignDeptId),
+        getDeptLabel(task.planInfo?.issuerDeptId)
+    ) || '--'
+}
+
+const getTaskCategoryLabel = (task = {}) => {
+    const category = resolveFirstValue(
+        task.targetCategory,
+        task.productCategory,
+        task.planInfo?.targetCategory,
+        task.planInfo?.productCategory
+    )
+
+    if (!category) return '--'
+    const label = getProductCategoryLabel(category)
+    return label !== '--' ? label : category
+}
+
+const getDetectionItemsLabel = (task = {}) => {
+    return resolveFirstValue(task.detectionItems, task.planInfo?.detectionItems) || '--'
+}
 
 
 
@@ -325,8 +366,7 @@ const handleFilter = () => {
         );
     }
     if (queryParams.unit) {
-        // 假设 unit 对应 assignDeptId，暂时搜索 ID 或如果后端返回了单位名称字段则搜索名称
-        result = result.filter(item => String(item.assignDeptId).includes(queryParams.unit));
+        result = result.filter(item => getTaskDeptLabel(item).includes(queryParams.unit));
     }
     if (queryParams.status) {
         result = result.filter(item => item.status === queryParams.status);
@@ -355,12 +395,38 @@ const getDetail = async () => {
         if (id) {
             const data = await DetectionTaskApi.getDetectionTask(id);
             taskDetail.value = data || {};
+            await loadMissingDeptNames(data);
         }
     } catch (error) {
         console.error('获取任务详情失败:', error);
     } finally {
         detailLoading.value = false;
     }
+}
+
+const loadMissingDeptNames = async (detail = {}) => {
+    const deptIds = [
+        detail.issuerDeptId,
+        detail.assignDeptId,
+        detail.planInfo?.issuerDeptId
+    ].filter(id => id && !deptMap.value[id])
+
+    const uniqueDeptIds = [...new Set(deptIds)]
+    if (!uniqueDeptIds.length) return
+
+    await Promise.all(uniqueDeptIds.map(async (id) => {
+        try {
+            const dept = await DeptApi.getDept(id)
+            if (dept?.name) {
+                deptMap.value = {
+                    ...deptMap.value,
+                    [id]: dept.name
+                }
+            }
+        } catch (e) {
+            console.warn('获取部门详情失败', e)
+        }
+    }))
 }
 
 onMounted(async () => {

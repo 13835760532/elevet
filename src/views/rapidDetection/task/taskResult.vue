@@ -77,8 +77,13 @@
                     <el-table-column label="检测项目" prop="item" min-width="200" align="center" show-overflow-tooltip />
                     <el-table-column label="检测值（T/C值）" prop="tcValue" width="180" align="center">
                         <template #default="scope">
-                            {{ typeof scope.row.tcValue === 'number' ? scope.row.tcValue.toFixed(4) : scope.row.tcValue
-                            }}
+                            <span>
+                                {{
+                                    scope.row.tcValue !== null && scope.row.tcValue !== undefined && scope.row.tcValue !== ''
+                                        ? (isNaN(Number(scope.row.tcValue)) ? scope.row.tcValue : Number(scope.row.tcValue).toFixed(2))
+                                        : '--'
+                                }}
+                            </span>
                         </template>
                     </el-table-column>
                     <el-table-column label="浓度值(单位:ppb)" prop="concentration" width="160" align="center" />

@@ -135,7 +135,7 @@ $input-default-width: 150px;
 
     /* 表单项 */
     .el-form-item {
-        margin-right: 12px;
+        margin-right: 12px !important;
         margin-bottom: 8px !important;
         display: flex;
         align-items: center;
@@ -494,7 +494,15 @@ $input-default-width: 150px;
 
 
     .el-table__cell .cell{
-        padding: 0!important;
+        padding: 0 12px!important;
+    }
+
+    .el-table__cell:first-child .cell {
+        padding-left: 16px !important;
+    }
+
+    .el-table__cell:last-child .cell {
+        padding-right: 16px !important;
     }
 
   .el-table__border-bottom-patch,

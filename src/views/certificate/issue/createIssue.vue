@@ -554,80 +554,12 @@
             <!-- 第三步：查看合格证 -->
             <div v-if="currentStep === 3" class="step-content">
                 <div ref="printAreaRef" class="certificate-document">
-                    <div class="cert-header">
-                        <span class="cert-no-tag">合格证编号－{{ displayCertNo }}</span>
-                    </div>
-
-                    <div class="cert-body">
-                        <h1 class="cert-title">承诺达标合格证</h1>
-                        <h2 class="cert-subtitle">承诺事项：</h2>
-                        <div class="cert-declaration-list">
-                            <p v-for="(line, idx) in computedCommitment" :key="idx" class="declaration-line">• {{ line
-                                }}</p>
-                        </div>
-
-                        <div class="cert-middle-section">
-                            <div class="cert-basis">
-                                <h3 class="basis-title" style="margin-bottom: 12px;">承诺依据：</h3>
-                                <div class="custom-basis-group">
-                                    <div class="basis-item" v-for="item in selectedBasisOptions" :key="item.value">
-                                        <span class="basis-box checked">✔</span>
-                                        <span class="basis-label">
-                                            <span class="basis-index">{{ item.indexLabel }}</span>
-                                            {{ item.label }}
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="qr-code-wrapper">
-                                <Qrcode v-if="displayCertNo"
-                                    :text="`https://yishizhijian.jikeyun.net/web/index.html#/pages/index?id=${formData.id || ''}&code=${displayCertNo}`"
-                                    :options="{ errorCorrectionLevel: 'L' }" :width="162" />
-                            </div>
-                        </div>
-
-                        <div class="divider"></div>
-
-                        <div class="info-section">
-                            <h3 class="info-title">基本信息：</h3>
-                            <div class="info-table">
-                                <div class="info-row">
-                                    <div class="label">产品名称</div>
-                                    <div class="value">{{ formData.productName }}</div>
-                                </div>
-                                <div class="info-row">
-                                    <div class="label">数量/重量</div>
-                                    <div class="value">{{ (formData.quantity ?? formData.batchSize ?? '--') }} {{
-                                        getAgriUnitLabel(formData.unit) }}</div>
-                                </div>
-                                <div class="info-row">
-                                    <div class="label">产品产地</div>
-                                    <div class="value">{{ formData.origin }}</div>
-                                </div>
-                                <div class="info-row">
-                                    <div class="label">承诺主体</div>
-                                    <div class="value">{{ formData.entity }}</div>
-                                </div>
-                                <div class="info-row">
-                                    <div class="label">开具时间</div>
-                                    <div class="value">{{ formatPrintDate(certStore.certificate.issueDate) }}</div>
-                                </div>
-                                <div class="info-row">
-                                    <div class="label">打印时间</div>
-                                    <div class="value">{{ printTimeText }}</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="divider no-print"></div>
-
-                        <div v-if="formData.productImageUrl" class="image-section no-print">
-                            <h3 class="info-title">产品图片</h3>
-                            <div class="image-preview-box">
-                                <img :src="formData.productImageUrl" class="cert-product-img" alt="产品图片" />
-                            </div>
-                        </div>
-                    </div>
+                    <CertificatePreview
+                        class="step-three-certificate-preview"
+                        :certificate="generatedCertificatePreview"
+                        :basis-options="basisOptions"
+                        :qr-text="generatedCertificateQrText"
+                    />
                 </div>
 
                 <div class="action-footer">
@@ -702,6 +634,7 @@ import { DICT_TYPE, getIntDictOptions, getDictOptions, getDictLabel } from '@/ut
 import { formatDate } from '@/utils/formatTime';
 import html2canvas from 'html2canvas';
 import { Qrcode } from '@/components/Qrcode';
+import { CertificatePreview } from '@/components/CertificatePreview';
 import SubjectFormDrawer from '@/views/filing/subject/components/SubjectFormDrawer.vue';
 import PlatformDetectionSelector from './components/PlatformDetectionSelector.vue';
 import { BluetoothPrinter } from '@/utils';
@@ -909,6 +842,26 @@ const computedCommitment = computed(() => {
     return [labels[1], labels[2], labels[3]].filter(Boolean);
 });
 const displayCertNo = computed(() => certStore.certificate.certNo || formData.productNo || '');
+
+const generatedCertificateQrText = computed(() =>
+    displayCertNo.value
+        ? `https://yishizhijian.jikeyun.net/web/index.html#/pages/index?id=${formData.id || ''}&code=${displayCertNo.value}`
+        : ''
+);
+
+const generatedCertificatePreview = computed(() => ({
+    certificateCode: displayCertNo.value,
+    qrCode: generatedCertificateQrText.value,
+    productName: formData.productName,
+    quantity: formData.quantity ?? formData.batchSize,
+    unit: formData.unit,
+    productionArea: formData.origin,
+    subjectName: formData.entity,
+    contactPhone: formData.contactPhone,
+    issueDate: formatPrintDate(certStore.certificate.issueDate || formData.createDate),
+    commitmentBasis: formData.basis,
+    productImageUrl: formData.productImageUrl
+}));
 
 const STEP1_FIELD_KEYS = [
     'linkProfile',
@@ -1619,7 +1572,6 @@ const printEffectPreviewSrc = ref(null);
 const preparedPrintBytes = ref(null);
 const captureLoading = ref(false);
 const printEffectLoading = ref(false);
-const printTimeText = ref(formatDate(new Date()));
 const bluetoothConnecting = ref(false);
 const bluetoothPrinting = ref(false);
 const bluetoothReady = ref(false);
@@ -1632,15 +1584,6 @@ const basisOptions = [
     { indexLabel: '(2)', label: '自行检测合格', value: 2 },
     { indexLabel: '(3)', label: '委托检测合格', value: 3 }
 ];
-
-const selectedBasisOptions = computed(() => {
-    const selected = new Set((formData.basis || []).map(v => Number(v)));
-    return basisOptions.filter(item => selected.has(Number(item.value)));
-});
-
-const refreshPrintTime = () => {
-    printTimeText.value = formatDate(new Date());
-};
 
 const formatPrintDate = (value) => {
     if (!value) return '--';
@@ -1751,7 +1694,6 @@ onUnmounted(() => {
 const captureAreaToImg = async () => {
     const area = printAreaRef.value;
     if (!area) return null;
-    refreshPrintTime();
     await nextTick();
 
     // 获取可能存在的 no-print 元素并暂时隐藏
@@ -2652,11 +2594,10 @@ const handlePrint = async (prepared) => {
 /* 步骤三：合格证大页面样式 */
 .certificate-document {
     background: #fff;
-    border: 1px solid #E5E7EB;
-    padding: 24px; // 默认预览稍微减小一点
-    border-radius: 8px;
-    width: 100%;
+    width: 470px;
+    max-width: 100%;
     margin: 0 auto;
+    border-radius: 8px;
 
     .info-section {
         margin-top: 24px;
@@ -2680,6 +2621,12 @@ const handlePrint = async (prepared) => {
         box-shadow: none !important;
         background: transparent !important; // 让外部没有背景
         box-sizing: border-box !important;
+
+        .step-three-certificate-preview {
+            width: 100% !important;
+            border: none !important;
+            box-shadow: none !important;
+        }
 
         .cert-header {
             margin-top: 0 !important;

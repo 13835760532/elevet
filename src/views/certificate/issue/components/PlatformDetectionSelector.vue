@@ -139,7 +139,13 @@
               <div v-for="(item, index) in detectionItems" :key="index" class="result-trow">
                 <span class="col-idx">{{ item.channel }}</span>
                 <span class="col-name">{{ item.detectionItem }}</span>
-                <span class="col-value">{{ isNaN(Number(item.detectionValue)) ? item.detectionValue : Number(item.detectionValue).toFixed(3) }}</span>
+                <span class="col-value">
+                  {{
+                    item.detectionValue !== null && item.detectionValue !== undefined && item.detectionValue !== ''
+                      ? (isNaN(Number(item.detectionValue)) ? item.detectionValue : Number(item.detectionValue).toFixed(2))
+                      : '--'
+                  }}
+                </span>
                 <span class="col-conc">{{ item.concentration || '--' }}</span>
                 <span class="col-status">
                   <i :class="['status-dot', item.result === 1 ? 'is-safe' : 'is-danger']"></i>

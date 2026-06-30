@@ -417,7 +417,7 @@ const getNoticeList = async () => {
       time: item.createTime ? formatDate(item.createTime, 'YYYY-MM-DD HH:mm') : '',
       title: item.title,
       type: item.type
-    }))
+    })).filter(item => item.type == 3)
   } catch (error) {
     console.error('获取公告列表失败:', error)
     noticeData.value = []
