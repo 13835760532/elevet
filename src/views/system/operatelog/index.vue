@@ -8,9 +8,10 @@
       :model="queryParams"
       ref="queryFormRef"
       :inline="true"
+      style="display: flex; flex-wrap: wrap; width: 100%;"
       label-width="68px"
     >
-      <el-form-item label="操作人" prop="userId">
+      <el-form-item prop="userId" style="margin-right: 12px !important;">
         <el-select
           v-model="queryParams.userId"
           clearable
@@ -26,7 +27,7 @@
           />
         </el-select>
       </el-form-item>
-      <el-form-item label="操作模块" prop="type">
+      <el-form-item prop="type" style="margin-right: 12px !important;">
         <el-input
           v-model="queryParams.type"
           placeholder="请输入操作模块"
@@ -35,7 +36,7 @@
           class="!w-240px"
         />
       </el-form-item>
-      <el-form-item label="操作名" prop="subType">
+      <el-form-item prop="subType" style="margin-right: 12px !important;">
         <el-input
           v-model="queryParams.subType"
           placeholder="请输入操作名"
@@ -44,16 +45,16 @@
           class="!w-240px"
         />
       </el-form-item>
-      <el-form-item label="操作内容" prop="action">
+      <el-form-item prop="action" style="margin-right: 12px !important;">
         <el-input
           v-model="queryParams.action"
-          placeholder="请输入操作名"
+          placeholder="请输入操作内容"
           clearable
           @keyup.enter="handleQuery"
           class="!w-240px"
         />
       </el-form-item>
-      <el-form-item label="操作时间" prop="createTime">
+      <el-form-item prop="createTime" style="margin-right: 12px !important;">
         <el-date-picker
           v-model="queryParams.createTime"
           value-format="YYYY-MM-DD HH:mm:ss"
@@ -61,10 +62,10 @@
           start-placeholder="开始日期"
           end-placeholder="结束日期"
           :default-time="[new Date('1 00:00:00'), new Date('1 23:59:59')]"
-          class="!w-240px"
+          style="width: 260px !important;"
         />
       </el-form-item>
-      <el-form-item label="业务编号" prop="bizId">
+      <el-form-item prop="bizId" style="margin-right: 12px !important;">
         <el-input
           v-model="queryParams.bizId"
           placeholder="请输入业务编号"
@@ -73,7 +74,7 @@
           class="!w-240px"
         />
       </el-form-item>
-      <el-form-item>
+      <el-form-item style="margin-left: auto; margin-right: 0 !important;">
         <el-button @click="handleQuery"><Icon icon="ep:search" class="mr-5px" /> 搜索</el-button>
         <el-button @click="resetQuery"><Icon icon="ep:refresh" class="mr-5px" /> 重置</el-button>
         <el-button

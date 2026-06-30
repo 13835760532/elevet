@@ -281,7 +281,7 @@ onMounted(async () => {
 }
 
 .query-form-wrapper {
-  margin-bottom: 20px;
+  margin-bottom: 5px;
 }
 
 /* 搜索表单布局 */

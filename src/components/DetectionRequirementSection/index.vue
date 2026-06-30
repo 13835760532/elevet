@@ -5,7 +5,7 @@
             <span class="summary-text">已选任务分配量：</span>
             <span class="summary-value" :class="{ 'error-text': isExceedLimit }">{{ selectedQuantity }}</span>
             <span class="divider">|</span>
-            <span class="summary-text">方案检测总量：</span>
+            <span class="summary-text">任务总样品量：</span>
             <span class="summary-value">{{ sampleCount }}</span>
             <el-button type="primary" @click="handleHighRiskQuery" class="batch-config-btn">
                 高风险查询
@@ -41,7 +41,7 @@
                             size="small" />
                     </template>
                 </el-table-column>
-                <el-table-column label="检测数量" prop="quantity" width="80" align="center">
+                <el-table-column label="待检样品量" prop="quantity" width="80" align="center">
                     <template #default="scope">
                         <el-input-number v-if="!scope.row.isAdd" v-model="scope.row.quantity" :min="0" :precision="0"
                             :disabled="quantityReadonly" controls-position="right" size="small" class="cell-number"

@@ -7,7 +7,7 @@
       :inline="true"
       label-width="68px"
     >
-      <el-form-item label="字典名称" prop="dictType">
+      <el-form-item prop="dictType">
         <el-select v-model="queryParams.dictType" class="!w-240px" @change="dictChange">
           <el-option
             v-for="item in dictTypeList"
@@ -17,7 +17,7 @@
           />
         </el-select>
       </el-form-item>
-      <el-form-item label="字典标签" prop="label">
+      <el-form-item prop="label">
         <el-input
           v-model="queryParams.label"
           placeholder="请输入字典标签"
@@ -26,8 +26,8 @@
           class="!w-240px"
         />
       </el-form-item>
-      <el-form-item label="状态" prop="status">
-        <el-select v-model="queryParams.status" placeholder="数据状态" clearable class="!w-240px">
+      <el-form-item prop="status">
+        <el-select v-model="queryParams.status" placeholder="请选择数据状态" clearable class="!w-240px">
           <el-option
             v-for="dict in getIntDictOptions(DICT_TYPE.COMMON_STATUS)"
             :key="dict.value"
@@ -36,7 +36,7 @@
           />
         </el-select>
       </el-form-item>
-      <el-form-item>
+      <el-form-item class="!mr-0" style="margin-left: auto;">
         <el-button @click="handleQuery"><Icon icon="ep:search" class="mr-5px" /> 搜索</el-button>
         <el-button @click="resetQuery"><Icon icon="ep:refresh" class="mr-5px" /> 重置</el-button>
         <el-button

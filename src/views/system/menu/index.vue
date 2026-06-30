@@ -4,18 +4,18 @@
 
   <!-- 搜索工作栏 -->
   <ContentWrap>
-    <el-form ref="queryFormRef" :inline="true" :model="queryParams" class="-mb-15px" label-width="68px">
-      <el-form-item label="菜单名称" prop="name">
+    <el-form ref="queryFormRef" :inline="true" :model="queryParams" class="-mb-15px" style="display: flex; flex-wrap: wrap; width: 100%;" label-width="68px">
+      <el-form-item prop="name" style="margin-right: 12px !important;">
         <el-input v-model="queryParams.name" class="!w-240px" clearable placeholder="请输入菜单名称"
           @keyup.enter="handleQuery" />
       </el-form-item>
-      <el-form-item label="状态" prop="status">
+      <el-form-item prop="status" style="margin-right: 12px !important;">
         <el-select v-model="queryParams.status" class="!w-240px" clearable placeholder="请选择菜单状态">
           <el-option v-for="dict in getIntDictOptions(DICT_TYPE.COMMON_STATUS)" :key="dict.value" :label="dict.label"
             :value="dict.value" />
         </el-select>
       </el-form-item>
-      <el-form-item>
+      <el-form-item style="margin-left: auto; margin-right: 0 !important;">
         <el-button @click="handleQuery">
           <Icon class="mr-5px" icon="ep:search" />
           搜索

@@ -68,8 +68,8 @@
                         </el-form-item>
                     </el-col>
                     <el-col :span="12">
-                        <el-form-item label="方案检测总量" prop="sampleCount">
-                            <el-input v-model.number="formData.sampleCount" min="1" placeholder="请填写检测样品总量"
+                        <el-form-item label="任务总样品量" prop="sampleCount">
+                            <el-input v-model.number="formData.sampleCount" min="1" placeholder="请填写任务样品总量"
                                 type="number" />
                         </el-form-item>
                     </el-col>

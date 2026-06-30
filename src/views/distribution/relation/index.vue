@@ -12,25 +12,24 @@
       <div class="query-form-wrapper">
         <el-form :inline="true" :model="queryParams" class="custom-query-form custom-query-form-row"
           label-position="left">
-          <el-form-item label="关系名称">
+          <el-form-item prop="name">
             <el-input v-model="queryParams.name" placeholder="请输入关系名称" clearable class="custom-input w180" />
           </el-form-item>
-          <el-form-item label="关系类型">
-            <el-select v-model="queryParams.relationType" placeholder="请选择" clearable class="custom-select w130">
-              <el-option label="全部" value="" />
+          <el-form-item prop="relationType">
+            <el-select v-model="queryParams.relationType" placeholder="请选择关系类型" clearable class="custom-select w130">
+              <el-option label="全部关系类型" value="" />
               <el-option v-for="dict in relationTypeOptions" :key="dict.value" :label="dict.label"
                 :value="dict.value" />
             </el-select>
           </el-form-item>
-          <el-form-item label="关系状态">
-            <el-select v-model="queryParams.status" placeholder="请选择" clearable class="custom-select w130">
-              <el-option label="全部" value="" />
+          <el-form-item prop="status">
+            <el-select v-model="queryParams.status" placeholder="请选择关系状态" clearable class="custom-select w130">
+              <el-option label="全部关系状态" value="" />
               <el-option label="启用" :value="1" />
               <el-option label="禁用" :value="0" />
             </el-select>
           </el-form-item>
-
-          <div class="query-btns">
+          <div class="query-btns" style="margin-left: auto;">
             <el-button type="primary" @click="handleQuery" class="search-btn">查询</el-button>
             <el-button @click="handleReset" class="reset-btn">重置</el-button>
           </div>

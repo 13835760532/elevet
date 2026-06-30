@@ -13,26 +13,26 @@
     <el-col :span="20" :xs="24">
       <!-- 搜索 -->
       <ContentWrap>
-        <el-form class="-mb-15px" :model="queryParams" ref="queryFormRef" :inline="true" label-width="68px">
-          <el-form-item label="用户名称" prop="username">
+        <el-form class="-mb-15px" :model="queryParams" ref="queryFormRef" :inline="true" style="display: flex; flex-wrap: wrap; width: 100%;" label-width="68px">
+          <el-form-item prop="username" style="margin-right: 12px !important;">
             <el-input v-model="queryParams.username" placeholder="请输入用户名称" clearable @keyup.enter="handleQuery"
               class="!w-240px" />
           </el-form-item>
-          <el-form-item label="手机号码" prop="mobile">
+          <el-form-item prop="mobile" style="margin-right: 12px !important;">
             <el-input v-model="queryParams.mobile" placeholder="请输入手机号码" clearable @keyup.enter="handleQuery"
               class="!w-240px" />
           </el-form-item>
-          <el-form-item label="状态" prop="status">
+          <el-form-item prop="status" style="margin-right: 12px !important;">
             <el-select v-model="queryParams.status" placeholder="请选择用户状态" clearable class="!w-240px">
               <el-option v-for="dict in getIntDictOptions(DICT_TYPE.COMMON_STATUS)" :key="dict.value"
                 :label="dict.label" :value="dict.value" />
             </el-select>
           </el-form-item>
-          <el-form-item label="创建时间" prop="createTime">
+          <el-form-item prop="createTime" style="margin-right: 12px !important;">
             <el-date-picker v-model="queryParams.createTime" value-format="YYYY-MM-DD HH:mm:ss" type="datetimerange"
-              start-placeholder="开始日期" end-placeholder="结束日期" class="!w-240px" />
+              start-placeholder="开始日期" end-placeholder="结束日期" style="width: 260px !important;" />
           </el-form-item>
-          <el-form-item>
+          <el-form-item style="margin-left: auto; margin-right: 0 !important;">
             <el-button @click="handleQuery">
               <Icon icon="ep:search" />搜索
             </el-button>

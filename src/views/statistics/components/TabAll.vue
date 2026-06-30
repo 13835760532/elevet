@@ -664,9 +664,9 @@ const loadMapData = async () => {
         value: Number(
           mapType.value === '阳性率分布'
             ? (() => {
-                const rate = Number(item.positiveRate || 0)
-                return rate > 0 && rate <= 1 ? rate * 100 : rate
-              })()
+              const rate = Number(item.positiveRate || 0)
+              return rate > 0 && rate <= 1 ? rate * 100 : rate
+            })()
             : mapType.value === '任务监督分布'
               ? item.taskIssuedCount || 0
               : mapType.value === '检测执行分布'
@@ -832,8 +832,9 @@ const loadNotices = async () => {
     noticeData.value = DEFAULT_RISK_NOTICES.map((item, index) => ({
       id: item.id,
       time: dayjs().subtract(index + 1, 'minute').format('YYYY-MM-DD HH:mm'),
-      title: item.title
-    }))
+      title: item.title,
+      type: item.type
+    })).filter(item => item.type == 3)
   } catch (error) {
     console.error('[StatisticsAll] load notices failed:', error)
     noticeData.value = []
@@ -1322,6 +1323,7 @@ onMounted(() => {
   gap: 12px;
 
   &:nth-child(1) {
+
     .bar-index,
     .bar-label,
     .bar-value {
@@ -1336,6 +1338,7 @@ onMounted(() => {
   }
 
   &:nth-child(n + 10) {
+
     .bar-label,
     .bar-value {
       font-size: 15px;

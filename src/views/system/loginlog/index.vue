@@ -8,9 +8,10 @@
       :model="queryParams"
       ref="queryFormRef"
       :inline="true"
+      style="display: flex; flex-wrap: wrap; width: 100%;"
       label-width="68px"
     >
-      <el-form-item label="用户名称" prop="username">
+      <el-form-item prop="username" style="margin-right: 12px !important;">
         <el-input
           v-model="queryParams.username"
           placeholder="请输入用户名称"
@@ -19,7 +20,7 @@
           class="!w-240px"
         />
       </el-form-item>
-      <el-form-item label="登录地址" prop="userIp">
+      <el-form-item prop="userIp" style="margin-right: 12px !important;">
         <el-input
           v-model="queryParams.userIp"
           placeholder="请输入登录地址"
@@ -28,7 +29,7 @@
           class="!w-240px"
         />
       </el-form-item>
-      <el-form-item label="登录日期" prop="createTime">
+      <el-form-item prop="createTime" style="margin-right: 12px !important;">
         <el-date-picker
           v-model="queryParams.createTime"
           value-format="YYYY-MM-DD HH:mm:ss"
@@ -36,10 +37,10 @@
           start-placeholder="开始日期"
           end-placeholder="结束日期"
           :default-time="[new Date('1 00:00:00'), new Date('1 23:59:59')]"
-          class="!w-240px"
+          style="width: 260px !important;"
         />
       </el-form-item>
-      <el-form-item>
+      <el-form-item style="margin-left: auto; margin-right: 0 !important;">
         <el-button @click="handleQuery"><Icon icon="ep:search" class="mr-5px" /> 搜索</el-button>
         <el-button @click="resetQuery"><Icon icon="ep:refresh" class="mr-5px" /> 重置</el-button>
         <el-button

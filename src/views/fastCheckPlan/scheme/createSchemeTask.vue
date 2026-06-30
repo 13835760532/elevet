@@ -99,7 +99,7 @@
 
                 <!-- 步骤2: 设置任务分配周期 -->
                 <div class="step-section">
-                    <h4 class="step-title">2、设置任务分配周期</h4>
+                    <h4 class="step-title">2、设置任务分配原则</h4>
                     <div class="allocation-config">
                         <div class="config-row">
                             <span class="config-label">任务检测量：</span>
