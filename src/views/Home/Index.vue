@@ -175,7 +175,7 @@ const checkSubjectStatus = async () => {
     // 调用后端接口，查询本部门是否已经完成备案登记
     const data = await OrganizationApi.hasFiled();
     // 更新备案状态：true 表示已备案（主工作台展示），false 表示未备案（展示备案引导区域）
-    //hasFiling.value = !!data;
+    hasFiling.value = !!data;
   } catch (error) {
     console.error('获取备案状态失败', error);
   }
