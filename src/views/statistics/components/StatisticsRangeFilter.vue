@@ -5,15 +5,27 @@
       <span v-if="description" class="filter-desc">{{ description }}</span>
     </div>
 
-    <el-radio-group :model-value="rangeType" class="range-preset-group" @change="handleRangeTypeChange">
+    <el-radio-group
+      :model-value="rangeType"
+      class="range-preset-group"
+      @change="handleRangeTypeChange"
+    >
       <el-radio-button v-for="item in presets" :key="item" :label="item" />
     </el-radio-group>
 
     <div class="date-field">
       <span class="date-prefix">自定义</span>
-      <el-date-picker :model-value="dateRange" type="daterange" range-separator="至" start-placeholder="开始日期"
-        end-placeholder="结束日期" format="YYYY-MM-DD" value-format="YYYY-MM-DD" class="date-picker"
-        @update:model-value="handleDateRangeChange" />
+      <el-date-picker
+        :model-value="dateRange"
+        type="daterange"
+        range-separator="至"
+        start-placeholder="开始日期"
+        end-placeholder="结束日期"
+        format="YYYY-MM-DD"
+        value-format="YYYY-MM-DD"
+        class="date-picker"
+        @update:model-value="handleDateRangeChange"
+      />
     </div>
 
     <div v-if="$slots.extra" class="filter-extra">
@@ -94,22 +106,22 @@ $statistics-control-radius: 6px;
 
 .statistics-range-filter {
   display: flex;
-  padding: 10px 12px;
+  padding: 8px 12px;
   margin: 0 0 16px;
   overflow: auto hidden;
   background: #fff;
   border: 1px solid #e9f0f8;
   border-radius: 12px;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .filter-label-block {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  width: 128px;
-  flex: 0 0 128px;
+  width: 120px;
+  flex: 0 0 120px;
 }
 
 .filter-label {
@@ -137,7 +149,7 @@ $statistics-control-radius: 6px;
 
 :deep(.range-preset-group .el-radio-button__inner) {
   height: 36px;
-  min-width: 68px;
+  min-width: 66px;
   padding: 0 14px;
   font-weight: 600;
   line-height: 36px;
@@ -157,13 +169,13 @@ $statistics-control-radius: 6px;
 .date-field {
   display: flex;
   height: $statistics-control-height;
-  min-width: 330px;
+  min-width: 318px;
   padding: 0 8px 0 10px;
   background: #fff;
   border: 1px solid #dfe8f2;
   border-radius: $statistics-control-radius;
   transition: border-color 0.2s ease;
-  flex: 0 0 330px;
+  flex: 0 0 318px;
   align-items: center;
 
   &:hover {
@@ -235,7 +247,7 @@ $statistics-control-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 10px;
+  gap: 8px;
   flex: 0 0 auto;
 }
 

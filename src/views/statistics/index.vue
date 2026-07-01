@@ -3,15 +3,29 @@
     <!-- 顶部 Tabs -->
     <div class="stat-tabs-wrapper">
       <div class="stat-tabs">
-        <div
-          v-for="tab in tabs"
-          :key="tab.value"
-          :class="['tab-item', { active: currentTab === tab.value }]"
-          @click="currentTab = tab.value"
-        >
-          <Icon :icon="tab.icon" :size="18" class="tab-icon" />
-          <span>{{ tab.label }}</span>
-        </div>
+        <template v-for="tab in tabs" :key="tab.value">
+          <el-dropdown v-if="tab.dropdownOptions?.length" class="tab-dropdown" trigger="hover" placement="bottom-start"
+            @command="handleDropdownCommand(tab.value)">
+            <div :class="['tab-item', { active: currentTab === tab.value }]" @click="handleTabChange(tab.value)">
+              <Icon :icon="tab.icon" :size="18" class="tab-icon" />
+              <span class="tab-label">
+                {{ tab.label }}
+                <Icon icon="ep:arrow-down" :size="14" class="tab-arrow" />
+              </span>
+            </div>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item v-for="option in tab.dropdownOptions" :key="option.value" :command="option.value">
+                  {{ option.label }}
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
+          <div v-else :class="['tab-item', { active: currentTab === tab.value }]" @click="handleTabChange(tab.value)">
+            <Icon :icon="tab.icon" :size="18" class="tab-icon" />
+            <span>{{ tab.label }}</span>
+          </div>
+        </template>
       </div>
     </div>
 
@@ -40,14 +54,76 @@ import TabFiling from './components/TabFiling.vue'
 const route = useRoute()
 const currentTab = ref('all')
 
-const tabs = [
+interface TabDropdownOption {
+  label: string
+  value: string
+}
+
+interface StatisticsTab {
+  label: string
+  value: string
+  icon: string
+  dropdownOptions?: TabDropdownOption[]
+}
+
+const tabs: StatisticsTab[] = [
   { label: '全部', value: 'all', icon: 'ep:user' },
-  { label: '检测任务', value: 'task', icon: 'ep:message' },
-  { label: '快速检测', value: 'quick', icon: 'ep:home-filled' },
-  { label: '合格证开具', value: 'issue', icon: 'ep:document' },
-  { label: '合格证收证', value: 'verify', icon: 'ep:document-checked' },
-  { label: '建档备案', value: 'filing', icon: 'ep:folder' }
+  {
+    label: '检测任务',
+    value: 'task',
+    icon: 'ep:message',
+    dropdownOptions: [
+      { label: '本机构下发任务', value: 'issued' },
+      { label: '本机构执行任务', value: 'executed' },
+      { label: '辖区内全部任务', value: 'all' }
+    ]
+  },
+  {
+    label: '快速检测',
+    value: 'quick',
+    icon: 'ep:home-filled',
+    dropdownOptions: [
+      { label: '本机构自主检测', value: 'self' },
+      { label: '本机构任务检测', value: 'task' },
+      { label: '辖区内快速检测', value: 'all' }
+    ]
+  },
+  {
+    label: '合格证开具',
+    value: 'issue',
+    icon: 'ep:document',
+    dropdownOptions: [
+      { label: '本机构合格证开具', value: 'own' },
+      { label: '辖区内合格证开具', value: 'area' }
+    ]
+  },
+  {
+    label: '合格证收证',
+    value: 'verify',
+    icon: 'ep:document-checked',
+    dropdownOptions: [
+      { label: '本机构合格证收取', value: 'own' },
+      { label: '辖区内合格证收取', value: 'area' }
+    ]
+  },
+  {
+    label: '建档备案',
+    value: 'filing',
+    icon: 'ep:folder',
+    dropdownOptions: [
+      { label: '本机构建档备案', value: 'own' },
+      { label: '辖区内建档备案', value: 'area' }
+    ]
+  }
 ]
+
+const handleTabChange = (tabValue: string) => {
+  currentTab.value = tabValue
+}
+
+const handleDropdownCommand = (tabValue: string) => {
+  currentTab.value = tabValue
+}
 
 const initTab = () => {
   if (route.query.tab) {
@@ -82,7 +158,7 @@ watch(
 /* 顶部 Tabs */
 .stat-tabs-wrapper {
   background-color: #fff;
-  padding: 0 32px;
+  padding: 0 28px;
   border-bottom: 1px solid #f0f2f5;
   position: sticky;
   top: 0;
@@ -92,14 +168,22 @@ watch(
 .stat-tabs {
   display: flex;
   align-items: center;
-  gap: 40px;
+  gap: 36px;
+}
+
+.tab-dropdown {
+  display: inline-flex;
+}
+
+.tab-dropdown :deep(.el-tooltip__trigger) {
+  outline: none;
 }
 
 .tab-item {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 20px 0;
+  padding: 18px 0;
   cursor: pointer;
   font-size: 15px;
   color: #8c8c8c;
@@ -111,16 +195,40 @@ watch(
     transition: transform 0.3s;
   }
 
+  .tab-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .tab-arrow {
+    color: currentColor;
+    opacity: 0.72;
+    transition:
+      opacity 0.2s ease,
+      transform 0.2s ease;
+  }
+
   &:hover {
     color: #00b3ed;
+
     .tab-icon {
       transform: translateY(-2px);
+    }
+
+    .tab-arrow {
+      opacity: 1;
+      transform: translateY(1px);
     }
   }
 
   &.active {
     color: #00b3ed;
     font-weight: 600;
+
+    .tab-arrow {
+      opacity: 1;
+    }
 
     &::after {
       content: '';
@@ -139,8 +247,8 @@ watch(
 .statistics-tab-body :deep(.stat-content) {
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  padding: 20px 32px 28px;
+  gap: 16px;
+  padding: 16px;
   background: #f5f8fb;
 }
 
@@ -149,7 +257,7 @@ watch(
 }
 
 .statistics-tab-body :deep(.card-section) {
-  padding: 24px;
+  padding: 20px;
   margin-bottom: 0;
   background: #fff;
   border: 1px solid #e7eef5;
@@ -161,7 +269,7 @@ watch(
   display: flex;
   align-items: center;
   min-height: 24px;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
   line-height: 24px;
 }
 
@@ -174,23 +282,23 @@ watch(
 }
 
 .statistics-tab-body :deep(.overview-cards) {
-  gap: 16px;
+  gap: 14px;
 }
 
 .statistics-tab-body :deep(.stat-card) {
-  min-height: 104px;
+  min-height: 96px;
   border-radius: 10px;
 }
 
 .statistics-tab-body :deep(.coverage-group) {
-  padding: 24px;
+  padding: 20px;
   border-radius: 10px;
 }
 
 .statistics-tab-body :deep(.result-filters) {
   gap: 12px;
-  padding: 16px;
-  margin-bottom: 20px;
+  padding: 14px;
+  margin-bottom: 16px;
   background: #f8fbfd;
   border: 1px solid #edf3f8;
   border-radius: 10px;
@@ -203,20 +311,20 @@ watch(
 
 .statistics-tab-body :deep(.chart-area-wrapper),
 .statistics-tab-body :deep(.chart-container) {
-  padding: 16px;
-  margin-bottom: 20px;
+  padding: 14px;
+  margin-bottom: 16px;
   background: #fbfdff;
   border: 1px solid #edf3f8;
   border-radius: 10px;
 }
 
 .statistics-tab-body :deep(.chart-header) {
-  margin-bottom: 16px;
+  margin-bottom: 14px;
 }
 
 .statistics-tab-body :deep(.charts-container) {
-  gap: 16px !important;
-  margin-bottom: 20px !important;
+  gap: 14px !important;
+  margin-bottom: 16px !important;
 }
 
 .statistics-tab-body :deep(.table-section) {
@@ -224,8 +332,8 @@ watch(
 }
 
 .statistics-tab-body :deep(.table-header) {
-  padding-bottom: 16px;
-  margin-bottom: 16px;
+  padding-bottom: 14px;
+  margin-bottom: 14px;
   border-bottom: 1px solid #edf3f8;
 }
 
@@ -234,8 +342,8 @@ watch(
 }
 
 .statistics-tab-body :deep(.pagination-container) {
-  padding-top: 16px;
-  margin-top: 16px;
+  padding-top: 14px;
+  margin-top: 14px;
   border-top: 1px solid #edf3f8;
 }
 
@@ -245,19 +353,19 @@ watch(
 
 .statistics-tab-body :deep(.risk-grid),
 .statistics-tab-body :deep(.bottom-grid) {
-  gap: 16px;
-  margin-bottom: 20px;
+  gap: 14px;
+  margin-bottom: 16px;
 }
 
 .statistics-tab-body :deep(.risk-card) {
-  padding: 20px;
+  padding: 18px;
   border-color: #e7eef5;
   border-radius: 12px;
 }
 
-@media (width <= 1360px) {
+@media (width <=1360px) {
   .statistics-tab-body :deep(.stat-content) {
-    padding: 20px 24px 28px;
+    padding: 16px 24px 24px;
   }
 }
 </style>

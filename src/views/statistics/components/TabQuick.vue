@@ -68,7 +68,7 @@
       </div>
 
       <!-- 图表区域 -->
-      <div class="charts-container" style="display: flex; gap: 20px; margin-bottom: 30px;">
+      <div class="charts-container" style="display: flex; gap: 14px; margin-bottom: 16px;">
         <div class="chart-area-wrapper" style="flex: 1; margin-bottom: 0;">
           <div class="chart-header">
             <div class="chart-legends">
@@ -497,7 +497,7 @@ $statistics-control-radius: 6px;
   font-size: 16px;
   font-weight: bold;
   color: #333;
-  margin-bottom: 20px;
+  margin-bottom: 14px;
 }
 
 /* 整体业务概况卡片 */
@@ -560,8 +560,8 @@ $statistics-control-radius: 6px;
 .result-filters {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  margin-bottom: 30px;
+  gap: 12px;
+  margin-bottom: 16px;
 
   .filter-row-top {
     display: flex;
@@ -639,7 +639,7 @@ $statistics-control-radius: 6px;
 
 /* 图表区域 */
 .chart-area-wrapper {
-  margin-bottom: 30px;
+  margin-bottom: 16px;
 }
 
 .chart-header {
@@ -647,7 +647,7 @@ $statistics-control-radius: 6px;
   justify-content: center;
   align-items: center;
   position: relative;
-  margin-bottom: 20px;
+  margin-bottom: 14px;
 
   .chart-y-title {
     position: absolute;
@@ -659,7 +659,7 @@ $statistics-control-radius: 6px;
 
   .chart-legends {
     display: flex;
-    gap: 20px;
+    gap: 14px;
   }
 
   .legend-item {
