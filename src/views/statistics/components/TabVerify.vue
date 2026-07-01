@@ -1,22 +1,11 @@
 <template>
   <div class="stat-content">
     <!-- 数据范围筛选 -->
-    <StatisticsRangeFilter
-      v-model:range-type="dateRangeType"
-      v-model:date-range="dateRange"
-      description="合格证收证统计周期"
-      @search="handleSearch"
-      @reset="handleReset"
-    >
+    <StatisticsRangeFilter v-model:range-type="dateRangeType" v-model:date-range="dateRange" description="合格证收证统计周期"
+      @search="handleSearch" @reset="handleReset">
       <template #extra>
-        <AreaCascader
-          v-model="areaIds"
-          placeholder="省/市/县"
-          checkStrictly
-          :root-area-code="userDeptAreaCode"
-          @select="handleAreaSelect"
-          @change="handleAreaChange"
-        />
+        <AreaCascader v-model="areaIds" placeholder="省/市/县" checkStrictly :root-area-code="userDeptAreaCode"
+          @select="handleAreaSelect" @change="handleAreaChange" />
       </template>
     </StatisticsRangeFilter>
 
@@ -35,7 +24,8 @@
           <div class="card-bg-icon">¥</div>
           <div class="card-info">
             <div class="card-title">收证主体量</div>
-            <div class="card-value">{{ formatNumber(overview.verificationSubjectCount) }} <span class="unit">个</span></div>
+            <div class="card-value">{{ formatNumber(overview.verificationSubjectCount) }} <span class="unit">个</span>
+            </div>
           </div>
         </div>
       </div>
@@ -44,7 +34,7 @@
     <!-- 合格证收证 -->
     <div class="card-section">
       <div class="section-title">合格证收证</div>
-      
+
       <!-- 第二层筛选 -->
       <div class="result-filters">
         <el-input v-model="filters.certNo" placeholder="合格证编号" class="filter-item input-item" />
@@ -57,9 +47,9 @@
           <el-option v-for="item in productCategoryOptions" :key="item.value" :label="item.label" :value="item.value" />
         </el-select>
         <el-input v-model="filters.origin" placeholder="产地" class="filter-item" clearable />
-        <el-button type="primary" class="export-btn" @click="handleSearch">查询</el-button>
-        <el-button class="export-btn plain-btn" @click="resetTableFilters">重置</el-button>
-        <el-button type="primary" class="export-btn" @click="handleExport">导出</el-button>
+        <div class="filter-actions">
+          <el-button type="primary" class="export-btn" @click="handleExport" :loading="exportLoading">导出</el-button>
+        </div>
       </div>
 
       <!-- 图表区域 -->
@@ -72,7 +62,8 @@
 
       <!-- 表格区域 -->
       <div class="table-container">
-        <el-table v-loading="loading" :data="tableData" style="width: 100%" border header-cell-class-name="custom-header" empty-text="暂无合格证收证记录">
+        <el-table v-loading="loading" :data="tableData" style="width: 100%" border
+          header-cell-class-name="custom-header" empty-text="暂无合格证收证记录">
           <el-table-column type="index" label="序号" width="60" align="center" />
           <el-table-column prop="certNo" label="合格证编号" align="center" min-width="160" />
           <el-table-column prop="source" label="合格证来源" align="center" width="120" />
@@ -82,17 +73,11 @@
           <el-table-column prop="subject" label="生产经营主体" align="center" min-width="200" show-overflow-tooltip />
           <el-table-column prop="time" label="收证时间" align="center" min-width="160" />
         </el-table>
-        
+
         <div class="pagination-container">
           <div class="total-text">合计：{{ total }}条</div>
-          <el-pagination
-            v-model:current-page="pageNo"
-            v-model:page-size="pageSize"
-            background
-            layout="prev, pager, next"
-            :total="total"
-            @current-change="loadTable"
-          />
+          <el-pagination v-model:current-page="pageNo" v-model:page-size="pageSize" background
+            layout="prev, pager, next" :total="total" @current-change="loadTable" />
         </div>
       </div>
     </div>
@@ -121,7 +106,8 @@ import {
   normalizePagedResult
 } from './statisticsData'
 import { useDict } from '@/hooks/web/useDict'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import download from '@/utils/download'
 
 const dateRangeType = ref('近一周')
 const dateRange = ref<string[]>([])
@@ -136,6 +122,7 @@ const overview = ref<DashboardCertificateOverviewRespVO>({})
 const trend = ref<CertificateServiceTrendRespVO>({})
 const tableData = ref<any[]>([])
 const loading = ref(false)
+const exportLoading = ref(false)
 const total = ref(0)
 const pageNo = ref(1)
 const pageSize = ref(10)
@@ -220,6 +207,11 @@ const loadDashboardData = async () => {
 const loadTable = async () => {
   loading.value = true
   try {
+    const createTime = queryParams.value.startDate && queryParams.value.endDate ? [
+      dayjs(queryParams.value.startDate).startOf('day').format('YYYY-MM-DD HH:mm:ss'),
+      dayjs(queryParams.value.endDate).endOf('day').format('YYYY-MM-DD HH:mm:ss')
+    ] : undefined
+
     const data = await CertificateApi.getCertificateVerificationPage({
       pageNo: pageNo.value,
       pageSize: pageSize.value,
@@ -228,8 +220,7 @@ const loadTable = async () => {
       productName: filters.productName || undefined,
       productCategory: filters.category || undefined,
       productionArea: filters.origin || undefined,
-      startDate: queryParams.value.startDate,
-      endDate: queryParams.value.endDate,
+      createTime,
       areaType: queryParams.value.areaType,
       areaCode: queryParams.value.areaCode
     })
@@ -276,7 +267,39 @@ const handleReset = () => {
 }
 
 const handleExport = () => {
-  ElMessage.info('当前统计页暂未提供导出接口')
+  try {
+    ElMessageBox.confirm('确定要导出所有合格证收证查验数据吗？', '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    }).then(async () => {
+      exportLoading.value = true
+      try {
+        const createTime = queryParams.value.startDate && queryParams.value.endDate ? [
+          dayjs(queryParams.value.startDate).startOf('day').format('YYYY-MM-DD HH:mm:ss'),
+          dayjs(queryParams.value.endDate).endOf('day').format('YYYY-MM-DD HH:mm:ss')
+        ] : undefined
+
+        const data = await CertificateApi.exportCertificateVerification({
+          certificateCode: filters.certNo || undefined,
+          certificateSource: filters.source,
+          productName: filters.productName || undefined,
+          productCategory: filters.category || undefined,
+          productionArea: filters.origin || undefined,
+          createTime,
+          areaType: queryParams.value.areaType,
+          areaCode: queryParams.value.areaCode
+        })
+        download.excel(data, '合格证收证记录.xls')
+      } catch (err) {
+        console.error('导出失败:', err)
+      } finally {
+        exportLoading.value = false
+      }
+    })
+  } catch (error) {
+    console.error('导出确认框异常:', error)
+  }
 }
 
 watch([dateRangeType, dateRange], () => {
@@ -351,7 +374,7 @@ onMounted(() => {
     display: flex;
     align-items: baseline;
     gap: 4px;
-    
+
     .unit {
       font-size: 16px;
       font-weight: normal;
@@ -375,18 +398,28 @@ onMounted(() => {
   align-items: center;
   gap: 12px;
   margin-bottom: 30px;
-  
+
   .filter-item {
     width: 140px;
   }
-  
+
   .input-item {
     width: 180px;
   }
-  
+
   .export-btn {
     background-color: #00B3ED;
     border-color: #00B3ED;
+  }
+
+  .filter-actions {
+    margin-left: auto;
+    display: flex;
+    gap: 12px;
+  }
+
+  :deep(.el-button + .el-button) {
+    margin-left: 0;
   }
 }
 
@@ -401,7 +434,7 @@ onMounted(() => {
   align-items: center;
   position: relative;
   margin-bottom: 20px;
-  
+
   .chart-y-title {
     position: absolute;
     left: 0;
@@ -444,7 +477,7 @@ onMounted(() => {
   flex-direction: column;
   justify-content: space-between;
   pointer-events: none;
-  
+
   .grid-line {
     width: 100%;
     height: 1px;
@@ -464,7 +497,7 @@ onMounted(() => {
 /* 表格区域 */
 .table-container {
   margin-top: 10px;
-  
+
   ::v-deep(.custom-header) {
     background-color: #f5f7fa !important;
     color: #333;
@@ -477,7 +510,7 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   margin-top: 20px;
-  
+
   .total-text {
     font-size: 14px;
     color: #333;

@@ -62,9 +62,7 @@
           <el-date-picker v-model="filters.date" type="daterange" range-separator="至" start-placeholder="开始日期"
             end-placeholder="结束日期" class="filter-item date-picker-large" />
           <div class="filter-actions">
-            <el-button type="primary" class="export-btn" @click="handleSearch">查询</el-button>
-            <el-button type="primary" class="export-btn" @click="resetResultFilters">重置</el-button>
-            <el-button type="primary" class="export-btn" @click="handleExport">导出</el-button>
+            <el-button type="primary" class="export-btn" @click="handleExport" :loading="exportLoading">导出</el-button>
           </div>
         </div>
       </div>
@@ -95,8 +93,8 @@
         <el-table v-loading="loading" :data="tableData" style="width: 100%" border
           header-cell-class-name="custom-header" empty-text="暂无快速检测记录">
           <el-table-column type="index" label="序号" width="60" align="center" />
-          <el-table-column prop="taskNo" label="任务编号" align="center" width="100" />
-          <el-table-column prop="taskName" label="任务名称" align="center" show-overflow-tooltip min-width="120" />
+          <el-table-column prop="recordCode" label="任务编号" align="center" width="100" />
+          <el-table-column prop="planName" label="任务名称" align="center" show-overflow-tooltip min-width="120" />
           <el-table-column prop="sampleNo" label="样品编号" align="center" width="120" />
           <el-table-column prop="sampleName" label="样品名称" align="center" width="80" />
           <el-table-column prop="category" label="产品分类" align="center" width="80" />
@@ -143,7 +141,9 @@ import {
   getUserDeptAreaParams,
   normalizePagedResult
 } from './statisticsData'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import download from '@/utils/download'
+import dayjs from 'dayjs'
 
 const route = useRoute()
 
@@ -171,6 +171,7 @@ const overview = ref<DashboardFastOverviewRespVO>({})
 const selfTrend = ref<FastSelfSampleTrendRespVO>({})
 const positiveTrend = ref<FastPositiveRateTrendRespVO>({})
 const loading = ref(false)
+const exportLoading = ref(false)
 const tableData = ref<any[]>([])
 const total = ref(0)
 const pageNo = ref(1)
@@ -195,15 +196,7 @@ const dashboardQueryParams = computed(() => ({
   ...getEffectiveAreaParams(areaParams)
 }))
 
-const tableRangeParams = computed(() => {
-  if (Array.isArray(filters.date) && filters.date.length === 2) {
-    return {
-      startDate: filters.date[0],
-      endDate: filters.date[1]
-    }
-  }
-  return dashboardQueryParams.value
-})
+
 
 const sampleTrendOption = computed(() => {
   const xAxis = selfTrend.value.xaxis?.length
@@ -285,8 +278,10 @@ const getResultLabel = (value: any) => {
 }
 
 const mapRecordRow = (item: any) => ({
-  taskNo: item.taskCode || item.task?.taskCode || (item.taskId ? String(item.taskId) : '--'),
-  taskName: item.taskName || item.task?.taskName || '--',
+  taskNo: item.taskCode || item.task?.taskCode || item.recordCode || '--',
+  taskName: item.taskName || item.task?.taskName || item.planName || '--',
+  recordCode: item.recordCode || '--',
+  planName: item.planName || '--',
   type: item.taskId ? '任务检测' : '自主检测',
   sampleNo: item.sampleCode || item.recordCode || '--',
   sampleName: item.productName || item.sampleName || '--',
@@ -318,19 +313,76 @@ const loadDashboardData = async () => {
   }
 }
 
-const buildTableQuery = () => ({
-  pageNo: pageNo.value,
-  pageSize: pageSize.value,
-  ...tableRangeParams.value,
-  ...getEffectiveAreaParams(areaParams),
-  recordCode: filters.keyword || undefined,
-  sampleName: filters.sample || undefined,
-  productCategory: filters.category || undefined,
-  detectionArea: filters.area || undefined,
-  detectionOrgName: filters.org || undefined,
-  overallResult: filters.result !== '' ? filters.result : undefined,
-  selfDetection: filters.type === '1' ? 'true' : filters.type === '2' ? 'false' : undefined
-})
+const buildTableQuery = () => {
+  let rawStartDate: any = undefined
+  let rawEndDate: any = undefined
+
+  if (Array.isArray(filters.date) && filters.date.length === 2 && filters.date[0] && filters.date[1]) {
+    rawStartDate = filters.date[0]
+    rawEndDate = filters.date[1]
+  } else {
+    const dashboardParams = dashboardQueryParams.value
+    rawStartDate = dashboardParams.startDate
+    rawEndDate = dashboardParams.endDate
+  }
+
+  const detectionDate = rawStartDate && rawEndDate ? [
+    formatExportDate(rawStartDate, false),
+    formatExportDate(rawEndDate, true)
+  ] : undefined
+
+  return {
+    pageNo: pageNo.value,
+    pageSize: pageSize.value,
+    ...getEffectiveAreaParams(areaParams),
+    recordCode: filters.keyword || undefined,
+    sampleName: filters.sample || undefined,
+    productCategory: filters.category || undefined,
+    detectionArea: filters.area || undefined,
+    detectionOrgName: filters.org || undefined,
+    overallResult: filters.result !== '' ? filters.result : undefined,
+    selfDetection: filters.type === '1' ? 'true' : filters.type === '2' ? 'false' : undefined,
+    detectionDate
+  }
+}
+
+const formatExportDate = (dateVal: any, isEnd: boolean) => {
+  if (!dateVal) return undefined
+  const d = dayjs(dateVal)
+  if (!d.isValid()) return undefined
+  return isEnd ? d.endOf('day').format('YYYY-MM-DD HH:mm:ss') : d.startOf('day').format('YYYY-MM-DD HH:mm:ss')
+}
+
+const buildExportParams = () => {
+  let rawStartDate: any = undefined
+  let rawEndDate: any = undefined
+
+  if (Array.isArray(filters.date) && filters.date.length === 2 && filters.date[0] && filters.date[1]) {
+    rawStartDate = filters.date[0]
+    rawEndDate = filters.date[1]
+  } else {
+    const dashboardParams = dashboardQueryParams.value
+    rawStartDate = dashboardParams.startDate
+    rawEndDate = dashboardParams.endDate
+  }
+
+  const detectionDate = rawStartDate && rawEndDate ? [
+    formatExportDate(rawStartDate, false),
+    formatExportDate(rawEndDate, true)
+  ] : undefined
+
+  return {
+    ...getEffectiveAreaParams(areaParams),
+    recordCode: filters.keyword || undefined,
+    sampleName: filters.sample || undefined,
+    productCategory: filters.category || undefined,
+    detectionArea: filters.area || undefined,
+    detectionOrgName: filters.org || undefined,
+    overallResult: filters.result !== '' ? filters.result : undefined,
+    selfDetection: filters.type === '1' ? 'true' : filters.type === '2' ? 'false' : undefined,
+    detectionDate
+  }
+}
 
 const loadTable = async () => {
   loading.value = true
@@ -381,8 +433,26 @@ const handleReset = () => {
   resetResultFilters()
 }
 
-const handleExport = () => {
-  ElMessage.info('当前统计页暂未提供导出接口')
+const handleExport = async () => {
+  try {
+    await ElMessageBox.confirm('确定要导出快速检测记录吗？', '导出确认', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+    exportLoading.value = true
+    const params = buildExportParams()
+    const data = await DetectionRecordApi.exportDetectionRecord(params)
+    download.excel(data, '快速检测记录.xls')
+    ElMessage.success('导出成功')
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('导出快速检测记录失败：', error)
+      ElMessage.error('导出失败')
+    }
+  } finally {
+    exportLoading.value = false
+  }
 }
 
 watch([dateRangeType, dateRange], () => {

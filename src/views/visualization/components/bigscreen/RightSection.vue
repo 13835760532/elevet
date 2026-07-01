@@ -15,7 +15,9 @@
           <thead>
             <tr>
               <th>排名</th>
-              <th>集中地区</th>
+              <th>地区</th>
+              <th>阳性量↓</th>
+              <th>阳性率↓</th>
             </tr>
           </thead>
           <tbody>
@@ -27,6 +29,8 @@
                 </template>
               </td>
               <td>{{ item.areaName }}</td>
+              <td>{{ item.isEmpty ? '' : item.positiveCount }}</td>
+              <td>{{ formatRateText(item) }}</td>
             </tr>
           </tbody>
         </table>
@@ -97,6 +101,9 @@ const currentRankData = computed(() => {
   const rows = rankList.value.map((item, index) => ({
     rank: item.rank || index + 1,
     areaName: formatRankAreaName(item),
+    positiveCount: item.positiveCount !== undefined && item.positiveCount !== null ? item.positiveCount : 0,
+    positiveRate: item.positiveRate !== undefined && item.positiveRate !== null ? item.positiveRate : 0,
+    detectionCount: item.detectionCount !== undefined && item.detectionCount !== null ? item.detectionCount : 0,
     isEmpty: false
   }))
 
@@ -105,11 +112,21 @@ const currentRankData = computed(() => {
     result.push({
       rank: i + 1,
       areaName: '',
+      positiveCount: 0,
+      positiveRate: 0,
+      detectionCount: 0,
       isEmpty: true
     })
   }
   return result
 })
+
+const formatRateText = (item: any) => {
+  if (item.isEmpty) return ''
+  const rate = Number(item.positiveRate || 0)
+  const rateStr = Number.isInteger(rate) ? String(rate) : rate.toFixed(1)
+  return `${rateStr}% (${item.positiveCount}/${item.detectionCount})`
+}
 
 const displayProjectRiskList = computed(() => {
   const rows = projectRiskList.value.slice(0, 10)
@@ -414,7 +431,12 @@ onUnmounted(() => {
 
   th:first-child,
   td:first-child {
-    width: 120px;
+    width: 60px;
+  }
+
+  th:nth-child(4),
+  td:nth-child(4) {
+    width: 130px;
   }
 }
 

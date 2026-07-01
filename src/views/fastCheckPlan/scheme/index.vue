@@ -211,8 +211,7 @@ const getList = async () => {
     }
     // 关键词搜索：同时传入 planCode 和 planName（后端会做 OR 查询，或根据实际逻辑处理）
     if (queryParams.keyword) {
-      params.planCode = queryParams.keyword
-      params.planName = queryParams.keyword
+      params.keyword = queryParams.keyword
     }
     // 目标品种
     if (queryParams.targetCategory) {

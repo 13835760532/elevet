@@ -78,10 +78,11 @@
           <span class="t-divider">|</span>
           <span class="t-tab" :class="{ active: activeTab === 'result' }" @click="activeTab = 'result'">检测结果</span>
         </div>
-        <el-button type="primary" class="export-btn" @click="handleExport">导出</el-button>
+        <el-button type="primary" class="export-btn" @click="handleExport" :loading="exportLoading">导出</el-button>
       </div>
       <div class="table-container">
-        <el-table v-if="activeTab === 'task'" v-loading="loading" :data="filteredTableData" style="width: 100%" empty-text="暂无任务检测分析数据">
+        <el-table v-if="activeTab === 'task'" v-loading="loading" :data="filteredTableData" style="width: 100%"
+          empty-text="暂无任务检测分析数据">
           <el-table-column type="index" label="序号" width="80" align="center" />
           <el-table-column prop="taskNo" label="任务编号" align="center" />
           <el-table-column prop="taskName" label="任务名称" align="center" show-overflow-tooltip />
@@ -93,23 +94,22 @@
 
         <!-- 检测结果筛选区 -->
         <div class="result-filters" v-if="activeTab === 'result'">
-          <el-input v-model="resultFilters.keyword" placeholder="任务名称/任务编号" class="filter-item input-item" clearable @change="loadResultPage" />
-          <el-input v-model="resultFilters.sample" placeholder="样品" class="filter-item input-item" clearable @change="loadResultPage" />
-          <el-select v-model="resultFilters.category" placeholder="产品分类" class="filter-item" clearable @change="loadResultPage">
-            <el-option v-for="item in productCategoryOptions" :key="item.value" :label="item.label" :value="item.value" />
+          <el-input v-model="resultFilters.keyword" placeholder="任务名称/任务编号" class="filter-item input-item" clearable
+            @change="loadResultPage" />
+          <el-input v-model="resultFilters.sample" placeholder="样品" class="filter-item input-item" clearable
+            @change="loadResultPage" />
+          <el-select v-model="resultFilters.category" placeholder="产品分类" class="filter-item" clearable
+            @change="loadResultPage">
+            <el-option v-for="item in productCategoryOptions" :key="item.value" :label="item.label"
+              :value="item.value" />
           </el-select>
-          <AreaCascader
-            v-model="resultFilters.area"
-            placeholder="检测地区"
-            checkStrictly
-            :root-area-code="userDeptAreaCode"
-            class="filter-item"
-            style="width: 150px"
-            @select="handleResultAreaSelect"
-            @change="handleResultAreaChange"
-          />
-          <el-select v-model="resultFilters.org" placeholder="检测机构" class="filter-item" clearable @change="loadResultPage"></el-select>
-          <el-select v-model="resultFilters.result" placeholder="检测结果" class="filter-item" clearable @change="loadResultPage">
+          <AreaCascader v-model="resultFilters.area" placeholder="检测地区" checkStrictly :root-area-code="userDeptAreaCode"
+            class="filter-item" style="width: 150px" @select="handleResultAreaSelect"
+            @change="handleResultAreaChange" />
+          <el-select v-model="resultFilters.org" placeholder="检测机构" class="filter-item" clearable
+            @change="loadResultPage"></el-select>
+          <el-select v-model="resultFilters.result" placeholder="检测结果" class="filter-item" clearable
+            @change="loadResultPage">
             <el-option label="阴性" :value="0" />
             <el-option label="阳性" :value="1" />
             <el-option label="结果异常" :value="2" />
@@ -118,13 +118,14 @@
 
         <!-- 检测结果趋势图 -->
         <div class="chart-container" v-if="activeTab === 'result' && trendOption">
-           <div class="chart-title">检测量</div>
-           <Echart :options="trendOption" height="320px" />
+          <div class="chart-title">检测量</div>
+          <Echart :options="trendOption" height="320px" />
         </div>
 
-        <el-table v-if="activeTab === 'result'" v-loading="resultLoading" :data="resultTableData" style="width: 100%" empty-text="暂无检测结果数据">
+        <el-table v-if="activeTab === 'result'" v-loading="resultLoading" :data="resultTableData" style="width: 100%"
+          empty-text="暂无检测结果数据">
           <el-table-column type="index" label="序号" width="60" align="center" />
-          <el-table-column prop="taskNo" label="任务编号" align="center" width="100" />
+          <el-table-column prop="recordCode" label="任务编号" align="center" width="100" />
           <el-table-column prop="taskName" label="任务名称" align="center" show-overflow-tooltip min-width="120" />
           <el-table-column prop="sampleNo" label="样品编号" align="center" width="120" />
           <el-table-column prop="sampleName" label="样品名称" align="center" width="80" />
@@ -156,6 +157,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
+import dayjs from 'dayjs'
 import StatisticsRangeFilter from './StatisticsRangeFilter.vue'
 import Echart from '@/components/Echart/src/Echart.vue'
 import AreaCascader from '@/components/AreaCascader/index.vue'
@@ -168,6 +170,7 @@ import {
   type TaskAnalysisRespVO
 } from '@/api/agri/dashboard/task'
 import * as DetectionRecordApi from '@/api/agri/detectionRecord'
+import * as DetectionTaskApi from '@/api/agri/detectionTask'
 import {
   buildRangeParams,
   formatNumber,
@@ -177,7 +180,8 @@ import {
   getUserDeptAreaParams,
   normalizePagedResult
 } from './statisticsData'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import download from '@/utils/download'
 
 const dateRangeType = ref('近一周')
 const dateRange = ref<string[]>([])
@@ -223,6 +227,7 @@ const resultTotal = ref(0)
 const resultPageNo = ref(1)
 const resultPageSize = ref(10)
 const resultLoading = ref(false)
+const exportLoading = ref(false)
 
 const userDeptAreaCode = computed(() => getUserDeptAreaParams().areaCode)
 const currentQueryParams = computed(() => ({
@@ -275,20 +280,57 @@ const loadTaskPage = async () => {
   }
 }
 
-const buildResultTableQuery = () => ({
-  pageNo: resultPageNo.value,
-  pageSize: resultPageSize.value,
-  ...currentQueryParams.value,
-  recordCode: resultFilters.value.keyword || undefined,
-  sampleName: resultFilters.value.sample || undefined,
-  productCategory: resultFilters.value.category || undefined,
-  detectionArea: typeof resultFilters.value.area === 'string' ? resultFilters.value.area : undefined,
-  areaType: resultFilters.value.areaType || currentQueryParams.value.areaType,
-  areaCode: resultFilters.value.areaCode || currentQueryParams.value.areaCode,
-  detectionOrgName: resultFilters.value.org || undefined,
-  overallResult: resultFilters.value.result !== '' ? resultFilters.value.result : undefined,
-  selfDetection: 'false'
-})
+const buildResultTableQuery = () => {
+  const queryParams = { ...currentQueryParams.value } as any
+  const detectionDate = queryParams.startDate && queryParams.endDate ? [
+    dayjs(queryParams.startDate).startOf('day').format('YYYY-MM-DD HH:mm:ss'),
+    dayjs(queryParams.endDate).endOf('day').format('YYYY-MM-DD HH:mm:ss')
+  ] : undefined
+
+  delete queryParams.startDate
+  delete queryParams.endDate
+
+  return {
+    pageNo: resultPageNo.value,
+    pageSize: resultPageSize.value,
+    ...queryParams,
+    recordCode: resultFilters.value.keyword || undefined,
+    sampleName: resultFilters.value.sample || undefined,
+    productCategory: resultFilters.value.category || undefined,
+    detectionArea: typeof resultFilters.value.area === 'string' ? resultFilters.value.area : undefined,
+    areaType: resultFilters.value.areaType || currentQueryParams.value.areaType,
+    areaCode: resultFilters.value.areaCode || currentQueryParams.value.areaCode,
+    detectionOrgName: resultFilters.value.org || undefined,
+    overallResult: resultFilters.value.result !== '' ? resultFilters.value.result : undefined,
+    selfDetection: 'false',
+    detectionDate
+  }
+}
+
+const buildResultExportQuery = () => {
+  const queryParams = { ...currentQueryParams.value } as any
+  const detectionDate = queryParams.startDate && queryParams.endDate ? [
+    dayjs(queryParams.startDate).startOf('day').format('YYYY-MM-DD HH:mm:ss'),
+    dayjs(queryParams.endDate).endOf('day').format('YYYY-MM-DD HH:mm:ss')
+  ] : undefined
+
+  delete queryParams.startDate
+  delete queryParams.endDate
+
+  return {
+    ...queryParams,
+    recordCode: resultFilters.value.keyword || undefined,
+    sampleName: resultFilters.value.sample || undefined,
+    productCategory: resultFilters.value.category || undefined,
+    detectionArea: typeof resultFilters.value.area === 'string' ? resultFilters.value.area : undefined,
+    areaType: resultFilters.value.areaType || currentQueryParams.value.areaType,
+    areaCode: resultFilters.value.areaCode || currentQueryParams.value.areaCode,
+    detectionOrgName: resultFilters.value.org || undefined,
+    overallResult: resultFilters.value.result !== '' ? resultFilters.value.result : undefined,
+    selfDetection: 'false',
+    detectionDate
+  }
+}
 
 const loadResultPage = async () => {
   resultLoading.value = true
@@ -391,8 +433,57 @@ const handleReset = () => {
   handleSearch()
 }
 
-const handleExport = () => {
-  ElMessage.info('当前统计页暂未提供导出接口')
+const handleExport = async () => {
+  if (activeTab.value === 'task') {
+    try {
+      await ElMessageBox.confirm('确定要导出检测任务数据吗？', '导出确认', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      })
+      exportLoading.value = true
+      const params: any = {
+        ...currentQueryParams.value,
+        taskName: keyword.value ? keyword.value.trim() : undefined
+      }
+      if (params.startDate) {
+        params.startDate = `${params.startDate} 00:00:00`
+      }
+      if (params.endDate) {
+        params.endDate = `${params.endDate} 23:59:59`
+      }
+      const data = await DetectionTaskApi.exportDetectionTask(params)
+      download.excel(data, '检测任务.xls')
+      ElMessage.success('导出成功')
+    } catch (error) {
+      if (error !== 'cancel') {
+        console.error('导出检测任务失败：', error)
+        ElMessage.error('导出失败')
+      }
+    } finally {
+      exportLoading.value = false
+    }
+  } else if (activeTab.value === 'result') {
+    try {
+      await ElMessageBox.confirm('确定要导出检测结果数据吗？', '导出确认', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      })
+      exportLoading.value = true
+      const params = buildResultExportQuery()
+      const data = await DetectionRecordApi.exportDetectionRecord(params)
+      download.excel(data, '检测结果.xls')
+      ElMessage.success('导出成功')
+    } catch (error) {
+      if (error !== 'cancel') {
+        console.error('导出检测结果失败：', error)
+        ElMessage.error('导出失败')
+      }
+    } finally {
+      exportLoading.value = false
+    }
+  }
 }
 
 watch([dateRangeType, dateRange], () => {
@@ -616,9 +707,10 @@ onMounted(() => {
   flex-wrap: wrap;
   gap: 12px;
   margin-bottom: 20px;
-  
+
   .filter-item {
     width: 140px;
+
     &.input-item {
       width: 160px;
     }
@@ -629,7 +721,7 @@ onMounted(() => {
   margin-bottom: 20px;
   background: #fff;
   padding: 10px 0;
-  
+
   .chart-title {
     font-size: 14px;
     color: #333;

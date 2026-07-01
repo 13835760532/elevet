@@ -4,14 +4,8 @@
     <StatisticsRangeFilter v-model:range-type="dateRangeType" v-model:date-range="dateRange" description="合格证统计周期"
       @search="handleSearch" @reset="handleReset">
       <template #extra>
-        <AreaCascader
-          v-model="areaIds"
-          placeholder="省/市/县"
-          checkStrictly
-          :root-area-code="userDeptAreaCode"
-          @select="handleAreaSelect"
-          @change="handleAreaChange"
-        />
+        <AreaCascader v-model="areaIds" placeholder="省/市/县" checkStrictly :root-area-code="userDeptAreaCode"
+          @select="handleAreaSelect" @change="handleAreaChange" />
       </template>
     </StatisticsRangeFilter>
 
@@ -54,8 +48,6 @@
         </el-select>
         <el-input v-model="filters.origin" placeholder="产地" class="filter-item" clearable />
         <div class="filter-actions">
-          <el-button type="primary" class="export-btn" @click="handleSearch">查询</el-button>
-          <el-button type="primary" class="export-btn" @click="resetTableFilters">重置</el-button>
           <el-button type="primary" class="export-btn" @click="handleExport">导出</el-button>
         </div>
       </div>
