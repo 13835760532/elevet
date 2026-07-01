@@ -124,7 +124,7 @@
                     <div class="table-wrapper">
                         <el-table :data="tableList" min-height="300" v-loading="loadingList" border="false">
                             <el-table-column label="序号" type="index" width="60" align="center" />
-                            <el-table-column label="样品编号" prop="sampleCode" width="140" align="center" />
+                            <el-table-column label="样品编号" prop="sampleCode" width="160" align="center" />
                             <el-table-column label="样品名称" prop="productName" width="100" align="center" />
                             <el-table-column label="样品来源" prop="sampleSource" width="110" align="center"
                                 show-overflow-tooltip />
@@ -139,7 +139,7 @@
                             <el-table-column label="抽检地区" prop="detectionArea" width="110" align="center" />
                             <el-table-column label="检测机构" prop="detectionOrgName" min-width="140"
                                 show-overflow-tooltip />
-                            <el-table-column label="检测时间" prop="testTime" width="100" align="center" />
+                            <el-table-column label="检测时间" prop="testTime" width="130" align="center" />
                             <el-table-column label="检测项目" prop="detectionItems" min-width="140" align="center"
                                 show-overflow-tooltip />
                             <el-table-column label="检测结果" prop="testResult" width="100" align="center" />
@@ -193,6 +193,7 @@ import { Search, QuestionFilled } from '@element-plus/icons-vue';
 import * as DetectionTaskApi from '@/api/agri/detectionTask';
 import * as DetectionRecordApi from '@/api/agri/detectionRecord';
 import * as DeptApi from '@/api/system/dept';
+import { formatDate } from '@/utils/formatTime';
 import { useDict } from '@/hooks/web/useDict';
 import download from '@/utils/download';
 import { useMessage } from '@/hooks/web/useMessage';
@@ -295,12 +296,12 @@ const getList = async () => {
 
         tableList.value = (data.list || []).map(item => {
             // 解析 AI JSON 时间
-            let time = item.detectionDate ? item.detectionDate.split(' ')[0] : '-';
+            let time = item.detectionDate ? formatDate(item.detectionDate, 'YYYY-MM-DD') : '-';
             if (item.aiRecognitionResult) {
                 try {
                     const aiParse = JSON.parse(item.aiRecognitionResult);
                     if (aiParse.timestamp) {
-                        time = aiParse.timestamp.split(' ')[0];
+                        time = formatDate(aiParse.timestamp, 'YYYY-MM-DD');
                     }
                 } catch (e) { }
             }

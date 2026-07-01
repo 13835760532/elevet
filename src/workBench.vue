@@ -522,7 +522,7 @@ const handleViewWarningDetail = (item: any) => {
   if (item.testTime) {
     dateStr = item.testTime.split(' ')[0]
   } else if (item.detectionDate) {
-    dateStr = item.detectionDate.split(' ')[0]
+    dateStr = dayjs(item.detectionDate).format('YYYY-MM-DD')
   }
 
   if (!dateStr) {

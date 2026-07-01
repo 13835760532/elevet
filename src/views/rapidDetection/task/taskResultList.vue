@@ -74,7 +74,7 @@
                     <el-table v-loading="loading" :data="tableList" border="false"
                         :header-cell-style="{ background: '#F8FAFC', color: '#475569', fontWeight: '500' }">
                         <el-table-column label="序号" type="index" width="60" align="center" />
-                        <el-table-column label="样品编号" prop="sampleCode" width="130" align="center" />
+                        <el-table-column label="样品编号" prop="sampleCode" width="160" align="center" />
                         <el-table-column label="样品名称" prop="productName" width="90" align="center" />
                         <el-table-column label="样品来源" prop="sampleSource" width="100" align="center"
                             show-overflow-tooltip />
@@ -92,7 +92,7 @@
                                 {{ scope.row.detectionOrgName || '-' }}
                             </template>
                         </el-table-column>
-                        <el-table-column label="检测时间" prop="testTime" width="100" align="center" />
+                        <el-table-column label="检测时间" prop="testTime" width="130" align="center" />
                         <el-table-column label="检测项目" prop="aiRecognitionResult" min-width="120" align="center"
                             show-overflow-tooltip />
                         <el-table-column label="检测结果" prop="overallResult" width="100" align="center">
@@ -151,6 +151,7 @@
 import { reactive, ref, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useDict } from '@/hooks/web/useDict';
+import { formatDate } from '@/utils/formatTime';
 import * as DetectionRecordApi from '@/api/agri/detectionRecord';
 import * as DetectionTaskApi from '@/api/agri/detectionTask';
 import AreaCascader from '@/components/AreaCascader/index.vue';
@@ -225,12 +226,12 @@ const getList = async () => {
                 try {
                     let parsed = JSON.parse(item.aiRecognitionResult)
                     item.aiRecognitionResult = (parsed.results || []).map((r: any) => r.codeName).join(', ');
-                    item.testTime = parsed.timestamp ? parsed.timestamp.split(' ')[0] : '-';
+                    item.testTime = parsed.timestamp ? formatDate(parsed.timestamp, 'YYYY-MM-DD') : '-';
                 } catch (e) {
-                    item.testTime = item.detectionDate ? item.detectionDate.split(' ')[0] : '-';
+                    item.testTime = item.detectionDate ? formatDate(item.detectionDate, 'YYYY-MM-DD') : '-';
                 }
             } else {
-                item.testTime = item.detectionDate ? item.detectionDate.split(' ')[0] : '-';
+                item.testTime = item.detectionDate ? formatDate(item.detectionDate, 'YYYY-MM-DD') : '-';
                 item.aiRecognitionResult = '-';
             }
 

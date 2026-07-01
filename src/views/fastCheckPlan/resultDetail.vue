@@ -166,6 +166,7 @@ import { ref, reactive, computed, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { ArrowDown } from '@element-plus/icons-vue';
 import * as DetectionTaskApi from '@/api/agri/detectionTask/index';
+import { formatDate } from '@/utils/formatTime';
 
 import imgYinXing from '@/assets/imgs/status/阴性.png';
 import imgYangXing from '@/assets/imgs/status/阳性.png';
@@ -236,7 +237,7 @@ const getDetail = async () => {
       detailData.sampleQuantity = res.sampleCount ? res.sampleCount + '个' : '--';
       
       detailData.resultStatus = res.status === 2 ? '阴性' : (res.status === 3 ? '阳性' : '--');
-      detailData.detectionDate = res.receiveTime ? res.receiveTime.substring(0, 10) : '--';
+      detailData.detectionDate = res.receiveTime ? formatDate(res.receiveTime, 'YYYY-MM-DD') : '--';
       
       // 处理检测项目列表
       if (res.detectionItems) {

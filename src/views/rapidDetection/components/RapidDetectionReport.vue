@@ -11,7 +11,7 @@
       <div class="top-fields">
         <p>报告编号：{{ data.recordCode || '--' }}</p>
         <p>样品名称：{{ data.sample?.sampleName || '--' }}</p>
-        <p>报告日期：{{ data.detectionDate || data.testDate ? (data.detectionDate || data.testDate).split(' ')[0] : '--' }}</p>
+        <p>报告日期：{{ data.detectionDate || data.testDate ? formatDate(data.detectionDate || data.testDate, 'YYYY-MM-DD') : '--' }}</p>
       </div>
       <div class="org-container">
         <div class="org-line">

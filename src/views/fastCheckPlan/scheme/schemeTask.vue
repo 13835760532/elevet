@@ -252,6 +252,7 @@ import * as DeptApi from '@/api/system/dept';
 import * as DetectionRecordApi from '@/api/agri/detectionRecord';
 import { useDict, DICT_TYPE } from '@/hooks/web/useDict';
 import download from '@/utils/download';
+import { formatDate } from '@/utils/formatTime';
 import DetectionProgress from '@/components/DetectionProgress/index.vue';
 import ProgressHistory from '@/components/ProgressHistory/index.vue';
 
@@ -623,7 +624,7 @@ const loadDetectionResults = async (params = {}) => {
             subject: item.subjectName || '--',
             region: item.detectionArea || '--',
             org: item.detectionOrgName || '--',
-            testTime: item.detectionDate ? item.detectionDate.substring(0, 10) : '--',
+            testTime: item.detectionDate ? formatDate(item.detectionDate, 'YYYY-MM-DD') : '--',
             result: item.overallResult === 0 ? '阴性' : (item.overallResult === 1 ? '阳性' : (item.overallResult === 2 ? '结果异常' : '--')),
             status: item.status === 1 ? '已检测' : (item.status === 0 ? '未检测' : '失败')
         }));
