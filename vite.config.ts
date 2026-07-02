@@ -31,7 +31,7 @@ export default ({command, mode}: ConfigEnv): UserConfig => {
             open: env.VITE_OPEN === 'true',
             proxy: {
               '/__geo_proxy': {
-                target: 'http://101.42.184.189:555',
+                target: 'https://yishizhijian.jikeyun.net',
                 ws: false,
                 changeOrigin: true,
                 rewrite: (path) => path.replace(/^\/__geo_proxy/, '')

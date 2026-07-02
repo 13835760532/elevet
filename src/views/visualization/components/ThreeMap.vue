@@ -119,7 +119,7 @@ type LabelItem = {
 
 const REMOTE_GEO_BASE_URL = import.meta.env.DEV
   ? '/__geo_proxy/assets/data/map/geo'
-  : 'http://101.42.184.189:555/assets/data/map/geo'
+  : '/assets/data/map/geo'
 const HOME_LEVEL: LevelState = {
   geoId: ''
 }
