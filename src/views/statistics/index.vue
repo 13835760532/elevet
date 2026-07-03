@@ -4,9 +4,17 @@
     <div class="stat-tabs-wrapper">
       <div class="stat-tabs">
         <template v-for="tab in tabs" :key="tab.value">
-          <el-dropdown v-if="tab.dropdownOptions?.length" class="tab-dropdown" trigger="hover" placement="bottom-start"
-            @command="handleDropdownCommand(tab.value)">
-            <div :class="['tab-item', { active: currentTab === tab.value }]" @click="handleTabChange(tab.value)">
+          <el-dropdown
+            v-if="tab.dropdownOptions?.length"
+            class="tab-dropdown"
+            trigger="hover"
+            placement="bottom-start"
+            @command="handleDropdownCommand(tab.value)"
+          >
+            <div
+              :class="['tab-item', { active: currentTab === tab.value }]"
+              @click="handleTabChange(tab.value)"
+            >
               <Icon :icon="tab.icon" :size="18" class="tab-icon" />
               <span class="tab-label">
                 {{ tab.label }}
@@ -15,13 +23,21 @@
             </div>
             <template #dropdown>
               <el-dropdown-menu>
-                <el-dropdown-item v-for="option in tab.dropdownOptions" :key="option.value" :command="option.value">
+                <el-dropdown-item
+                  v-for="option in tab.dropdownOptions"
+                  :key="option.value"
+                  :command="option.value"
+                >
                   {{ option.label }}
                 </el-dropdown-item>
               </el-dropdown-menu>
             </template>
           </el-dropdown>
-          <div v-else :class="['tab-item', { active: currentTab === tab.value }]" @click="handleTabChange(tab.value)">
+          <div
+            v-else
+            :class="['tab-item', { active: currentTab === tab.value }]"
+            @click="handleTabChange(tab.value)"
+          >
             <Icon :icon="tab.icon" :size="18" class="tab-icon" />
             <span>{{ tab.label }}</span>
           </div>
@@ -130,6 +146,10 @@ const initTab = () => {
     currentTab.value = route.query.tab as string
     return
   }
+  if (route.path.endsWith('/quick')) {
+    currentTab.value = 'quick'
+    return
+  }
   currentTab.value = 'all'
 }
 
@@ -138,7 +158,7 @@ onMounted(() => {
 })
 
 watch(
-  () => route.path,
+  () => [route.path, route.query.tab],
   () => {
     initTab()
   }

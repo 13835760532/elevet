@@ -1,6 +1,5 @@
 <template>
   <section class="left-section">
-    <BigScreenSelector label="年度快速检测总览" />
 
     <BigPanelCard title="快速检测概况" :bg-image="leftBg">
       <div class="subject-grid">
@@ -110,11 +109,11 @@ const subjectData = computed(() => [
 type CategoryDistributionResponse =
   | FastCategoryDistributionRespVO[]
   | {
-      list?: FastCategoryDistributionRespVO[]
-      rows?: FastCategoryDistributionRespVO[]
-      records?: FastCategoryDistributionRespVO[]
-      data?: FastCategoryDistributionRespVO[] | { list?: FastCategoryDistributionRespVO[] }
-    }
+    list?: FastCategoryDistributionRespVO[]
+    rows?: FastCategoryDistributionRespVO[]
+    records?: FastCategoryDistributionRespVO[]
+    data?: FastCategoryDistributionRespVO[] | { list?: FastCategoryDistributionRespVO[] }
+  }
 
 const normalizeCategoryDistribution = (data: CategoryDistributionResponse | null | undefined) => {
   if (Array.isArray(data)) return data
@@ -204,8 +203,8 @@ const categoryPieOption = computed(() => ({
   series: [
     {
       type: 'pie',
-      radius: ['50%', '62%'],
-      center: ['44%', '50%'],
+      radius: ['58%', '74%'],
+      center: ['50%', '54%'],
       silent: true,
       z: 0,
       label: { show: false },
@@ -227,8 +226,8 @@ const categoryPieOption = computed(() => ({
     },
     {
       type: 'pie',
-      radius: ['32%', '50%'],
-      center: ['44%', '50%'],
+      radius: ['38%', '58%'],
+      center: ['50%', '54%'],
       minAngle: 6,
       avoidLabelOverlap: true,
       z: 2,
@@ -304,7 +303,7 @@ onUnmounted(() => {
 <style scoped lang="scss">
 .left-section {
   display: grid;
-  grid-template-rows: auto 200px 200px minmax(0, 1fr);
+  grid-template-rows: 210px 210px minmax(0, 1fr);
   gap: 12px;
   height: 100%;
   min-height: 0;
@@ -537,26 +536,34 @@ onUnmounted(() => {
 
 .category-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 142px;
+  grid-template-columns: 220px 126px;
+  justify-content: center;
   align-items: center;
-  gap: 6px;
+  gap: 22px;
   height: 100%;
   min-height: 0;
-  padding: 0 24px 0 10px;
+  padding: 4px 22px 8px;
 }
 
 .pie-container {
+  justify-self: center;
+  align-self: center;
   min-width: 0;
-  height: 100%;
+  width: 220px;
+  height: 220px;
+  max-height: 100%;
   min-height: 0;
 }
 
 .category-legend {
   display: flex;
   flex-direction: column;
-  padding: 8px 0;
-  gap: 8px;
-  height: 100%;
+  justify-content: center;
+  align-self: center;
+  padding: 0;
+  gap: 10px;
+  height: auto;
+  max-height: 200px;
   min-height: 0;
   overflow-x: hidden;
   overflow-y: auto;

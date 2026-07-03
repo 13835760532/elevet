@@ -1,6 +1,5 @@
 <template>
   <section class="left-section">
-    <BigScreenSelector :label="selectorLabel" />
 
     <BigPanelCard title="合格证概况" :bg-image="leftBg">
       <div class="overview-grid">
@@ -23,7 +22,7 @@
     </BigPanelCard>
 
     <BigPanelCard title="合格证服务主体" :bg-image="leftBg">
-      <div class="subject-grid">
+      <div class="subject-grid" style="margin-top: 10px;">
         <div class="subject-item" v-for="(item, index) in subjectData" :key="item.label">
           <div class="item-inner">
             <p class="label">{{ item.label }}</p>
@@ -393,11 +392,12 @@ onUnmounted(() => {
 <style scoped lang="scss">
 .left-section {
   display: grid;
-  grid-template-rows:
-    42px 10px minmax(0, 1.18fr) 20px minmax(0, 0.79fr) 20px minmax(0, 1.03fr);
-  row-gap: 0;
+  grid-template-rows: 340px 260px minmax(0, 1fr);
+  gap: 12px;
+  align-content: start;
   height: 100%;
   min-height: 0;
+  overflow: hidden;
 
   :deep(.panel-card),
   :deep(.panel-body) {
@@ -445,21 +445,6 @@ onUnmounted(() => {
     color: #e0efef;
   }
 
-  > :nth-child(1) {
-    grid-row: 1;
-  }
-
-  > :nth-child(2) {
-    grid-row: 3;
-  }
-
-  > :nth-child(3) {
-    grid-row: 5;
-  }
-
-  > :nth-child(4) {
-    grid-row: 7;
-  }
 }
 
 .overview-grid {
@@ -717,7 +702,7 @@ onUnmounted(() => {
   gap: 8px;
   height: 100%;
   min-height: 0;
-  padding: 18px 20px 10px;
+  padding: 10px 20px 8px;
   background: url('@/assets/imgs/echarts/合格证/kjl_bg.png') no-repeat 0 0;
   background-size: 100% 100%;
 
@@ -750,11 +735,11 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  height: 142px;
+  height: 118px;
   min-height: 0;
   overflow-y: auto;
-  align-self: start;
-  margin-top: 42px;
+  align-self: end;
+  margin-bottom: 34px;
   padding-right: 0;
 
   &::-webkit-scrollbar {

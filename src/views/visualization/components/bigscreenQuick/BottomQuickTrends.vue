@@ -19,7 +19,6 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue';
-import echarts from '@/plugins/echarts';
 import { Echart } from '@/components/Echart';
 import BigPanelCard from '../bigscreen/BigPanelCard.vue';
 import bottomBg from '@/assets/imgs/echarts/检测任务/69.png';
@@ -45,14 +44,6 @@ const getAxisData = (axis?: string[]) =>
 const normalizeSeries = <T extends number>(list: T[] | undefined, length: number) =>
   Array.from({ length }, (_, index) => Number(list?.[index] || 0));
 const sumSeries = (list?: number[]) => (list || []).reduce((total, item) => total + Number(item || 0), 0);
-const estimatePositiveCount = (rates?: number[], totals?: number[], fallbackTotal = 0) => {
-  if (rates?.length && totals?.length) {
-    return Math.round(
-      rates.reduce((total, rate, index) => total + (Number(totals[index] || 0) * Number(rate || 0)) / 100, 0)
-    );
-  }
-  return Math.round((fallbackTotal * sumSeries(rates)) / Math.max(rates?.length || 0, 1) / 100);
-};
 const calcMax = (data: number[], emptyMax: number) => {
   const max = Math.max(...data, 0);
   if (!max) return emptyMax;
@@ -116,6 +107,9 @@ const positiveRateXAxis = computed(() => getAxisData(positiveRateTrend.value.xax
 const positiveRateData = computed(() =>
   normalizeSeries(positiveRateTrend.value.positiveRates, positiveRateXAxis.value.length)
 );
+const positiveDetectionData = computed(() =>
+  normalizeSeries(positiveRateTrend.value.detectionCounts, positiveRateXAxis.value.length)
+);
 const selfSampleXAxis = computed(() => getAxisData(selfSampleTrend.value.xaxis));
 const selfSampleData = computed(() =>
   normalizeSeries(selfSampleTrend.value.sampleCounts, selfSampleXAxis.value.length)
@@ -148,18 +142,11 @@ const leftTooltipFormatter = (params: any) => {
 
 const rightTooltipFormatter = (params: any) => {
   if (!params || params.length === 0) return '';
-  const dataIndex = params[0].dataIndex;
   const month = params[0].axisValue;
-
-  const positiveCounts = positiveRateTrend.value.positiveCounts || [];
-  const detectionCounts = positiveRateTrend.value.detectionCounts || [];
-
-  const posVal = positiveCounts[dataIndex] !== undefined ? positiveCounts[dataIndex] : '--';
-  const detVal = detectionCounts[dataIndex] !== undefined ? detectionCounts[dataIndex] : '--';
+  const val = params[0].value !== undefined ? params[0].value : '--';
 
   return `${month}<br/>` +
-         `<span style="display:inline-block;margin-right:4px;border-radius:10px;width:10px;height:10px;background-color:#ff4d4f;"></span>阳性数量：${posVal}项次<br/>` +
-         `<span style="display:inline-block;margin-right:4px;border-radius:10px;width:10px;height:10px;background-color:#4deaff;"></span>检测总量：${detVal}项次`;
+         `<span style="display:inline-block;margin-right:4px;border-radius:10px;width:10px;height:10px;background-color:#4deaff;"></span>自主检测样本量：${val}批次`;
 };
 
 const currentLeftTrendOption = computed(() =>
@@ -172,9 +159,9 @@ const currentLeftTrendOption = computed(() =>
       leftTooltipFormatter
     )
     : createTrendOption(
-      selfSampleXAxis.value,
-      selfSampleData.value,
-      calcMax(selfSampleData.value, 60000),
+      positiveRateXAxis.value,
+      positiveDetectionData.value,
+      calcMax(positiveDetectionData.value, 60000),
       undefined,
       leftTooltipFormatter
     )

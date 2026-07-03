@@ -1,6 +1,5 @@
 <template>
   <section class="left-section">
-    <BigScreenSelector label="年度检测任务总览" />
 
     <BigPanelCard title="接收任务概况" :bg-image="leftBg">
       <div class="summary-flex">
@@ -37,7 +36,7 @@
     <BigPanelCard title="接收检测产品品类" :bg-image="leftBg">
       <div class="category-layout">
         <div class="pie-container">
-          <Echart :options="categoryPieOption" height="230px" width="100%" />
+          <Echart :options="categoryPieOption" height="100%" width="100%" />
         </div>
         <div class="category-legend">
           <div class="legend-row" v-for="item in categoryItems" :key="item.name">
@@ -220,9 +219,10 @@ onUnmounted(() => {
 <style scoped lang="scss">
 .left-section {
   display: grid;
-  grid-template-rows: auto 200px 200px 1fr;
+  grid-template-rows: auto 200px minmax(0, 1fr);
   gap: 12px;
   height: 100%;
+  min-height: 0;
 }
 
 .summary-flex {

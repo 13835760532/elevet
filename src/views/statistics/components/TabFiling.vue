@@ -1,8 +1,13 @@
 <template>
   <div class="stat-content">
     <!-- 数据范围筛选 -->
-    <StatisticsRangeFilter v-model:range-type="dateRangeType" v-model:date-range="dateRange" description="建档备案统计周期"
-      @search="handleRangeSearch" @reset="handleRangeReset">
+    <StatisticsRangeFilter
+      v-model:range-type="dateRangeType"
+      v-model:date-range="dateRange"
+      description="建档备案统计周期"
+      @search="handleRangeSearch"
+      @reset="handleRangeReset"
+    >
       <template #extra>
         <AreaCascader
           v-model="areaIds"
@@ -22,15 +27,19 @@
         <div class="stat-card blue-card">
           <div class="card-bg-icon">¥</div>
           <div class="card-info">
-            <div class="card-title">样品档案量</div>
-            <div class="card-value">10,273 <span class="unit">↑</span></div>
+            <div class="card-title">产品档案量</div>
+            <div class="card-value">
+              {{ formatNumber(overview.productArchiveCount) }} <span class="unit">个</span>
+            </div>
           </div>
         </div>
         <div class="stat-card blue-card-light">
           <div class="card-bg-icon">¥</div>
           <div class="card-info">
             <div class="card-title">主体档案量 (生产经营企业或个人)</div>
-            <div class="card-value">10,273 <span class="unit">↑</span></div>
+            <div class="card-value">
+              {{ formatNumber(overview.subjectArchiveCount) }} <span class="unit">个</span>
+            </div>
           </div>
         </div>
       </div>
@@ -42,78 +51,138 @@
 
       <!-- 第二层筛选 -->
       <div class="result-filters">
-        <el-input v-model="filtersSubject.name" placeholder="主体名称" class="filter-item input-item" />
-        <el-select v-model="filtersSubject.filingType" placeholder="建档类型" class="filter-item" clearable>
-          <el-option v-for="dict in filingTypeOptions" :key="dict.value" :label="dict.label" :value="dict.value" />
+        <el-input
+          v-model="filtersSubject.name"
+          placeholder="主体名称"
+          class="filter-item input-item"
+          clearable
+        />
+        <el-select
+          v-model="filtersSubject.filingType"
+          placeholder="建档类型"
+          class="filter-item"
+          clearable
+        >
+          <el-option
+            v-for="dict in filingTypeOptions"
+            :key="String(dict.value)"
+            :label="dict.label"
+            :value="dict.value"
+          />
         </el-select>
-        <el-select v-model="filtersSubject.subjectType" placeholder="主体类型" class="filter-item" clearable>
-          <el-option v-for="dict in categoryOptions" :key="dict.value" :label="dict.label" :value="dict.value" />
+        <el-select
+          v-model="filtersSubject.subjectType"
+          placeholder="主体类型"
+          class="filter-item"
+          clearable
+        >
+          <el-option
+            v-for="dict in categoryOptions"
+            :key="String(dict.value)"
+            :label="dict.label"
+            :value="dict.value"
+          />
         </el-select>
         <AreaCascader
           v-model="filtersSubject.region"
           placeholder="所属地区"
           checkStrictly
           :root-area-code="userDeptAreaCode"
-          class="filter-item"
+          class="filter-item area-filter"
           @select="handleSubjectAreaSelect"
+          @change="handleSubjectAreaChange"
         />
-        <el-button type="primary" class="search-btn" @click="handleSubjectSearch">查询</el-button>
-        <el-button type="primary" class="export-btn" @click="handleSubjectExport">导出</el-button>
+        <div class="filter-actions">
+          <el-button class="reset-btn" @click="handleSubjectReset">重置</el-button>
+          <el-button type="primary" class="search-btn" @click="handleSubjectSearch">查询</el-button>
+          <el-button
+            type="primary"
+            class="export-btn"
+            :loading="subjectExportLoading"
+            @click="handleSubjectExport"
+          >
+            导出
+          </el-button>
+        </div>
       </div>
 
-      <!-- 图表区域 mock -->
-      <div class="chart-area-wrapper">
-        <div class="chart-header">
-          <span class="chart-y-title">主体数量</span>
+      <!-- 图表区域 -->
+      <div class="charts-container">
+        <div class="chart-area-wrapper">
+          <div class="chart-header">
+            <span class="chart-y-title">主体建档地区 TOP10</span>
+          </div>
+          <Echart :options="subjectAreaOption" height="320px" />
         </div>
-        <div class="svg-chart-container">
-          <div class="chart-y-axis">
-            <span>60</span><span>50</span><span>40</span><span>30</span><span>20</span><span>10</span><span>0</span>
+        <div class="chart-area-wrapper">
+          <div class="chart-header">
+            <span class="chart-y-title">主体类型占比</span>
           </div>
-          <div class="svg-wrapper">
-            <svg viewBox="0 0 1000 300" preserveAspectRatio="none" style="width: 100%; height: 300px;">
-              <path
-                d="M0,250 C100,200 200,150 250,50 C300,60 400,150 500,200 C600,180 700,220 800,220 C900,250 1000,220"
-                fill="none" stroke="#8D76FF" stroke-width="2"></path>
-              <!-- Add data points markers -->
-              <circle cx="0" cy="250" r="3" fill="#fff" stroke="#8D76FF" stroke-width="1.5" />
-              <circle cx="150" cy="180" r="3" fill="#fff" stroke="#8D76FF" stroke-width="1.5" />
-              <circle cx="250" cy="50" r="3" fill="#fff" stroke="#8D76FF" stroke-width="1.5" />
-              <circle cx="350" cy="100" r="3" fill="#fff" stroke="#8D76FF" stroke-width="1.5" />
-              <circle cx="450" cy="180" r="3" fill="#fff" stroke="#8D76FF" stroke-width="1.5" />
-              <circle cx="550" cy="190" r="3" fill="#fff" stroke="#8D76FF" stroke-width="1.5" />
-              <circle cx="650" cy="200" r="3" fill="#fff" stroke="#8D76FF" stroke-width="1.5" />
-              <circle cx="750" cy="220" r="3" fill="#fff" stroke="#8D76FF" stroke-width="1.5" />
-              <circle cx="850" cy="240" r="3" fill="#fff" stroke="#8D76FF" stroke-width="1.5" />
-              <circle cx="1000" cy="220" r="3" fill="#fff" stroke="#8D76FF" stroke-width="1.5" />
-            </svg>
-            <div class="chart-x-axis">
-              <span v-for="i in 12" :key="i">{{ i }}月</span>
-            </div>
-            <div class="chart-grid-lines">
-              <div class="grid-line" v-for="i in 6" :key="i"></div>
-            </div>
-          </div>
+          <Echart :options="subjectTypeOption" height="320px" />
         </div>
       </div>
 
       <!-- 表格区域 -->
       <div class="table-container">
-        <el-table :data="tableDataSubject" style="width: 100%" border header-cell-class-name="custom-header">
+        <el-table
+          v-loading="subjectLoading"
+          :data="tableDataSubject"
+          style="width: 100%"
+          border
+          header-cell-class-name="custom-header"
+          empty-text="暂无主体建档记录"
+        >
           <el-table-column type="index" label="序号" width="60" align="center" />
-          <el-table-column prop="code" label="主体代码 (企业信用代码/身份证)" align="center" min-width="180" show-overflow-tooltip />
-          <el-table-column prop="name" label="主体名称" align="center" min-width="120" />
+          <el-table-column
+            prop="code"
+            label="主体代码 (企业信用代码/身份证)"
+            align="center"
+            min-width="180"
+            show-overflow-tooltip
+          />
+          <el-table-column
+            prop="name"
+            label="主体名称"
+            align="center"
+            min-width="120"
+            show-overflow-tooltip
+          />
           <el-table-column prop="filingType" label="建档类型" align="center" width="120" />
           <el-table-column prop="subjectType" label="主体类型" align="center" width="100" />
-          <el-table-column prop="mainProduct" label="主营产品" align="center" min-width="140" show-overflow-tooltip />
-          <el-table-column prop="region" label="所属地区" align="center" min-width="160" show-overflow-tooltip />
+          <el-table-column
+            prop="mainProduct"
+            label="主营产品"
+            align="center"
+            min-width="140"
+            show-overflow-tooltip
+          />
+          <el-table-column
+            prop="region"
+            label="所属地区"
+            align="center"
+            min-width="160"
+            show-overflow-tooltip
+          />
           <el-table-column prop="createTime" label="创建时间" align="center" width="120" />
-          <el-table-column prop="createOrg" label="创建机构" align="center" min-width="140" show-overflow-tooltip />
+          <el-table-column
+            prop="createOrg"
+            label="创建机构"
+            align="center"
+            min-width="140"
+            show-overflow-tooltip
+          />
         </el-table>
 
         <div class="pagination-container">
-          <div class="total-text">合计：1891条</div>
-          <el-pagination background layout="prev, pager, next" :total="1891" :page-size="10" />
+          <div class="total-text">合计：{{ subjectTotal }}条</div>
+          <el-pagination
+            v-model:current-page="subjectPageNo"
+            v-model:page-size="subjectPageSize"
+            background
+            layout="prev, pager, next"
+            :total="subjectTotal"
+            @current-change="loadSubjectTable"
+          />
         </div>
       </div>
     </div>
@@ -122,130 +191,666 @@
     <div class="card-section">
       <div class="section-title">产品建档</div>
 
-      <!-- 图表区域 mock -->
-      <div class="chart-area-wrapper">
-        <div class="chart-header">
-          <span class="chart-y-title">产品数量</span>
+      <!-- 第二层筛选 -->
+      <div class="result-filters">
+        <el-input
+          v-model="filtersProduct.productCode"
+          placeholder="产品编码"
+          class="filter-item input-item"
+          clearable
+        />
+        <el-input
+          v-model="filtersProduct.productName"
+          placeholder="产品名称"
+          class="filter-item"
+          clearable
+        />
+        <el-input
+          v-model="filtersProduct.subjectName"
+          placeholder="主体名称"
+          class="filter-item"
+          clearable
+        />
+        <AreaCascader
+          v-model="filtersProduct.region"
+          placeholder="产品产地"
+          checkStrictly
+          :root-area-code="userDeptAreaCode"
+          class="filter-item area-filter"
+          @select="handleProductAreaSelect"
+          @change="handleProductAreaChange"
+        />
+        <div class="filter-actions">
+          <el-button class="reset-btn" @click="handleProductReset">重置</el-button>
+          <el-button type="primary" class="search-btn" @click="handleProductSearch">查询</el-button>
+          <el-button
+            type="primary"
+            class="export-btn"
+            :loading="productExportLoading"
+            @click="handleProductExport"
+          >
+            导出
+          </el-button>
         </div>
-        <div class="svg-chart-container">
-          <div class="chart-y-axis">
-            <span>60</span><span>50</span><span>40</span><span>30</span><span>20</span><span>10</span><span>0</span>
+      </div>
+
+      <!-- 图表区域 -->
+      <div class="charts-container">
+        <div class="chart-area-wrapper">
+          <div class="chart-header">
+            <span class="chart-y-title">产品建档趋势</span>
           </div>
-          <div class="svg-wrapper">
-            <svg viewBox="0 0 1000 300" preserveAspectRatio="none" style="width: 100%; height: 300px;">
-              <path
-                d="M0,250 C100,200 200,150 250,50 C300,60 400,150 500,200 C600,180 700,220 800,220 C900,250 1000,220"
-                fill="none" stroke="#8D76FF" stroke-width="2"></path>
-              <!-- Add data points markers -->
-              <circle cx="0" cy="250" r="3" fill="#fff" stroke="#8D76FF" stroke-width="1.5" />
-              <circle cx="150" cy="180" r="3" fill="#fff" stroke="#8D76FF" stroke-width="1.5" />
-              <circle cx="250" cy="50" r="3" fill="#fff" stroke="#8D76FF" stroke-width="1.5" />
-              <circle cx="350" cy="100" r="3" fill="#fff" stroke="#8D76FF" stroke-width="1.5" />
-              <circle cx="450" cy="180" r="3" fill="#fff" stroke="#8D76FF" stroke-width="1.5" />
-              <circle cx="550" cy="190" r="3" fill="#fff" stroke="#8D76FF" stroke-width="1.5" />
-              <circle cx="650" cy="200" r="3" fill="#fff" stroke="#8D76FF" stroke-width="1.5" />
-              <circle cx="750" cy="220" r="3" fill="#fff" stroke="#8D76FF" stroke-width="1.5" />
-              <circle cx="850" cy="240" r="3" fill="#fff" stroke="#8D76FF" stroke-width="1.5" />
-              <circle cx="1000" cy="220" r="3" fill="#fff" stroke="#8D76FF" stroke-width="1.5" />
-            </svg>
-            <div class="chart-x-axis">
-              <span v-for="i in 12" :key="i">{{ i }}月</span>
-            </div>
-            <div class="chart-grid-lines">
-              <div class="grid-line" v-for="i in 6" :key="i"></div>
-            </div>
+          <Echart :options="productTrendOption" height="320px" />
+        </div>
+        <div class="chart-area-wrapper">
+          <div class="chart-header">
+            <span class="chart-y-title">产品品类分布</span>
           </div>
+          <Echart :options="productCategoryOption" height="320px" />
         </div>
       </div>
 
       <!-- 表格区域 -->
       <div class="table-container">
-        <el-table :data="tableDataProduct" style="width: 100%" border header-cell-class-name="custom-header">
+        <el-table
+          v-loading="productLoading"
+          :data="tableDataProduct"
+          style="width: 100%"
+          border
+          header-cell-class-name="custom-header"
+          empty-text="暂无产品建档记录"
+        >
           <el-table-column type="index" label="序号" width="60" align="center" />
-          <el-table-column prop="code" label="产品编码" align="center" min-width="160" show-overflow-tooltip />
-          <el-table-column prop="name" label="产品名称" align="center" width="100" />
+          <el-table-column
+            prop="code"
+            label="产品编码"
+            align="center"
+            min-width="160"
+            show-overflow-tooltip
+          />
+          <el-table-column
+            prop="name"
+            label="产品名称"
+            align="center"
+            width="100"
+            show-overflow-tooltip
+          />
           <el-table-column prop="category" label="产品类别" align="center" width="100" />
-          <el-table-column prop="origin" label="产品产地" align="center" width="100" />
-          <el-table-column prop="subjectName" label="主体名称" align="center" min-width="160" show-overflow-tooltip />
+          <el-table-column
+            prop="origin"
+            label="产品产地"
+            align="center"
+            width="120"
+            show-overflow-tooltip
+          />
+          <el-table-column
+            prop="subjectName"
+            label="主体名称"
+            align="center"
+            min-width="160"
+            show-overflow-tooltip
+          />
           <el-table-column prop="filingDate" label="建档日期" align="center" width="120" />
-          <el-table-column prop="createOrg" label="创建机构" align="center" min-width="140" show-overflow-tooltip />
+          <el-table-column
+            prop="createOrg"
+            label="创建机构"
+            align="center"
+            min-width="140"
+            show-overflow-tooltip
+          />
         </el-table>
 
+        <div class="pagination-container">
+          <div class="total-text">合计：{{ productTotal }}条</div>
+          <el-pagination
+            v-model:current-page="productPageNo"
+            v-model:page-size="productPageSize"
+            background
+            layout="prev, pager, next"
+            :total="productTotal"
+            @current-change="loadProductTable"
+          />
+        </div>
       </div>
     </div>
-
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, reactive } from 'vue'
-import { ElMessage } from 'element-plus'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
+import dayjs from 'dayjs'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import StatisticsRangeFilter from './StatisticsRangeFilter.vue'
 import AreaCascader from '@/components/AreaCascader/index.vue'
-import { getSelectedAreaParams, getUserDeptAreaParams } from './statisticsData'
+import { Echart } from '@/components/Echart'
+import {
+  getArchiveOverview,
+  getArchiveProductCategoryDistribution,
+  getArchiveProductTrend,
+  getArchiveSubjectAreaTop10,
+  getArchiveSubjectTypeDistribution,
+  type DashboardArchiveOverviewRespVO,
+  type DashboardArchiveProductCategoryRespVO,
+  type DashboardArchiveProductTrendRespVO,
+  type DashboardArchiveSubjectAreaRespVO,
+  type DashboardArchiveSubjectTypeRespVO
+} from '@/api/agri/dashboard/archive'
+import * as ProductApi from '@/api/agri/product'
+import * as SubjectApi from '@/api/agri/subject'
+import {
+  buildRangeParams,
+  formatNumber,
+  getEffectiveAreaParams,
+  getSelectedAreaParams,
+  getUserDeptAreaParams,
+  normalizePagedResult
+} from './statisticsData'
 import { useDict } from '@/hooks/web/useDict'
-
-const { options: categoryOptions } = useDict('agri_subject_category', 'str')
-const { options: filingTypeOptions } = useDict('agri_filing_type', 'int')
+import download from '@/utils/download'
 
 const dateRangeType = ref('近一周')
 const dateRange = ref<string[]>([])
 const areaIds = ref<string[]>([])
-const userDeptAreaCode = computed(() => getUserDeptAreaParams().areaCode)
+const areaParams = reactive({
+  provinceName: '',
+  cityName: '',
+  districtName: '',
+  areaType: '',
+  areaCode: ''
+})
+const overview = ref<DashboardArchiveOverviewRespVO>({})
+const productTrend = ref<DashboardArchiveProductTrendRespVO>({})
+const productCategoryDistribution = ref<DashboardArchiveProductCategoryRespVO[]>([])
+const subjectTypeDistribution = ref<DashboardArchiveSubjectTypeRespVO[]>([])
+const subjectAreaTop = ref<DashboardArchiveSubjectAreaRespVO[]>([])
 
-const handleAreaSelect = (area: any) => {
-  getSelectedAreaParams(area)
-}
+const subjectLoading = ref(false)
+const productLoading = ref(false)
+const subjectExportLoading = ref(false)
+const productExportLoading = ref(false)
+const tableDataSubject = ref<any[]>([])
+const tableDataProduct = ref<any[]>([])
+const subjectTotal = ref(0)
+const productTotal = ref(0)
+const subjectPageNo = ref(1)
+const subjectPageSize = ref(10)
+const productPageNo = ref(1)
+const productPageSize = ref(10)
 
-const handleAreaChange = () => {}
+const { options: categoryOptions, getLabel: getCategoryLabel } = useDict(
+  'agri_subject_category',
+  'str'
+)
+const { options: filingTypeOptions, getLabel: getFilingTypeLabel } = useDict(
+  'agri_filing_type',
+  'int'
+)
+const { getLabel: getProductCategoryLabel } = useDict('agri_product_category', 'str')
 
 const filtersSubject = reactive({
   name: '',
-  filingType: undefined,
-  subjectType: undefined,
-  region: ''
+  filingType: undefined as number | string | undefined,
+  subjectType: undefined as number | string | undefined,
+  region: [] as string[]
 })
 
-const handleSubjectAreaSelect = (area: any) => {
-  filtersSubject.region = [area.province, area.city, area.district].filter(Boolean).join('-')
+const filtersProduct = reactive({
+  productCode: '',
+  productName: '',
+  subjectName: '',
+  region: [] as string[]
+})
+
+const subjectAreaNames = ref<string[]>([])
+const productAreaNames = ref<string[]>([])
+
+const userDeptAreaCode = computed(() => getUserDeptAreaParams().areaCode)
+
+const dashboardQueryParams = computed(() => ({
+  ...buildRangeParams(dateRangeType.value, dateRange.value),
+  ...getEffectiveAreaParams(areaParams)
+}))
+
+const globalAreaNames = computed(() =>
+  [areaParams.provinceName, areaParams.cityName, areaParams.districtName].filter(Boolean)
+)
+
+const archiveProductPalette = [
+  '#00B3ED',
+  '#5ECDE3',
+  '#7ED7C1',
+  '#9BD8B4',
+  '#B8DFC9',
+  '#8ECFE8',
+  '#A8DADC',
+  '#D5E8D4'
+]
+const archiveSubjectPalette = ['#00B3ED', '#7ED7C1']
+
+const subjectAreaOption = computed(() => {
+  const list = [...subjectAreaTop.value].sort((a, b) => Number(a.rank || 0) - Number(b.rank || 0))
+  return {
+    grid: { top: 24, right: 24, bottom: 48, left: 48 },
+    tooltip: { trigger: 'axis' },
+    xAxis: {
+      type: 'category',
+      data: list.map(
+        (item) => item.areaName || item.districtName || item.cityName || item.provinceName || '--'
+      ),
+      axisLabel: { interval: 0, rotate: 24 }
+    },
+    yAxis: { type: 'value', name: '主体数' },
+    series: [
+      {
+        name: '主体数',
+        type: 'bar',
+        barMaxWidth: 30,
+        data: list.map((item) => Number(item.count || 0)),
+        itemStyle: { color: '#00B3ED' }
+      }
+    ]
+  }
+})
+
+const subjectTypeOption = computed(() => ({
+  color: archiveSubjectPalette,
+  tooltip: { trigger: 'item' },
+  legend: { bottom: 0 },
+  series: [
+    {
+      name: '主体类型',
+      type: 'pie',
+      radius: ['42%', '68%'],
+      center: ['50%', '45%'],
+      data: subjectTypeDistribution.value.map((item, index) => ({
+        name: item.typeName || (item.type !== undefined ? getFilingTypeText(item.type) : '--'),
+        value: Number(item.count || 0),
+        itemStyle: { color: archiveSubjectPalette[index % archiveSubjectPalette.length] },
+        label: { color: archiveSubjectPalette[index % archiveSubjectPalette.length] },
+        labelLine: {
+          lineStyle: { color: archiveSubjectPalette[index % archiveSubjectPalette.length] }
+        }
+      })),
+      itemStyle: { borderColor: '#fff', borderWidth: 2 }
+    }
+  ]
+}))
+
+const productTrendOption = computed(() => ({
+  grid: { top: 24, right: 32, bottom: 36, left: 48 },
+  tooltip: { trigger: 'axis' },
+  xAxis: { type: 'category', boundaryGap: false, data: productTrend.value.xaxis || [] },
+  yAxis: { type: 'value', name: '产品数' },
+  series: [
+    {
+      name: '产品建档数',
+      type: 'line',
+      smooth: true,
+      data: productTrend.value.counts || [],
+      areaStyle: { opacity: 0.12 },
+      itemStyle: { color: '#8D76FF' }
+    }
+  ]
+}))
+
+const productCategoryOption = computed(() => ({
+  color: archiveProductPalette,
+  tooltip: { trigger: 'item' },
+  legend: { bottom: 0 },
+  series: [
+    {
+      name: '产品品类',
+      type: 'pie',
+      radius: ['42%', '68%'],
+      center: ['50%', '45%'],
+      data: productCategoryDistribution.value.map((item, index) => ({
+        name: getProductCategoryText(item.category),
+        value: Number(item.count || 0),
+        itemStyle: { color: archiveProductPalette[index % archiveProductPalette.length] },
+        label: { color: archiveProductPalette[index % archiveProductPalette.length] },
+        labelLine: {
+          lineStyle: { color: archiveProductPalette[index % archiveProductPalette.length] }
+        }
+      })),
+      itemStyle: { borderColor: '#fff', borderWidth: 2 }
+    }
+  ]
+}))
+
+const isEmptyValue = (value: any) => value === undefined || value === null || value === ''
+
+const formatDateText = (value: any) => {
+  if (!value) return '--'
+  const date = dayjs(value)
+  return date.isValid() ? date.format('YYYY-MM-DD') : String(value).slice(0, 10)
 }
 
-// 模拟事件响应
+const formatAreaText = (...items: any[]) => items.filter(Boolean).join('/') || '--'
+
+const getFilingTypeText = (value: any) => {
+  const label = getFilingTypeLabel(value)
+  return label === '--' ? value || '--' : label
+}
+
+const getSubjectCategoryText = (value: any) => {
+  const label = getCategoryLabel(value)
+  return label === '--' ? value || '--' : label
+}
+
+const getProductCategoryText = (value: any) => {
+  const label = getProductCategoryLabel(value)
+  return label === '--' ? value || '--' : label
+}
+
+const buildDateTimeRange = () => {
+  const { startDate, endDate } = dashboardQueryParams.value
+  if (!startDate || !endDate) return undefined
+  return [
+    dayjs(startDate).startOf('day').format('YYYY-MM-DD HH:mm:ss'),
+    dayjs(endDate).endOf('day').format('YYYY-MM-DD HH:mm:ss')
+  ]
+}
+
+const buildSubjectAreaParams = (areaNames: string[]) => ({
+  provinceCode: areaNames[0] || undefined,
+  cityCode: areaNames[1] || undefined,
+  districtCode: areaNames[2] || undefined
+})
+
+const buildProductAreaParams = (areaNames: string[]) => ({
+  productionArea: areaNames.length ? areaNames.join('') : undefined,
+  provinceCode: areaNames[0] || undefined,
+  cityCode: areaNames[1] || undefined,
+  districtCode: areaNames[2] || undefined
+})
+
+const buildSubjectQuery = (pageNo: number, pageSize: number) => {
+  const createTime = buildDateTimeRange()
+  const areaNames = subjectAreaNames.value.length ? subjectAreaNames.value : globalAreaNames.value
+  return {
+    pageNo,
+    pageSize,
+    name: filtersSubject.name || undefined,
+    type: isEmptyValue(filtersSubject.filingType) ? undefined : filtersSubject.filingType,
+    category: isEmptyValue(filtersSubject.subjectType) ? undefined : filtersSubject.subjectType,
+    ...buildSubjectAreaParams(areaNames),
+    createTime,
+    beginCreateTime: createTime?.[0],
+    endCreateTime: createTime?.[1]
+  }
+}
+
+const buildProductQuery = (pageNo: number, pageSize: number) => {
+  const createTime = buildDateTimeRange()
+  const areaNames = productAreaNames.value.length ? productAreaNames.value : globalAreaNames.value
+  return {
+    pageNo,
+    pageSize,
+    productCode: filtersProduct.productCode || undefined,
+    productName: filtersProduct.productName || undefined,
+    subjectName: filtersProduct.subjectName || undefined,
+    ...buildProductAreaParams(areaNames),
+    createTime,
+    beginArchiveDate: createTime?.[0],
+    endArchiveDate: createTime?.[1]
+  }
+}
+
+const handleAreaSelect = (area: any) => {
+  Object.assign(areaParams, {
+    ...getSelectedAreaParams(area),
+    districtName: area?.district || ''
+  })
+}
+
+const handleAreaChange = (value: any) => {
+  if (
+    value === undefined ||
+    value === null ||
+    value === '' ||
+    (Array.isArray(value) && value.length === 0)
+  ) {
+    areaParams.provinceName = ''
+    areaParams.cityName = ''
+    areaParams.districtName = ''
+    areaParams.areaType = ''
+    areaParams.areaCode = ''
+  }
+}
+
+const handleSubjectAreaSelect = (area: any) => {
+  subjectAreaNames.value = [area?.province, area?.city, area?.district].filter(Boolean)
+}
+
+const handleSubjectAreaChange = (value: any) => {
+  if (
+    value === undefined ||
+    value === null ||
+    value === '' ||
+    (Array.isArray(value) && value.length === 0)
+  ) {
+    subjectAreaNames.value = []
+  }
+}
+
+const handleProductAreaSelect = (area: any) => {
+  productAreaNames.value = [area?.province, area?.city, area?.district].filter(Boolean)
+}
+
+const handleProductAreaChange = (value: any) => {
+  if (
+    value === undefined ||
+    value === null ||
+    value === '' ||
+    (Array.isArray(value) && value.length === 0)
+  ) {
+    productAreaNames.value = []
+  }
+}
+
+const mapSubjectRow = (item: any) => ({
+  code: item.socialCreditCode || item.idCard || '--',
+  name: item.name || '--',
+  filingType: item.type !== undefined && item.type !== null ? getFilingTypeText(item.type) : '--',
+  subjectType: item.category ? getSubjectCategoryText(item.category) : '--',
+  mainProduct: item.mainProducts || '--',
+  region: formatAreaText(item.provinceCode, item.cityCode, item.districtCode),
+  createTime: formatDateText(item.createTime),
+  createOrg: item.deptName || item.createDeptName || item.dept?.name || '--'
+})
+
+const mapProductRow = (item: any) => ({
+  code: item.productCode || '--',
+  name: item.productName || '--',
+  category: item.category ? getProductCategoryText(item.category) : '--',
+  origin:
+    item.productionArea || formatAreaText(item.provinceCode, item.cityCode, item.districtCode),
+  subjectName: item.subjectInfo?.name || item.subjectName || '--',
+  filingDate: formatDateText(item.archiveDate || item.createTime),
+  createOrg:
+    item.deptName ||
+    item.createDeptName ||
+    item.subjectInfo?.deptName ||
+    item.subjectInfo?.dept?.name ||
+    '--'
+})
+
+const loadDashboardData = async () => {
+  try {
+    const [overviewData, productTrendData, productCategoryData, subjectTypeData, subjectAreaData] =
+      await Promise.all([
+        getArchiveOverview(dashboardQueryParams.value),
+        getArchiveProductTrend(dashboardQueryParams.value),
+        getArchiveProductCategoryDistribution(dashboardQueryParams.value),
+        getArchiveSubjectTypeDistribution(dashboardQueryParams.value),
+        getArchiveSubjectAreaTop10(dashboardQueryParams.value)
+      ])
+    overview.value = overviewData || {}
+    productTrend.value = productTrendData || {}
+    productCategoryDistribution.value = Array.isArray(productCategoryData)
+      ? productCategoryData
+      : []
+    subjectTypeDistribution.value = Array.isArray(subjectTypeData) ? subjectTypeData : []
+    subjectAreaTop.value = Array.isArray(subjectAreaData) ? subjectAreaData : []
+  } catch (error) {
+    console.error('[StatisticsFiling] load dashboard data failed:', error)
+    overview.value = {}
+    productTrend.value = {}
+    productCategoryDistribution.value = []
+    subjectTypeDistribution.value = []
+    subjectAreaTop.value = []
+  }
+}
+
+const loadSubjectTable = async () => {
+  subjectLoading.value = true
+  try {
+    const data = await SubjectApi.getSubjectPage(
+      buildSubjectQuery(subjectPageNo.value, subjectPageSize.value)
+    )
+    const normalized = normalizePagedResult<any>(data)
+    tableDataSubject.value = normalized.list.map(mapSubjectRow)
+    subjectTotal.value = normalized.total
+  } catch (error) {
+    console.error('[StatisticsFiling] load subject table failed:', error)
+    tableDataSubject.value = []
+    subjectTotal.value = 0
+  } finally {
+    subjectLoading.value = false
+  }
+}
+
+const loadProductTable = async () => {
+  productLoading.value = true
+  try {
+    const data = await ProductApi.getProductPage(
+      buildProductQuery(productPageNo.value, productPageSize.value)
+    )
+    const normalized = normalizePagedResult<any>(data)
+    tableDataProduct.value = normalized.list.map(mapProductRow)
+    productTotal.value = normalized.total
+  } catch (error) {
+    console.error('[StatisticsFiling] load product table failed:', error)
+    tableDataProduct.value = []
+    productTotal.value = 0
+  } finally {
+    productLoading.value = false
+  }
+}
+
+const loadTables = () => {
+  loadSubjectTable()
+  loadProductTable()
+}
+
+const loadData = () => {
+  loadDashboardData()
+  loadTables()
+}
+
 const handleRangeSearch = () => {
-  ElMessage.success('查询成功')
+  subjectPageNo.value = 1
+  productPageNo.value = 1
+  loadData()
 }
 
 const handleRangeReset = () => {
   dateRangeType.value = '近一周'
   dateRange.value = []
-  ElMessage.success('重置成功')
+  areaIds.value = []
+  areaParams.provinceName = ''
+  areaParams.cityName = ''
+  areaParams.districtName = ''
+  areaParams.areaType = ''
+  areaParams.areaCode = ''
+  handleRangeSearch()
 }
 
 const handleSubjectSearch = () => {
-  ElMessage.success('主体查询成功')
+  subjectPageNo.value = 1
+  loadSubjectTable()
 }
 
-const handleSubjectExport = () => {
-  ElMessage.success('导出主体数据成功')
+const handleSubjectReset = () => {
+  filtersSubject.name = ''
+  filtersSubject.filingType = undefined
+  filtersSubject.subjectType = undefined
+  filtersSubject.region = []
+  subjectAreaNames.value = []
+  handleSubjectSearch()
 }
 
-const tableDataSubject = ref([
-  { code: '1102011818788786816', name: '晓辉农场', filingType: '企业备案', subjectType: '生产', mainProduct: '黄瓜、西红柿', region: '北京市/北京市/海淀区', createTime: '20251219', createOrg: '北京市农业农村局' },
-  { code: '210*********0925', name: '李娜', filingType: '个人备案', subjectType: '收购', mainProduct: '西红柿', region: '北京市', createTime: '20251219', createOrg: '北京市农业农村局' },
-  { code: '1102011818788786816', name: '晓辉农场', filingType: '企业备案', subjectType: '储存', mainProduct: '草莓', region: '北京市', createTime: '20251219', createOrg: '北京市农业农村局' },
-])
+const handleProductSearch = () => {
+  productPageNo.value = 1
+  loadProductTable()
+}
 
-const tableDataProduct = ref([
-  { code: 'CP20251230000001', name: '草莓', category: '蔬菜', origin: '北京-海淀', subjectType: '企业备案', subjectName: '北京三快信息技术有限公司', filingDate: '2025-12-19', createOrg: '北京市农业农村局' },
-  { code: 'CP20251230000002', name: '香蕉', category: '水果', origin: '河北-廊坊', subjectType: '个人备案', subjectName: '秦艳萍', filingDate: '2025-12-19', createOrg: '北京市农业农村局' },
-  { code: 'CP20251230000003', name: '菠菜', category: '茶叶', origin: '山东-济南', subjectType: '企业备案', subjectName: '北京三快信息技术有限公司', filingDate: '2025-12-19', createOrg: '北京市农业农村局' },
-  { code: 'CP20251230000004', name: '黄瓜', category: '畜禽产品', origin: '广州-东莞', subjectType: '个人备案', subjectName: '秦艳萍', filingDate: '2025-12-19', createOrg: '北京市农业农村局' },
-  { code: 'CP20251230000006', name: '芹菜', category: '其他', origin: '山西-大同', subjectType: '企业备案', subjectName: '北京三快信息技术有限公司', filingDate: '2025-12-19', createOrg: '北京市农业农村局' },
-])
+const handleProductReset = () => {
+  filtersProduct.productCode = ''
+  filtersProduct.productName = ''
+  filtersProduct.subjectName = ''
+  filtersProduct.region = []
+  productAreaNames.value = []
+  handleProductSearch()
+}
 
+const handleSubjectExport = async () => {
+  try {
+    await ElMessageBox.confirm('确定要导出主体建档数据吗？', '导出确认', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+    subjectExportLoading.value = true
+    const data = await SubjectApi.exportSubject(buildSubjectQuery(subjectPageNo.value, 1000))
+    download.excel(data, '主体建档数据.xls')
+    ElMessage.success('导出成功')
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('[StatisticsFiling] export subject failed:', error)
+      ElMessage.error('导出失败')
+    }
+  } finally {
+    subjectExportLoading.value = false
+  }
+}
+
+const handleProductExport = async () => {
+  try {
+    await ElMessageBox.confirm('确定要导出产品建档数据吗？', '导出确认', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+    productExportLoading.value = true
+    const data = await ProductApi.exportProduct(buildProductQuery(productPageNo.value, 1000))
+    download.excel(data, '产品建档数据.xls')
+    ElMessage.success('导出成功')
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('[StatisticsFiling] export product failed:', error)
+      ElMessage.error('导出失败')
+    }
+  } finally {
+    productExportLoading.value = false
+  }
+}
+
+watch([dateRangeType, dateRange], () => {
+  subjectPageNo.value = 1
+  productPageNo.value = 1
+  loadData()
+})
+
+onMounted(() => {
+  loadData()
+})
 </script>
 
 <style lang="scss" scoped>
+$statistics-control-height: 42px;
+$statistics-control-radius: 6px;
+
 .stat-content {
   padding: 20px;
   display: flex;
@@ -329,7 +934,7 @@ const tableDataProduct = ref([
   flex-wrap: wrap;
   align-items: center;
   gap: 12px;
-  margin-bottom: 30px;
+  margin-bottom: 20px;
 
   .filter-item {
     width: 140px;
@@ -339,22 +944,52 @@ const tableDataProduct = ref([
     width: 180px;
   }
 
-  .search-btn {
-    background-color: #00B3ED;
-    border-color: #00B3ED;
-    margin-left: auto;
+  .area-filter {
+    width: 180px;
   }
 
+  .filter-actions {
+    margin-left: auto;
+    display: flex;
+    gap: 12px;
+  }
+
+  :deep(.el-button + .el-button) {
+    margin-left: 0;
+  }
+
+  :deep(.el-input__wrapper),
+  :deep(.el-select__wrapper) {
+    min-height: $statistics-control-height;
+    border-radius: $statistics-control-radius;
+    box-shadow: 0 0 0 1px #dfe8f2 inset;
+  }
+
+  .reset-btn,
+  .search-btn,
   .export-btn {
-    background-color: #00B3ED;
-    border-color: #00B3ED;
-    margin-left: 0 !important;
+    height: $statistics-control-height;
+    border-radius: $statistics-control-radius;
+  }
+
+  .search-btn,
+  .export-btn {
+    background-color: #00b3ed;
+    border-color: #00b3ed;
   }
 }
 
 /* 图表区域 */
+.charts-container {
+  display: flex;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
 .chart-area-wrapper {
-  margin-bottom: 30px;
+  flex: 1;
+  min-width: 0;
+  margin-bottom: 16px;
 }
 
 .chart-header {
@@ -362,64 +997,13 @@ const tableDataProduct = ref([
   justify-content: center;
   align-items: center;
   position: relative;
-  margin-bottom: 20px;
+  margin-bottom: 14px;
 
   .chart-y-title {
-    position: absolute;
-    left: 0;
     font-size: 14px;
     color: #333;
+    font-weight: bold;
   }
-}
-
-.svg-chart-container {
-  display: flex;
-  height: 320px;
-  position: relative;
-}
-
-.chart-y-axis {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  padding-right: 12px;
-  padding-bottom: 20px;
-  font-size: 12px;
-  color: #999;
-  text-align: right;
-  width: 30px;
-}
-
-.svg-wrapper {
-  flex: 1;
-  position: relative;
-}
-
-.chart-grid-lines {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 300px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  pointer-events: none;
-
-  .grid-line {
-    width: 100%;
-    height: 1px;
-    background-color: #f0f0f0;
-  }
-}
-
-.chart-x-axis {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 8px;
-  font-size: 12px;
-  color: #999;
-  padding: 0 10px;
 }
 
 /* 表格区域 */

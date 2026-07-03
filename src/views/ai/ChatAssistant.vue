@@ -24,12 +24,8 @@
             </span>
           </div>
           <div class="recommend-grid">
-            <div 
-              v-for="(item, index) in currentRecommends" 
-              :key="index" 
-              class="recommend-item"
-              @click="handleSend(item)"
-            >
+            <div v-for="(item, index) in currentRecommends" :key="index" class="recommend-item"
+              @click="handleSend(item)">
               {{ item }}
             </div>
           </div>
@@ -38,11 +34,7 @@
 
       <!-- 对话列表 -->
       <div class="message-list">
-        <div 
-          v-for="msg in messages" 
-          :key="msg.id" 
-          :class="['message-item', `is-${msg.role}`]"
-        >
+        <div v-for="msg in messages" :key="msg.id" :class="['message-item', `is-${msg.role}`]">
           <!-- 用户消息 -->
           <div v-if="msg.role === 'user'" class="message-bubble user-bubble">
             {{ msg.content }}
@@ -58,7 +50,9 @@
 
             <!-- 执行过程状态展示 -->
             <div v-if="msg.status === 'typing' || msg.status === 'done'" class="action-steps">
-              <div class="step-item"><Icon icon="ep:document" /> {{ msg.actionTitle || '农产品风险分析' }}</div>
+              <div class="step-item">
+                <Icon icon="ep:document" /> {{ msg.actionTitle || '农产品风险分析' }}
+              </div>
               <div class="step-desc">{{ msg.status === 'done' ? '已生成回答' : '正在回答中...' }}</div>
             </div>
 
@@ -69,22 +63,15 @@
                 <h4 v-if="msg.title" class="report-title">{{ msg.title }}</h4>
                 <!-- 文本流式输出 -->
                 <p v-html="formatContent(msg.content)"></p>
-                
+
                 <!-- 表格数据展示 -->
                 <div v-if="msg.tableData && msg.tableData.length" class="report-table">
                   <el-table :data="msg.tableData" border style="width: 100%" size="small">
-                    <el-table-column
-                      v-for="column in msg.tableColumns"
-                      :key="column.prop"
-                      :prop="column.prop"
-                      :label="column.label"
-                      :width="column.width"
-                      :min-width="column.minWidth"
-                      :align="column.align"
-                    />
+                    <el-table-column v-for="column in msg.tableColumns" :key="column.prop" :prop="column.prop"
+                      :label="column.label" :width="column.width" :min-width="column.minWidth" :align="column.align" />
                   </el-table>
                 </div>
-                
+
                 <!-- 结论富文本 -->
                 <p v-if="msg.conclusion" class="report-conclusion" v-html="formatContent(msg.conclusion)"></p>
               </div>
@@ -94,16 +81,12 @@
                 <div class="regenerate-btn" @click="handleRegenerate(msg.id)">
                   <Icon icon="ep:refresh-right" /> 重新生成
                 </div>
-                
+
                 <div v-if="msg.suggestions && msg.suggestions.length" class="follow-up-section">
                   <div class="follow-up-title">你可以继续问我：</div>
                   <div class="follow-up-list">
-                    <span 
-                      v-for="(sug, idx) in msg.suggestions" 
-                      :key="idx" 
-                      class="follow-up-pill"
-                      @click="handleSend(sug)"
-                    >
+                    <span v-for="(sug, idx) in msg.suggestions" :key="idx" class="follow-up-pill"
+                      @click="handleSend(sug)">
                       {{ sug }}
                     </span>
                   </div>
@@ -118,42 +101,26 @@
     <!-- 底部输入区域 -->
     <div class="chat-footer">
       <div class="input-wrapper">
-        <el-input
-          v-model="inputText"
-          type="textarea"
-          :rows="3"
-          placeholder="可以问我任何问题，帮你解答"
-          resize="none"
-          maxlength="100"
-          show-word-limit
-          @keydown.enter.exact.prevent="handleSend(inputText)"
-        />
-        <div
-          class="voice-btn"
-          :class="{ active: isRecording, disabled: isTyping }"
-          :title="voiceButtonTitle"
-          @click="toggleVoiceInput"
-        >
+        <el-input v-model="inputText" type="textarea" :rows="3" placeholder="可以问我任何问题，帮你解答" resize="none"
+          maxlength="100" show-word-limit @keydown.enter.exact.prevent="handleSend(inputText)" />
+        <div class="voice-btn" :class="{ active: isRecording, disabled: isTyping }" :title="voiceButtonTitle"
+          @click="toggleVoiceInput">
           <Icon :icon="isRecording ? 'ep:video-pause' : 'ep:microphone'" :size="20" />
         </div>
-        <div
+        <!-- <div
           class="voice-btn wake-btn"
           :class="{ active: isWakeWordEnabled, disabled: isTyping || !wakeWordRuntimeAvailable }"
           :title="wakeWordButtonTitle"
           @click="toggleWakeWord"
         >
           <Icon :icon="isWakeWordEnabled ? 'ep:bell-filled' : 'ep:bell'" :size="20" />
-        </div>
+        </div> -->
         <div class="send-btn" :class="{ active: inputText.trim() && !isTyping }" @click="handleSend(inputText)">
           <Icon icon="ep:position" :size="20" />
         </div>
         <div v-if="voiceStatusText" class="voice-status" :class="{ recording: isRecording }">
           <span class="voice-dot"></span>
           {{ voiceStatusText }}
-        </div>
-        <div class="wake-debug-chip" :class="{ unsupported: !wakeWordRuntimeAvailable }">
-          唤起状态：{{ wakeWordRuntimeAvailable ? wakeWordStatus : 'unsupported' }}
-          <span v-if="wakeWordTranscript"> | 识别：{{ wakeWordTranscript }}</span>
         </div>
       </div>
     </div>
@@ -671,11 +638,11 @@ const toggleWakeWord = async () => {
 const handleSend = async (text: string, options: { appendUser?: boolean } = {}) => {
   if (!text || !text.trim() || isTyping.value) return
   stopVoiceInput()
-  
+
   const query = text.trim()
   inputText.value = ''
   const appendUser = options.appendUser !== false
-  
+
   // 1. 添加用户消息
   if (appendUser) {
     messages.value.push({
@@ -711,7 +678,7 @@ const handleSend = async (text: string, options: { appendUser?: boolean } = {}) 
     targetMsg.tableColumns = answer.tableColumns
 
     await typeWriter(targetMsg, answer.content, 'content')
-    
+
     // 出现表格
     targetMsg.tableData = answer.tableData
     scrollToBottom()
@@ -776,10 +743,11 @@ onBeforeUnmount(() => {
   overflow-y: auto;
   padding: 24px;
   scroll-behavior: smooth;
-  
+
   &::-webkit-scrollbar {
     width: 6px;
   }
+
   &::-webkit-scrollbar-thumb {
     background-color: #dcdfe6;
     border-radius: 3px;
@@ -823,6 +791,7 @@ onBeforeUnmount(() => {
       font-size: 18px;
       color: #333;
     }
+
     p {
       margin: 0;
       color: #666;
@@ -857,7 +826,10 @@ onBeforeUnmount(() => {
       align-items: center;
       gap: 4px;
       transition: color 0.3s;
-      &:hover { color: #00B3ED; }
+
+      &:hover {
+        color: #00B3ED;
+      }
     }
   }
 
@@ -917,7 +889,7 @@ onBeforeUnmount(() => {
 
 .is-assistant {
   justify-content: flex-start;
-  
+
   .message-wrapper {
     max-width: 85%;
     display: flex;
@@ -936,7 +908,7 @@ onBeforeUnmount(() => {
   gap: 10px;
   color: #00B3ED;
   font-size: 14px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .action-steps {
@@ -977,7 +949,7 @@ onBeforeUnmount(() => {
       color: #1f2d3d;
       margin: 0 0 16px 0;
     }
-    
+
     p {
       margin: 0 0 16px 0;
       color: #333;
@@ -1014,8 +986,10 @@ onBeforeUnmount(() => {
       align-items: center;
       gap: 4px;
       margin-bottom: 16px;
-      
-      &:hover { opacity: 0.8; }
+
+      &:hover {
+        opacity: 0.8;
+      }
     }
 
     .follow-up-section {
@@ -1024,6 +998,7 @@ onBeforeUnmount(() => {
         color: #999;
         margin-bottom: 12px;
       }
+
       .follow-up-list {
         display: flex;
         flex-wrap: wrap;
@@ -1076,7 +1051,7 @@ onBeforeUnmount(() => {
       padding: 16px 132px 16px 16px;
       font-size: 14px;
       background: transparent;
-      
+
       &:focus {
         box-shadow: none;
       }
@@ -1104,7 +1079,7 @@ onBeforeUnmount(() => {
     }
 
     .voice-btn {
-      right: 92px;
+      right: 60px;
       cursor: pointer;
 
       &:hover {
