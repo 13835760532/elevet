@@ -87,6 +87,7 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import dayjs from 'dayjs'
+import { useDebounceFn } from '@vueuse/core'
 import StatisticsRangeFilter from './StatisticsRangeFilter.vue'
 import AreaCascader from '@/components/AreaCascader/index.vue'
 import { Echart } from '@/components/Echart'
@@ -99,11 +100,17 @@ import {
 import * as CertificateApi from '@/api/agri/certificate'
 import {
   buildRangeParams,
+  createCategoryAxis,
+  createChartGrid,
+  createChartTooltip,
+  createLineSeries,
+  createValueAxis,
   formatNumber,
   getEffectiveAreaParams,
   getSelectedAreaParams,
   getUserDeptAreaParams,
-  normalizePagedResult
+  normalizePagedResult,
+  statisticsChartColors
 } from './statisticsData'
 import { useDict } from '@/hooks/web/useDict'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -144,19 +151,17 @@ const queryParams = computed(() => ({
 const userDeptAreaCode = computed(() => getUserDeptAreaParams().areaCode)
 
 const trendOption = computed(() => ({
-  grid: { top: 24, right: 32, bottom: 36, left: 48 },
-  tooltip: { trigger: 'axis' },
-  xAxis: { type: 'category', boundaryGap: false, data: trend.value.xaxis || [] },
-  yAxis: { type: 'value' },
+  grid: createChartGrid({ top: 30 }),
+  tooltip: createChartTooltip('axis'),
+  xAxis: createCategoryAxis(trend.value.xaxis || [], { boundaryGap: false }),
+  yAxis: createValueAxis(),
   series: [
-    {
+    createLineSeries({
       name: '收证份数',
-      type: 'line',
-      smooth: true,
       data: trend.value.verificationCounts || [],
-      areaStyle: { opacity: 0.12 },
-      itemStyle: { color: '#8D76FF' }
-    }
+      color: statisticsChartColors.purple,
+      areaColor: statisticsChartColors.purpleSoft
+    })
   ]
 }))
 
@@ -236,6 +241,11 @@ const loadTable = async () => {
   }
 }
 
+const searchTable = useDebounceFn(() => {
+  pageNo.value = 1
+  loadTable()
+}, 300)
+
 const loadData = () => {
   loadDashboardData()
   loadTable()
@@ -306,6 +316,24 @@ watch([dateRangeType, dateRange], () => {
   pageNo.value = 1
   loadData()
 })
+
+watch(areaParams, () => {
+  pageNo.value = 1
+  loadData()
+})
+
+watch(
+  () => ({
+    certNo: filters.certNo,
+    source: filters.source,
+    productName: filters.productName,
+    category: filters.category,
+    origin: filters.origin
+  }),
+  () => {
+    searchTable()
+  }
+)
 
 onMounted(() => {
   loadData()

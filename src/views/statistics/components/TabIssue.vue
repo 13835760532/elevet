@@ -86,6 +86,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { useDebounceFn } from '@vueuse/core'
 import StatisticsRangeFilter from './StatisticsRangeFilter.vue'
 import AreaCascader from '@/components/AreaCascader/index.vue'
 import { Echart } from '@/components/Echart'
@@ -98,11 +99,17 @@ import {
 import * as CertificateApi from '@/api/agri/certificate'
 import {
   buildRangeParams,
+  createCategoryAxis,
+  createChartGrid,
+  createChartTooltip,
+  createLineSeries,
+  createValueAxis,
   formatNumber,
   getEffectiveAreaParams,
   getSelectedAreaParams,
   getUserDeptAreaParams,
-  normalizePagedResult
+  normalizePagedResult,
+  statisticsChartColors
 } from './statisticsData'
 import { useDict } from '@/hooks/web/useDict'
 import { ElMessage } from 'element-plus'
@@ -127,7 +134,7 @@ const { options: productCategoryOptions, getLabel: getProductCategoryLabel } = u
 
 const filters = reactive({
   certNo: '',
-  issueType: 3 as number | undefined,
+  issueType: undefined as number | undefined,
   productName: '',
   category: '',
   origin: ''
@@ -141,17 +148,17 @@ const queryParams = computed(() => ({
 const userDeptAreaCode = computed(() => getUserDeptAreaParams().areaCode)
 
 const trendOption = computed(() => ({
-  grid: { top: 24, right: 32, bottom: 36, left: 48 },
-  tooltip: { trigger: 'axis' },
-  xAxis: { type: 'category', boundaryGap: false, data: trend.value.xaxis || [] },
-  yAxis: { type: 'value' },
+  grid: createChartGrid({ top: 30 }),
+  tooltip: createChartTooltip('axis'),
+  xAxis: createCategoryAxis(trend.value.xaxis || [], { boundaryGap: false }),
+  yAxis: createValueAxis(),
   series: [
-    {
+    createLineSeries({
       name: '开具份数',
-      type: 'line',
       data: trend.value.issueCounts || [],
-      itemStyle: { color: '#00B3ED' }
-    }
+      color: statisticsChartColors.primary,
+      areaColor: statisticsChartColors.primarySoft
+    })
   ]
 }))
 
@@ -235,6 +242,11 @@ const loadTable = async () => {
   }
 }
 
+const searchTable = useDebounceFn(() => {
+  pageNo.value = 1
+  loadTable()
+}, 300)
+
 const loadData = () => {
   loadDashboardData()
   loadTable()
@@ -247,7 +259,7 @@ const handleSearch = () => {
 
 const resetTableFilters = () => {
   filters.certNo = ''
-  filters.issueType = 3
+  filters.issueType = undefined
   filters.productName = ''
   filters.category = ''
   filters.origin = ''
@@ -273,6 +285,24 @@ watch([dateRangeType, dateRange], () => {
   pageNo.value = 1
   loadData()
 })
+
+watch(areaParams, () => {
+  pageNo.value = 1
+  loadData()
+})
+
+watch(
+  () => ({
+    certNo: filters.certNo,
+    issueType: filters.issueType,
+    productName: filters.productName,
+    category: filters.category,
+    origin: filters.origin
+  }),
+  () => {
+    searchTable()
+  }
+)
 
 onMounted(() => {
   loadData()

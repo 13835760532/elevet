@@ -120,6 +120,7 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
+import { useDebounceFn } from '@vueuse/core'
 import StatisticsRangeFilter from './StatisticsRangeFilter.vue'
 import AreaCascader from '@/components/AreaCascader/index.vue'
 import { Echart } from '@/components/Echart'
@@ -135,11 +136,17 @@ import * as DetectionRecordApi from '@/api/agri/detectionRecord'
 import { useDict } from '@/hooks/web/useDict'
 import {
   buildRangeParams,
+  createBarSeries,
+  createCategoryAxis,
+  createChartGrid,
+  createChartTooltip,
+  createValueAxis,
   formatNumber,
   getEffectiveAreaParams,
   getSelectedAreaParams,
   getUserDeptAreaParams,
-  normalizePagedResult
+  normalizePagedResult,
+  statisticsChartColors
 } from './statisticsData'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import download from '@/utils/download'
@@ -203,18 +210,16 @@ const sampleTrendOption = computed(() => {
     ? selfTrend.value.xaxis
     : positiveTrend.value.xaxis || []
   return {
-    grid: { top: 24, right: 36, bottom: 36, left: 48 },
-    tooltip: { trigger: 'axis' },
-    xAxis: { type: 'category', data: xAxis },
-    yAxis: { type: 'value', name: '样品量' },
+    grid: createChartGrid({ top: 24 }),
+    tooltip: createChartTooltip('axis'),
+    xAxis: createCategoryAxis(xAxis),
+    yAxis: createValueAxis(),
     series: [
-      {
+      createBarSeries({
         name: '样品量',
-        type: 'bar',
-        barMaxWidth: 30,
         data: selfTrend.value.sampleCounts || [],
-        itemStyle: { color: '#00B3ED' }
-      }
+        color: statisticsChartColors.primary
+      })
     ]
   }
 })
@@ -224,21 +229,18 @@ const positiveTrendOption = computed(() => {
     ? selfTrend.value.xaxis
     : positiveTrend.value.xaxis || []
   return {
-    grid: { top: 24, right: 36, bottom: 36, left: 48 },
-    tooltip: {
-      trigger: 'axis',
+    grid: createChartGrid({ top: 24 }),
+    tooltip: createChartTooltip('axis', {
       valueFormatter: (value: any) => value + '%'
-    },
-    xAxis: { type: 'category', data: xAxis },
-    yAxis: { type: 'value', name: '阳性率(%)' },
+    }),
+    xAxis: createCategoryAxis(xAxis),
+    yAxis: createValueAxis(),
     series: [
-      {
+      createBarSeries({
         name: '阳性率',
-        type: 'bar',
-        barMaxWidth: 30,
         data: positiveTrend.value.positiveRates || [],
-        itemStyle: { color: '#00B3ED' }
-      }
+        color: statisticsChartColors.green
+      })
     ]
   }
 })
@@ -400,6 +402,11 @@ const loadTable = async () => {
   }
 }
 
+const searchTable = useDebounceFn(() => {
+  pageNo.value = 1
+  loadTable()
+}, 300)
+
 const loadData = () => {
   loadDashboardData()
   loadTable()
@@ -459,6 +466,28 @@ watch([dateRangeType, dateRange], () => {
   pageNo.value = 1
   loadData()
 })
+
+watch(areaParams, () => {
+  pageNo.value = 1
+  loadData()
+})
+
+watch(
+  () => ({
+    keyword: filters.keyword,
+    type: filters.type,
+    sample: filters.sample,
+    category: filters.category,
+    area: filters.area,
+    org: filters.org,
+    result: filters.result,
+    date: Array.isArray(filters.date) ? [...filters.date] : filters.date
+  }),
+  () => {
+    searchTable()
+  },
+  { deep: true }
+)
 
 onMounted(() => {
   initFiltersFromQuery()

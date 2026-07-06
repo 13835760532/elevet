@@ -94,22 +94,17 @@
 
         <!-- 检测结果筛选区 -->
         <div class="result-filters" v-if="activeTab === 'result'">
-          <el-input v-model="resultFilters.keyword" placeholder="任务名称/任务编号" class="filter-item input-item" clearable
-            @change="loadResultPage" />
-          <el-input v-model="resultFilters.sample" placeholder="样品" class="filter-item input-item" clearable
-            @change="loadResultPage" />
-          <el-select v-model="resultFilters.category" placeholder="产品分类" class="filter-item" clearable
-            @change="loadResultPage">
+          <el-input v-model="resultFilters.keyword" placeholder="任务名称/任务编号" class="filter-item input-item" clearable />
+          <el-input v-model="resultFilters.sample" placeholder="样品" class="filter-item input-item" clearable />
+          <el-select v-model="resultFilters.category" placeholder="产品分类" class="filter-item" clearable>
             <el-option v-for="item in productCategoryOptions" :key="item.value" :label="item.label"
               :value="item.value" />
           </el-select>
           <AreaCascader v-model="resultFilters.area" placeholder="检测地区" checkStrictly :root-area-code="userDeptAreaCode"
             class="filter-item" style="width: 150px" @select="handleResultAreaSelect"
             @change="handleResultAreaChange" />
-          <el-select v-model="resultFilters.org" placeholder="检测机构" class="filter-item" clearable
-            @change="loadResultPage"></el-select>
-          <el-select v-model="resultFilters.result" placeholder="检测结果" class="filter-item" clearable
-            @change="loadResultPage">
+          <el-select v-model="resultFilters.org" placeholder="检测机构" class="filter-item" clearable></el-select>
+          <el-select v-model="resultFilters.result" placeholder="检测结果" class="filter-item" clearable>
             <el-option label="阴性" :value="0" />
             <el-option label="阳性" :value="1" />
             <el-option label="结果异常" :value="2" />
@@ -158,6 +153,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 import dayjs from 'dayjs'
+import { useDebounceFn } from '@vueuse/core'
 import StatisticsRangeFilter from './StatisticsRangeFilter.vue'
 import Echart from '@/components/Echart/src/Echart.vue'
 import AreaCascader from '@/components/AreaCascader/index.vue'
@@ -173,12 +169,18 @@ import * as DetectionRecordApi from '@/api/agri/detectionRecord'
 import * as DetectionTaskApi from '@/api/agri/detectionTask'
 import {
   buildRangeParams,
+  createCategoryAxis,
+  createChartGrid,
+  createChartTooltip,
+  createLineSeries,
+  createValueAxis,
   formatNumber,
   formatPercent,
   getEffectiveAreaParams,
   getSelectedAreaParams,
   getUserDeptAreaParams,
-  normalizePagedResult
+  normalizePagedResult,
+  statisticsChartColors
 } from './statisticsData'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import download from '@/utils/download'
@@ -204,14 +206,12 @@ const handleResultAreaSelect = (area: any) => {
   resultFilters.value.area = [area.province, area.city, area.district].filter(Boolean).join('-')
   resultFilters.value.areaType = selectedArea.areaType
   resultFilters.value.areaCode = selectedArea.areaCode
-  loadResultPage()
 }
 const handleResultAreaChange = (value: any) => {
   if (value === undefined || value === null || value === '' || (Array.isArray(value) && value.length === 0)) {
     resultFilters.value.area = []
     resultFilters.value.areaType = ''
     resultFilters.value.areaCode = ''
-    loadResultPage()
   }
 }
 const trendOption = ref<any>(null)
@@ -362,47 +362,46 @@ const loadResultPage = async () => {
   }
 }
 
+const searchResultPage = useDebounceFn(() => {
+  if (activeTab.value !== 'result') return
+  resultPageNo.value = 1
+  loadResultPage()
+}, 300)
+
 const loadTrend = async () => {
   try {
     const data = await getTaskVolumeTrend(currentQueryParams.value)
     if (data && data.xaxis) {
       trendOption.value = {
-        grid: { top: 40, right: 20, bottom: 20, left: 40, containLabel: true },
-        tooltip: { trigger: 'axis' },
+        grid: createChartGrid({ top: 46, right: 24 }),
+        tooltip: createChartTooltip('axis'),
         legend: {
           data: ['样品量', '检测量'],
           top: 0,
           right: 20,
-          icon: 'circle'
-        },
-        xAxis: {
-          type: 'category',
-          data: data.xaxis,
-          axisLine: { lineStyle: { color: '#E2E8F0' } },
-          axisLabel: { color: '#64748B' }
-        },
-        yAxis: {
-          type: 'value',
-          splitLine: { lineStyle: { type: 'dashed', color: '#E2E8F0' } },
-          axisLabel: { color: '#64748B' }
-        },
-        series: [
-          {
-            name: '样品量',
-            type: 'line',
-            smooth: true,
-            data: data.sampleCounts || [],
-            itemStyle: { color: '#A855F7' },
-            areaStyle: { color: 'rgba(168, 85, 247, 0.1)' }
-          },
-          {
-            name: '检测量',
-            type: 'line',
-            smooth: true,
-            data: data.itemCounts || [],
-            itemStyle: { color: '#FDE047' },
-            areaStyle: { color: 'rgba(253, 224, 71, 0.1)' }
+          icon: 'circle',
+          itemWidth: 9,
+          itemHeight: 9,
+          textStyle: {
+            color: statisticsChartColors.muted,
+            fontSize: 12
           }
+        },
+        xAxis: createCategoryAxis(data.xaxis),
+        yAxis: createValueAxis(),
+        series: [
+          createLineSeries({
+            name: '样品量',
+            data: data.sampleCounts || [],
+            color: statisticsChartColors.purple,
+            areaColor: statisticsChartColors.purpleSoft
+          }),
+          createLineSeries({
+            name: '检测量',
+            data: data.itemCounts || [],
+            color: statisticsChartColors.yellow,
+            areaColor: statisticsChartColors.yellowSoft
+          })
         ]
       }
     } else {
@@ -489,6 +488,25 @@ const handleExport = async () => {
 watch([dateRangeType, dateRange], () => {
   handleSearch()
 })
+
+watch(
+  () => ({
+    keyword: resultFilters.value.keyword,
+    sample: resultFilters.value.sample,
+    category: resultFilters.value.category,
+    area: Array.isArray(resultFilters.value.area)
+      ? [...resultFilters.value.area]
+      : resultFilters.value.area,
+    areaType: resultFilters.value.areaType,
+    areaCode: resultFilters.value.areaCode,
+    org: resultFilters.value.org,
+    result: resultFilters.value.result
+  }),
+  () => {
+    searchResultPage()
+  },
+  { deep: true }
+)
 
 watch(activeTab, (val) => {
   if (val === 'task') {

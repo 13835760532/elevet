@@ -1,24 +1,83 @@
 <template>
   <div class="ai-chat-container">
-    <!-- 聊天内容区域 -->
-    <div class="chat-main" ref="chatMainRef">
-      <!-- 初始欢迎及推荐区域 (仅在没有对话时显示) -->
-      <div v-if="messages.length === 0" class="welcome-section">
-        <!-- 欢迎卡片 -->
-        <div class="welcome-card">
-          <div class="avatar-wrap">
-            <div class="ai-avatar">小壹</div>
-          </div>
-          <div class="welcome-text">
-            <h3>嗨！你好呀 我是你的小壹助手~</h3>
-            <p>初次见面，为了我们未来合作的更默契，先了解一下我的能力</p>
-          </div>
-        </div>
+    <div class="ambient ambient-a"></div>
+    <div class="ambient ambient-b"></div>
+    <div class="surface-grain"></div>
 
-        <!-- 推荐提问 -->
+    <div class="assistant-nav">
+      <div class="nav-brand">
+        <span class="brand-mark">壹</span>
+        <div>
+          <strong>小壹 AI 助手</strong>
+          <span>农产品风险问答工作台</span>
+        </div>
+      </div>
+      <div class="nav-status">
+        <span class="status-dot"></span>
+        实时分析
+      </div>
+    </div>
+
+    <div class="chat-main" ref="chatMainRef">
+      <div v-if="messages.length === 0" class="welcome-section">
+        <section class="welcome-card">
+          <div class="hero-copy">
+            <div class="assistant-kicker">农产品风险问答</div>
+            <h1>把检测数据，问成一句清楚答案</h1>
+            <p>
+              支持地区排名、检测项目、月度趋势、阳性率对比等问题。直接输入自然语言，小壹会整理数据、结论和后续追问方向。
+            </p>
+            <div class="hero-actions">
+              <button class="primary-action" type="button" @click="handleSend('4月份农产品风险情况怎么样？')">
+                <span>试问一个问题</span>
+                <i>
+                  <Icon icon="ep:position" :size="16" />
+                </i>
+              </button>
+              <button class="secondary-action" type="button" @click="refreshRecommends">
+                <Icon icon="ep:refresh" :size="16" />
+                换一批推荐
+              </button>
+            </div>
+          </div>
+
+          <div class="hero-panel">
+            <div class="assistant-card-head">
+              <div class="avatar-orbit">
+                <div class="ai-avatar">壹</div>
+              </div>
+              <div class="panel-copy">
+                <span>小壹正在待命</span>
+                <strong>一次提问，返回分析结论</strong>
+              </div>
+            </div>
+            <div class="answer-preview">
+              <p>“本月哪些地区风险偏高？”</p>
+              <span>小壹会返回排名、阳性率、重点风险项目和建议关注方向。</span>
+            </div>
+            <div class="capability-stack">
+              <div>
+                <span>地区</span>
+                <strong>风险排名</strong>
+              </div>
+              <div>
+                <span>项目</span>
+                <strong>阳性检出</strong>
+              </div>
+              <div>
+                <span>月份</span>
+                <strong>趋势对比</strong>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <div class="recommend-section">
           <div class="recommend-header">
-            <h4>为您推荐</h4>
+            <div>
+              <h4>推荐问法</h4>
+              <span>选择一个问题快速开始，也可以在底部自由输入。</span>
+            </div>
             <span class="refresh-btn" @click="refreshRecommends">
               <Icon icon="ep:refresh" /> 换一批
             </span>
@@ -27,28 +86,26 @@
             <div v-for="(item, index) in currentRecommends" :key="index" class="recommend-item"
               @click="handleSend(item)">
               {{ item }}
+              <i>
+                <Icon icon="ep:right" :size="14" />
+              </i>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- 对话列表 -->
       <div class="message-list">
         <div v-for="msg in messages" :key="msg.id" :class="['message-item', `is-${msg.role}`]">
-          <!-- 用户消息 -->
           <div v-if="msg.role === 'user'" class="message-bubble user-bubble">
             {{ msg.content }}
           </div>
 
-          <!-- AI消息 -->
           <div v-else class="message-wrapper">
-            <!-- 思考状态 -->
             <div v-if="msg.status === 'thinking'" class="thinking-box">
               <Icon icon="ep:loading" class="is-loading" />
               <span>小壹正在思考中...</span>
             </div>
 
-            <!-- 执行过程状态展示 -->
             <div v-if="msg.status === 'typing' || msg.status === 'done'" class="action-steps">
               <div class="step-item">
                 <Icon icon="ep:document" /> {{ msg.actionTitle || '农产品风险分析' }}
@@ -56,15 +113,11 @@
               <div class="step-desc">{{ msg.status === 'done' ? '已生成回答' : '正在回答中...' }}</div>
             </div>
 
-            <!-- AI 回答气泡 -->
             <div v-if="msg.content || msg.tableData" class="message-bubble ai-bubble">
               <div class="rich-content">
-                <!-- 标题 -->
                 <h4 v-if="msg.title" class="report-title">{{ msg.title }}</h4>
-                <!-- 文本流式输出 -->
                 <p v-html="formatContent(msg.content)"></p>
 
-                <!-- 表格数据展示 -->
                 <div v-if="msg.tableData && msg.tableData.length" class="report-table">
                   <el-table :data="msg.tableData" border style="width: 100%" size="small">
                     <el-table-column v-for="column in msg.tableColumns" :key="column.prop" :prop="column.prop"
@@ -72,11 +125,9 @@
                   </el-table>
                 </div>
 
-                <!-- 结论富文本 -->
                 <p v-if="msg.conclusion" class="report-conclusion" v-html="formatContent(msg.conclusion)"></p>
               </div>
 
-              <!-- 底部操作与追问 -->
               <div v-if="msg.status === 'done'" class="message-footer">
                 <div class="regenerate-btn" @click="handleRegenerate(msg.id)">
                   <Icon icon="ep:refresh-right" /> 重新生成
@@ -98,7 +149,6 @@
       </div>
     </div>
 
-    <!-- 底部输入区域 -->
     <div class="chat-footer">
       <div class="input-wrapper">
         <el-input v-model="inputText" type="textarea" :rows="3" placeholder="可以问我任何问题，帮你解答" resize="none"
@@ -730,160 +780,538 @@ onBeforeUnmount(() => {
 .ai-chat-container {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 120px);
-  background-color: #f2f7fb;
-  border-radius: 8px;
+  height: calc(100vh - 90px);
+  min-height: 640px;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(0, 179, 237, 0.08), transparent 32%),
+    linear-gradient(180deg, #f7fbfe 0%, #f2f7fb 100%);
+  border: 1px solid #e6f0f6;
+  border-radius: 12px;
   overflow: hidden;
   position: relative;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-family: 'Geist', 'Satoshi', 'HarmonyOS Sans SC', 'PingFang SC', sans-serif;
+  color: #172b3a;
+  isolation: isolate;
+}
+
+.ambient {
+  position: absolute;
+  border-radius: 999px;
+  pointer-events: none;
+  opacity: 0.35;
+  transform: translate3d(0, 0, 0);
+}
+
+.ambient-a {
+  top: -140px;
+  left: 12%;
+  width: 320px;
+  height: 320px;
+  background: rgba(0, 179, 237, 0.12);
+  filter: blur(24px);
+}
+
+.ambient-b {
+  right: 4%;
+  bottom: 60px;
+  width: 280px;
+  height: 280px;
+  background: rgba(0, 179, 237, 0.08);
+  filter: blur(28px);
+}
+
+.surface-grain {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.35;
+  background-image: linear-gradient(rgba(12, 55, 80, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(12, 55, 80, 0.04) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+.assistant-nav {
+  position: relative;
+  z-index: 2;
+  width: min(1120px, calc(100% - 48px));
+  margin: 16px auto 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.nav-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+
+  strong,
+  span:not(.brand-mark) {
+    display: block;
+  }
+
+  strong {
+    color: #172b3a;
+    font-size: 15px;
+    font-weight: 700;
+  }
+
+  span:not(.brand-mark) {
+    margin-top: 3px;
+    color: #7c8f9d;
+    font-size: 12px;
+  }
+}
+
+.brand-mark {
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: #00b3ed;
+  color: #fff;
+  font-weight: 700;
+  box-shadow: 0 8px 20px rgba(0, 179, 237, 0.22);
+}
+
+.nav-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  background: #fff;
+  border: 1px solid #e4f1f7;
+  color: #087da4;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #00b3ed;
+  box-shadow: 0 0 0 4px rgba(0, 179, 237, 0.12);
 }
 
 .chat-main {
+  position: relative;
+  z-index: 1;
   flex: 1;
   overflow-y: auto;
-  padding: 24px;
+  padding: 18px 24px 18px;
   scroll-behavior: smooth;
 
   &::-webkit-scrollbar {
-    width: 6px;
+    width: 8px;
   }
 
   &::-webkit-scrollbar-thumb {
-    background-color: #dcdfe6;
-    border-radius: 3px;
+    background: rgba(0, 179, 237, 0.2);
+    border-radius: 999px;
   }
 }
 
-/* 欢迎区域 */
 .welcome-section {
-  max-width: 800px;
+  width: min(1120px, 100%);
   margin: 0 auto;
+  animation: riseIn 520ms cubic-bezier(0.32, 0.72, 0, 1) both;
 }
 
 .welcome-card {
-  background: #fff;
-  border-radius: 12px;
-  padding: 24px;
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  margin-bottom: 24px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(300px, 0.9fr);
+  gap: 14px;
+  padding: 16px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.86);
+  border: 1px solid #e4f1f7;
+  box-shadow: 0 12px 34px rgba(23, 59, 82, 0.06);
+  overflow: hidden;
+}
 
-  .avatar-wrap {
-    .ai-avatar {
-      width: 56px;
-      height: 56px;
-      background: linear-gradient(135deg, #00B3ED, #0084ff);
-      color: #fff;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 18px;
-      font-weight: bold;
-    }
+.hero-copy,
+.hero-panel {
+  position: relative;
+  min-height: 226px;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.hero-copy {
+  padding: 30px 32px;
+  background: linear-gradient(135deg, #ffffff 0%, #f5fbff 100%);
+  border: 1px solid #edf5fa;
+
+  &::after {
+    content: '';
+    position: absolute;
+    right: -36px;
+    bottom: -46px;
+    width: 170px;
+    height: 170px;
+    border-radius: 34px;
+    background: rgba(0, 179, 237, 0.06);
+    transform: rotate(18deg);
   }
 
-  .welcome-text {
-    h3 {
-      margin: 0 0 8px 0;
-      font-size: 18px;
-      color: #333;
-    }
+  h1 {
+    position: relative;
+    z-index: 1;
+    max-width: 620px;
+    margin: 12px 0 14px;
+    color: #102b3b;
+    font-size: clamp(28px, 3vw, 40px);
+    line-height: 1.22;
+    letter-spacing: -0.04em;
+    font-weight: 800;
+  }
 
-    p {
-      margin: 0;
-      color: #666;
-      font-size: 14px;
-    }
+  p {
+    position: relative;
+    z-index: 1;
+    max-width: 640px;
+    margin: 0;
+    color: #657888;
+    font-size: 15px;
+    line-height: 1.8;
+  }
+}
+
+.assistant-kicker {
+  position: relative;
+  z-index: 1;
+  width: fit-content;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgba(0, 179, 237, 0.09);
+  color: #007da6;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.hero-actions {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.primary-action,
+.secondary-action {
+  border: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 700;
+  transition:
+    transform 240ms ease,
+    box-shadow 240ms ease,
+    background 240ms ease;
+
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+.primary-action {
+  background: #00b3ed;
+  color: #fff;
+  box-shadow: 0 10px 20px rgba(0, 179, 237, 0.18);
+
+  i {
+    width: 24px;
+    height: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.18);
+  }
+
+  &:hover {
+    transform: translate3d(0, -2px, 0);
+    box-shadow: 0 14px 24px rgba(0, 179, 237, 0.22);
+  }
+}
+
+.secondary-action {
+  background: #fff;
+  color: #31495a;
+  border: 1px solid #dcecf4;
+
+  &:hover {
+    transform: translate3d(0, -2px, 0);
+    border-color: rgba(0, 179, 237, 0.28);
+  }
+}
+
+.hero-panel {
+  padding: 24px;
+  background: linear-gradient(180deg, #f3fbff 0%, #ffffff 100%);
+  border: 1px solid #dff0f8;
+  color: #172b3a;
+}
+
+.assistant-card-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.avatar-orbit {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+  background: rgba(0, 179, 237, 0.12);
+}
+
+.ai-avatar {
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: #00b3ed;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.panel-copy {
+  span {
+    color: #7c8f9d;
+    font-size: 12px;
+  }
+
+  strong {
+    display: block;
+    margin-top: 4px;
+    font-size: 17px;
+    line-height: 1.4;
+  }
+}
+
+.answer-preview {
+  margin-top: 22px;
+  padding: 16px;
+  border-radius: 14px;
+  background: #fff;
+  border: 1px solid #e6f1f7;
+
+  p {
+    margin: 0 0 8px;
+    color: #123245;
+    font-size: 16px;
+    font-weight: 700;
+  }
+
+  span {
+    color: #657888;
+    font-size: 13px;
+    line-height: 1.7;
+  }
+}
+
+.capability-stack {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 14px;
+
+  div {
+    padding: 10px;
+    border-radius: 12px;
+    background: rgba(0, 179, 237, 0.06);
+    border: 1px solid rgba(0, 179, 237, 0.1);
+  }
+
+  span,
+  strong {
+    display: block;
+  }
+
+  span {
+    color: #7c8f9d;
+    font-size: 12px;
+  }
+
+  strong {
+    margin-top: 4px;
+    font-size: 13px;
+    color: #172b3a;
   }
 }
 
 .recommend-section {
-  background: #fff;
-  border-radius: 12px;
-  padding: 20px 24px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+  margin-top: 14px;
+  padding: 16px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid #e4f1f7;
+  box-shadow: 0 10px 28px rgba(23, 59, 82, 0.05);
+}
 
-  .recommend-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 16px;
+.recommend-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0 0 12px;
 
-    h4 {
-      margin: 0;
-      font-size: 15px;
-      color: #333;
-    }
-
-    .refresh-btn {
-      color: #666;
-      font-size: 13px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      transition: color 0.3s;
-
-      &:hover {
-        color: #00B3ED;
-      }
-    }
+  span {
+    color: #7c8f9d;
+    font-size: 13px;
   }
 
-  .recommend-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
+  h4 {
+    margin: 0 0 4px;
+    color: #172b3a;
+    font-size: 17px;
+    font-weight: 700;
+  }
+}
 
-    .recommend-item {
-      background: #f4f6f8;
-      border: 1px solid #ebeef5;
-      padding: 10px 16px;
-      border-radius: 8px;
-      font-size: 13px;
-      color: #333;
-      cursor: pointer;
-      transition: all 0.3s;
+.refresh-btn {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  background: rgba(0, 179, 237, 0.08);
+  color: #087da4;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    transform 240ms ease,
+    background 240ms ease;
 
-      &:hover {
-        border-color: #00B3ED;
-        color: #00B3ED;
-        background: #f0faff;
-      }
+  &:hover {
+    transform: translate3d(0, -2px, 0);
+    background: rgba(0, 179, 237, 0.13);
+  }
+}
+
+.recommend-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  grid-auto-flow: dense;
+  gap: 10px;
+}
+
+.recommend-item {
+  position: relative;
+  min-height: 70px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #fff;
+  border: 1px solid #e7f0f5;
+  color: #263f50;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
+  cursor: pointer;
+  transition:
+    transform 240ms ease,
+    box-shadow 240ms ease,
+    border-color 240ms ease,
+    color 240ms ease;
+
+  &:nth-child(1) {
+    grid-column: span 6;
+  }
+
+  &:nth-child(2) {
+    grid-column: span 6;
+  }
+
+  &:nth-child(3),
+  &:nth-child(4),
+  &:nth-child(5) {
+    grid-column: span 4;
+  }
+
+  &::before {
+    content: none;
+  }
+
+  i {
+    flex: 0 0 auto;
+    width: 26px;
+    height: 26px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    background: rgba(0, 179, 237, 0.08);
+    color: #00b3ed;
+  }
+
+  &:hover {
+    transform: translate3d(0, -2px, 0);
+    border-color: rgba(0, 179, 237, 0.32);
+    color: #0089b7;
+    box-shadow: 0 8px 18px rgba(23, 59, 82, 0.08);
+
+    i {
+      background: #00b3ed;
+      color: #fff;
     }
   }
 }
 
-/* 聊天列表 */
 .message-list {
-  max-width: 880px;
+  width: min(960px, 100%);
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 24px;
-  padding-bottom: 20px;
+  gap: 18px;
+  padding: 10px 0 24px;
 }
 
 .message-item {
   display: flex;
   width: 100%;
+  animation: riseIn 560ms cubic-bezier(0.32, 0.72, 0, 1) both;
 }
 
 .is-user {
   justify-content: flex-end;
 
   .user-bubble {
-    background: #00B3ED;
+    background: #00b3ed;
     color: #fff;
     border-radius: 16px 16px 4px 16px;
-    padding: 12px 20px;
+    padding: 12px 16px;
     font-size: 14px;
     max-width: 80%;
-    line-height: 1.5;
-    box-shadow: 0 2px 8px rgba(0, 179, 237, 0.2);
+    line-height: 1.7;
+    box-shadow: 0 10px 22px rgba(0, 179, 237, 0.16);
   }
 }
 
@@ -891,24 +1319,25 @@ onBeforeUnmount(() => {
   justify-content: flex-start;
 
   .message-wrapper {
-    max-width: 85%;
+    max-width: 92%;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 10px;
   }
 }
 
-/* AI 状态和过程 */
 .thinking-box {
+  width: fit-content;
   background: #fff;
-  padding: 12px 20px;
-  border-radius: 8px;
+  padding: 10px 14px;
+  border-radius: 999px;
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  color: #00B3ED;
+  color: #0089b7;
   font-size: 14px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  border: 1px solid #dcecf4;
+  box-shadow: 0 8px 20px rgba(23, 59, 82, 0.06);
 }
 
 .action-steps {
@@ -918,84 +1347,93 @@ onBeforeUnmount(() => {
 
   .step-item {
     background: #fff;
-    padding: 10px 16px;
-    border-radius: 6px;
+    padding: 8px 12px;
+    border-radius: 999px;
     font-size: 13px;
-    color: #606266;
+    color: #24485a;
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    border: 1px solid #ebeef5;
+    border: 1px solid #dcecf4;
     align-self: flex-start;
   }
 
   .step-desc {
     font-size: 12px;
-    color: #999;
-    padding-left: 8px;
+    color: rgba(11, 37, 53, 0.46);
+    padding-left: 14px;
   }
 }
 
-/* AI 回答气泡 */
 .ai-bubble {
   background: #fff;
+  border: 1px solid #e3eef5;
   border-radius: 4px 16px 16px 16px;
-  padding: 24px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+  padding: 22px;
+  box-shadow: 0 10px 28px rgba(23, 59, 82, 0.06);
 
   .rich-content {
     .report-title {
-      font-size: 16px;
-      color: #1f2d3d;
-      margin: 0 0 16px 0;
+      font-size: 18px;
+      color: #172b3a;
+      margin: 0 0 14px 0;
+      font-weight: 700;
     }
 
     p {
       margin: 0 0 16px 0;
-      color: #333;
-      font-size: 14px;
-      line-height: 1.6;
+      color: #435b6b;
+      font-size: 15px;
+      line-height: 1.8;
     }
 
     .report-table {
-      margin: 20px 0;
-      border-radius: 4px;
+      margin: 16px 0;
+      border-radius: 12px;
       overflow: hidden;
-      border: 1px solid #ebeef5;
+      border: 1px solid #dcecf4;
+
+      :deep(.el-table) {
+        --el-table-border-color: rgba(0, 179, 237, 0.12);
+        --el-table-header-bg-color: rgba(0, 179, 237, 0.08);
+        color: #17394b;
+      }
     }
 
     .report-conclusion {
       margin-bottom: 0;
-      background: #f8fbff;
-      padding: 16px;
-      border-radius: 6px;
-      border-left: 4px solid #00B3ED;
+      background: #f3fbff;
+      padding: 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(0, 179, 237, 0.16);
     }
   }
 
   .message-footer {
-    margin-top: 24px;
-    padding-top: 16px;
-    border-top: 1px solid #f0f2f5;
+    margin-top: 20px;
+    padding-top: 14px;
+    border-top: 1px solid #e8f2f7;
 
     .regenerate-btn {
-      color: #00B3ED;
+      color: #0089b7;
       font-size: 13px;
+      font-weight: 800;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
       gap: 4px;
       margin-bottom: 16px;
+      transition: transform 620ms cubic-bezier(0.32, 0.72, 0, 1);
 
       &:hover {
-        opacity: 0.8;
+        transform: translate3d(0, -1px, 0);
       }
     }
 
     .follow-up-section {
       .follow-up-title {
         font-size: 13px;
-        color: #999;
+        color: rgba(11, 37, 53, 0.46);
         margin-bottom: 12px;
       }
 
@@ -1005,18 +1443,23 @@ onBeforeUnmount(() => {
         gap: 10px;
 
         .follow-up-pill {
-          background: #fff;
-          border: 1px solid #dcdfe6;
-          color: #606266;
-          padding: 6px 14px;
-          border-radius: 16px;
+          background: rgba(255, 255, 255, 0.74);
+          border: 1px solid #dcecf4;
+          color: #24485a;
+          padding: 8px 14px;
+          border-radius: 999px;
           font-size: 12px;
+          font-weight: 700;
           cursor: pointer;
-          transition: all 0.3s;
+          transition:
+            transform 620ms cubic-bezier(0.32, 0.72, 0, 1),
+            color 620ms cubic-bezier(0.32, 0.72, 0, 1),
+            border-color 620ms cubic-bezier(0.32, 0.72, 0, 1);
 
           &:hover {
-            border-color: #00B3ED;
-            color: #00B3ED;
+            transform: translate3d(0, -2px, 0);
+            border-color: rgba(0, 179, 237, 0.35);
+            color: #0089b7;
           }
         }
       }
@@ -1024,58 +1467,75 @@ onBeforeUnmount(() => {
   }
 }
 
-/* 底部输入区 */
 .chat-footer {
-  background: #f2f7fb;
-  padding: 16px 24px;
+  position: relative;
+  z-index: 2;
+  background: rgba(247, 251, 254, 0.94);
+  border-top: 1px solid #e6f0f6;
+  padding: 14px 24px 18px;
   display: flex;
   justify-content: center;
 
   .input-wrapper {
     position: relative;
     width: 100%;
-    max-width: 880px;
+    max-width: 1120px;
     background: #fff;
-    border-radius: 12px;
-    box-shadow: 0 -2px 16px rgba(0, 0, 0, 0.04);
-    border: 1px solid #ebeef5;
-    transition: border-color 0.3s;
+    border-radius: 16px;
+    box-shadow: 0 10px 26px rgba(23, 59, 82, 0.06);
+    border: 1px solid #dcecf4;
+    transition:
+      border-color 240ms ease,
+      box-shadow 240ms ease;
 
     &:focus-within {
-      border-color: #00B3ED;
+      border-color: rgba(0, 179, 237, 0.42);
+      box-shadow: 0 12px 28px rgba(0, 179, 237, 0.12);
     }
 
     :deep(.el-textarea__inner) {
       border: none;
       box-shadow: none;
-      padding: 16px 132px 16px 16px;
-      font-size: 14px;
+      min-height: 84px !important;
+      padding: 16px 132px 16px 18px;
+      color: #172b3a;
+      font-size: 15px;
+      line-height: 1.7;
       background: transparent;
+      font-family: inherit;
 
       &:focus {
         box-shadow: none;
       }
+
+      &::placeholder {
+        color: #a2b0ba;
+      }
     }
 
     :deep(.el-input__count) {
-      bottom: 8px;
-      right: 12px;
+      bottom: 12px;
+      right: 52px;
       background: transparent;
+      color: #a2b0ba;
     }
 
     .voice-btn,
     .send-btn {
       position: absolute;
-      bottom: 12px;
-      width: 32px;
-      height: 32px;
-      border-radius: 6px;
+      bottom: 14px;
+      width: 36px;
+      height: 36px;
+      border-radius: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
-      color: #a8abb2;
+      color: #8da0ac;
       cursor: not-allowed;
-      transition: all 0.3s;
+      transition:
+        transform 240ms ease,
+        background 240ms ease,
+        color 240ms ease;
     }
 
     .voice-btn {
@@ -1083,21 +1543,22 @@ onBeforeUnmount(() => {
       cursor: pointer;
 
       &:hover {
-        color: #00B3ED;
-        background: #f0faff;
+        color: #0089b7;
+        background: rgba(0, 179, 237, 0.09);
+        transform: translate3d(0, -2px, 0);
       }
 
       &.active {
         color: #fff;
-        background: #f56c6c;
+        background: #f05b72;
 
         &:hover {
-          background: #e64b4b;
+          background: #e94962;
         }
       }
 
       &.disabled {
-        color: #c0c4cc;
+        color: rgba(11, 37, 53, 0.28);
         background: transparent;
         cursor: not-allowed;
       }
@@ -1108,15 +1569,18 @@ onBeforeUnmount(() => {
     }
 
     .send-btn {
-      right: 12px;
+      right: 16px;
+      background: rgba(0, 179, 237, 0.08);
 
       &.active {
         color: #fff;
-        background: #00B3ED;
+        background: #00b3ed;
         cursor: pointer;
+        box-shadow: 0 8px 18px rgba(0, 179, 237, 0.22);
 
         &:hover {
-          background: #0099cc;
+          transform: translate3d(3px, -2px, 0) scale(1.04);
+          background: #009ed1;
         }
       }
     }
@@ -1124,11 +1588,11 @@ onBeforeUnmount(() => {
     .voice-status {
       position: absolute;
       left: 16px;
-      bottom: -28px;
+      bottom: -24px;
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      color: #909399;
+      color: #7c8f9d;
       font-size: 12px;
 
       &.recording {
@@ -1158,6 +1622,104 @@ onBeforeUnmount(() => {
         background: rgba(245, 108, 108, 0.12);
         color: #f56c6c;
       }
+    }
+  }
+}
+
+@keyframes riseIn {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 28px, 0) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@media (max-width: 1180px) {
+  .welcome-card {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-panel {
+    min-height: 260px;
+  }
+}
+
+@media (max-width: 900px) {
+  .ai-chat-container {
+    height: calc(100vh - 88px);
+    min-height: 620px;
+    border-radius: 16px;
+  }
+
+  .assistant-nav {
+    width: calc(100% - 32px);
+  }
+
+  .chat-main {
+    padding: 20px 16px;
+  }
+
+  .hero-copy {
+    padding: 30px 24px;
+
+    h1 {
+      font-size: clamp(30px, 9vw, 42px);
+    }
+  }
+
+  .recommend-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .recommend-item,
+  .recommend-item:nth-child(1),
+  .recommend-item:nth-child(2),
+  .recommend-item:nth-child(3),
+  .recommend-item:nth-child(4),
+  .recommend-item:nth-child(5) {
+    grid-column: span 6;
+  }
+
+  .chat-footer {
+    padding: 14px 16px 18px;
+  }
+
+  .message-list {
+    width: 100%;
+  }
+
+  .is-assistant .message-wrapper,
+  .is-user .user-bubble {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 640px) {
+  .assistant-nav {
+    align-items: flex-start;
+    border-radius: 24px;
+  }
+
+  .nav-status {
+    display: none;
+  }
+
+  .capability-stack {
+    grid-template-columns: 1fr;
+  }
+
+  .recommend-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .chat-footer .input-wrapper {
+    :deep(.el-textarea__inner) {
+      padding-right: 116px;
     }
   }
 }
