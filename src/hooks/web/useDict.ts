@@ -32,7 +32,7 @@ export const useDict = (dictType: string, valueType: 'int' | 'str' = 'int') => {
 
   /** 根据值获取标签文本 */
   const getLabel = (value: any): string => {
-    return getDictLabel(dictType, value) || '--'
+    return getDictLabel(dictType, value) || value || '--'
   }
 
   // 立即加载
