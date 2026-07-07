@@ -3,11 +3,7 @@
 
     <BigPanelCard title="任务下发概况" :bg-image="leftBg">
       <template #title-extra>
-        <el-tooltip
-          placement="bottom-end"
-          popper-class="bigscreen-task-tooltip"
-          effect="light"
-        >
+        <el-tooltip placement="bottom-end" popper-class="bigscreen-task-tooltip" effect="light">
           <template #content>
             <div class="tooltip-text-content">
               任务下发量：本机构任务下发总量（统计：下发任务样品量）；<br />
@@ -29,11 +25,44 @@
             <p class="label">{{ item.label }}</p>
             <div class="value-container">
               <span class="value">{{ item.value }}</span>
+              <span class="unit" v-if="item.unit">{{ item.unit }}</span>
               <!-- 全息投影效果 -->
               <img class="holographic-img" src="@/assets/imgs/echarts/合格证/bf67.png" />
             </div>
           </div>
           <div v-if="index < summaryData.length - 1" class="separator"></div>
+        </div>
+      </div>
+    </BigPanelCard>
+
+    <BigPanelCard title="快速检测概况" :bg-image="leftBg">
+      <template #title-extra>
+        <el-tooltip placement="bottom-end" popper-class="bigscreen-task-tooltip" effect="light">
+          <template #content>
+            <div class="tooltip-text-content">
+              样品总量：本机构“任务执行抽样量+自主检测抽样量”；<br />
+              检测总量：本机构“任务执行+自主检测”的全部样品检测项总量；<br />
+              检测阳性率：本机构全部样品检测项的阳性率，即“检测项阳性量/检测总量”；<br />
+              任务完成量：本机构执行任务的“抽样数量”；<br />
+              任务完成率：本机构“任务完成量/任务接收量”；<br />
+              快速检测（本机构执行检测数据）
+            </div>
+          </template>
+          <span class="question-icon">?</span>
+        </el-tooltip>
+      </template>
+      <div class="summary-flex">
+        <div class="summary-item" v-for="(item, index) in fastSummaryData" :key="item.label">
+          <div class="item-inner">
+            <p class="label">{{ item.label }}</p>
+            <div class="value-container">
+              <span class="value">{{ item.value }}</span>
+              <span class="unit" v-if="item.unit">{{ item.unit }}</span>
+              <!-- 全息投影效果 -->
+              <img class="holographic-img" src="@/assets/imgs/echarts/合格证/bf67.png" />
+            </div>
+          </div>
+          <div v-if="index < fastSummaryData.length - 1" class="separator"></div>
         </div>
       </div>
     </BigPanelCard>
@@ -84,19 +113,27 @@ import {
   type DashboardTaskOverviewRespVO,
   type TaskCategoryDistributionRespVO
 } from '@/api/agri/dashboard/task';
+import { getFastOverview, type DashboardFastOverviewRespVO } from '@/api/agri/dashboard/fast';
 import { getBigScreenQueryParams, subscribeBigScreenRefresh } from '../bigscreen/config';
 
 const overview = ref<DashboardTaskOverviewRespVO>({});
+const fastOverview = ref<DashboardFastOverviewRespVO>({});
 const categoryDistribution = ref<TaskCategoryDistributionRespVO[]>([]);
 const categoryColors = ['#3f6dff', '#ffb22c', '#3ba4ff', '#d8efff', '#39e3e7', '#8ad64c', '#7d60ff', '#ff8a34'];
 
 const formatCount = (value?: number) => Number(value || 0);
-const formatRate = (value?: number) => `${Number(value || 0).toFixed(0)}%`;
+const formatRate = (value?: number) => Number(value || 0).toFixed(0);
 
 const summaryData = computed(() => [
-  { label: '任务下发量', value: formatCount(overview.value.taskIssuedCount) },
-  { label: '任务完成量', value: formatCount(overview.value.taskCompletedCount) },
-  { label: '任务完成率', value: formatRate(overview.value.taskCompletionRate) }
+  { label: '任务下发量', value: formatCount(overview.value.taskIssuedCount), unit: '批次' },
+  { label: '任务完成量', value: formatCount(overview.value.taskCompletedCount), unit: '项次' },
+  { label: '任务完成率', value: formatRate(overview.value.taskCompletionRate), unit: '%' }
+]);
+
+const fastSummaryData = computed(() => [
+  { label: '样品总量', value: formatCount(fastOverview.value.sampleBatchCount), unit: '批次' },
+  { label: '检测总量', value: formatCount(fastOverview.value.detectionItemCount), unit: '项次' },
+  { label: '检测阳性率', value: formatRate(fastOverview.value.itemPositiveRate), unit: '%' }
 ]);
 
 const coverData = computed(() => [
@@ -111,6 +148,16 @@ const loadOverviewData = async () => {
   } catch (error) {
     console.error('加载检测任务概览失败', error);
     overview.value = {};
+  }
+};
+
+const loadFastOverviewData = async () => {
+  try {
+    const data = await getFastOverview(getBigScreenQueryParams());
+    fastOverview.value = data || {};
+  } catch (error) {
+    console.error('加载快速检测概览失败', error);
+    fastOverview.value = {};
   }
 };
 
@@ -140,8 +187,8 @@ const categoryPieOption = computed(() => ({
   series: [
     {
       type: 'pie',
-      radius: ['50%', '62%'],
-      center: ['44%', '50%'],
+      radius: ['66%', '78%'],
+      center: ['38%', '50%'],
       silent: true,
       z: 0,
       label: { show: false },
@@ -163,8 +210,8 @@ const categoryPieOption = computed(() => ({
     },
     {
       type: 'pie',
-      radius: ['32%', '50%'],
-      center: ['44%', '50%'],
+      radius: ['48%', '66%'],
+      center: ['38%', '50%'],
       minAngle: 6,
       avoidLabelOverlap: true,
       z: 2,
@@ -215,11 +262,13 @@ const loadCategoryDistribution = async () => {
 onMounted(() => {
   loadOverviewData();
   loadCategoryDistribution();
+  loadFastOverviewData();
 });
 
 const disposeRefresh = subscribeBigScreenRefresh(() => {
   loadOverviewData();
   loadCategoryDistribution();
+  loadFastOverviewData();
 });
 
 onUnmounted(() => {
@@ -230,7 +279,7 @@ onUnmounted(() => {
 <style scoped lang="scss">
 .left-section {
   display: grid;
-  grid-template-rows: auto 200px minmax(0, 1fr);
+  grid-template-rows: auto auto auto minmax(0, 1fr);
   gap: 12px;
   height: 100%;
   min-height: 0;
@@ -266,11 +315,19 @@ onUnmounted(() => {
 
     .value {
       color: #7feaff;
-      font-size: 44px;
+      font-size: 28px;
       line-height: 1;
       font-weight: 700;
       font-family: 'DIN Alternate', sans-serif;
       text-shadow: 0 0 15px rgba(127, 234, 255, 0.5);
+    }
+
+    .unit {
+      color: #a7caea;
+      font-size: 16px;
+      margin-left: 4px;
+      font-weight: normal;
+      text-shadow: none;
     }
 
     .holographic-img {
@@ -287,11 +344,12 @@ onUnmounted(() => {
 
   .separator {
     width: 1px;
-    height: 44px;
+    height: 100%;
     background: linear-gradient(to bottom, transparent, rgba(66, 142, 228, 0.4), transparent);
     position: absolute;
     right: 0;
-    top: 10px;
+    top: 0;
+    bottom: 0;
   }
 }
 
@@ -342,7 +400,6 @@ onUnmounted(() => {
   justify-content: center;
   gap: 16px;
   position: relative;
-  padding-top: 20px;
 
   .dial-wrap {
     position: relative;
@@ -448,23 +505,23 @@ onUnmounted(() => {
   display: grid;
   grid-template-columns: 14px minmax(0, 1fr);
   align-items: center;
-  gap: 10px;
-  min-height: 22px;
+  gap: 4px;
+  min-height: 16px;
   padding: 0;
   border: 0;
   background: transparent;
   box-shadow: none;
 
   .dot {
-    width: 14px;
-    height: 14px;
+    width: 10px;
+    height: 10px;
     border-radius: 0;
     box-shadow: 0 0 8px rgba(87, 226, 255, 0.22);
   }
 
   .name {
     color: #cdd9df;
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 600;
     white-space: nowrap;
     overflow: hidden;
@@ -503,6 +560,7 @@ onUnmounted(() => {
   transition: all 0.2s ease;
   user-select: none;
 }
+
 .question-icon:hover {
   border-color: #57e2ff;
   color: #57e2ff;

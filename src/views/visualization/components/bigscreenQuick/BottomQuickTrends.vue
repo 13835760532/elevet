@@ -1,6 +1,6 @@
 <template>
   <section class="bottom-quick-trends">
-    <BigPanelCard class="big-panel-center panel-header-bottom" title="检测量态势" :tabs="['检测量', '阳性率']"
+    <BigPanelCard class="big-panel-center panel-header-bottom" title="检测量态势" :tabs="[]"
       v-model:active-tab="leftTrendTab" :bg-image="bottomBg">
       <div class="quick-trend-chart">
         <div class="positive-count-summary">
@@ -11,7 +11,7 @@
       </div>
     </BigPanelCard>
 
-    <BigPanelCard class="big-panel-center panel-header-bottom" title="风险态势" :tabs="['自主检测样本量']" :bg-image="bottomBg">
+    <BigPanelCard class="big-panel-center panel-header-bottom" title="风险态势" :tabs="[]" :bg-image="bottomBg">
       <Echart :options="currentRightTrendOption" :height="200" />
     </BigPanelCard>
   </section>
@@ -130,13 +130,13 @@ const leftTooltipFormatter = (params: any) => {
 
   if (leftTrendTab.value === '阳性率') {
     return `${month}<br/>` +
-           `<span style="display:inline-block;margin-right:4px;border-radius:10px;width:10px;height:10px;background-color:#ff4d4f;"></span>阳性率：${rateVal}<br/>` +
-           `<span style="display:inline-block;margin-right:4px;border-radius:10px;width:10px;height:10px;background-color:#ff7875;"></span>阳性数量：${posVal}项次<br/>` +
-           `<span style="display:inline-block;margin-right:4px;border-radius:10px;width:10px;height:10px;background-color:#4deaff;"></span>检测总量：${detVal}项次`;
+      `<span style="display:inline-block;margin-right:4px;border-radius:10px;width:10px;height:10px;background-color:#ff4d4f;"></span>阳性率：${rateVal}<br/>` +
+      `<span style="display:inline-block;margin-right:4px;border-radius:10px;width:10px;height:10px;background-color:#ff7875;"></span>阳性数量：${posVal}项次<br/>` +
+      `<span style="display:inline-block;margin-right:4px;border-radius:10px;width:10px;height:10px;background-color:#4deaff;"></span>检测总量：${detVal}项次`;
   } else {
     return `${month}<br/>` +
-           `<span style="display:inline-block;margin-right:4px;border-radius:10px;width:10px;height:10px;background-color:#ff7875;"></span>阳性数量：${posVal}项次<br/>` +
-           `<span style="display:inline-block;margin-right:4px;border-radius:10px;width:10px;height:10px;background-color:#4deaff;"></span>检测总量：${detVal}项次`;
+      `<span style="display:inline-block;margin-right:4px;border-radius:10px;width:10px;height:10px;background-color:#ff7875;"></span>阳性数量：${posVal}项次<br/>` +
+      `<span style="display:inline-block;margin-right:4px;border-radius:10px;width:10px;height:10px;background-color:#4deaff;"></span>检测总量：${detVal}项次`;
   }
 };
 
@@ -146,7 +146,7 @@ const rightTooltipFormatter = (params: any) => {
   const val = params[0].value !== undefined ? params[0].value : '--';
 
   return `${month}<br/>` +
-         `<span style="display:inline-block;margin-right:4px;border-radius:10px;width:10px;height:10px;background-color:#4deaff;"></span>自主检测样本量：${val}批次`;
+    `<span style="display:inline-block;margin-right:4px;border-radius:10px;width:10px;height:10px;background-color:#4deaff;"></span>自主检测样本量：${val}批次`;
 };
 
 const currentLeftTrendOption = computed(() =>

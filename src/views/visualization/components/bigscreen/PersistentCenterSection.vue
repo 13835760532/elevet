@@ -19,7 +19,10 @@
           <div class="stat-item" v-for="item in sideStats" :key="item.label">
             <div class="stat-content">
               <span class="stat-label">{{ item.label }}</span>
-              <span class="stat-value">{{ item.value }}</span>
+              <div class="stat-value-container">
+                <span class="stat-value">{{ item.value }}</span>
+                <span class="stat-unit" v-if="item.unit">{{ item.unit }}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -153,13 +156,13 @@ const topMetrics = computed(() => [
 ])
 
 const sideStats = computed(() => [
-  { label: '任务下发项次', value: `${Number(dashboardOverview.value.taskIssuedCount || 0)}` },
-  { label: '任务完成项次', value: `${Number(dashboardOverview.value.taskCompletedCount || 0)}` },
-  { label: '任务完成率', value: `${Number(dashboardOverview.value.taskCompletionRate || 0).toFixed(2)}%` },
-  { label: '检测样品量', value: `${Number(dashboardOverview.value.sampleCount || 0)}` },
-  { label: '检测项次', value: `${Number(dashboardOverview.value.detectionItemCount || 0)}` },
-  { label: '合格证开具份', value: `${Number(dashboardOverview.value.certificateIssueCount || 0)}` },
-  { label: '合格证收证份', value: `${Number(dashboardOverview.value.certificateVerifyCount || 0)}` }
+  { label: '任务下发量', value: Number(dashboardOverview.value.taskIssuedCount || 0), unit: '批次' },
+  { label: '任务完成量', value: Number(dashboardOverview.value.taskCompletedCount || 0), unit: '批次' },
+  { label: '任务完成率', value: Number(dashboardOverview.value.taskCompletionRate || 0).toFixed(2), unit: '%' },
+  { label: '快检样品量', value: Number(dashboardOverview.value.sampleCount || 0), unit: '批次' },
+  { label: '检测项总量', value: Number(dashboardOverview.value.detectionItemCount || 0), unit: '项次' },
+  { label: '合格证开具', value: Number(dashboardOverview.value.certificateIssueCount || 0), unit: '份' },
+  { label: '合格证收证', value: Number(dashboardOverview.value.certificateVerifyCount || 0), unit: '份' }
 ])
 
 const monthLabels = Array.from({ length: 12 }, (_, index) => `${index + 1}月`)
@@ -249,17 +252,17 @@ const createDashboardTrendOption = (
     },
     ...(rightTitle
       ? [
-          {
-            type: 'text',
-            right: 26,
-            top: 20,
-            style: {
-              text: rightTitle,
-              fill: 'rgba(228, 235, 245, 0.72)',
-              font: '16px sans-serif'
-            }
+        {
+          type: 'text',
+          right: 26,
+          top: 20,
+          style: {
+            text: rightTitle,
+            fill: 'rgba(228, 235, 245, 0.72)',
+            font: '16px sans-serif'
           }
-        ]
+        }
+      ]
       : []),
     {
       type: 'text',
@@ -396,22 +399,22 @@ const createDashboardTrendOption = (
 const dashboardTrendOption = computed(() =>
   trendTab.value === '阳性率'
     ? createDashboardTrendOption(
-        dashboardLineValues.value,
-        dashboardYAxisMax.value,
-        '{value}%',
-        '（%）',
-        '',
-        20,
-        15,
-        'right'
-      )
+      dashboardLineValues.value,
+      dashboardYAxisMax.value,
+      '{value}%',
+      '（%）',
+      '',
+      20,
+      15,
+      'right'
+    )
     : createDashboardTrendOption(
-        dashboardLineValues.value,
-        dashboardYAxisMax.value,
-        undefined,
-        undefined,
-        ''
-      )
+      dashboardLineValues.value,
+      dashboardYAxisMax.value,
+      undefined,
+      undefined,
+      ''
+    )
 )
 
 const normalizeSeries = (series?: number[], length = 0) =>
@@ -754,6 +757,11 @@ onUnmounted(() => {
     line-height: 23px;
   }
 
+  .stat-value-container {
+    display: flex;
+    align-items: baseline;
+  }
+
   .stat-value {
     color: #43e4ff;
     font-size: 30px;
@@ -761,6 +769,14 @@ onUnmounted(() => {
     font-family: 'Din Alternate', sans-serif;
     line-height: 1;
     text-shadow: 0 0 8px rgba(67, 228, 255, 0.35);
+  }
+
+  .stat-unit {
+    color: rgba(235, 248, 248, 0.58);
+    font-size: 15px;
+    font-weight: normal;
+    margin-left: 6px;
+    text-shadow: none;
   }
 }
 

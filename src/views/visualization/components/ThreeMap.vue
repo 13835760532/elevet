@@ -199,13 +199,14 @@ const legendTitle = computed(() => {
 })
 
 const legendItems = [
-  { label: '300-499', color: '#45f4b8' },
-  { label: '200-399', color: '#26cfa8' },
-  { label: '100-299', color: '#1aa3b4' },
-  { label: '50-199', color: '#176c9f' },
-  { label: '30-100', color: '#15527d' },
-  { label: '10-50', color: '#b9f2f0' },
-  { label: '0-10', color: '#f0f6f3' }
+  { label: '300~499', color: '#60D1FA' },
+  { label: '200~299', color: '#4DA8E1' },
+  { label: '100~199', color: '#3C84C7' },
+  { label: '50~99', color: '#2F66AE' },
+  { label: '30~49', color: '#254C94' },
+  { label: '10~29', color: '#1D367C' },
+  { label: '1~9', color: '#172662' },
+  { label: '0', color: '#11184A' }
 ]
 
 const getTerrainTexture = () => {
