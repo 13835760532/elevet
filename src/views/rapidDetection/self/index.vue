@@ -61,6 +61,7 @@
                 <div class="action-left">
                     <!-- <el-button type="primary" @click="handleBatchImport" class="primary-btn">检测批量导入</el-button> -->
                     <el-button type="primary" @click="handleSingleInput" class="primary-btn">检测单条录入</el-button>
+                    <el-button type="primary" @click="handleBatchPublic" :disabled="multipleSelection.length === 0">批量设置</el-button>
                 </div>
                 <div class="action-right">
                     <el-button @click="handleExport">导出</el-button>
@@ -72,7 +73,8 @@
             <div class="content-card">
                 <!-- 数据表格 -->
                 <div class="table-wrapper" v-loading="loading" ref="tableWrapperRef">
-                    <el-table :data="tableList" :height="tableHeight" :border="false">
+                    <el-table :data="tableList" :height="tableHeight" :border="false" @selection-change="handleSelectionChange">
+                        <el-table-column type="selection" width="55" align="center" fixed="left" />
                         <el-table-column label="序号" type="index" width="60" align="center" />
                         <el-table-column label="样品编号" prop="sampleCode" width="130" align="center" />
                         <el-table-column label="样品名称" prop="productName" width="80" align="center" />
@@ -184,6 +186,36 @@
                 </div>
             </template>
         </el-dialog>
+
+        <!-- 批量设置公开状态弹窗 -->
+        <el-dialog v-model="batchPublicDialogVisible" width="480px" :show-close="true" class="rule-dialog" align-center>
+            <template #header>
+                <div class="dialog-header">
+                    <div class="title-with-accent">
+                        <span class="accent-bar"></span>
+                        <h3 class="dialog-title">批量设置公开状态</h3>
+                    </div>
+                    <p class="dialog-desc">批量修改选中检测记录是否公开</p>
+                </div>
+            </template>
+
+            <div class="rule-form">
+                <div class="form-item">
+                    <label class="form-label">选中的 {{ multipleSelection.length }} 条检测记录是否面向政府公开</label>
+                    <el-radio-group v-model="batchPublicValue">
+                        <el-radio :value="true">是</el-radio>
+                        <el-radio :value="false">否</el-radio>
+                    </el-radio-group>
+                </div>
+            </div>
+
+            <template #footer>
+                <div class="dialog-footer">
+                    <el-button @click="batchPublicDialogVisible = false" class="cancel-btn">取消</el-button>
+                    <el-button type="primary" @click="confirmBatchPublic" class="confirm-btn">确定</el-button>
+                </div>
+            </template>
+        </el-dialog>
     </div>
 </template>
 
@@ -231,6 +263,11 @@ const pageParams = reactive({
 
 const total = ref(0);
 const tableList = ref([]);
+const multipleSelection = ref<any[]>([]);
+
+const handleSelectionChange = (val: any[]) => {
+    multipleSelection.value = val;
+};
 
 const formatDetectionTime = (value: any) => {
     if (!value) return '-';
@@ -335,6 +372,10 @@ const handleExport = async () => {
 
 // 数据上报规则弹窗
 const ruleDialogVisible = ref(false);
+
+// 批量设置公开状态弹窗
+const batchPublicDialogVisible = ref(false);
+const batchPublicValue = ref(true);
 const ruleForm = reactive<{
     id: number | undefined;
     isPublic: boolean;
@@ -395,6 +436,36 @@ const handleSaveRule = async () => {
 const handleSingleInput = () => {
     console.log('Single Input');
     router.push('/rapidDetection/create');
+};
+
+const handleBatchPublic = () => {
+    if (multipleSelection.value.length === 0) {
+        message.warning('请先勾选需要操作的检测记录');
+        return;
+    }
+    batchPublicValue.value = true;
+    batchPublicDialogVisible.value = true;
+};
+
+const confirmBatchPublic = async () => {
+    loading.value = true;
+    const publicFlag = batchPublicValue.value;
+    const actionText = publicFlag ? '公开' : '不公开';
+    try {
+        const ids = multipleSelection.value.map(item => item.id);
+        await DetectionRecordApi.updateSelfDetectionPublicFlag({
+            ids,
+            publicFlag
+        });
+        message.success('操作成功');
+        batchPublicDialogVisible.value = false;
+        multipleSelection.value = []; // 清空选中的记录
+        await getList(); // 刷新列表
+    } catch (error) {
+        console.error(`批量修改${actionText}状态失败`, error);
+    } finally {
+        loading.value = false;
+    }
 };
 
 /* Removed unused handleTest */
@@ -649,6 +720,19 @@ onMounted(() => {
             opacity: 0.8;
             text-decoration: underline;
         }
+    }
+}
+
+/* 订正多选复选框样式与对齐 */
+:deep(.el-table) {
+    .el-checkbox__inner {
+        border-radius: 2px !important;
+    }
+    .el-table-column--selection .cell {
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        padding: 0 !important;
     }
 }
 </style>

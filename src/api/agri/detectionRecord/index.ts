@@ -64,3 +64,8 @@ export const exportDetectionRecord = (params: any) => {
 export const updateDetectionRecordRemarks = (data: { id: number; remarks: string }) => {
   return request.put({ url: '/agri/detection-record/updateRemarks', data })
 }
+
+// 批量修改自主检测记录是否公开
+export const updateSelfDetectionPublicFlag = (data: { ids: number[]; publicFlag: boolean }) => {
+  return request.put({ url: '/agri/detection-record/update-public-flag', data })
+}

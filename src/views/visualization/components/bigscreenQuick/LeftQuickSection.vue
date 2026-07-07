@@ -2,6 +2,21 @@
   <section class="left-section">
 
     <BigPanelCard title="快速检测概况" :bg-image="leftBg">
+      <template #title-extra>
+        <el-tooltip placement="bottom-end" popper-class="bigscreen-quick-tooltip" effect="light">
+          <template #content>
+            <div class="tooltip-text-content">
+              样品总量：本机构“任务执行抽样量+自主检测抽样量”；<br />
+              检测总量：本机构“任务执行+自主检测”的全部样品检测项总量；<br />
+              检测阳性率：本机构全部样品检测项的阳性率，即“检测项阳性量/检测总量”；<br />
+              任务完成量：本机构执行任务的“抽样数量”；<br />
+              任务完成率：本机构“任务完成量/任务接收量”；<br />
+              快速检测（本机构执行检测数据）
+            </div>
+          </template>
+          <span class="question-icon">?</span>
+        </el-tooltip>
+      </template>
       <div class="subject-grid">
         <div class="subject-item" v-for="(item, index) in overviewData" :key="item.label">
           <div class="item-inner">
@@ -55,7 +70,6 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { Echart } from '@/components/Echart'
 import BigPanelCard from '../bigscreen/BigPanelCard.vue'
-import BigScreenSelector from '../bigscreen/BigScreenSelector.vue'
 import leftBg from '@/assets/imgs/echarts/合格证/Frame 58_bg.png'
 import iconOrg from '@/assets/imgs/echarts/检测任务/68.png'
 import iconFactory from '@/assets/imgs/echarts/检测任务/69.png'
@@ -696,6 +710,47 @@ onUnmounted(() => {
     background: linear-gradient(to bottom, transparent, rgba(255, 255, 255, 0.2), transparent);
     position: absolute;
     right: -20px;
+  }
+}
+
+.question-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 50%;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 13px;
+  font-weight: bold;
+  cursor: pointer;
+  margin-left: 6px;
+  line-height: 1;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.question-icon:hover {
+  border-color: #57e2ff;
+  color: #57e2ff;
+  background: rgba(87, 226, 255, 0.1);
+}
+</style>
+
+<style lang="scss">
+.bigscreen-quick-tooltip.el-popper {
+  background: rgba(255, 255, 255, 0.96) !important;
+  border: 1px solid #1890ff !important;
+  color: #333333 !important;
+  --el-bg-color-overlay: rgba(255, 255, 255, 0.96) !important;
+  --el-border-color-light: #1890ff !important;
+
+  .tooltip-text-content {
+    font-size: 14px;
+    line-height: 1.8;
+    color: #333333;
+    font-family: sans-serif;
   }
 }
 </style>

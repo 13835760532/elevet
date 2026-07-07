@@ -2,6 +2,27 @@
   <section class="left-section">
 
     <BigPanelCard title="任务下发概况" :bg-image="leftBg">
+      <template #title-extra>
+        <el-tooltip
+          placement="bottom-end"
+          popper-class="bigscreen-task-tooltip"
+          effect="light"
+        >
+          <template #content>
+            <div class="tooltip-text-content">
+              任务下发量：本机构任务下发总量（统计：下发任务样品量）；<br />
+              任务完成量：本机构下发任务完成量（统计：已下发任务完成抽样量）；<br />
+              任务完成率：本机构的“任务下发量/完成任务量”；<br />
+              <br />
+              样品总量：本机构的“全部检测样品量”；<br />
+              检测项总量：本机构的“全部样品总检测量”；<br />
+              合格证开具：本机构的“合格证累计开具份数”；<br />
+              合格证收证：本机构的“合格证累计收证份数”；
+            </div>
+          </template>
+          <span class="question-icon">?</span>
+        </el-tooltip>
+      </template>
       <div class="summary-flex">
         <div class="summary-item" v-for="(item, index) in summaryData" :key="item.label">
           <div class="item-inner">
@@ -52,10 +73,8 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue';
-import echarts from '@/plugins/echarts';
 import { Echart } from '@/components/Echart';
 import BigPanelCard from '../bigscreen/BigPanelCard.vue';
-import BigScreenSelector from '../bigscreen/BigScreenSelector.vue';
 import leftBg from '@/assets/imgs/echarts/检测任务/erji_bg.png';
 import iconOrg from '@/assets/imgs/echarts/检测任务/68.png';
 import iconFactory from '@/assets/imgs/echarts/检测任务/69.png';
@@ -464,6 +483,46 @@ onUnmounted(() => {
 
   to {
     transform: rotate(360deg);
+  }
+}
+
+.question-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 50%;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 13px;
+  font-weight: bold;
+  cursor: pointer;
+  margin-left: 6px;
+  line-height: 1;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+.question-icon:hover {
+  border-color: #57e2ff;
+  color: #57e2ff;
+  background: rgba(87, 226, 255, 0.1);
+}
+</style>
+
+<style lang="scss">
+.bigscreen-task-tooltip.el-popper {
+  background: rgba(255, 255, 255, 0.96) !important;
+  border: 1px solid #1890ff !important;
+  color: #333333 !important;
+  --el-bg-color-overlay: rgba(255, 255, 255, 0.96) !important;
+  --el-border-color-light: #1890ff !important;
+
+  .tooltip-text-content {
+    font-size: 14px;
+    line-height: 1.8;
+    color: #333333;
+    font-family: sans-serif;
   }
 }
 </style>

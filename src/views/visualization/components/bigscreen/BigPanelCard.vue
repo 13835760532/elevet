@@ -4,11 +4,14 @@
       <div class="panel-title-wrap">
         <h3 class="panel-title">{{ title }}</h3>
       </div>
-      <div v-if="tabs.length" class="panel-tabs">
-        <button v-for="tab in tabs" :key="tab" class="panel-tab" :class="{ active: tab === currentActiveTab }"
-          type="button" @click="handleTabClick(tab)">
-          {{ tab }}
-        </button>
+      <div class="panel-header-right">
+        <slot name="title-extra" />
+        <div v-if="tabs.length" class="panel-tabs">
+          <button v-for="tab in tabs" :key="tab" class="panel-tab" :class="{ active: tab === currentActiveTab }"
+            type="button" @click="handleTabClick(tab)">
+            {{ tab }}
+          </button>
+        </div>
       </div>
     </header>
     <div class="panel-body">
@@ -139,10 +142,16 @@ const handleTabClick = (tab: string) => {
   line-height: 46px;
 }
 
+.panel-header-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-right: 8px;
+}
+
 .panel-tabs {
   display: flex;
   gap: 14px;
-  padding-right: 18px;
 }
 
 .panel-tab {
