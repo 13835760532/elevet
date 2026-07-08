@@ -405,18 +405,39 @@ const buildDateTimeRange = () => {
   ]
 }
 
-const buildSubjectAreaParams = (areaNames: string[]) => ({
-  provinceCode: areaNames[0] || undefined,
-  cityCode: areaNames[1] || undefined,
-  districtCode: areaNames[2] || undefined
-})
+const isEmptyCascaderValue = (value: any) =>
+  value === undefined ||
+  value === null ||
+  value === '' ||
+  (Array.isArray(value) && value.length === 0)
 
-const buildProductAreaParams = (areaNames: string[]) => ({
-  productionArea: areaNames.length ? areaNames.join('') : undefined,
-  provinceCode: areaNames[0] || undefined,
-  cityCode: areaNames[1] || undefined,
-  districtCode: areaNames[2] || undefined
-})
+const normalizeArray = <T,>(value: T[] | undefined | null) => (Array.isArray(value) ? value : [])
+
+const getLastAreaName = (areaNames: string[]) => {
+  const effectiveAreaNames = areaNames.filter(Boolean)
+  return effectiveAreaNames[effectiveAreaNames.length - 1] || ''
+}
+
+const buildSubjectAreaParams = (areaNames: string[]) => {
+  const lastAreaName = getLastAreaName(areaNames)
+  const level = areaNames.filter(Boolean).length
+  return {
+    provinceCode: level === 1 ? lastAreaName : undefined,
+    cityCode: level === 2 ? lastAreaName : undefined,
+    districtCode: level === 3 ? lastAreaName : undefined
+  }
+}
+
+const buildProductAreaParams = (areaNames: string[]) => {
+  const lastAreaName = getLastAreaName(areaNames)
+  const level = areaNames.filter(Boolean).length
+  return {
+    productionArea: lastAreaName || undefined,
+    provinceCode: level === 1 ? lastAreaName : undefined,
+    cityCode: level === 2 ? lastAreaName : undefined,
+    districtCode: level === 3 ? lastAreaName : undefined
+  }
+}
 
 const buildSubjectQuery = (pageNo: number, pageSize: number) => {
   const createTime = buildDateTimeRange()
@@ -483,13 +504,9 @@ const handleSubjectAreaSelect = (area: any) => {
 }
 
 const handleSubjectAreaChange = (value: any) => {
-  if (
-    value === undefined ||
-    value === null ||
-    value === '' ||
-    (Array.isArray(value) && value.length === 0)
-  ) {
+  if (isEmptyCascaderValue(value)) {
     subjectAreaNames.value = []
+    searchSubjectTable()
   }
 }
 
@@ -498,13 +515,9 @@ const handleProductAreaSelect = (area: any) => {
 }
 
 const handleProductAreaChange = (value: any) => {
-  if (
-    value === undefined ||
-    value === null ||
-    value === '' ||
-    (Array.isArray(value) && value.length === 0)
-  ) {
+  if (isEmptyCascaderValue(value)) {
     productAreaNames.value = []
+    searchProductTable()
   }
 }
 
@@ -739,7 +752,7 @@ watch(
     name: filtersSubject.name,
     filingType: filtersSubject.filingType,
     subjectType: filtersSubject.subjectType,
-    region: [...filtersSubject.region],
+    region: [...normalizeArray(filtersSubject.region)],
     areaNames: [...subjectAreaNames.value]
   }),
   () => {
@@ -752,7 +765,7 @@ watch(
     productCode: filtersProduct.productCode,
     productName: filtersProduct.productName,
     subjectName: filtersProduct.subjectName,
-    region: [...filtersProduct.region],
+    region: [...normalizeArray(filtersProduct.region)],
     areaNames: [...productAreaNames.value]
   }),
   () => {

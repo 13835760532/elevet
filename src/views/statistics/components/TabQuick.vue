@@ -272,12 +272,23 @@ const handleAreaChange = (value: any) => {
 }
 
 const handleDetectionAreaSelect = (area: any) => {
-  filters.area = [area?.province, area?.city, area?.district].filter(Boolean).join('-')
+  filters.area = area?.district || area?.city || area?.province || ''
+}
+
+const isEmptyCascaderValue = (value: any) =>
+  value === undefined ||
+  value === null ||
+  value === '' ||
+  (Array.isArray(value) && value.length === 0)
+
+const clearDetectionAreaFilter = () => {
+  filters.area = ''
+  searchTable()
 }
 
 const handleDetectionAreaChange = (value: any) => {
-  if (value === undefined || value === null || value === '' || (Array.isArray(value) && value.length === 0)) {
-    filters.area = ''
+  if (isEmptyCascaderValue(value)) {
+    clearDetectionAreaFilter()
   }
 }
 
@@ -501,6 +512,16 @@ watch(areaParams, () => {
   pageNo.value = 1
   loadData()
 })
+
+watch(
+  detectionAreaIds,
+  (value) => {
+    if (isEmptyCascaderValue(value)) {
+      clearDetectionAreaFilter()
+    }
+  },
+  { deep: true }
+)
 
 watch(
   canViewAreaRange,
