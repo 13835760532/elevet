@@ -90,7 +90,7 @@
           </div>
 
           <div class="form-item">
-            <div class="item-label">风险公告更新频次</div>
+            <div class="item-label">数据更新频次</div>
             <div class="frequency-input">
               <span>每</span>
               <el-input-number v-model="configForm.frequency" :min="1" :controls="false" size="small"
@@ -199,7 +199,8 @@ const areaCascaderProps = {
   label: 'name',
   children: 'children',
   checkStrictly: true,
-  emitPath: true
+  emitPath: true,
+  expandTrigger: 'hover'
 }
 
 const userDeptAreaCode = computed(() => getBigScreenUserDeptAreaParams().areaCode)
@@ -1066,6 +1067,24 @@ onUnmounted(() => {
     border: 1px solid rgba(57, 141, 231, 0.55);
     background: rgba(8, 20, 54, 0.98);
     box-shadow: 0 10px 30px rgba(4, 18, 45, 0.5);
+
+    // 干掉级联选择器面板中的单选框，使点击整行文本即可选中
+    .el-radio {
+      width: 100% !important;
+      height: 100% !important;
+      position: absolute !important;
+      top: 0 !important;
+      left: 0 !important;
+      z-index: 10 !important;
+      margin-right: 0 !important;
+      opacity: 0 !important;
+      cursor: pointer !important;
+
+      .el-radio__input,
+      .el-radio__inner {
+        display: none !important;
+      }
+    }
   }
 
   .el-cascader-menu {
@@ -1075,6 +1094,7 @@ onUnmounted(() => {
 
   .el-cascader-node {
     color: #c4e1ff;
+    position: relative !important; // 重要，配合绝对定位的 .el-radio
 
     &.is-active,
     &:hover {

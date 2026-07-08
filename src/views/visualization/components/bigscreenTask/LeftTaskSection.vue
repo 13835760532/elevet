@@ -126,7 +126,7 @@ const formatRate = (value?: number) => Number(value || 0).toFixed(0);
 
 const summaryData = computed(() => [
   { label: '任务下发量', value: formatCount(overview.value.taskIssuedCount), unit: '批次' },
-  { label: '任务完成量', value: formatCount(overview.value.taskCompletedCount), unit: '项次' },
+  { label: '任务完成量', value: formatCount(overview.value.taskCompletedCount), unit: '批次' },
   { label: '任务完成率', value: formatRate(overview.value.taskCompletionRate), unit: '%' }
 ]);
 

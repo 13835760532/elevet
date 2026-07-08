@@ -97,6 +97,17 @@ const formatBarValue = (value: number) => Number(value).toFixed(2);
 const middleBarOption = computed(() => ({
   animation: false,
   grid: { left: 122, right: 44, top: 4, bottom: 26 },
+  tooltip: {
+    trigger: 'axis',
+    axisPointer: { type: 'shadow' },
+    backgroundColor: 'rgba(6, 18, 42, 0.92)',
+    borderColor: 'rgba(87, 226, 255, 0.35)',
+    textStyle: { color: '#dff7ff' },
+    formatter: (params: any) => {
+      const item = Array.isArray(params) ? params[0] : params;
+      return `${item.name}<br/>检测项阳性率：${formatBarValue(Number(item.value))}%`;
+    }
+  },
   xAxis: {
     type: 'value',
     min: 0,
@@ -125,7 +136,12 @@ const middleBarOption = computed(() => ({
     axisLabel: {
       color: '#e6f0ff',
       fontSize: 13,
-      margin: 14
+      margin: 14,
+      formatter: (value: string) => {
+        const name = value || '';
+        const maxLen = 7;
+        return name.length > maxLen ? `${name.substring(0, maxLen)}...` : name;
+      }
     }
   },
   series: [
@@ -161,6 +177,17 @@ const middleBarOption = computed(() => ({
 const bottomBarOption = computed(() => ({
   animation: false,
   grid: { left: 122, right: 44, top: 4, bottom: 26 },
+  tooltip: {
+    trigger: 'axis',
+    axisPointer: { type: 'shadow' },
+    backgroundColor: 'rgba(6, 18, 42, 0.92)',
+    borderColor: 'rgba(87, 226, 255, 0.35)',
+    textStyle: { color: '#dff7ff' },
+    formatter: (params: any) => {
+      const item = Array.isArray(params) ? params[0] : params;
+      return `${item.name}<br/>检测项阳性率：${formatBarValue(Number(item.value))}%`;
+    }
+  },
   xAxis: {
     type: 'value',
     min: 0,
@@ -189,7 +216,12 @@ const bottomBarOption = computed(() => ({
     axisLabel: {
       color: '#e6f0ff',
       fontSize: 13,
-      margin: 14
+      margin: 14,
+      formatter: (value: string) => {
+        const name = value || '';
+        const maxLen = 7;
+        return name.length > maxLen ? `${name.substring(0, maxLen)}...` : name;
+      }
     }
   },
   series: [
@@ -226,6 +258,17 @@ const currentTopColumnOption = computed(() =>
   ({
     animation: false,
     grid: { left: 34, right: 16, top: 18, bottom: 40 },
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: { type: 'shadow' },
+      backgroundColor: 'rgba(6, 18, 42, 0.92)',
+      borderColor: 'rgba(87, 226, 255, 0.35)',
+      textStyle: { color: '#dff7ff' },
+      formatter: (params: any) => {
+        const item = Array.isArray(params) ? params[0] : params;
+        return `${item.name}<br/>${topTab.value}：${formatTopValue(Number(item.value))}`;
+      }
+    },
     xAxis: {
       type: 'category',
       data: categoryNames.value,
@@ -234,7 +277,12 @@ const currentTopColumnOption = computed(() =>
         fontSize: 11,
         interval: 0,
         rotate: categoryNames.value.length > 6 ? 18 : 0,
-        formatter: (value: string, index: number) => `${index + 1}.${value}`
+        formatter: (value: string, index: number) => {
+          const name = value || '';
+          const maxLen = 5;
+          const displayValue = name.length > maxLen ? `${name.substring(0, maxLen)}...` : name;
+          return `${index + 1}.${displayValue}`;
+        }
       },
       axisTick: { show: false },
       axisLine: {

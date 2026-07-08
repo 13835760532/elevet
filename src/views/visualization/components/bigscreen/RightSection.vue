@@ -129,7 +129,8 @@ const formatRateText = (item: any) => {
 }
 
 const displayProjectRiskList = computed(() => {
-  const rows = projectRiskList.value.slice(0, 10)
+  const sorted = [...projectRiskList.value].sort((a, b) => Number(b.statValue || 0) - Number(a.statValue || 0))
+  const rows = sorted.slice(0, 10)
   return rows.length
     ? rows
     : Array.from({ length: 10 }, () => ({
