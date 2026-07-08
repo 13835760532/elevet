@@ -189,7 +189,7 @@
                                     <div class="completion-rate-cell">
                                         <span class="rate-pct">{{ scope.row.percentage }}%</span>
                                         <span class="rate-counts">({{ scope.row.completed }}/{{ scope.row.total
-                                        }})</span>
+                                            }})</span>
                                     </div>
                                 </template>
                             </el-table-column>
@@ -421,7 +421,7 @@ const loadPlanData = async (id) => {
                 const stats = await DetectionPlanApi.getPlanStatistics(id);
                 if (stats) {
                     schemeInfo.taskProgress = stats.completionRate || 0;
-                    schemeInfo.taskCompleted = stats.taskCompletedCount || 0;
+                    schemeInfo.taskCompleted = stats.sampleCompletedCount || 0;
                     schemeInfo.taskTotal = stats.taskTotalCount || 0;
 
                     schemeInfo.sampleProgress = stats.sampleCompletionRate || 0;
