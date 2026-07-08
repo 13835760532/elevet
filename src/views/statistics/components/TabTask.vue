@@ -100,10 +100,11 @@
             <el-option v-for="item in productCategoryOptions" :key="item.value" :label="item.label"
               :value="item.value" />
           </el-select>
-          <AreaCascader v-model="resultFilters.area" placeholder="检测地区" checkStrictly :root-area-code="userDeptAreaCode"
-            class="filter-item" style="width: 150px" @select="handleResultAreaSelect"
+          <AreaCascader v-if="canViewAreaRange" v-model="resultFilters.area" placeholder="检测地区" checkStrictly
+            :root-area-code="userDeptAreaCode" class="filter-item" style="width: 150px" @select="handleResultAreaSelect"
             @change="handleResultAreaChange" />
-          <el-select v-model="resultFilters.org" placeholder="检测机构" class="filter-item" clearable></el-select>
+          <el-select v-if="canViewAreaRange" v-model="resultFilters.org" placeholder="检测机构" class="filter-item" clearable></el-select>
+          <el-input v-else :model-value="currentDeptName" placeholder="检测机构" class="filter-item" disabled />
           <el-select v-model="resultFilters.result" placeholder="检测结果" class="filter-item" clearable>
             <el-option label="阴性" :value="0" />
             <el-option label="阳性" :value="1" />
@@ -176,9 +177,11 @@ import {
   createValueAxis,
   formatNumber,
   formatPercent,
+  getCurrentUserDeptInfo,
   getEffectiveAreaParams,
   getSelectedAreaParams,
   getUserDeptAreaParams,
+  isCurrentUserRegulatoryDept,
   normalizePagedResult,
   statisticsChartColors
 } from './statisticsData'
@@ -202,12 +205,14 @@ const resultFilters = ref({
   result: ''
 })
 const handleResultAreaSelect = (area: any) => {
+  if (!canViewAreaRange.value) return
   const selectedArea = getSelectedAreaParams(area)
   resultFilters.value.area = [area.province, area.city, area.district].filter(Boolean).join('-')
   resultFilters.value.areaType = selectedArea.areaType
   resultFilters.value.areaCode = selectedArea.areaCode
 }
 const handleResultAreaChange = (value: any) => {
+  if (!canViewAreaRange.value) return
   if (value === undefined || value === null || value === '' || (Array.isArray(value) && value.length === 0)) {
     resultFilters.value.area = []
     resultFilters.value.areaType = ''
@@ -229,10 +234,16 @@ const resultPageSize = ref(10)
 const resultLoading = ref(false)
 const exportLoading = ref(false)
 
+const currentUserDeptInfo = computed(() => getCurrentUserDeptInfo())
+const canViewAreaRange = computed(() => isCurrentUserRegulatoryDept())
+const currentDeptId = computed(() => currentUserDeptInfo.value.id)
+const currentDeptName = computed(() => currentUserDeptInfo.value.name || '')
+
 const userDeptAreaCode = computed(() => getUserDeptAreaParams().areaCode)
 const currentQueryParams = computed(() => ({
   ...buildRangeParams(dateRangeType.value, dateRange.value),
-  ...getEffectiveAreaParams()
+  ...getEffectiveAreaParams(),
+  deptId: canViewAreaRange.value ? undefined : currentDeptId.value || undefined
 }))
 
 const filteredTableData = computed(() => {
@@ -290,6 +301,10 @@ const buildResultTableQuery = () => {
   delete queryParams.startDate
   delete queryParams.endDate
 
+  const areaType = canViewAreaRange.value ? resultFilters.value.areaType || currentQueryParams.value.areaType : undefined
+  const areaCode = canViewAreaRange.value ? resultFilters.value.areaCode || currentQueryParams.value.areaCode : undefined
+  const detectionOrgName = canViewAreaRange.value ? resultFilters.value.org : currentDeptName.value
+
   return {
     pageNo: resultPageNo.value,
     pageSize: resultPageSize.value,
@@ -298,9 +313,9 @@ const buildResultTableQuery = () => {
     sampleName: resultFilters.value.sample || undefined,
     productCategory: resultFilters.value.category || undefined,
     detectionArea: typeof resultFilters.value.area === 'string' ? resultFilters.value.area : undefined,
-    areaType: resultFilters.value.areaType || currentQueryParams.value.areaType,
-    areaCode: resultFilters.value.areaCode || currentQueryParams.value.areaCode,
-    detectionOrgName: resultFilters.value.org || undefined,
+    areaType,
+    areaCode,
+    detectionOrgName: detectionOrgName || undefined,
     overallResult: resultFilters.value.result !== '' ? resultFilters.value.result : undefined,
     selfDetection: 'false',
     detectionDate
@@ -317,15 +332,19 @@ const buildResultExportQuery = () => {
   delete queryParams.startDate
   delete queryParams.endDate
 
+  const areaType = canViewAreaRange.value ? resultFilters.value.areaType || currentQueryParams.value.areaType : undefined
+  const areaCode = canViewAreaRange.value ? resultFilters.value.areaCode || currentQueryParams.value.areaCode : undefined
+  const detectionOrgName = canViewAreaRange.value ? resultFilters.value.org : currentDeptName.value
+
   return {
     ...queryParams,
     recordCode: resultFilters.value.keyword || undefined,
     sampleName: resultFilters.value.sample || undefined,
     productCategory: resultFilters.value.category || undefined,
     detectionArea: typeof resultFilters.value.area === 'string' ? resultFilters.value.area : undefined,
-    areaType: resultFilters.value.areaType || currentQueryParams.value.areaType,
-    areaCode: resultFilters.value.areaCode || currentQueryParams.value.areaCode,
-    detectionOrgName: resultFilters.value.org || undefined,
+    areaType,
+    areaCode,
+    detectionOrgName: detectionOrgName || undefined,
     overallResult: resultFilters.value.result !== '' ? resultFilters.value.result : undefined,
     selfDetection: 'false',
     detectionDate
@@ -488,6 +507,18 @@ const handleExport = async () => {
 watch([dateRangeType, dateRange], () => {
   handleSearch()
 })
+
+watch(
+  canViewAreaRange,
+  (canView) => {
+    if (canView) return
+    resultFilters.value.area = []
+    resultFilters.value.areaType = ''
+    resultFilters.value.areaCode = ''
+    resultFilters.value.org = ''
+  },
+  { immediate: true }
+)
 
 watch(
   () => ({

@@ -3,7 +3,7 @@
     <!-- 数据范围筛选 -->
     <StatisticsRangeFilter v-model:range-type="dateRangeType" v-model:date-range="dateRange" description="建档备案统计周期"
       @search="handleRangeSearch" @reset="handleRangeReset">
-      <template #extra>
+      <template v-if="canViewAreaRange" #extra>
         <AreaCascader v-model="areaIds" placeholder="省/市/县" checkStrictly :root-area-code="userDeptAreaCode"
           @select="handleAreaSelect" @change="handleAreaChange" />
       </template>
@@ -16,7 +16,7 @@
         <div class="stat-card blue-card">
           <div class="card-bg-icon">¥</div>
           <div class="card-info">
-            <div class="card-title">产品档案量</div>
+            <div class="card-title">样品档案量</div>
             <div class="card-value">
               {{ formatNumber(overview.productArchiveCount) }} <span class="unit">个</span>
             </div>
@@ -193,9 +193,11 @@ import {
   createPieSeries,
   createValueAxis,
   formatNumber,
+  getCurrentUserDeptInfo,
   getEffectiveAreaParams,
   getSelectedAreaParams,
   getUserDeptAreaParams,
+  isCurrentUserRegulatoryDept,
   normalizePagedResult,
   statisticsChartColors
 } from './statisticsData'
@@ -258,11 +260,18 @@ const filtersProduct = reactive({
 const subjectAreaNames = ref<string[]>([])
 const productAreaNames = ref<string[]>([])
 
+const currentUserDeptInfo = computed(() => getCurrentUserDeptInfo())
+const canViewAreaRange = computed(() => isCurrentUserRegulatoryDept())
+const currentDeptId = computed(() => currentUserDeptInfo.value.id)
+const currentDeptName = computed(() => currentUserDeptInfo.value.name || '')
+
 const userDeptAreaCode = computed(() => getUserDeptAreaParams().areaCode)
 
 const dashboardQueryParams = computed(() => ({
   ...buildRangeParams(dateRangeType.value, dateRange.value),
-  ...getEffectiveAreaParams(areaParams)
+  ...getEffectiveAreaParams(canViewAreaRange.value ? areaParams : undefined),
+  deptId: canViewAreaRange.value ? undefined : currentDeptId.value || undefined,
+  deptName: canViewAreaRange.value ? undefined : currentDeptName.value || undefined
 }))
 
 const globalAreaNames = computed(() =>
@@ -415,6 +424,8 @@ const buildSubjectQuery = (pageNo: number, pageSize: number) => {
   return {
     pageNo,
     pageSize,
+    deptId: canViewAreaRange.value ? undefined : currentDeptId.value || undefined,
+    deptName: canViewAreaRange.value ? undefined : currentDeptName.value || undefined,
     name: filtersSubject.name || undefined,
     type: isEmptyValue(filtersSubject.filingType) ? undefined : filtersSubject.filingType,
     category: isEmptyValue(filtersSubject.subjectType) ? undefined : filtersSubject.subjectType,
@@ -431,6 +442,8 @@ const buildProductQuery = (pageNo: number, pageSize: number) => {
   return {
     pageNo,
     pageSize,
+    deptId: canViewAreaRange.value ? undefined : currentDeptId.value || undefined,
+    deptName: canViewAreaRange.value ? undefined : currentDeptName.value || undefined,
     productCode: filtersProduct.productCode || undefined,
     productName: filtersProduct.productName || undefined,
     subjectName: filtersProduct.subjectName || undefined,
@@ -442,6 +455,7 @@ const buildProductQuery = (pageNo: number, pageSize: number) => {
 }
 
 const handleAreaSelect = (area: any) => {
+  if (!canViewAreaRange.value) return
   Object.assign(areaParams, {
     ...getSelectedAreaParams(area),
     districtName: area?.district || ''
@@ -449,6 +463,7 @@ const handleAreaSelect = (area: any) => {
 }
 
 const handleAreaChange = (value: any) => {
+  if (!canViewAreaRange.value) return
   if (
     value === undefined ||
     value === null ||
@@ -700,6 +715,24 @@ watch(areaParams, () => {
   productPageNo.value = 1
   loadData()
 })
+
+watch(
+  canViewAreaRange,
+  (canView) => {
+    if (canView) return
+    areaIds.value = []
+    areaParams.provinceName = ''
+    areaParams.cityName = ''
+    areaParams.districtName = ''
+    areaParams.areaType = ''
+    areaParams.areaCode = ''
+    filtersSubject.region = []
+    filtersProduct.region = []
+    subjectAreaNames.value = []
+    productAreaNames.value = []
+  },
+  { immediate: true }
+)
 
 watch(
   () => ({

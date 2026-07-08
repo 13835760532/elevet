@@ -3,7 +3,7 @@
     <!-- 数据范围筛选 -->
     <StatisticsRangeFilter v-model:range-type="dateRangeType" v-model:date-range="dateRange" description="快速检测统计周期"
       @search="handleSearch" @reset="handleReset">
-      <template #extra>
+      <template v-if="canViewAreaRange" #extra>
         <AreaCascader v-model="areaIds" placeholder="省/市/县" checkStrictly :root-area-code="userDeptAreaCode"
           @select="handleAreaSelect" @change="handleAreaChange" />
       </template>
@@ -48,8 +48,11 @@
             <el-option v-for="item in productCategoryOptions" :key="item.value" :label="item.label"
               :value="item.value" />
           </el-select>
-          <el-input v-model="filters.area" placeholder="检测地区" class="filter-item" clearable />
-          <el-select v-model="filters.org" placeholder="检测机构" class="filter-item"></el-select>
+          <AreaCascader v-model="detectionAreaIds" placeholder="检测地区" checkStrictly
+            :root-area-code="userDeptAreaCode" class="filter-item" @select="handleDetectionAreaSelect"
+            @change="handleDetectionAreaChange" />
+          <el-select v-if="canViewAreaRange" v-model="filters.org" placeholder="检测机构" class="filter-item"></el-select>
+          <el-input v-else :model-value="currentDeptName" placeholder="检测机构" class="filter-item" disabled />
           <el-select v-model="filters.result" placeholder="检测结果" class="filter-item" clearable>
             <el-option label="阴性" :value="0" />
             <el-option label="阳性" :value="1" />
@@ -142,9 +145,11 @@ import {
   createChartTooltip,
   createValueAxis,
   formatNumber,
+  getCurrentUserDeptInfo,
   getEffectiveAreaParams,
   getSelectedAreaParams,
   getUserDeptAreaParams,
+  isCurrentUserRegulatoryDept,
   normalizePagedResult,
   statisticsChartColors
 } from './statisticsData'
@@ -168,6 +173,7 @@ const initFiltersFromQuery = () => {
 const dateRangeType = ref('近一周')
 const dateRange = ref<string[]>([])
 const areaIds = ref<string[]>([])
+const detectionAreaIds = ref<string[]>([])
 const areaParams = reactive({
   provinceName: '',
   cityName: '',
@@ -196,11 +202,16 @@ const filters = reactive({
   date: []
 })
 
+const currentUserDeptInfo = computed(() => getCurrentUserDeptInfo())
+const canViewAreaRange = computed(() => isCurrentUserRegulatoryDept())
+const currentDeptName = computed(() => currentUserDeptInfo.value.name || '')
+
 const userDeptAreaCode = computed(() => getUserDeptAreaParams().areaCode)
 
 const dashboardQueryParams = computed(() => ({
   ...buildRangeParams(dateRangeType.value, dateRange.value),
-  ...getEffectiveAreaParams(areaParams)
+  ...getEffectiveAreaParams(canViewAreaRange.value ? areaParams : undefined),
+  detectionOrgName: canViewAreaRange.value ? undefined : currentDeptName.value || undefined
 }))
 
 
@@ -246,15 +257,27 @@ const positiveTrendOption = computed(() => {
 })
 
 const handleAreaSelect = (area: any) => {
+  if (!canViewAreaRange.value) return
   Object.assign(areaParams, getSelectedAreaParams(area))
 }
 
 const handleAreaChange = (value: any) => {
+  if (!canViewAreaRange.value) return
   if (value === undefined || value === null || value === '' || (Array.isArray(value) && value.length === 0)) {
     areaParams.provinceName = ''
     areaParams.cityName = ''
     areaParams.areaType = ''
     areaParams.areaCode = ''
+  }
+}
+
+const handleDetectionAreaSelect = (area: any) => {
+  filters.area = [area?.province, area?.city, area?.district].filter(Boolean).join('-')
+}
+
+const handleDetectionAreaChange = (value: any) => {
+  if (value === undefined || value === null || value === '' || (Array.isArray(value) && value.length === 0)) {
+    filters.area = ''
   }
 }
 
@@ -333,15 +356,18 @@ const buildTableQuery = () => {
     formatExportDate(rawEndDate, true)
   ] : undefined
 
+  const areaQueryParams = canViewAreaRange.value ? getEffectiveAreaParams(areaParams) : {}
+  const detectionOrgName = canViewAreaRange.value ? filters.org : currentDeptName.value
+
   return {
     pageNo: pageNo.value,
     pageSize: pageSize.value,
-    ...getEffectiveAreaParams(areaParams),
+    ...areaQueryParams,
     recordCode: filters.keyword || undefined,
     sampleName: filters.sample || undefined,
     productCategory: filters.category || undefined,
     detectionArea: filters.area || undefined,
-    detectionOrgName: filters.org || undefined,
+    detectionOrgName: detectionOrgName || undefined,
     overallResult: filters.result !== '' ? filters.result : undefined,
     selfDetection: filters.type === '1' ? 'true' : filters.type === '2' ? 'false' : undefined,
     detectionDate
@@ -373,13 +399,16 @@ const buildExportParams = () => {
     formatExportDate(rawEndDate, true)
   ] : undefined
 
+  const areaQueryParams = canViewAreaRange.value ? getEffectiveAreaParams(areaParams) : {}
+  const detectionOrgName = canViewAreaRange.value ? filters.org : currentDeptName.value
+
   return {
-    ...getEffectiveAreaParams(areaParams),
+    ...areaQueryParams,
     recordCode: filters.keyword || undefined,
     sampleName: filters.sample || undefined,
     productCategory: filters.category || undefined,
     detectionArea: filters.area || undefined,
-    detectionOrgName: filters.org || undefined,
+    detectionOrgName: detectionOrgName || undefined,
     overallResult: filters.result !== '' ? filters.result : undefined,
     selfDetection: filters.type === '1' ? 'true' : filters.type === '2' ? 'false' : undefined,
     detectionDate
@@ -423,6 +452,7 @@ const resetResultFilters = () => {
   filters.sample = ''
   filters.category = ''
   filters.area = ''
+  detectionAreaIds.value = []
   filters.org = ''
   filters.result = ''
   filters.date = []
@@ -471,6 +501,20 @@ watch(areaParams, () => {
   pageNo.value = 1
   loadData()
 })
+
+watch(
+  canViewAreaRange,
+  (canView) => {
+    if (canView) return
+    areaIds.value = []
+    areaParams.provinceName = ''
+    areaParams.cityName = ''
+    areaParams.areaType = ''
+    areaParams.areaCode = ''
+    filters.org = ''
+  },
+  { immediate: true }
+)
 
 watch(
   () => ({

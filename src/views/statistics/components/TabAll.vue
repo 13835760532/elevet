@@ -346,9 +346,11 @@ import {
   buildRangeParams,
   formatNumber,
   formatPercent,
+  getCurrentUserDeptInfo,
   getEffectiveAreaParams,
   getStatValue,
-  getUserDeptAreaParams
+  getUserDeptAreaParams,
+  isCurrentUserRegulatoryDept
 } from './statisticsData'
 import { formatDate } from '@/utils/formatTime'
 import dayjs from 'dayjs'
@@ -485,7 +487,17 @@ const regionRiskData = ref<any[]>([])
 const pesticideRiskData = ref<any[]>([])
 const noticeData = ref<Array<{ id?: number; time: string; title: string }>>([])
 
-const queryParams = computed(() => buildRangeParams(dateRangeType.value, dateRange.value))
+const currentUserDeptInfo = computed(() => getCurrentUserDeptInfo())
+const canViewAreaRange = computed(() => isCurrentUserRegulatoryDept())
+const currentDeptId = computed(() => currentUserDeptInfo.value.id)
+const currentDeptName = computed(() => currentUserDeptInfo.value.name || '')
+
+const queryParams = computed(() => ({
+  ...buildRangeParams(dateRangeType.value, dateRange.value),
+  ...getEffectiveAreaParams(),
+  deptId: canViewAreaRange.value ? undefined : currentDeptId.value || undefined,
+  deptName: canViewAreaRange.value ? undefined : currentDeptName.value || undefined
+}))
 
 const toBarData = (list: any[], getName: (item: any) => string, statType: '检测量' | '阳性率') => {
   const rows = list.map((item) => {
@@ -639,7 +651,6 @@ const loadMapData = async () => {
     const isCertificateMap = mapType.value === '合格证分布'
     const mapParams = {
       ...queryParams.value,
-      ...getEffectiveAreaParams(),
       areaLevel: '1'
     } as const
     const data = isTaskMap

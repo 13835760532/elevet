@@ -3,7 +3,7 @@
     <!-- 数据范围筛选 -->
     <StatisticsRangeFilter v-model:range-type="dateRangeType" v-model:date-range="dateRange" description="合格证统计周期"
       @search="handleSearch" @reset="handleReset">
-      <template #extra>
+      <template v-if="canViewAreaRange" #extra>
         <AreaCascader v-model="areaIds" placeholder="省/市/县" checkStrictly :root-area-code="userDeptAreaCode"
           @select="handleAreaSelect" @change="handleAreaChange" />
       </template>
@@ -46,9 +46,10 @@
         <el-select v-model="filters.category" placeholder="产品类别" class="filter-item" clearable>
           <el-option v-for="item in productCategoryOptions" :key="item.value" :label="item.label" :value="item.value" />
         </el-select>
-        <el-input v-model="filters.origin" placeholder="产地" class="filter-item" clearable />
+        <AreaCascader v-model="originAreaIds" placeholder="产地" checkStrictly :root-area-code="userDeptAreaCode"
+          class="filter-item" @select="handleOriginAreaSelect" @change="handleOriginAreaChange" />
         <div class="filter-actions">
-          <el-button type="primary" class="export-btn" @click="handleExport">导出</el-button>
+          <el-button type="primary" class="export-btn" @click="handleExport" :loading="exportLoading">导出</el-button>
         </div>
       </div>
 
@@ -105,18 +106,22 @@ import {
   createLineSeries,
   createValueAxis,
   formatNumber,
+  getCurrentUserDeptInfo,
   getEffectiveAreaParams,
   getSelectedAreaParams,
   getUserDeptAreaParams,
+  isCurrentUserRegulatoryDept,
   normalizePagedResult,
   statisticsChartColors
 } from './statisticsData'
 import { useDict } from '@/hooks/web/useDict'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import download from '@/utils/download'
 
 const dateRangeType = ref('近一周')
 const dateRange = ref<string[]>([])
 const areaIds = ref<string[]>([])
+const originAreaIds = ref<string[]>([])
 const areaParams = reactive({
   provinceName: '',
   cityName: '',
@@ -127,6 +132,7 @@ const overview = ref<DashboardCertificateOverviewRespVO>({})
 const trend = ref<CertificateServiceTrendRespVO>({})
 const tableData = ref<any[]>([])
 const loading = ref(false)
+const exportLoading = ref(false)
 const total = ref(0)
 const pageNo = ref(1)
 const pageSize = ref(10)
@@ -140,9 +146,16 @@ const filters = reactive({
   origin: ''
 })
 
+const currentUserDeptInfo = computed(() => getCurrentUserDeptInfo())
+const canViewAreaRange = computed(() => isCurrentUserRegulatoryDept())
+const currentDeptId = computed(() => currentUserDeptInfo.value.id)
+const currentDeptName = computed(() => currentUserDeptInfo.value.name || '')
+
 const queryParams = computed(() => ({
   ...buildRangeParams(dateRangeType.value, dateRange.value),
-  ...getEffectiveAreaParams(areaParams)
+  ...getEffectiveAreaParams(canViewAreaRange.value ? areaParams : undefined),
+  deptId: canViewAreaRange.value ? undefined : currentDeptId.value || undefined,
+  deptName: canViewAreaRange.value ? undefined : currentDeptName.value || undefined
 }))
 
 const userDeptAreaCode = computed(() => getUserDeptAreaParams().areaCode)
@@ -175,15 +188,27 @@ const maskPhone = (value?: string) => {
 }
 
 const handleAreaSelect = (area: any) => {
+  if (!canViewAreaRange.value) return
   Object.assign(areaParams, getSelectedAreaParams(area))
 }
 
 const handleAreaChange = (value: any) => {
+  if (!canViewAreaRange.value) return
   if (value === undefined || value === null || value === '' || (Array.isArray(value) && value.length === 0)) {
     areaParams.provinceName = ''
     areaParams.cityName = ''
     areaParams.areaType = ''
     areaParams.areaCode = ''
+  }
+}
+
+const handleOriginAreaSelect = (area: any) => {
+  filters.origin = area?.district || area?.city || area?.province || ''
+}
+
+const handleOriginAreaChange = (value: any) => {
+  if (value === undefined || value === null || value === '' || (Array.isArray(value) && value.length === 0)) {
+    filters.origin = ''
   }
 }
 
@@ -214,22 +239,27 @@ const loadDashboardData = async () => {
   }
 }
 
+const buildCertificateQuery = (withPage = true) => {
+  return {
+    ...(withPage ? { pageNo: pageNo.value, pageSize: pageSize.value } : { pageNo: 1, pageSize: 1000 }),
+    certificateCode: filters.certNo || undefined,
+    certificateType: filters.issueType,
+    productName: filters.productName || undefined,
+    productCategory: filters.category || undefined,
+    productionArea: filters.origin || undefined,
+    startDate: queryParams.value.startDate,
+    endDate: queryParams.value.endDate,
+    areaType: queryParams.value.areaType,
+    areaCode: queryParams.value.areaCode,
+    deptId: queryParams.value.deptId,
+    deptName: queryParams.value.deptName
+  }
+}
+
 const loadTable = async () => {
   loading.value = true
   try {
-    const data = await CertificateApi.getCertificatePage({
-      pageNo: pageNo.value,
-      pageSize: pageSize.value,
-      certificateCode: filters.certNo || undefined,
-      certificateType: filters.issueType,
-      productName: filters.productName || undefined,
-      productCategory: filters.category || undefined,
-      productionArea: filters.origin || undefined,
-      startDate: queryParams.value.startDate,
-      endDate: queryParams.value.endDate,
-      areaType: queryParams.value.areaType,
-      areaCode: queryParams.value.areaCode
-    })
+    const data = await CertificateApi.getCertificatePage(buildCertificateQuery())
     const normalized = normalizePagedResult<any>(data)
     tableData.value = normalized.list.map(mapRow)
     total.value = normalized.total
@@ -263,6 +293,7 @@ const resetTableFilters = () => {
   filters.productName = ''
   filters.category = ''
   filters.origin = ''
+  originAreaIds.value = []
   handleSearch()
 }
 
@@ -277,8 +308,25 @@ const handleReset = () => {
   resetTableFilters()
 }
 
-const handleExport = () => {
-  ElMessage.info('当前统计页暂未提供导出接口')
+const handleExport = async () => {
+  try {
+    await ElMessageBox.confirm('确定要导出当前筛选条件下的合格证开具数据吗？', '导出确认', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+    exportLoading.value = true
+    const data = await CertificateApi.exportCertificate(buildCertificateQuery(false))
+    download.excel(data, '合格证开具记录.xls')
+    ElMessage.success('导出成功')
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('导出合格证开具数据失败：', error)
+      ElMessage.error('导出失败')
+    }
+  } finally {
+    exportLoading.value = false
+  }
 }
 
 watch([dateRangeType, dateRange], () => {
@@ -290,6 +338,21 @@ watch(areaParams, () => {
   pageNo.value = 1
   loadData()
 })
+
+watch(
+  canViewAreaRange,
+  (canView) => {
+    if (canView) return
+    areaIds.value = []
+    areaParams.provinceName = ''
+    areaParams.cityName = ''
+    areaParams.areaType = ''
+    areaParams.areaCode = ''
+    originAreaIds.value = []
+    filters.origin = ''
+  },
+  { immediate: true }
+)
 
 watch(
   () => ({

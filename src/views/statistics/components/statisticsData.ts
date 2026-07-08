@@ -24,6 +24,23 @@ export const isSuperAdmin = () => {
   return Array.isArray(roles) && roles.includes('super_admin')
 }
 
+export const getCurrentUserDeptInfo = () => {
+  const { wsCache } = useCache()
+  const userDept = wsCache.get(CACHE_KEY.USER_DEPT) || {}
+  const userInfo = wsCache.get(CACHE_KEY.USER) || {}
+  const user = userInfo.user || {}
+
+  return {
+    id: userDept.id ?? user.deptId ?? userInfo.deptId,
+    name: userDept.name ?? user.deptName ?? userInfo.deptName,
+    deptType: userDept.deptType ?? user.deptType ?? userInfo.deptType,
+    areaType: userDept.areaType ?? userDept.areaLevel,
+    areaCode: userDept.areaCode
+  }
+}
+
+export const isCurrentUserRegulatoryDept = () => Number(getCurrentUserDeptInfo().deptType) === 1
+
 export const getUserDeptAreaParams = () => {
   if (isSuperAdmin()) {
     return {

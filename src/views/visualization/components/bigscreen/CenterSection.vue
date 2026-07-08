@@ -72,7 +72,7 @@ const topMetrics = computed(() => [
 const sideStats = computed(() => [
   { label: '任务下发项次', value: `${Number(overview.value.taskIssuedCount || 0)}` },
   { label: '任务完成项次', value: `${Number(overview.value.taskCompletedCount || 0)}` },
-  { label: '任务完成率', value: `${Number(overview.value.taskCompletionRate || 0).toFixed(2)}%` },
+  { label: '任务完成率', value: `${Number(overview.value.taskCompletionRate || 0).toFixed(0)}%` },
   { label: '检测样品量', value: `${Number(overview.value.sampleCount || 0)}` },
   { label: '检测项次', value: `${Number(overview.value.detectionItemCount || 0)}` },
   { label: '合格证开具份', value: `${Number(overview.value.certificateIssueCount || 0)}` },

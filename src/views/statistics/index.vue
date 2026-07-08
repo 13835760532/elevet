@@ -58,7 +58,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { computed, ref, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import TabAll from './components/TabAll.vue'
 import TabTask from './components/TabTask.vue'
@@ -66,6 +66,7 @@ import TabQuick from './components/TabQuick.vue'
 import TabIssue from './components/TabIssue.vue'
 import TabVerify from './components/TabVerify.vue'
 import TabFiling from './components/TabFiling.vue'
+import { isCurrentUserRegulatoryDept } from './components/statisticsData'
 
 const route = useRoute()
 const currentTab = ref('all')
@@ -82,56 +83,68 @@ interface StatisticsTab {
   dropdownOptions?: TabDropdownOption[]
 }
 
-const tabs: StatisticsTab[] = [
+const quickDropdownOptions: TabDropdownOption[] = [
+  { label: '本机构自主检测', value: 'self' },
+  { label: '本机构任务检测', value: 'task' },
+  { label: '辖区内快速检测', value: 'all' }
+]
+
+const taskDropdownOptions: TabDropdownOption[] = [
+  { label: '本机构下发任务', value: 'issued' },
+  { label: '本机构执行任务', value: 'executed' },
+  { label: '辖区内全部任务', value: 'all' }
+]
+
+const issueDropdownOptions: TabDropdownOption[] = [
+  { label: '本机构合格证开具', value: 'own' },
+  { label: '辖区内合格证开具', value: 'area' }
+]
+
+const verifyDropdownOptions: TabDropdownOption[] = [
+  { label: '本机构合格证收取', value: 'own' },
+  { label: '辖区内合格证收取', value: 'area' }
+]
+
+const filingDropdownOptions: TabDropdownOption[] = [
+  { label: '本机构建档备案', value: 'own' },
+  { label: '辖区内建档备案', value: 'area' }
+]
+
+const isRegulatoryDept = computed(() => isCurrentUserRegulatoryDept())
+
+const tabs = computed<StatisticsTab[]>(() => [
   { label: '全部', value: 'all', icon: 'ep:user' },
   {
     label: '检测任务',
     value: 'task',
     icon: 'ep:message',
-    dropdownOptions: [
-      { label: '本机构下发任务', value: 'issued' },
-      { label: '本机构执行任务', value: 'executed' },
-      { label: '辖区内全部任务', value: 'all' }
-    ]
+    dropdownOptions: isRegulatoryDept.value ? taskDropdownOptions : undefined
   },
   {
     label: '快速检测',
     value: 'quick',
     icon: 'ep:home-filled',
-    dropdownOptions: [
-      { label: '本机构自主检测', value: 'self' },
-      { label: '本机构任务检测', value: 'task' },
-      { label: '辖区内快速检测', value: 'all' }
-    ]
+    dropdownOptions: isRegulatoryDept.value ? quickDropdownOptions : undefined
   },
   {
     label: '合格证开具',
     value: 'issue',
     icon: 'ep:document',
-    dropdownOptions: [
-      { label: '本机构合格证开具', value: 'own' },
-      { label: '辖区内合格证开具', value: 'area' }
-    ]
+    dropdownOptions: isRegulatoryDept.value ? issueDropdownOptions : undefined
   },
   {
     label: '合格证收证',
     value: 'verify',
     icon: 'ep:document-checked',
-    dropdownOptions: [
-      { label: '本机构合格证收取', value: 'own' },
-      { label: '辖区内合格证收取', value: 'area' }
-    ]
+    dropdownOptions: isRegulatoryDept.value ? verifyDropdownOptions : undefined
   },
   {
     label: '建档备案',
     value: 'filing',
     icon: 'ep:folder',
-    dropdownOptions: [
-      { label: '本机构建档备案', value: 'own' },
-      { label: '辖区内建档备案', value: 'area' }
-    ]
+    dropdownOptions: isRegulatoryDept.value ? filingDropdownOptions : undefined
   }
-]
+])
 
 const handleTabChange = (tabValue: string) => {
   currentTab.value = tabValue
