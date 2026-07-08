@@ -388,8 +388,8 @@
                     </div>
 
                     <!-- 基本信息预览 -->
-                    <div class="divider compact"></div>
-                    <div class="basic-info-preview">
+                    <div class="divider compact" v-if="false"></div>
+                    <div class="basic-info-preview" v-if="false">
                         <h3 class="preview-title" style="margin-bottom: 4px;">待开具合格证-产品信息预览</h3>
                         <div class="info-grid">
                             <div class="info-row"><span class="label">产品名称</span><span class="value">{{
@@ -554,12 +554,9 @@
             <!-- 第三步：查看合格证 -->
             <div v-if="currentStep === 3" class="step-content">
                 <div ref="printAreaRef" class="step-three-print-source">
-                    <CertificatePrintTemplate
-                        :certificate="generatedCertificatePreview"
-                        :basis-options="selectedGeneratedBasisOptions"
-                        :commitment-lines="generatedCommitmentLines"
-                        :qr-text="generatedCertificateQrText"
-                    />
+                    <CertificatePrintTemplate :certificate="generatedCertificatePreview"
+                        :basis-options="selectedGeneratedBasisOptions" :commitment-lines="generatedCommitmentLines"
+                        :qr-text="generatedCertificateQrText" />
                 </div>
 
                 <div class="action-footer">

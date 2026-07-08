@@ -312,14 +312,17 @@ const pad = (value: number) => String(value).padStart(2, '0')
 const reportDateText = computed(() => `${reportForm.year}年${reportForm.month}月${reportForm.day}日`)
 const reportCode = computed(() => `${reportForm.year}${pad(reportForm.month)}${pad(reportForm.day)}`)
 
+const getRiskCount = (item?: StaticRiskListVO) =>
+  Number(item?.positiveItemCount ?? item?.unqualifiedCount) || 0
+
 const sortedRiskItems = computed(() =>
-  [...riskItems.value].sort((a, b) => (Number(b.unqualifiedCount) || 0) - (Number(a.unqualifiedCount) || 0))
+  [...riskItems.value].sort((a, b) => getRiskCount(b) - getRiskCount(a))
 )
 
 const getRiskProductName = (item?: StaticRiskListVO) =>
-  item?.foodType || item?.foodSubcategory || item?.foodCategory || ''
+  item?.productName || item?.foodType || item?.foodSubcategory || item?.foodCategory || ''
 
-const getRiskItemName = (item?: StaticRiskListVO) => item?.unqualifiedItem || ''
+const getRiskItemName = (item?: StaticRiskListVO) => item?.detectionItem || item?.unqualifiedItem || ''
 
 const uniqueJoin = (values: string[], limit = 3) => {
   const list = Array.from(new Set(values.filter(Boolean))).slice(0, limit)
@@ -335,7 +338,7 @@ const riskItemSummary = computed(() =>
 )
 
 const riskTotalCount = computed(() =>
-  riskItems.value.reduce((total, item) => total + (Number(item.unqualifiedCount) || 0), 0)
+  riskItems.value.reduce((total, item) => total + getRiskCount(item), 0)
 )
 
 const topRiskItem = computed(() => sortedRiskItems.value[0])
@@ -361,7 +364,7 @@ const monthlyReport = computed(() => ({
     {
       label: '风险最高产品',
       value: topRiskItem.value
-        ? `${getRiskProductName(topRiskItem.value) || '未知产品'}（${topRiskItem.value.unqualifiedCount || 0}次）`
+        ? `${getRiskProductName(topRiskItem.value) || '未知产品'}（${getRiskCount(topRiskItem.value)}次）`
         : '暂无数据'
     },
     { label: '重点不合格项', value: riskItemSummary.value },

@@ -312,8 +312,8 @@ const handleHighRiskConfirm = (selectedItems) => {
             quantity: 0,
             executionTime: defaultExecutionTime,
             timeRange: defaultTimeRange,
-            varieties: item.foodType || item.foodSubcategory,
-            items: item.unqualifiedItem || ''
+            varieties: item.productName || item.foodType || item.foodSubcategory || '',
+            items: item.detectionItem || item.unqualifiedItem || ''
         });
     });
 

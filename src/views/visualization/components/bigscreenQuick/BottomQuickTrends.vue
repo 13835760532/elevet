@@ -55,7 +55,8 @@ const createTrendOption = (
   data: number[],
   max: number,
   formatter?: string,
-  tooltipFormatter?: (params: any) => string
+  tooltipFormatter?: (params: any) => string,
+  showDots = false
 ) => ({
   grid: { left: 40, right: 16, top: 18, bottom: 24 },
   tooltip: {
@@ -95,7 +96,9 @@ const createTrendOption = (
       type: 'line',
       smooth: false,
       symbol: 'circle',
-      symbolSize: 6,
+      symbolSize: showDots ? 8 : 6,
+      showSymbol: showDots,
+      showAllSymbol: showDots,
       lineStyle: { color: '#4deaff', width: 2 },
       itemStyle: { color: '#48e8ff', borderColor: '#fff', borderWidth: 1 },
       data
@@ -119,34 +122,34 @@ const leftTooltipFormatter = (params: any) => {
   if (!params || params.length === 0) return '';
   const dataIndex = params[0].dataIndex;
   const month = params[0].axisValue;
+  const val = params[0].value !== undefined ? params[0].value : '--';
 
-  const positiveRates = positiveRateTrend.value.positiveRates || [];
+  // 阳性数量/检测总量
   const positiveCounts = positiveRateTrend.value.positiveCounts || [];
   const detectionCounts = positiveRateTrend.value.detectionCounts || [];
-
-  const rateVal = positiveRates[dataIndex] !== undefined ? `${Number(positiveRates[dataIndex]).toFixed(2)}%` : '--%';
   const posVal = positiveCounts[dataIndex] !== undefined ? positiveCounts[dataIndex] : '--';
   const detVal = detectionCounts[dataIndex] !== undefined ? detectionCounts[dataIndex] : '--';
 
-  if (leftTrendTab.value === '阳性率') {
-    return `${month}<br/>` +
-      `<span style="display:inline-block;margin-right:4px;border-radius:10px;width:10px;height:10px;background-color:#ff4d4f;"></span>阳性率：${rateVal}<br/>` +
-      `<span style="display:inline-block;margin-right:4px;border-radius:10px;width:10px;height:10px;background-color:#ff7875;"></span>阳性数量：${posVal}项次<br/>` +
-      `<span style="display:inline-block;margin-right:4px;border-radius:10px;width:10px;height:10px;background-color:#4deaff;"></span>检测总量：${detVal}项次`;
-  } else {
-    return `${month}<br/>` +
-      `<span style="display:inline-block;margin-right:4px;border-radius:10px;width:10px;height:10px;background-color:#ff7875;"></span>阳性数量：${posVal}项次<br/>` +
-      `<span style="display:inline-block;margin-right:4px;border-radius:10px;width:10px;height:10px;background-color:#4deaff;"></span>检测总量：${detVal}项次`;
-  }
+  return `${month}<br/>` +
+    `<span style="display:inline-block;margin-right:4px;border-radius:10px;width:10px;height:10px;background-color:#4deaff;"></span>检测总量：${val}<br/>` +
+    `<span style="display:inline-block;margin-right:4px;border-radius:10px;width:10px;height:10px;background-color:#ff7875;"></span>阳性数量/检测总量：${posVal}/${detVal}`;
 };
 
 const rightTooltipFormatter = (params: any) => {
   if (!params || params.length === 0) return '';
+  const dataIndex = params[0].dataIndex;
   const month = params[0].axisValue;
   const val = params[0].value !== undefined ? params[0].value : '--';
 
+  // 阳性数量/检测总量
+  const positiveCounts = positiveRateTrend.value.positiveCounts || [];
+  const detectionCounts = positiveRateTrend.value.detectionCounts || [];
+  const posVal = positiveCounts[dataIndex] !== undefined ? positiveCounts[dataIndex] : '--';
+  const detVal = detectionCounts[dataIndex] !== undefined ? detectionCounts[dataIndex] : '--';
+
   return `${month}<br/>` +
-    `<span style="display:inline-block;margin-right:4px;border-radius:10px;width:10px;height:10px;background-color:#4deaff;"></span>自主检测样本量：${val}批次`;
+    `<span style="display:inline-block;margin-right:4px;border-radius:10px;width:10px;height:10px;background-color:#4deaff;"></span>自主检测样本量：${val}批次<br/>` +
+    `<span style="display:inline-block;margin-right:4px;border-radius:10px;width:10px;height:10px;background-color:#ff7875;"></span>阳性数量/检测总量：${posVal}/${detVal}`;
 };
 
 const currentLeftTrendOption = computed(() =>
@@ -156,24 +159,28 @@ const currentLeftTrendOption = computed(() =>
       positiveRateData.value,
       Math.min(calcMax(positiveRateData.value, 60), 100),
       '{value}%',
-      leftTooltipFormatter
+      leftTooltipFormatter,
+      true // 显示圆点
     )
     : createTrendOption(
       positiveRateXAxis.value,
       positiveDetectionData.value,
       calcMax(positiveDetectionData.value, 60000),
       undefined,
-      leftTooltipFormatter
+      leftTooltipFormatter,
+      true // 显示圆点
     )
 );
 
+// 右侧风险态势图表 - 圆点可点击，tooltip 显示阳性数量/检测总量
 const currentRightTrendOption = computed(() =>
   createTrendOption(
     selfSampleXAxis.value,
     selfSampleData.value,
     calcMax(selfSampleData.value, 60000),
     undefined,
-    rightTooltipFormatter
+    rightTooltipFormatter,
+    true // 显示圆点
   )
 );
 

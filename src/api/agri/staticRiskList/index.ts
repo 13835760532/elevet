@@ -2,15 +2,23 @@ import request from '@/config/axios'
 
 export interface StaticRiskListVO {
   id: number
-  foodCategory: string
-  foodSubcategory: string
-  foodType: string
-  unqualifiedItem: string
-  unqualifiedCount: number
-  createTime: string
+  productCategory?: string
+  productName?: string
+  detectionItem?: string
+  positiveItemCount?: number
+  totalItemCount?: number
+  positiveRate?: number
+  foodCategory?: string
+  foodSubcategory?: string
+  foodType?: string
+  unqualifiedItem?: string
+  unqualifiedCount?: number
+  createTime?: string
 }
 
 export interface StaticRiskListPageReqVO {
+  timeDimension?: string
+  productName?: string
   foodCategory?: string
   foodSubcategory?: string
   foodType?: string

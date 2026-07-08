@@ -1,17 +1,18 @@
 <template>
-  <el-dialog v-model="visible" title="高风险农产品top10排序" width="800px" :close-on-click-modal="false"
-    class="high-risk-dialog" append-to-body>
+  <el-dialog v-model="visible" title="高风险农产品top10排序" width="86vw" :close-on-click-modal="false" class="high-risk-dialog"
+    append-to-body>
     <div class="filter-header">
       <div class="filter-row">
         <div class="left-actions">
           <span class="filter-label">数据统计范围：</span>
-          <el-select v-model="queryParams.timeType" placeholder="请选择" class="filter-input" style="width: 140px"
-            clearable>
-            <el-option label="上月度" value="上月度" />
-            <el-option label="上年度" value="上年度" />
-            <el-option label="累计" value="累计" />
+          <el-select v-model="queryParams.timeDimension" placeholder="请选择" class="filter-input" style="width: 140px">
+            <el-option label="累计" value="1" />
+            <el-option label="上月度" value="2" />
+            <el-option label="上年度" value="3" />
           </el-select>
-
+          <span class="filter-label">农产品名称：</span>
+          <el-input v-model="queryParams.productName" placeholder="请输入农产品名称" class="filter-input product-input"
+            clearable @keyup.enter="handleQuery" />
         </div>
         <el-button type="primary" class="query-btn" @click="handleQuery" :loading="loading">
           查询
@@ -35,33 +36,36 @@
 
     <!-- 表格部分 -->
     <div class="table-containers" v-loading="loading">
-      <el-table :data="tableData" border @selection-change="handleSelectionChange" :header-cell-style="{
+      <el-table :data="sortedTableData" border :header-cell-style="{
         textAlign: 'center',
         backgroundColor: '#F9FAFB',
         color: '#111827',
         fontWeight: 'bold'
       }" :cell-style="{ textAlign: 'center' }" height="400">
-        <el-table-column type="selection" width="55" />
         <el-table-column label="序号" type="index" width="60" />
-        <el-table-column label="食品大类" prop="foodCategory" show-overflow-tooltip />
-        <el-table-column label="食品亚类" prop="foodSubcategory" show-overflow-tooltip />
-        <el-table-column label="食品品类" prop="foodType" show-overflow-tooltip />
-        <el-table-column label="不合格项" prop="unqualifiedItem" show-overflow-tooltip />
-        <el-table-column label="不合格频次" prop="unqualifiedCount" width="120" />
+        <el-table-column label="品类" prop="productCategory" min-width="130" show-overflow-tooltip />
+        <el-table-column label="农产品名称" prop="productName" min-width="140" show-overflow-tooltip />
+        <el-table-column label="检测项" prop="detectionItem" min-width="160" show-overflow-tooltip />
+        <el-table-column label="阳性项次" prop="positiveItemCount" width="110" sortable />
+        <el-table-column label="总项次" prop="totalItemCount" width="100" />
+        <el-table-column label="阳性率" prop="positiveRate" width="100">
+          <template #default="{ row }">
+            {{ formatPositiveRate(row.positiveRate) }}
+          </template>
+        </el-table-column>
       </el-table>
 
       <!-- 分页 -->
       <div class="pagination-container">
         <el-pagination v-model:current-page="queryParams.pageNo" v-model:page-size="queryParams.pageSize" :total="total"
-          :page-sizes="[10, 20, 50, 100]" background layout="total, sizes, prev, pager, next" @size-change="handleQuery"
-          @current-change="handleQuery" />
+          :page-sizes="[10, 20, 50, 100]" background layout="total, sizes, prev, pager, next"
+          @size-change="handleSizeChange" @current-change="getList" />
       </div>
     </div>
 
     <!-- 底部按钮 -->
     <template #footer>
       <div class="dialog-footer">
-        <el-button class="action-btn action-btn-secondary" @click="handleSetAsTarget">设为检测品种及检测项</el-button>
         <el-button class="action-btn action-btn-primary" @click="handleClose">了解并关闭</el-button>
       </div>
     </template>
@@ -70,9 +74,7 @@
 
 <script setup>
 import { ref, reactive, computed, watch } from 'vue'
-import { QuestionFilled } from '@element-plus/icons-vue'
 import * as StaticRiskListApi from '@/api/agri/staticRiskList'
-import AreaCascader from '@/components/AreaCascader/index.vue'
 
 const props = defineProps({
   modelValue: {
@@ -81,25 +83,17 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['update:modelValue', 'confirm'])
+const emit = defineEmits(['update:modelValue'])
 
 const visible = computed({
   get: () => props.modelValue,
   set: (val) => emit('update:modelValue', val)
 })
 
-// 级联地区选择绑定值
-const areaIds = ref([])
-
 // 查询参数
 const queryParams = reactive({
-  timeType: '累计',
-  province: '',
-  city: '',
-  district: '',
-  provinceCode: '',
-  cityCode: '',
-  districtCode: '',
+  timeDimension: '1',
+  productName: '',
   pageNo: 1,
   pageSize: 10
 })
@@ -107,38 +101,25 @@ const queryParams = reactive({
 const loading = ref(false)
 const total = ref(0)
 const tableData = ref([])
-const selectedItems = ref([])
 
-// 监听地区清空
-watch(
-  () => areaIds.value,
-  (newVal) => {
-    if (!newVal || newVal.length === 0) {
-      queryParams.province = ''
-      queryParams.city = ''
-      queryParams.district = ''
-      queryParams.provinceCode = ''
-      queryParams.cityCode = ''
-      queryParams.districtCode = ''
-    }
+const sortedTableData = computed(() => {
+  return [...tableData.value].sort(
+    (a, b) => (Number(b.positiveItemCount) || 0) - (Number(a.positiveItemCount) || 0)
+  )
+})
+
+const buildQueryParams = () => {
+  const params = { ...queryParams }
+  if (!params.productName) {
+    delete params.productName
   }
-)
-
-// 处理地区选择事件
-const handleAreaSelect = (val) => {
-  queryParams.province = val.province || ''
-  queryParams.city = val.city || ''
-  queryParams.district = val.district || ''
-  queryParams.provinceCode = val.provinceCode || ''
-  queryParams.cityCode = val.cityCode || ''
-  queryParams.districtCode = val.districtCode || ''
+  return params
 }
 
-/** 加载数据 */
-const handleQuery = async () => {
+const getList = async () => {
   loading.value = true
   try {
-    const data = await StaticRiskListApi.getHighRiskList(queryParams)
+    const data = await StaticRiskListApi.getHighRiskList(buildQueryParams())
     tableData.value = data.list || []
     total.value = data.total || 0
   } catch (error) {
@@ -148,20 +129,25 @@ const handleQuery = async () => {
   }
 }
 
-const handleSelectionChange = (selection) => {
-  selectedItems.value = selection
+/** 加载数据 */
+const handleQuery = () => {
+  queryParams.pageNo = 1
+  getList()
+}
+
+const handleSizeChange = () => {
+  queryParams.pageNo = 1
+  getList()
+}
+
+const formatPositiveRate = (value) => {
+  if (value === null || value === undefined || value === '') return '-'
+  const rate = Number(value)
+  if (Number.isNaN(rate)) return '-'
+  return `${rate.toFixed(2)}%`
 }
 
 const handleClose = () => {
-  visible.value = false
-}
-
-const handleSetAsTarget = () => {
-  if (selectedItems.value.length === 0) {
-    ElMessage.warning('请选择需要设置的风险记录')
-    return
-  }
-  emit('confirm', selectedItems.value)
   visible.value = false
 }
 
@@ -169,7 +155,7 @@ watch(
   () => visible.value,
   (val) => {
     if (val && tableData.value.length === 0) {
-      handleQuery()
+      getList()
     }
   }
 )
@@ -179,6 +165,7 @@ watch(
 .high-risk-dialog {
   border-radius: 10px !important;
   overflow: hidden;
+  max-width: 1280px;
 
   .el-dialog__header {
     margin-right: 0;
@@ -222,6 +209,7 @@ watch(
       display: flex;
       align-items: center;
       gap: 12px;
+      flex-wrap: wrap;
     }
 
     .query-btn {
@@ -256,6 +244,10 @@ watch(
       box-shadow: 0 0 0 1px #e2e8f0 inset;
       border-radius: 6px;
     }
+  }
+
+  .product-input {
+    width: 220px;
   }
 }
 
