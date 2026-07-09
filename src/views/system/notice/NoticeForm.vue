@@ -6,12 +6,14 @@
       :model="formData"
       :rules="formRules"
       label-width="80px"
+      :disabled="formType === 'detail'"
     >
       <el-form-item label="公告标题" prop="title">
         <el-input v-model="formData.title" placeholder="请输入公告标题" />
       </el-form-item>
       <el-form-item label="公告内容" prop="content">
-        <Editor v-model="formData.content" height="150px" />
+        <Editor v-if="formType !== 'detail'" v-model="formData.content" height="150px" />
+        <div v-else v-html="formData.content" class="editor-content-view" style="border: 1px solid #dcdfe6; border-radius: 4px; padding: 8px 12px; min-height: 150px; width: 100%; background-color: #f5f7fa; color: #909399; overflow-y: auto;"></div>
       </el-form-item>
       <el-form-item label="公告类型" prop="type">
         <el-select v-model="formData.type" clearable placeholder="请选择公告类型">
@@ -38,8 +40,8 @@
       </el-form-item>
     </el-form>
     <template #footer>
-      <el-button :disabled="formLoading" type="primary" @click="submitForm">确 定</el-button>
-      <el-button @click="dialogVisible = false">取 消</el-button>
+      <el-button v-if="formType !== 'detail'" :disabled="formLoading" type="primary" @click="submitForm">确 定</el-button>
+      <el-button @click="dialogVisible = false">{{ formType === 'detail' ? '关 闭' : '取 消' }}</el-button>
     </template>
   </Dialog>
 </template>
@@ -76,7 +78,7 @@ const formRef = ref() // 表单 Ref
 /** 打开弹窗 */
 const open = async (type: string, id?: number) => {
   dialogVisible.value = true
-  dialogTitle.value = t('action.' + type)
+  dialogTitle.value = type === 'detail' ? '公告详情' : t('action.' + type)
   formType.value = type
   resetForm()
   // 修改时，设置数据

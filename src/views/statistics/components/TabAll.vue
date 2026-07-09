@@ -302,7 +302,8 @@
             </div>
           </div>
           <div class="notice-list">
-            <div class="notice-item" v-for="item in noticeData" :key="item.id">
+            <div class="notice-item" v-for="item in noticeData" :key="item.id" @click="handleViewNoticeDetail(item)"
+              style="cursor: pointer;">
               <div class="notice-tag">
                 <span class="tag-new" v-if="item.id < 3">new</span>
                 <span class="tag-risk">风险</span>
@@ -317,6 +318,25 @@
       </div>
     </div>
   </div>
+
+  <!-- Notice Detail Dialog -->
+  <el-dialog v-model="noticeDialogVisible" title="公告详情" width="600px">
+    <div v-loading="noticeDetailLoading" class="notice-detail-container" style="min-height: 100px;">
+      <h3 style="font-size: 18px; font-weight: bold; margin-bottom: 8px; text-align: center; color: #333;">{{
+        currentNotice?.title }}</h3>
+      <div style="font-size: 13px; color: #999; text-align: center; margin-bottom: 20px;">
+        发布时间：{{ currentNotice?.time || '--' }}
+      </div>
+      <div v-html="currentNotice?.content" class="notice-content-body"
+        style="font-size: 14px; line-height: 1.6; color: #333; overflow-wrap: break-word; border-top: 1px solid #eee; padding-top: 16px;">
+      </div>
+    </div>
+    <template #footer>
+      <span class="dialog-footer">
+        <el-button type="primary" @click="noticeDialogVisible = false">知道了</el-button>
+      </span>
+    </template>
+  </el-dialog>
 </template>
 
 <script setup lang="ts">
@@ -341,7 +361,7 @@ import {
   type DashboardCertificateOverviewRespVO
 } from '@/api/agri/dashboard/certificate'
 import { getTaskMap } from '@/api/agri/dashboard/task'
-import { getNoticePage, type NoticeVO } from '@/api/system/notice'
+import { getNoticePage, getNotice, type NoticeVO } from '@/api/system/notice'
 import {
   buildRangeParams,
   formatNumber,
@@ -486,6 +506,9 @@ const categoryRiskData = ref<any[]>([])
 const regionRiskData = ref<any[]>([])
 const pesticideRiskData = ref<any[]>([])
 const noticeData = ref<Array<{ id?: number; time: string; title: string }>>([])
+const noticeDialogVisible = ref(false)
+const noticeDetailLoading = ref(false)
+const currentNotice = ref<{ title: string; time: string; content: string } | null>(null)
 
 const currentUserDeptInfo = computed(() => getCurrentUserDeptInfo())
 const canViewAreaRange = computed(() => isCurrentUserRegulatoryDept())
@@ -828,27 +851,43 @@ const loadRiskData = async () => {
   }
 }
 
-const DEFAULT_RISK_NOTICES = [
-  { id: 1, title: '示例一在抽检中发现农药残留呈阳性，已发预警' },
-  { id: 2, title: '检测到示例二含有百菌清成分，存在高风险' },
-  { id: 3, title: '示例三最新检测结果显示啶虫脒超标，请关注' },
-  { id: 4, title: '示例四近期抽检发现克百威呈阳性风险' },
-  { id: 5, title: '示例五在最新批次抽检中检出违禁农药成分' }
-]
 
 const loadNotices = async () => {
   try {
-    // 此部分显示大屏中的风险内容，即按检测结果进行的风险公告（阳性内容）
-    // TODO: 待后端提供对应接口后替换为真实 API 
-    noticeData.value = DEFAULT_RISK_NOTICES.map((item, index) => ({
+    const res = await getNoticePage({ pageNo: 1, pageSize: 8, type: 2 })
+    noticeData.value = (res?.list || []).map((item: any) => ({
       id: item.id,
-      time: dayjs().subtract(index + 1, 'minute').format('YYYY-MM-DD HH:mm'),
+      time: item.createTime ? dayjs(item.createTime).format('YYYY-MM-DD HH:mm') : '',
       title: item.title,
       type: item.type
-    })).filter(item => item.type == 3)
+    })).filter(item => item.type == 2).slice(0, 6)
   } catch (error) {
     console.error('[StatisticsAll] load notices failed:', error)
     noticeData.value = []
+  }
+}
+
+const handleViewNoticeDetail = async (item: any) => {
+  if (!item.id) return
+  currentNotice.value = {
+    title: item.title,
+    time: item.time,
+    content: ''
+  }
+  noticeDialogVisible.value = true
+  noticeDetailLoading.value = true
+  try {
+    const res = await getNotice(item.id)
+    if (currentNotice.value) {
+      currentNotice.value.content = res.content || '暂无内容'
+    }
+  } catch (error) {
+    console.error('[StatisticsAll] load notice detail failed:', error)
+    if (currentNotice.value) {
+      currentNotice.value.content = '获取内容失败，请稍后重试'
+    }
+  } finally {
+    noticeDetailLoading.value = false
   }
 }
 

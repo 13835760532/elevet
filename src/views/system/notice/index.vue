@@ -55,16 +55,20 @@
       <el-table-column label="创建时间" align="center" prop="createTime" width="180" :formatter="dateFormatter" />
       <el-table-column label="操作" align="center">
         <template #default="scope">
-          <el-button link type="primary" @click="openForm('update', scope.row.id)"
+          <el-button link type="primary" @click="openForm('detail', scope.row.id)">
+            详情
+          </el-button>
+          <el-button v-if="scope.row.type !== 2" link type="primary" @click="openForm('update', scope.row.id)"
             v-hasPermi="['system:notice:update']">
             编辑
           </el-button>
-          <el-button link type="danger" @click="handleDelete(scope.row.id)" v-hasPermi="['system:notice:delete']">
+          <el-button v-if="scope.row.type !== 2" link type="danger" @click="handleDelete(scope.row.id)"
+            v-hasPermi="['system:notice:delete']">
             删除
           </el-button>
-          <el-button link @click="handlePush(scope.row.id)" v-hasPermi="['system:notice:update']">
+          <!-- <el-button v-if="scope.row.type !== 2" link @click="handlePush(scope.row.id)" v-hasPermi="['system:notice:update']">
             推送
-          </el-button>
+          </el-button> -->
         </template>
       </el-table-column>
     </el-table>
@@ -86,6 +90,7 @@ defineOptions({ name: 'SystemNotice' })
 
 const message = useMessage() // 消息弹窗
 const { t } = useI18n() // 国际化
+const route = useRoute()
 
 const loading = ref(true) // 列表的加载中
 const total = ref(0) // 列表的总页数
@@ -94,7 +99,7 @@ const queryParams = reactive({
   pageNo: 1,
   pageSize: 10,
   title: '',
-  type: undefined,
+  type: route.query.type ? parseInt(route.query.type as string) : undefined,
   status: undefined
 })
 const queryFormRef = ref() // 搜索的表单

@@ -2,17 +2,13 @@
   <section class="right-section">
     <BigPanelCard title="风险公告" :bg-image="noticeBg">
       <div v-if="!noticeEmpty" class="announcement-list">
-        <div class="announcement-item" v-for="(item, index) in displayNoticeList" :key="index">
+        <div class="announcement-item" v-for="(item, index) in displayNoticeList" :key="index"
+          @click="handleViewNoticeDetail(item)" style="cursor: pointer;">
           <p class="time">{{ formatDate(item.createTime, 'YYYY-MM-DD HH:mm') }}</p>
           <p class="desc">{{ item.title }}</p>
         </div>
       </div>
-      <BigDataEmpty
-        v-else
-        title="暂无风险公告"
-        description="当前暂无可展示的风险公告"
-        compact
-      />
+      <BigDataEmpty v-else title="暂无风险公告" description="当前暂无可展示的风险公告" compact />
     </BigPanelCard>
 
     <BigPanelCard title="区域风险排序TOP 10" :tabs="['产地', '检测地']" v-model:active-tab="rankTab" :bg-image="rankBg">
@@ -40,12 +36,7 @@
             </tr>
           </tbody>
         </table>
-        <BigDataEmpty
-          v-else
-          title="暂无区域风险"
-          description="当前筛选范围未返回区域风险排行"
-          compact
-        />
+        <BigDataEmpty v-else title="暂无区域风险" description="当前筛选范围未返回区域风险排行" compact />
         <div class="rank-level-tabs">
           <button v-for="tab in areaLevelTabs" :key="tab" type="button" class="rank-level-tab"
             :class="{ active: tab === rankAreaLevelTab }" @click="rankAreaLevelTab = tab">
@@ -69,14 +60,28 @@
           </div>
         </div>
         <Echart v-if="!projectRiskEmpty" :options="currentProjectRiskOption" height="100%" />
-        <BigDataEmpty
-          v-else
-          title="暂无组合风险"
-          description="当前筛选范围未返回农产品-检测项风险"
-          compact
-        />
+        <BigDataEmpty v-else title="暂无组合风险" description="当前筛选范围未返回农产品-检测项风险" compact />
       </div>
     </BigPanelCard>
+
+    <!-- Notice Detail Dialog -->
+    <el-dialog v-model="noticeDialogVisible" title="公告详情" width="600px" class="big-screen-dialog">
+      <div v-loading="noticeDetailLoading" class="notice-detail-container" style="min-height: 100px;">
+        <h3 style="font-size: 14px; font-weight: bold; margin-bottom: 8px; text-align: center; color: #fff;">{{
+          currentNotice?.title }}</h3>
+        <div style="font-size: 13px; color: #fff; text-align: center; margin-bottom: 20px;">
+          发布时间：{{ currentNotice?.time || '--' }}
+        </div>
+        <div v-html="currentNotice?.content" class="notice-content-body"
+          style="font-size: 16px; line-height: 1.6; color: #e0e6ed; overflow-wrap: break-word; border-top: 1px solid rgba(0, 179, 237, 0.2); padding-top: 16px;">
+        </div>
+      </div>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button class="big-screen-btn" type="primary" @click="noticeDialogVisible = false">知道了</el-button>
+        </span>
+      </template>
+    </el-dialog>
   </section>
 </template>
 
@@ -98,11 +103,14 @@ import {
   type ProductPesticideTopRespVO,
   type RiskAreaTopRespVO
 } from '@/api/agri/dashboard'
-import { getNoticePage, type NoticeVO } from '@/api/system/notice'
+import { getNoticePage, getNotice, type NoticeVO } from '@/api/system/notice'
 import { getBigScreenQueryParams, subscribeBigScreenRefresh } from './config'
 import { formatDate } from '@/utils/formatTime'
 
 const noticeList = ref<NoticeVO[]>([])
+const noticeDialogVisible = ref(false)
+const noticeDetailLoading = ref(false)
+const currentNotice = ref<{ title: string; time: string; content: string } | null>(null)
 const rankTab = ref('产地')
 const rankAreaLevelTab = ref('城市')
 const projectRiskTab = ref('检测总量')
@@ -305,12 +313,37 @@ const loadNoticeList = async () => {
     const data = await getNoticePage({
       pageNo: 1,
       pageSize: 10,
-      status: 0 // 开启状态
-    } as PageParam & { status: number })
-    noticeList.value = data?.list.filter(item => item.type == 3) || []
+      status: 0, // 开启状态
+      type: 2
+    } as any)
+    noticeList.value = (data?.list || []).filter(item => item.type == 2)
   } catch (error) {
     console.error('加载风险公告失败', error)
     noticeList.value = []
+  }
+}
+
+const handleViewNoticeDetail = async (item: any) => {
+  if (!item.id) return
+  currentNotice.value = {
+    title: item.title,
+    time: item.createTime ? formatDate(item.createTime, 'YYYY-MM-DD HH:mm') : '',
+    content: ''
+  }
+  noticeDialogVisible.value = true
+  noticeDetailLoading.value = true
+  try {
+    const res = await getNotice(item.id)
+    if (currentNotice.value) {
+      currentNotice.value.content = res.content || '暂无内容'
+    }
+  } catch (error) {
+    console.error('加载公告详情失败', error)
+    if (currentNotice.value) {
+      currentNotice.value.content = '获取内容失败，请稍后重试'
+    }
+  } finally {
+    noticeDetailLoading.value = false
   }
 }
 
@@ -591,6 +624,77 @@ onUnmounted(() => {
     font-weight: 700;
     font-family: 'DIN Alternate', Arial, sans-serif;
     text-shadow: 0 0 8px rgba(87, 226, 255, 0.4);
+  }
+}
+
+:deep(.big-screen-dialog) {
+  background: rgba(8, 28, 54, 0.95) !important;
+  border: 1px solid rgba(0, 179, 237, 0.6) !important;
+  box-shadow: 0 0 25px rgba(0, 179, 237, 0.4) !important;
+  border-radius: 8px !important;
+
+  .el-dialog__header {
+    border-bottom: 1px solid rgba(0, 179, 237, 0.2) !important;
+    padding: 16px 20px !important;
+    margin-right: 0 !important;
+
+    .el-dialog__title {
+      color: #ffffff !important;
+      font-size: 18px !important;
+      font-weight: bold !important;
+    }
+
+    .el-dialog__headerbtn {
+      top: 4px !important;
+      margin-top: 0 !important;
+
+      .el-dialog__close {
+        color: #ffffff !important;
+        font-size: 20px !important;
+
+        &:hover {
+          color: #00b3ed !important;
+        }
+      }
+    }
+  }
+
+  .el-dialog__body {
+    padding: 24px 20px !important;
+    color: #e0e6ed !important;
+  }
+
+  .el-dialog__footer {
+    border-top: 1px solid rgba(0, 179, 237, 0.1) !important;
+    padding: 16px 20px !important;
+  }
+}
+
+:deep(.big-screen-btn) {
+  background: linear-gradient(90deg, #00b3ed 0%, #00f2fe 100%) !important;
+  border: none !important;
+  color: #fff !important;
+  font-weight: bold !important;
+  box-shadow: 0 0 10px rgba(0, 179, 237, 0.4) !important;
+  transition: all 0.3s !important;
+
+  &:hover {
+    opacity: 0.9 !important;
+    box-shadow: 0 0 15px rgba(0, 179, 237, 0.6) !important;
+  }
+
+  &:active {
+    opacity: 0.8 !important;
+  }
+}
+
+:deep(.notice-detail-container.el-loading-parent--relative) {
+  .el-loading-mask {
+    background-color: rgba(8, 28, 54, 0.8) !important;
+
+    .path {
+      stroke: #00b3ed !important;
+    }
   }
 }
 </style>

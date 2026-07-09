@@ -159,10 +159,6 @@ const initTab = () => {
     currentTab.value = route.query.tab as string
     return
   }
-  if (route.path.endsWith('/quick')) {
-    currentTab.value = 'quick'
-    return
-  }
   currentTab.value = 'all'
 }
 

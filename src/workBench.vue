@@ -27,7 +27,7 @@
         </div>
 
         <div class="notice-list">
-          <div v-for="(item, index) in noticeData" :key="item.id || index" class="notice-item">
+          <div v-for="(item, index) in noticeData" :key="item.id || index" class="notice-item" @click="handleViewNoticeDetail(item)">
             <div class="notice-badge-wrap">
               <span v-if="index < 2" class="notice-new">new</span>
               <span class="notice-badge" :class="item.type === 2 ? 'is-warning' : 'is-risk'">风险</span>
@@ -206,6 +206,22 @@
         </span>
       </template>
     </el-dialog>
+
+    <!-- Notice Detail Dialog -->
+    <el-dialog v-model="noticeDialogVisible" title="公告详情" width="600px">
+      <div v-loading="noticeDetailLoading" class="notice-detail-container" style="min-height: 100px;">
+        <h3 style="font-size: 18px; font-weight: bold; margin-bottom: 8px; text-align: center;">{{ currentNotice?.title }}</h3>
+        <div style="font-size: 13px; color: #999; text-align: center; margin-bottom: 20px;">
+          发布时间：{{ currentNotice?.time || '--' }}
+        </div>
+        <div v-html="currentNotice?.content" class="notice-content-body" style="font-size: 14px; line-height: 1.6; color: #333; overflow-wrap: break-word; border-top: 1px solid #eee; padding-top: 16px;"></div>
+      </div>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button type="primary" @click="noticeDialogVisible = false">知道了</el-button>
+        </span>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -214,7 +230,7 @@ import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import ProgressHistory from '@/components/ProgressHistory/index.vue'
-import { getNoticePage } from '@/api/system/notice'
+import { getNoticePage, getNotice } from '@/api/system/notice'
 import {
   acceptDetectionTask,
   getDetectionTaskPage,
@@ -273,6 +289,10 @@ const activeTaskType = ref<'executed' | 'dispatched'>('executed')
 
 const reportDialogVisible = ref(false)
 const currentReport = ref<typeof dailyReport.value>()
+
+const noticeDialogVisible = ref(false)
+const noticeDetailLoading = ref(false)
+const currentNotice = ref<{ title: string; time: string; content: string } | null>(null)
 
 const today = new Date()
 const reportForm = reactive({
@@ -420,7 +440,7 @@ const getNoticeList = async () => {
       time: item.createTime ? formatDate(item.createTime, 'YYYY-MM-DD HH:mm') : '',
       title: item.title,
       type: item.type
-    })).filter(item => item.type == 3)
+    })).filter(item => item.type == 2)
   } catch (error) {
     console.error('获取公告列表失败:', error)
     noticeData.value = []
@@ -708,7 +728,31 @@ const handleAcceptTask = async (row: TaskRow) => {
 }
 
 const handleViewAllNotice = () => {
-  router.push('/user/notify-message')
+  router.push('/system/messages/notice?type=2')
+}
+
+const handleViewNoticeDetail = async (item: NoticeItem) => {
+  if (!item.id) return
+  currentNotice.value = {
+    title: item.title,
+    time: item.time,
+    content: ''
+  }
+  noticeDialogVisible.value = true
+  noticeDetailLoading.value = true
+  try {
+    const res = await getNotice(item.id)
+    if (currentNotice.value) {
+      currentNotice.value.content = res.content || '暂无内容'
+    }
+  } catch (error) {
+    console.error('获取公告详情失败:', error)
+    if (currentNotice.value) {
+      currentNotice.value.content = '获取内容失败，请稍后重试'
+    }
+  } finally {
+    noticeDetailLoading.value = false
+  }
 }
 
 const handleSubscribe = () => {
@@ -868,6 +912,12 @@ onMounted(() => {
   align-items: flex-start;
   background: transparent;
   padding: 0;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.notice-item:hover {
+  opacity: 0.8;
 }
 
 .notice-badge-wrap {

@@ -158,7 +158,7 @@ DeptApi.getSimpleDeptList().then(depts => {
 
 const buildQueryParams = (params = {}, withPage = true) => {
     const query = {
-        pageNo: params.pageNum || 1,
+        pageNo: params.pageNo || params.pageNum || 1,
         pageSize: params.pageSize || 10,
         taskName: params.taskName,
         status: params.status,
