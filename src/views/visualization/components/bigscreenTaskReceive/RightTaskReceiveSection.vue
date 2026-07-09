@@ -2,7 +2,7 @@
   <section class="right-section">
     <BigPanelCard title="任务检测分析" :bg-image="rightBg">
       <div class="table-wrap">
-        <table class="analysis-table">
+        <table v-if="!tableEmpty" class="analysis-table">
           <colgroup>
             <col class="col-index" />
             <col class="col-name" />
@@ -32,6 +32,12 @@
             </tr>
           </tbody>
         </table>
+        <BigDataEmpty
+          v-else
+          title="暂无任务分析"
+          description="当前筛选范围未返回接收任务检测分析"
+          compact
+        />
       </div>
     </BigPanelCard>
   </section>
@@ -40,6 +46,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import BigPanelCard from '../bigscreen/BigPanelCard.vue'
+import BigDataEmpty from '../bigscreen/BigDataEmpty.vue'
 import rightBg from '@/assets/imgs/echarts/检测任务/rwjcfx_bg.png'
 import { getTaskAnalysisPage, type TaskAnalysisRespVO } from '@/api/agri/dashboard/task'
 import { getBigScreenQueryParams, subscribeBigScreenRefresh } from '../bigscreen/config'
@@ -58,6 +65,7 @@ const tableData = computed(() =>
     rate: formatRate(item.completionRate)
   }))
 )
+const tableEmpty = computed(() => tableData.value.length === 0)
 
 const loadAnalysisPage = async () => {
   try {

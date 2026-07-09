@@ -3,7 +3,7 @@
     <BigPanelCard class="analysis-panel" title="合格证分析" :bg-image="rightBg">
       <div class="analysis-wrap">
         <p class="analysis-title">合格证出具类型</p>
-        <div class="analysis-layout">
+        <div v-if="!analysisEmpty" class="analysis-layout">
           <div class="analysis-pie">
             <Echart :options="analysisOption" height="100%" width="100%" />
           </div>
@@ -15,12 +15,18 @@
             </div>
           </div>
         </div>
+        <BigDataEmpty
+          v-else
+          title="暂无出具类型"
+          description="当前筛选范围未返回合格证出具类型"
+          compact
+        />
       </div>
     </BigPanelCard>
 
     <BigPanelCard class="rank-panel" title="合格证开具榜单" :tabs="['累计']" active-tab="累计">
       <div class="rank-container">
-        <table class="rank-table">
+        <table v-if="!issueRankEmpty" class="rank-table">
           <thead>
             <tr>
               <th width="92">排行</th>
@@ -40,12 +46,18 @@
             </tr>
           </tbody>
         </table>
+        <BigDataEmpty
+          v-else
+          title="暂无开具榜单"
+          description="当前筛选范围未返回合格证开具排行"
+          compact
+        />
       </div>
     </BigPanelCard>
 
     <BigPanelCard class="rank-panel" title="合格证收证排行榜" :tabs="['累计']" active-tab="累计">
       <div class="rank-container">
-        <table class="rank-table">
+        <table v-if="!storeRankEmpty" class="rank-table">
           <thead>
             <tr>
               <th width="92">排行</th>
@@ -65,6 +77,12 @@
             </tr>
           </tbody>
         </table>
+        <BigDataEmpty
+          v-else
+          title="暂无收证榜单"
+          description="当前筛选范围未返回合格证收证排行"
+          compact
+        />
       </div>
     </BigPanelCard>
   </section>
@@ -75,6 +93,7 @@ import { computed, onMounted, onUnmounted, ref } from 'vue'
 import echarts from '@/plugins/echarts'
 import { Echart } from '@/components/Echart'
 import BigPanelCard from '../bigscreen/BigPanelCard.vue'
+import BigDataEmpty from '../bigscreen/BigDataEmpty.vue'
 import rightBg from '@/assets/imgs/echarts/合格证/Frame 60_bg.png'
 import {
   getCertificateIssueTop10,
@@ -129,6 +148,13 @@ const analysisLegendItems = computed(() =>
 )
 const displayedIssueRank = computed(() => toTenRankRows(issueRank.value))
 const displayedStoreRank = computed(() => toTenRankRows(storeRank.value))
+const analysisEmpty = computed(() => analysisPieItems.value.length === 0)
+const issueRankEmpty = computed(
+  () => issueRank.value.length === 0 || !issueRank.value.some((item) => Number(item.value || 0) > 0)
+)
+const storeRankEmpty = computed(
+  () => storeRank.value.length === 0 || !storeRank.value.some((item) => Number(item.value || 0) > 0)
+)
 
 const analysisOption = computed(() => ({
   animation: false,

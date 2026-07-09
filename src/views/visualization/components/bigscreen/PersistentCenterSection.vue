@@ -35,12 +35,18 @@
       v-model:active-tab="trendTab" :bg-image="trendBgImage" :title-bg-image="trendTitleBgImage">
       <div v-if="isCertificateMode" class="trend-head">{{ certificateTrendHead }}</div>
       <div class="trend-chart-wrap" style="position: relative;">
-        <div class="positive-count-summary">
+        <div v-if="!trendEmpty" class="positive-count-summary">
           <span v-if="trendTab === '阳性率'">阳性项次/总项次</span>
           <span v-else>检测总量</span>
         </div>
-        <Echart v-if="isCertificateMode" :options="certificateTrendOption" height="100%" />
-        <Echart v-else :key="`dashboard-trend-${trendTab}`" :options="dashboardTrendOption" height="100%" />
+        <Echart v-if="isCertificateMode && !trendEmpty" :options="certificateTrendOption" height="100%" />
+        <Echart v-else-if="!trendEmpty" :key="`dashboard-trend-${trendTab}`" :options="dashboardTrendOption" height="100%" />
+        <BigDataEmpty
+          v-else
+          :title="isCertificateMode ? '暂无合格证趋势' : '暂无检测态势'"
+          description="当前筛选范围未返回趋势数据"
+          compact
+        />
       </div>
     </BigPanelCard>
   </section>
@@ -62,6 +68,7 @@ import {
   type CertificateServiceTrendRespVO
 } from '@/api/agri/dashboard/certificate'
 import BigPanelCard from './BigPanelCard.vue'
+import BigDataEmpty from './BigDataEmpty.vue'
 import VisualizationMap from '../Map.vue'
 import { getBigScreenQueryParams, subscribeBigScreenRefresh } from './config'
 import { cachedBigScreenRequest } from './requestCache'
@@ -199,6 +206,9 @@ const dashboardTrendDataByMonth = computed(() => {
 
 const dashboardLineValues = computed(() =>
   dashboardTrendDataByMonth.value.map((item) => item.statValue)
+)
+const dashboardTrendEmpty = computed(
+  () => dashboardTrendData.value.length === 0 || !dashboardLineValues.value.some((value) => Number(value || 0) > 0)
 )
 
 const dashboardMaxPointIndex = computed(() => {
@@ -508,6 +518,24 @@ const certificateTrendOption = computed(() =>
     ),
     normalizeSeries(certificateTrendData.value.traceCounts, certificateXAxisData.value.length)
   )
+)
+
+const certificateTrendEmpty = computed(() => {
+  const axisLength = certificateXAxisData.value.length
+  if (!axisLength) return true
+  const total = [
+    certificateTrendData.value.issueCounts,
+    certificateTrendData.value.verificationCounts,
+    certificateTrendData.value.traceCounts
+  ].reduce(
+    (sum, series) => sum + (series || []).reduce((current, item) => current + Number(item || 0), 0),
+    0
+  )
+  return total <= 0
+})
+
+const trendEmpty = computed(() =>
+  isCertificateMode.value ? certificateTrendEmpty.value : dashboardTrendEmpty.value
 )
 
 const certificateTrendHead = computed(() => {

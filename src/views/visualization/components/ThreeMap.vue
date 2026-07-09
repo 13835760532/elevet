@@ -457,7 +457,7 @@ const getItemValue = (item?: MapDataItem) => {
   return Number((item as CertificateMapItemVO | undefined)?.count || 0)
 }
 
-const formatRate = (value?: number) => `${Number(value || 0).toFixed(2)}%`
+const formatRate = (value?: number) => `${Number(value || 0).toFixed(0)}%`
 
 const createTooltipLines = (item?: MapDataItem, value = 0) => {
   if (isCertificateMode.value) {

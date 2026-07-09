@@ -29,11 +29,17 @@
     <BigPanelCard class="big-panel-center" title="检测态势" :tabs="['检测量', '阳性率']" v-model:active-tab="trendTab"
       :bg-image="trendBg" :title-bg-image="fgqtBg">
       <div class="trend-chart-wrap" style="position: relative;">
-        <div class="positive-count-summary">
+        <div v-if="!trendEmpty" class="positive-count-summary">
           <span v-if="trendTab === '阳性率'">阳性项次/总项次</span>
           <span v-else>检测总量</span>
         </div>
-        <Echart :options="currentLineTrendOption" height="100%" />
+        <Echart v-if="!trendEmpty" :options="currentLineTrendOption" height="100%" />
+        <BigDataEmpty
+          v-else
+          title="暂无检测态势"
+          description="当前筛选范围未返回趋势数据"
+          compact
+        />
       </div>
     </BigPanelCard>
   </section>
@@ -44,6 +50,7 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import echarts from '@/plugins/echarts'
 import { Echart } from '@/components/Echart'
 import BigPanelCard from './BigPanelCard.vue'
+import BigDataEmpty from './BigDataEmpty.vue'
 import Map from '../Map.vue'
 import fgqtBg from '@/assets/imgs/echarts/首页/fgqt_bg.png'
 import trendBg from '@/assets/imgs/echarts/首页/jcdtl_bg.png'
@@ -112,6 +119,9 @@ const currentTrendDataByMonth = computed(() => {
 })
 
 const lineValues = computed(() => currentTrendDataByMonth.value.map((item) => item.statValue))
+const trendEmpty = computed(
+  () => trendData.value.length === 0 || !lineValues.value.some((value) => Number(value || 0) > 0)
+)
 
 const maxPointIndex = computed(() => {
   let maxIndex = 0

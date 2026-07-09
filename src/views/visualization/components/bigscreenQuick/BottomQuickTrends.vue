@@ -7,12 +7,28 @@
           <span v-if="leftTrendTab === '阳性率'">阳性项次/总项次</span>
           <span v-else>检测总量</span>
         </div>
-        <Echart :options="currentLeftTrendOption" :height="200" />
+        <Echart v-if="!leftTrendEmpty" :options="currentLeftTrendOption" :height="200" />
+        <BigDataEmpty
+          v-else
+          compact
+          variant="line"
+          title="暂无检测量态势"
+          description="当前周期未返回检测量趋势"
+        />
       </div>
     </BigPanelCard>
 
     <BigPanelCard class="big-panel-center panel-header-bottom" title="风险态势" :tabs="[]" :bg-image="bottomBg">
-      <Echart :options="currentRightTrendOption" :height="200" />
+      <div class="quick-trend-chart">
+        <Echart v-if="!rightTrendEmpty" :options="currentRightTrendOption" :height="200" />
+        <BigDataEmpty
+          v-else
+          compact
+          variant="line"
+          title="暂无风险态势"
+          description="当前周期未形成风险趋势"
+        />
+      </div>
     </BigPanelCard>
   </section>
 </template>
@@ -21,6 +37,7 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { Echart } from '@/components/Echart';
 import BigPanelCard from '../bigscreen/BigPanelCard.vue';
+import BigDataEmpty from '../bigscreen/BigDataEmpty.vue';
 import bottomBg from '@/assets/imgs/echarts/检测任务/69.png';
 import {
   getFastPositiveRateTrend,
@@ -117,6 +134,12 @@ const selfSampleXAxis = computed(() => getAxisData(selfSampleTrend.value.xaxis))
 const selfSampleData = computed(() =>
   normalizeSeries(selfSampleTrend.value.sampleCounts, selfSampleXAxis.value.length)
 );
+const leftTrendEmpty = computed(() =>
+  leftTrendTab.value === '阳性率'
+    ? sumSeries(positiveRateData.value) <= 0
+    : sumSeries(positiveDetectionData.value) <= 0
+);
+const rightTrendEmpty = computed(() => sumSeries(selfSampleData.value) <= 0);
 
 const leftTooltipFormatter = (params: any) => {
   if (!params || params.length === 0) return '';

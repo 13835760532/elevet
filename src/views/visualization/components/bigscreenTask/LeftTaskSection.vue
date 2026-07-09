@@ -84,7 +84,13 @@
     </BigPanelCard>
 
     <BigPanelCard title="检测样品品类" :bg-image="leftBg">
-      <div class="category-layout">
+      <BigDataEmpty
+        v-if="categoryEmpty"
+        title="暂无品类数据"
+        description="当前筛选范围未返回检测样品品类"
+        compact
+      />
+      <div v-else class="category-layout">
         <div class="pie-container">
           <Echart :options="categoryPieOption" height="100%" width="100%" />
         </div>
@@ -104,6 +110,7 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { Echart } from '@/components/Echart';
 import BigPanelCard from '../bigscreen/BigPanelCard.vue';
+import BigDataEmpty from '../bigscreen/BigDataEmpty.vue';
 import leftBg from '@/assets/imgs/echarts/检测任务/erji_bg.png';
 import iconOrg from '@/assets/imgs/echarts/检测任务/68.png';
 import iconFactory from '@/assets/imgs/echarts/检测任务/69.png';
@@ -175,6 +182,7 @@ const categoryItems = computed(() =>
 );
 
 const pieItems = computed(() => categoryItems.value.filter((item) => item.value > 0));
+const categoryEmpty = computed(() => pieItems.value.length === 0);
 
 const categoryPieOption = computed(() => ({
   tooltip: {

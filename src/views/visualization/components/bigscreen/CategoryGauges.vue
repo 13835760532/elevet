@@ -1,5 +1,11 @@
 <template>
-  <div v-if="mode === '阳性率'" class="category-rate-platforms">
+  <BigDataEmpty
+    v-if="categoryEmpty"
+    title="暂无品类数据"
+    description="当前筛选范围未返回农产品类别风险"
+    compact
+  />
+  <div v-else-if="mode === '阳性率'" class="category-rate-platforms">
     <div class="positive-count-summary" style="top: -8px; right: 12px;">
       <span>阳性项次/总项次</span>
     </div>
@@ -31,6 +37,7 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { Echart } from '@/components/Echart'
 import { getCategoryRisk, type CategoryRiskRespVO } from '@/api/agri/dashboard'
 import { getBigScreenQueryParams, subscribeBigScreenRefresh } from './config'
+import BigDataEmpty from './BigDataEmpty.vue'
 import platformImg from '@/assets/imgs/new/a.png'
 
 const props = withDefaults(
@@ -104,6 +111,10 @@ const ratePlatformItems = computed(() =>
     name: item.name,
     valueColor: rateValueColors[index % rateValueColors.length]
   }))
+)
+
+const categoryEmpty = computed(
+  () => displayItems.value.length === 0 || displayItems.value.every((item) => Number(item.value || 0) <= 0)
 )
 
 const isEmptyPieData = computed(() =>

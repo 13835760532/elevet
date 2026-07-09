@@ -1299,7 +1299,7 @@ const getTooltipPayload = (e: any) => {
     ),
     rate: `${Number(
       isTaskMapMode.value ? props.taskCompletionRate || 0 : props.positiveRate || 0
-    ).toFixed(2)}%`,
+    ).toFixed(0)}%`,
     x: nextX,
     y: nextY
   }

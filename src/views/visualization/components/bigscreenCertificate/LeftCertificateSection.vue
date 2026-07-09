@@ -37,7 +37,13 @@
     </BigPanelCard>
 
     <BigPanelCard class="category-panel" title="各产品品类合格证开具量" :bg-image="leftBg">
-      <div class="category-layout">
+      <BigDataEmpty
+        v-if="categoryEmpty"
+        title="暂无品类数据"
+        description="当前筛选范围未返回合格证品类开具量"
+        compact
+      />
+      <div v-else class="category-layout">
         <div class="pie-container">
           <Echart :options="categoryPieOption" height="100%" width="100%" />
         </div>
@@ -58,7 +64,7 @@ import { computed, onMounted, onUnmounted, ref } from 'vue'
 import echarts from '@/plugins/echarts'
 import { Echart } from '@/components/Echart'
 import BigPanelCard from '../bigscreen/BigPanelCard.vue'
-import BigScreenSelector from '../bigscreen/BigScreenSelector.vue'
+import BigDataEmpty from '../bigscreen/BigDataEmpty.vue'
 import leftBg from '@/assets/imgs/echarts/合格证/Frame 58_bg.png'
 import {
   getCertificateCategoryDistribution,
@@ -163,13 +169,14 @@ const personalCount = computed(() => {
   return isNaN(count) ? 0 : count
 })
 
+// 开具主体改为【开具服务主体】
+// 存证主体改为【存证服务主体】
 const subjectData = computed(() => [
   {
-    label: '监管机构/检测机构',
+    label: '开具服务主体',
     value: supervisorOrgCount.value || Number(overview.value.issueSubjectCount || 0)
   },
-  { label: '企业', value: enterpriseCount.value },
-  { label: '个人', value: personalCount.value }
+  { label: '存证服务主体', value: enterpriseCount.value || 0 }
 ])
 
 const loadOverviewData = () => {
@@ -263,6 +270,7 @@ const categoryItems = computed(() => {
 })
 
 const pieItems = computed(() => categoryItems.value.filter((item) => item.value > 0))
+const categoryEmpty = computed(() => pieItems.value.length === 0)
 
 const categoryPieOption = computed(() => {
   const labelRich = pieItems.value.reduce(
@@ -628,7 +636,7 @@ onUnmounted(() => {
   box-sizing: border-box;
   position: relative;
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   align-content: start;
   height: 100%;
   padding: 30px 0 0;

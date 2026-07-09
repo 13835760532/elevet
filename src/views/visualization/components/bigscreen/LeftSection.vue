@@ -6,21 +6,33 @@
 
     <BigPanelCard title="农产品风险 TOP 10" :tabs="['检测量', '阳性率']" v-model:active-tab="riskTab">
       <div class="chart-wrapper-with-summary" style="position: relative; height: 100%;">
-        <div class="positive-count-summary">
+        <div v-if="!produceRiskEmpty" class="positive-count-summary">
           <span v-if="riskTab === '阳性率'">阳性项次/总项次</span>
           <span v-else>样品总量</span>
         </div>
-        <Echart class="left-chart" :options="currentRiskTopOption" height="100%" />
+        <Echart v-if="!produceRiskEmpty" class="left-chart" :options="currentRiskTopOption" height="100%" />
+        <BigDataEmpty
+          v-else
+          title="暂无农产品风险"
+          description="当前筛选范围未返回农产品风险排行"
+          compact
+        />
       </div>
     </BigPanelCard>
 
     <BigPanelCard title="检测项风险 TOP 10" :tabs="['检测量', '阳性率']" v-model:active-tab="pesticideTab">
       <div class="chart-wrapper-with-summary" style="position: relative; height: 100%;">
-        <div class="positive-count-summary">
+        <div v-if="!pesticideRiskEmpty" class="positive-count-summary">
           <span v-if="pesticideTab === '阳性率'">阳性项次/总项次</span>
           <span v-else>检测总量</span>
         </div>
-        <Echart class="left-chart" :options="currentPesticideTopOption" height="100%" />
+        <Echart v-if="!pesticideRiskEmpty" class="left-chart" :options="currentPesticideTopOption" height="100%" />
+        <BigDataEmpty
+          v-else
+          title="暂无检测项风险"
+          description="当前筛选范围未返回检测项风险排行"
+          compact
+        />
       </div>
     </BigPanelCard>
   </section>
@@ -32,6 +44,7 @@ import echarts from '@/plugins/echarts'
 import { Echart } from '@/components/Echart'
 import BigPanelCard from './BigPanelCard.vue'
 import CategoryGauges from './CategoryGauges.vue'
+import BigDataEmpty from './BigDataEmpty.vue'
 import {
   getPesticideRiskTop10,
   getProduceRiskTop10,
@@ -102,6 +115,14 @@ const pesticideValues = computed(() =>
     }
     return Number(item.statValue ?? item.detectionCount ?? 0)
   })
+)
+
+const hasPositiveValue = (list: number[]) => list.some((value) => Number(value || 0) > 0)
+const produceRiskEmpty = computed(
+  () => displayProduceRiskList.value.length === 0 || !hasPositiveValue(riskValues.value)
+)
+const pesticideRiskEmpty = computed(
+  () => displayPesticideRiskList.value.length === 0 || !hasPositiveValue(pesticideValues.value)
 )
 
 const getNiceAxisMax = (value: number) => {

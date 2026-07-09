@@ -189,7 +189,7 @@
                                     <div class="completion-rate-cell">
                                         <span class="rate-pct">{{ scope.row.percentage }}%</span>
                                         <span class="rate-counts">({{ scope.row.completed }}/{{ scope.row.total
-                                            }})</span>
+                                        }})</span>
                                     </div>
                                 </template>
                             </el-table-column>
@@ -420,13 +420,10 @@ const loadPlanData = async (id) => {
             try {
                 const stats = await DetectionPlanApi.getPlanStatistics(id);
                 if (stats) {
-                    schemeInfo.taskProgress = stats.completionRate || 0;
+                    schemeInfo.taskProgress = stats.sampleCompletionRate || 0;
                     schemeInfo.taskCompleted = stats.sampleCompletedCount || 0;
                     schemeInfo.taskTotal = stats.taskTotalCount || 0;
 
-                    schemeInfo.sampleProgress = stats.sampleCompletionRate || 0;
-                    schemeInfo.sampleCompleted = stats.sampleCompletedCount || 0;
-                    schemeInfo.sampleTotal = stats.sampleCount || 0;
                 }
             } catch (err) {
                 console.warn('获取方案统计失败', err);
@@ -498,8 +495,8 @@ const loadTaskList = async (id) => {
                 startDate: t.startDate,
                 endDate: t.endDate,
                 total,
-                completed,
-                percentage,
+                completed: t.sampleCompletedCount,
+                percentage: t.sampleCompletionRate,
                 status: t.status === 3 ? '已完成' : (t.status === 2 ? '已延期' : (t.status === 1 ? '进行中' : '未开始'))
             };
         });

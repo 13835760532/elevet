@@ -9,7 +9,15 @@
 
     <BigPanelCard class="big-panel-center" title="合格证服务趋势图" :bg-image="trendBg">
       <div class="trend-head">{{ trendHead }}</div>
-      <Echart :options="currentTrendOption" height="100%" />
+      <div class="trend-chart-wrap">
+        <Echart v-if="!trendEmpty" :options="currentTrendOption" height="100%" />
+        <BigDataEmpty
+          v-else
+          title="暂无合格证趋势"
+          description="当前筛选范围未返回合格证服务趋势"
+          compact
+        />
+      </div>
     </BigPanelCard>
   </section>
 </template>
@@ -20,6 +28,7 @@ import echarts from '@/plugins/echarts'
 import { Echart } from '@/components/Echart'
 
 import BigPanelCard from '../bigscreen/BigPanelCard.vue'
+import BigDataEmpty from '../bigscreen/BigDataEmpty.vue'
 import Map from '../Map.vue'
 import mapBg from '@/assets/imgs/echarts/合格证/Frame 57_bg.png'
 import trendBg from '@/assets/imgs/echarts/合格证/Frame 59_bg.png'
@@ -128,6 +137,19 @@ const currentTrendOption = computed(() =>
   )
 )
 
+const trendEmpty = computed(() => {
+  if (!xAxisData.value.length) return true
+  const total = [
+    trendData.value.issueCounts,
+    trendData.value.verificationCounts,
+    trendData.value.traceCounts
+  ].reduce(
+    (sum, series) => sum + (series || []).reduce((current, item) => current + Number(item || 0), 0),
+    0
+  )
+  return total <= 0
+})
+
 const trendHead = computed(() => {
   const axis = xAxisData.value
   if (!axis.length) return ''
@@ -174,6 +196,12 @@ onUnmounted(() => {
   position: relative;
   min-height: 0;
   flex: 1;
+}
+
+.trend-chart-wrap {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
 }
 
 .map-legend {

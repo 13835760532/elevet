@@ -7,7 +7,15 @@
       v-model:active-tab="leftActiveTab"
       :bg-image="bottomBg"
     >
-      <Echart :options="currentLeftTrendOption" :height="200" />
+      <div class="task-trend-chart">
+        <Echart v-if="!leftTrendEmpty" :options="currentLeftTrendOption" :height="200" />
+        <BigDataEmpty
+          v-else
+          title="暂无工作动态"
+          description="当前筛选范围未返回接收任务工作动态"
+          compact
+        />
+      </div>
     </BigPanelCard>
 
     <BigPanelCard
@@ -18,11 +26,17 @@
       :bg-image="bottomBg"
     >
       <div class="task-trend-chart">
-        <div class="positive-count-summary">
+        <div v-if="!rightTrendEmpty" class="positive-count-summary">
           <span>阳性项次/总项次</span>
           <strong>{{ taskPositiveCountSummary.positive }}/{{ taskPositiveCountSummary.total }}</strong>
         </div>
-        <Echart :options="currentRightTrendOption" :height="200" />
+        <Echart v-if="!rightTrendEmpty" :options="currentRightTrendOption" :height="200" />
+        <BigDataEmpty
+          v-else
+          title="暂无风险态势"
+          description="当前筛选范围未返回接收任务检测风险"
+          compact
+        />
       </div>
     </BigPanelCard>
   </section>
@@ -32,6 +46,7 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { Echart } from '@/components/Echart'
 import BigPanelCard from '../bigscreen/BigPanelCard.vue'
+import BigDataEmpty from '../bigscreen/BigDataEmpty.vue'
 import bottomBg from '@/assets/imgs/echarts/检测任务/69.png'
 import {
   getTaskRiskTrend,
@@ -174,6 +189,18 @@ const samplePositiveRates = computed(() =>
 const itemPositiveRates = computed(() =>
   normalizeSeries(riskTrend.value.itemPositiveRates, rightTrendXAxis.value.length)
 )
+const currentLeftTrendData = computed(() =>
+  leftActiveTab.value === '样品量' ? sampleCounts.value : itemCounts.value
+)
+const currentRightTrendData = computed(() =>
+  rightActiveTab.value === '样品阳性率' ? samplePositiveRates.value : itemPositiveRates.value
+)
+const leftTrendEmpty = computed(
+  () => leftTrendXAxis.value.length === 0 || !currentLeftTrendData.value.some((value) => Number(value || 0) > 0)
+)
+const rightTrendEmpty = computed(
+  () => rightTrendXAxis.value.length === 0 || !currentRightTrendData.value.some((value) => Number(value || 0) > 0)
+)
 const taskPositiveCountSummary = computed(() => {
   const isSampleRate = rightActiveTab.value === '样品阳性率'
   const total =
@@ -212,16 +239,14 @@ const rightAxisMax = computed(() => {
 
 const currentLeftTrendOption = computed(() => {
   const isSample = leftActiveTab.value === '样品量'
-  const data = isSample ? sampleCounts.value : itemCounts.value
   const color = isSample ? '#83d54b' : '#56e8ff'
-  return createTrendOption(leftTrendXAxis.value, data, leftAxisMax.value, color)
+  return createTrendOption(leftTrendXAxis.value, currentLeftTrendData.value, leftAxisMax.value, color)
 })
 
 const currentRightTrendOption = computed(() => {
   const isSampleRate = rightActiveTab.value === '样品阳性率'
-  const data = isSampleRate ? samplePositiveRates.value : itemPositiveRates.value
   const color = isSampleRate ? '#83d54b' : '#56e8ff'
-  return createTrendOption(rightTrendXAxis.value, data, rightAxisMax.value, color, '{value}%')
+  return createTrendOption(rightTrendXAxis.value, currentRightTrendData.value, rightAxisMax.value, color, '{value}%')
 })
 
 const loadVolumeTrend = async () => {

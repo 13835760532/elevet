@@ -94,8 +94,8 @@
                                 </el-form-item>
                                 <el-form-item label="" prop="productionArea">
                                     <div class="area-selectors">
-                                        <AreaCascader v-model="areaIds" @select="handleAreaSelect" placeholder="产品产地"
-                                            :root-area-code="userDeptAreaCode" style="width: 200px;" />
+                                        <AreaCascader v-model="areaIds" @select="handleAreaSelect" @change="handleAreaChange" placeholder="产品产地"
+                                            checkStrictly :root-area-code="userDeptAreaCode" style="width: 200px;" />
                                     </div>
                                 </el-form-item>
                                 <el-form-item v-if="activeTab === 'verify'" label="" prop="certificateSource">
@@ -354,6 +354,15 @@ const handleAreaSelect = (area: any) => {
     queryParams.city = area.city;
     queryParams.county = area.district;
     queryParams.productionArea = [area.province, area.city, area.district].filter(Boolean).join('');
+};
+
+const handleAreaChange = (value: any) => {
+    if (value === undefined || value === null || value === '' || (Array.isArray(value) && value.length === 0)) {
+        queryParams.province = '';
+        queryParams.city = '';
+        queryParams.county = '';
+        queryParams.productionArea = '';
+    }
 };
 
 // 分页参数

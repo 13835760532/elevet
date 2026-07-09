@@ -7,7 +7,14 @@
           <span v-else>检测总量</span>
         </div>
         <p class="block-title">检测农产品高风险top</p>
-        <Echart :options="currentTopColumnOption" :height="200" />
+        <Echart v-if="!topChartEmpty" :options="currentTopColumnOption" :height="200" />
+        <BigDataEmpty
+          v-else
+          compact
+          variant="columns"
+          title="暂无风险排行"
+          description="当前范围未检出农产品风险数据"
+        />
       </div>
     </BigPanelCard>
 
@@ -17,7 +24,16 @@
       :tabs="['检测项阳性率']"
       active-tab="检测项阳性率"
     >
-      <Echart class="rank-chart" :options="middleBarOption" height="100%" />
+      <div class="rank-chart-shell">
+        <Echart v-if="!productChartEmpty" class="rank-chart" :options="middleBarOption" height="100%" />
+        <BigDataEmpty
+          v-else
+          compact
+          variant="bars"
+          title="暂无组合风险"
+          description="产品与检测项目暂未形成排行"
+        />
+      </div>
     </BigPanelCard>
 
     <BigPanelCard
@@ -26,7 +42,16 @@
       :tabs="['检测项阳性率']"
       active-tab="检测项阳性率"
     >
-      <Echart class="rank-chart" :options="bottomBarOption" height="100%" />
+      <div class="rank-chart-shell">
+        <Echart v-if="!itemChartEmpty" class="rank-chart" :options="bottomBarOption" height="100%" />
+        <BigDataEmpty
+          v-else
+          compact
+          variant="bars"
+          title="暂无检测项风险"
+          description="当前范围无检测项高风险统计"
+        />
+      </div>
     </BigPanelCard>
   </section>
 </template>
@@ -36,6 +61,7 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import echarts from '@/plugins/echarts';
 import { Echart } from '@/components/Echart';
 import BigPanelCard from '../bigscreen/BigPanelCard.vue';
+import BigDataEmpty from '../bigscreen/BigDataEmpty.vue';
 import rightBg from '@/assets/imgs/echarts/检测任务/rwjcfx_bg.png';
 import {
   getFastCategoryTop10,
@@ -70,6 +96,10 @@ const itemNames = computed(() =>
 const itemValues = computed(() =>
   pesticideTop10.value.map((item) => Number(item.positiveRate || 0))
 );
+const hasPositiveValue = (list: number[]) => list.some((value) => Number(value || 0) > 0);
+const topChartEmpty = computed(() => categoryNames.value.length === 0 || !hasPositiveValue(categoryValues.value));
+const productChartEmpty = computed(() => productNames.value.length === 0 || !hasPositiveValue(productValues.value));
+const itemChartEmpty = computed(() => itemNames.value.length === 0 || !hasPositiveValue(itemValues.value));
 
 const topMax = computed(() => {
   const maxValue = Math.max(...categoryValues.value, 0);
@@ -390,12 +420,23 @@ watch(topTab, () => {
 }
 
 .right-block {
+  position: relative;
+  min-height: 210px;
+
   .block-title {
     margin: 0 0 4px;
     color: #9ec2e5;
     font-size: 14px;
     font-weight: 700;
   }
+}
+
+.rank-chart-shell {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  height: 0;
+  min-height: 0;
 }
 
 :deep(.panel-body) {

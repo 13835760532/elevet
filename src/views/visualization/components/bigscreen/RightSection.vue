@@ -1,17 +1,23 @@
 <template>
   <section class="right-section">
     <BigPanelCard title="风险公告" :bg-image="noticeBg">
-      <div class="announcement-list">
+      <div v-if="!noticeEmpty" class="announcement-list">
         <div class="announcement-item" v-for="(item, index) in displayNoticeList" :key="index">
           <p class="time">{{ formatDate(item.createTime, 'YYYY-MM-DD HH:mm') }}</p>
           <p class="desc">{{ item.title }}</p>
         </div>
       </div>
+      <BigDataEmpty
+        v-else
+        title="暂无风险公告"
+        description="当前暂无可展示的风险公告"
+        compact
+      />
     </BigPanelCard>
 
     <BigPanelCard title="区域风险排序TOP 10" :tabs="['产地', '检测地']" v-model:active-tab="rankTab" :bg-image="rankBg">
       <div class="rank-table-wrap">
-        <table class="rank-table">
+        <table v-if="!rankTableEmpty" class="rank-table">
           <thead>
             <tr>
               <th>排名</th>
@@ -34,6 +40,12 @@
             </tr>
           </tbody>
         </table>
+        <BigDataEmpty
+          v-else
+          title="暂无区域风险"
+          description="当前筛选范围未返回区域风险排行"
+          compact
+        />
         <div class="rank-level-tabs">
           <button v-for="tab in areaLevelTabs" :key="tab" type="button" class="rank-level-tab"
             :class="{ active: tab === rankAreaLevelTab }" @click="rankAreaLevelTab = tab">
@@ -46,17 +58,23 @@
     <BigPanelCard title="农产品-检测项风险TOP 10" :tabs="['检测总量', '阳性率']" v-model:active-tab="projectRiskTab"
       :bg-image="riskBg">
       <div class="project-risk-chart" style="position: relative;">
-        <div class="positive-count-summary">
+        <div v-if="!projectRiskEmpty" class="positive-count-summary">
           <span v-if="projectRiskTab === '阳性率'">阳性项次/总项次</span>
           <span v-else>检测总量</span>
         </div>
-        <div class="project-risk-axis-labels">
+        <div v-if="!projectRiskEmpty" class="project-risk-axis-labels">
           <div v-for="(label, index) in projectLabels" :key="`${label}-${index}`" class="project-risk-axis-label">
             <span class="project-risk-axis-text">{{ truncateProjectLabel(label) }}</span>
             <span class="project-risk-label-tooltip">{{ label }}</span>
           </div>
         </div>
-        <Echart :options="currentProjectRiskOption" height="100%" />
+        <Echart v-if="!projectRiskEmpty" :options="currentProjectRiskOption" height="100%" />
+        <BigDataEmpty
+          v-else
+          title="暂无组合风险"
+          description="当前筛选范围未返回农产品-检测项风险"
+          compact
+        />
       </div>
     </BigPanelCard>
   </section>
@@ -67,6 +85,7 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import echarts from '@/plugins/echarts'
 import { Echart } from '@/components/Echart'
 import BigPanelCard from './BigPanelCard.vue'
+import BigDataEmpty from './BigDataEmpty.vue'
 import noticeBg from '@/assets/imgs/echarts/首页/bg_fxgg.png'
 import rankBg from '@/assets/imgs/echarts/首页/fxjzqy_bg.png'
 import riskBg from '@/assets/imgs/echarts/首页/nclfx_bg.png'
@@ -93,6 +112,7 @@ const areaLevelTabs = ['城市', '区县']
 const rankBadgeImages = [rankNo1, rankNo2, rankNo3]
 
 const displayNoticeList = computed(() => noticeList.value.slice(0, 3))
+const noticeEmpty = computed(() => displayNoticeList.value.length === 0)
 
 const formatRankAreaName = (item: RiskAreaTopRespVO) =>
   item.areaName || item.cityName || item.districtName || item.provinceName || '--'
@@ -121,6 +141,17 @@ const currentRankData = computed(() => {
   return result
 })
 
+const rankTableEmpty = computed(
+  () =>
+    rankList.value.length === 0 ||
+    !rankList.value.some(
+      (item) =>
+        Number(item.positiveCount || 0) > 0 ||
+        Number(item.positiveRate || 0) > 0 ||
+        Number(item.detectionCount || 0) > 0
+    )
+)
+
 const formatRateText = (item: any) => {
   if (item.isEmpty) return ''
   const rate = Number(item.positiveRate || 0)
@@ -130,19 +161,16 @@ const formatRateText = (item: any) => {
 
 const displayProjectRiskList = computed(() => {
   const sorted = [...projectRiskList.value].sort((a, b) => Number(b.statValue || 0) - Number(a.statValue || 0))
-  const rows = sorted.slice(0, 10)
-  return rows.length
-    ? rows
-    : Array.from({ length: 10 }, () => ({
-      combineName: '--',
-      statValue: 0
-    }))
+  return sorted.slice(0, 10)
 })
 const projectLabels = computed(() =>
   displayProjectRiskList.value.map((item) => item.combineName || '--')
 )
 const projectValues = computed(() =>
   displayProjectRiskList.value.map((item) => Number(item.statValue || 0))
+)
+const projectRiskEmpty = computed(
+  () => displayProjectRiskList.value.length === 0 || !projectValues.value.some((value) => value > 0)
 )
 const projectMax = computed(() => {
   const maxValue = Math.max(...projectValues.value, 0)
