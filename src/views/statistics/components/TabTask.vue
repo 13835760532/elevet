@@ -188,6 +188,15 @@ import {
 import { ElMessage, ElMessageBox } from 'element-plus'
 import download from '@/utils/download'
 
+const props = withDefaults(
+  defineProps<{
+    queryDeptScope?: number
+  }>(),
+  {
+    queryDeptScope: 0
+  }
+)
+
 const dateRangeType = ref('近一周')
 const dateRange = ref<string[]>([])
 const keyword = ref('')
@@ -243,6 +252,7 @@ const userDeptAreaCode = computed(() => getUserDeptAreaParams().areaCode)
 const currentQueryParams = computed(() => ({
   ...buildRangeParams(dateRangeType.value, dateRange.value),
   ...getEffectiveAreaParams(),
+  queryDeptScope: props.queryDeptScope,
   deptId: canViewAreaRange.value ? undefined : currentDeptId.value || undefined
 }))
 
@@ -507,6 +517,13 @@ const handleExport = async () => {
 watch([dateRangeType, dateRange], () => {
   handleSearch()
 })
+
+watch(
+  () => props.queryDeptScope,
+  () => {
+    handleSearch()
+  }
+)
 
 watch(
   canViewAreaRange,

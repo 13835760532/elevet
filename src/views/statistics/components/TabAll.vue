@@ -310,7 +310,7 @@
               </div>
               <div class="notice-content">
                 <div class="notice-time">{{ item.time }}</div>
-                <div class="notice-title">{{ item.title }}</div>
+                <div class="notice-title" v-html="item.content || '暂无风险公告'"></div>
               </div>
             </div>
           </div>
@@ -859,6 +859,7 @@ const loadNotices = async () => {
       id: item.id,
       time: item.createTime ? dayjs(item.createTime).format('YYYY-MM-DD HH:mm') : '',
       title: item.title,
+      content: item.content,
       type: item.type
     })).filter(item => item.type == 2).slice(0, 6)
   } catch (error) {
@@ -1835,5 +1836,20 @@ onMounted(() => {
   font-size: 13px;
   color: #666;
   line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  :deep(*) {
+    display: inline !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+    font-size: inherit !important;
+    line-height: inherit !important;
+    color: inherit !important;
+  }
 }
 </style>

@@ -5,7 +5,7 @@
         <div class="announcement-item" v-for="(item, index) in displayNoticeList" :key="index"
           @click="handleViewNoticeDetail(item)" style="cursor: pointer;">
           <p class="time">{{ formatDate(item.createTime, 'YYYY-MM-DD HH:mm') }}</p>
-          <p class="desc">{{ item.title }}</p>
+          <p class="desc" v-html="item.content || '暂无风险公告'"></p>
         </div>
       </div>
       <BigDataEmpty v-else title="暂无风险公告" description="当前暂无可展示的风险公告" compact />
@@ -37,12 +37,12 @@
           </tbody>
         </table>
         <BigDataEmpty v-else title="暂无区域风险" description="当前筛选范围未返回区域风险排行" compact />
-        <div class="rank-level-tabs">
-          <button v-for="tab in areaLevelTabs" :key="tab" type="button" class="rank-level-tab"
-            :class="{ active: tab === rankAreaLevelTab }" @click="rankAreaLevelTab = tab">
-            {{ tab }}
-          </button>
-        </div>
+      </div>
+      <div class="rank-level-tabs">
+        <button v-for="tab in areaLevelTabs" :key="tab" type="button" class="rank-level-tab"
+          :class="{ active: tab === rankAreaLevelTab }" @click="rankAreaLevelTab = tab">
+          {{ tab }}
+        </button>
       </div>
     </BigPanelCard>
 
@@ -119,7 +119,7 @@ const projectRiskList = ref<ProductPesticideTopRespVO[]>([])
 const areaLevelTabs = ['城市', '区县']
 const rankBadgeImages = [rankNo1, rankNo2, rankNo3]
 
-const displayNoticeList = computed(() => noticeList.value.slice(0, 3))
+const displayNoticeList = computed(() => noticeList.value.slice(0, 6))
 const noticeEmpty = computed(() => displayNoticeList.value.length === 0)
 
 const formatRankAreaName = (item: RiskAreaTopRespVO) =>
@@ -425,9 +425,21 @@ onUnmounted(() => {
     color: rgba(232, 238, 248, 0.72);
     font-size: 15px;
     line-height: 22px;
-    white-space: nowrap;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
     overflow: hidden;
     text-overflow: ellipsis;
+
+    :deep(*) {
+      display: inline !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      background: transparent !important;
+      font-size: inherit !important;
+      line-height: inherit !important;
+      color: inherit !important;
+    }
   }
 }
 
@@ -505,9 +517,19 @@ onUnmounted(() => {
 .rank-table-wrap {
   position: relative;
   height: 100%;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
   padding-top: 8px;
-  padding-bottom: 46px;
+  padding-bottom: 50px;
+
+  &::-webkit-scrollbar {
+    width: 5px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #1f4b89;
+    border-radius: 3px;
+  }
 }
 
 .rank-badge {

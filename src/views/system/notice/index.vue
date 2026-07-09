@@ -62,8 +62,7 @@
             v-hasPermi="['system:notice:update']">
             编辑
           </el-button>
-          <el-button v-if="scope.row.type !== 2" link type="danger" @click="handleDelete(scope.row.id)"
-            v-hasPermi="['system:notice:delete']">
+          <el-button link type="danger" @click="handleDelete(scope.row.id)" v-hasPermi="['system:notice:delete']">
             删除
           </el-button>
           <!-- <el-button v-if="scope.row.type !== 2" link @click="handlePush(scope.row.id)" v-hasPermi="['system:notice:update']">

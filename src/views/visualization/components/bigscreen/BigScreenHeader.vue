@@ -189,9 +189,11 @@ const configForm = reactive({
   frequency: 5
 })
 
+
 const dataScopeOptions = [
-  { label: '本辖区监管采集检测数据（默认）', value: 'jurisdiction' },
-  { label: '本辖区全部检测数据', value: 'all' }
+  { label: '本辖区监管范畴采集检测数', value: 'all' },
+  { label: '本机构下发任务采集数据', value: 'issued' },
+  { label: '本机构执行任务采集数据', value: 'self' }
 ]
 
 const areaCascaderProps = {
@@ -1110,14 +1112,25 @@ onUnmounted(() => {
   background: rgba(8, 20, 54, 0.98) !important;
   box-shadow: 0 10px 30px rgba(4, 18, 45, 0.5) !important;
 
+  .el-popper__arrow::before {
+    background: rgba(8, 20, 54, 0.98) !important;
+    border: 1px solid rgba(57, 141, 231, 0.55) !important;
+  }
+
+  .el-select-dropdown {
+    background: transparent !important;
+  }
+
   .el-select-dropdown__item {
-    color: #c4e1ff;
-    font-size: 16px;
+    color: #c4e1ff !important;
+    font-size: 16px !important;
 
     &.is-selected,
+    &.hover,
+    &.is-hovering,
     &:hover {
-      background: rgba(41, 112, 201, 0.18);
-      color: #4ce9ff;
+      background: rgba(41, 112, 201, 0.18) !important;
+      color: #4ce9ff !important;
     }
   }
 }

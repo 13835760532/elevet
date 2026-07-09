@@ -737,7 +737,7 @@ onUnmounted(() => {
   position: relative;
   flex: 1;
   min-height: 0;
-  overflow: hidden;
+  z-index: 5;
 }
 
 .trend-chart-wrap {

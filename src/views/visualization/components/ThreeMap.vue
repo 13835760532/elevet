@@ -195,7 +195,7 @@ const legendTitle = computed(() => {
   if (isCertificateMode.value) return props.certificateTab === '存证' ? '存证分布' : '开具分布'
   if (isFastMapMode.value) return '检测样本分布'
   if (isTaskMapMode.value) return `${props.taskLabel}分布`
-  return '测量分布'
+  return '任务完成量（项次）'
 })
 
 const legendItems = [
@@ -1226,7 +1226,7 @@ onBeforeUnmount(() => {
   width: 100%;
   height: 100%;
   min-height: 0;
-  overflow: hidden;
+  z-index: 5;
   background:
     radial-gradient(circle at 48% 48%, rgba(24, 182, 194, 0.12), rgba(2, 8, 22, 0) 38%),
     linear-gradient(180deg, #04101e 0%, #020914 56%, #01060d 100%);
@@ -1336,7 +1336,7 @@ onBeforeUnmount(() => {
 
 .map-tooltip {
   position: absolute;
-  z-index: 20;
+  z-index: 9999;
   min-width: 188px;
   padding: 10px 14px 11px;
   border: 1px solid rgba(115, 245, 255, 0.76);

@@ -237,8 +237,8 @@ const createLegendItems = (labels: string[], blockClasses: string[]): MapLegendI
 const mapLegendTitle = computed(() => {
   if (isCertificateMode.value) return props.certificateTab === '存证' ? '存证分布' : '开具分布'
   if (isFastMapMode.value) return '检测样本分布'
-  if (isTaskMapMode.value) return `${props.taskLabel}分布`
-  return '测量分布'
+  if (isTaskMapMode.value) return `${props.taskLabel}分布1`
+  return '任务完成量（项次）'
 })
 
 const mapLegendItems = computed(() => {
@@ -405,9 +405,9 @@ const renderHotspots = (geometries: any[]) => {
     .filter(Boolean)
     .sort((a: any, b: any) => b.count - a.count)
     .slice(0, ui.isDrilled ? 24 : 18) as Array<{
-    coordinate: [number, number]
-    count: number
-  }>
+      coordinate: [number, number]
+      count: number
+    }>
 
   const maxCount = points[0]?.count || 0
   points.forEach((point, index) => {
@@ -1134,7 +1134,7 @@ const initMap = async () => {
   if (disposed || !mapRef.value) return // 确保 echarts 在全局可用
   await ensureMaptalks()
   if (disposed || !mapRef.value) return
-  ;(window as any).echarts = echarts
+    ; (window as any).echarts = echarts
   state.map = new maptalks.Map(mapRef.value, {
     center: HOME_CENTER,
     zoom: HOME_ZOOM,
@@ -1447,10 +1447,8 @@ onUnmounted(() => {
     <!-- 返回全国按钮 -->
     <transition name="fade">
       <div v-if="ui.isDrilled && !scopedProvinceCode" class="absolute top-20 left-10 z-40">
-        <div
-          @click="rollUp"
-          class="back-btn glass-panel px-6 py-2 rounded-xl flex items-center gap-2 text-cyan-400 font-bold hover:text-white cursor-pointer transition-all border border-cyan-400/30 shadow-[0_0_15px_rgba(34,211,238,0.2)]"
-        >
+        <div @click="rollUp"
+          class="back-btn glass-panel px-6 py-2 rounded-xl flex items-center gap-2 text-cyan-400 font-bold hover:text-white cursor-pointer transition-all border border-cyan-400/30 shadow-[0_0_15px_rgba(34,211,238,0.2)]">
           <span class="text-xl">←</span>
           <span>返回全国</span>
         </div>
@@ -1458,11 +1456,8 @@ onUnmounted(() => {
     </transition>
 
     <!-- 自定义 Tooltip -->
-    <div
-      v-if="tooltipData.show"
-      class="map-tooltip absolute pointer-events-none"
-      :style="{ left: tooltipData.x + 'px', top: tooltipData.y + 'px', zIndex: 9999 }"
-    >
+    <div v-if="tooltipData.show" class="map-tooltip absolute pointer-events-none"
+      :style="{ left: tooltipData.x + 'px', top: tooltipData.y + 'px', zIndex: 9999 }">
       <div class="tooltip-content">
         <div v-if="isCertificateMode" class="tooltip-lines">
           <div class="tooltip-line">
@@ -1517,12 +1512,8 @@ onUnmounted(() => {
       <div class="legend-panel">
         <h4 class="legend-title">{{ mapLegendTitle }}</h4>
         <div class="legend-list">
-          <div
-            v-for="(item, index) in mapLegendItems"
-            :key="item.label"
-            class="legend-item"
-            :class="{ muted: index === mapLegendItems.length - 1 }"
-          >
+          <div v-for="(item, index) in mapLegendItems" :key="item.label" class="legend-item"
+            :class="{ muted: index === mapLegendItems.length - 1 }">
             <div class="legend-block" :class="item.blockClass"></div>
             <span>{{ item.label }}</span>
           </div>
@@ -1540,12 +1531,10 @@ onUnmounted(() => {
   overflow: hidden;
   background:
     linear-gradient(180deg, rgba(2, 10, 28, 0.24), rgba(0, 7, 22, 0.54)),
-    radial-gradient(
-      ellipse at 48% 51%,
+    radial-gradient(ellipse at 48% 51%,
       rgba(23, 130, 181, 0.28) 0%,
       rgba(5, 40, 73, 0.13) 43%,
-      rgba(2, 6, 23, 0) 72%
-    ),
+      rgba(2, 6, 23, 0) 72%),
     radial-gradient(ellipse at 72% 49%, rgba(0, 207, 255, 0.12), rgba(2, 8, 25, 0) 46%),
     url('@/assets/imgs/echarts/1.png') center / cover no-repeat,
     #020b18;
@@ -1580,8 +1569,7 @@ onUnmounted(() => {
 }
 
 #map-container canvas {
-  filter: saturate(1.32) contrast(1.16) brightness(1.04)
-    drop-shadow(0 0 18px rgba(30, 218, 255, 0.3));
+  filter: saturate(1.32) contrast(1.16) brightness(1.04) drop-shadow(0 0 18px rgba(30, 218, 255, 0.3));
 }
 
 .map-wrapper :deep(.maptalks-attribution) {
@@ -1637,12 +1625,10 @@ onUnmounted(() => {
   border: 1px solid rgba(78, 232, 238, 0.62);
   border-radius: 8px;
   background:
-    linear-gradient(
-      135deg,
+    linear-gradient(135deg,
       rgba(18, 72, 92, 0.88),
       rgba(5, 32, 55, 0.84) 58%,
-      rgba(2, 21, 38, 0.92)
-    ),
+      rgba(2, 21, 38, 0.92)),
     rgba(5, 32, 55, 0.88);
   box-shadow:
     inset 0 0 22px rgba(96, 239, 255, 0.22),

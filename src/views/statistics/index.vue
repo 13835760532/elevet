@@ -9,7 +9,7 @@
             class="tab-dropdown"
             trigger="hover"
             placement="bottom-start"
-            @command="handleDropdownCommand(tab.value)"
+            @command="(command) => handleDropdownCommand(tab.value, command)"
           >
             <div
               :class="['tab-item', { active: currentTab === tab.value }]"
@@ -48,11 +48,15 @@
     <!-- 动态内容 -->
     <div class="statistics-tab-body">
       <TabAll v-if="currentTab === 'all'" />
-      <TabTask v-else-if="currentTab === 'task'" />
-      <TabQuick v-else-if="currentTab === 'quick'" />
-      <TabIssue v-else-if="currentTab === 'issue'" />
-      <TabVerify v-else-if="currentTab === 'verify'" />
-      <TabFiling v-else-if="currentTab === 'filing'" />
+      <TabTask v-else-if="currentTab === 'task'" :query-dept-scope="taskDeptScope" />
+      <TabQuick
+        v-else-if="currentTab === 'quick'"
+        :query-dept-scope="quickDeptScope"
+        :self-detection="quickSelfDetection"
+      />
+      <TabIssue v-else-if="currentTab === 'issue'" :query-dept-scope="tabDeptScopes.issue" />
+      <TabVerify v-else-if="currentTab === 'verify'" :query-dept-scope="tabDeptScopes.verify" />
+      <TabFiling v-else-if="currentTab === 'filing'" :query-dept-scope="tabDeptScopes.filing" />
     </div>
   </div>
 </template>
@@ -70,6 +74,19 @@ import { isCurrentUserRegulatoryDept } from './components/statisticsData'
 
 const route = useRoute()
 const currentTab = ref('all')
+const scopedTabValues = ['issue', 'verify', 'filing'] as const
+type ScopedTabValue = (typeof scopedTabValues)[number]
+type QuickCommand = 'self' | 'task' | 'all'
+type TaskCommand = 'issued' | 'executed' | 'all'
+
+const tabDeptScopes = ref<Record<ScopedTabValue, number>>({
+  issue: 0,
+  verify: 0,
+  filing: 0
+})
+const taskDeptScope = ref(0)
+const quickDeptScope = ref(0)
+const quickSelfDetection = ref<boolean | undefined>(undefined)
 
 interface TabDropdownOption {
   label: string
@@ -148,10 +165,69 @@ const tabs = computed<StatisticsTab[]>(() => [
 
 const handleTabChange = (tabValue: string) => {
   currentTab.value = tabValue
+  if (tabValue === 'task') {
+    taskDeptScope.value = 0
+  }
+  if (tabValue === 'quick') {
+    quickDeptScope.value = 0
+    quickSelfDetection.value = undefined
+  }
+  if (scopedTabValues.includes(tabValue as ScopedTabValue)) {
+    tabDeptScopes.value[tabValue as ScopedTabValue] = 0
+  }
 }
 
-const handleDropdownCommand = (tabValue: string) => {
+const getQueryDeptScopeByCommand = (command: unknown) => {
+  if (command === 'area') return 1
+  if (command === 'own') return 2
+  return 0
+}
+
+const setQuickScopeByCommand = (command: unknown) => {
+  const quickCommand = command as QuickCommand
+  if (quickCommand === 'self') {
+    quickDeptScope.value = 2
+    quickSelfDetection.value = true
+    return
+  }
+  if (quickCommand === 'task') {
+    quickDeptScope.value = 2
+    quickSelfDetection.value = false
+    return
+  }
+  if (quickCommand === 'all') {
+    quickDeptScope.value = 1
+    quickSelfDetection.value = undefined
+    return
+  }
+  quickDeptScope.value = 0
+  quickSelfDetection.value = undefined
+}
+
+const setTaskScopeByCommand = (command: unknown) => {
+  const taskCommand = command as TaskCommand
+  if (taskCommand === 'issued' || taskCommand === 'executed') {
+    taskDeptScope.value = 2
+    return
+  }
+  if (taskCommand === 'all') {
+    taskDeptScope.value = 1
+    return
+  }
+  taskDeptScope.value = 0
+}
+
+const handleDropdownCommand = (tabValue: string, command: unknown) => {
   currentTab.value = tabValue
+  if (tabValue === 'task') {
+    setTaskScopeByCommand(command)
+  }
+  if (tabValue === 'quick') {
+    setQuickScopeByCommand(command)
+  }
+  if (scopedTabValues.includes(tabValue as ScopedTabValue)) {
+    tabDeptScopes.value[tabValue as ScopedTabValue] = getQueryDeptScopeByCommand(command)
+  }
 }
 
 const initTab = () => {

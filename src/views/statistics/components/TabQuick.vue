@@ -157,6 +157,17 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import download from '@/utils/download'
 import dayjs from 'dayjs'
 
+const props = withDefaults(
+  defineProps<{
+    queryDeptScope?: number
+    selfDetection?: boolean
+  }>(),
+  {
+    queryDeptScope: 0,
+    selfDetection: undefined
+  }
+)
+
 const route = useRoute()
 
 const initFiltersFromQuery = () => {
@@ -208,9 +219,18 @@ const currentDeptName = computed(() => currentUserDeptInfo.value.name || '')
 
 const userDeptAreaCode = computed(() => getUserDeptAreaParams().areaCode)
 
+const effectiveSelfDetection = computed(() => {
+  if (props.selfDetection !== undefined) return props.selfDetection
+  if (filters.type === '1') return true
+  if (filters.type === '2') return false
+  return undefined
+})
+
 const dashboardQueryParams = computed(() => ({
   ...buildRangeParams(dateRangeType.value, dateRange.value),
   ...getEffectiveAreaParams(canViewAreaRange.value ? areaParams : undefined),
+  queryDeptScope: props.queryDeptScope,
+  selfDetection: props.selfDetection,
   detectionOrgName: canViewAreaRange.value ? undefined : currentDeptName.value || undefined
 }))
 
@@ -380,7 +400,8 @@ const buildTableQuery = () => {
     detectionArea: filters.area || undefined,
     detectionOrgName: detectionOrgName || undefined,
     overallResult: filters.result !== '' ? filters.result : undefined,
-    selfDetection: filters.type === '1' ? 'true' : filters.type === '2' ? 'false' : undefined,
+    queryDeptScope: props.queryDeptScope,
+    selfDetection: effectiveSelfDetection.value,
     detectionDate
   }
 }
@@ -421,7 +442,8 @@ const buildExportParams = () => {
     detectionArea: filters.area || undefined,
     detectionOrgName: detectionOrgName || undefined,
     overallResult: filters.result !== '' ? filters.result : undefined,
-    selfDetection: filters.type === '1' ? 'true' : filters.type === '2' ? 'false' : undefined,
+    queryDeptScope: props.queryDeptScope,
+    selfDetection: effectiveSelfDetection.value,
     detectionDate
   }
 }
@@ -512,6 +534,14 @@ watch(areaParams, () => {
   pageNo.value = 1
   loadData()
 })
+
+watch(
+  () => [props.queryDeptScope, props.selfDetection],
+  () => {
+    pageNo.value = 1
+    loadData()
+  }
+)
 
 watch(
   detectionAreaIds,

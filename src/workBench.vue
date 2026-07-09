@@ -27,14 +27,15 @@
         </div>
 
         <div class="notice-list">
-          <div v-for="(item, index) in noticeData" :key="item.id || index" class="notice-item" @click="handleViewNoticeDetail(item)">
+          <div v-for="(item, index) in noticeData" :key="item.id || index" class="notice-item"
+            @click="handleViewNoticeDetail(item)">
             <div class="notice-badge-wrap">
               <span v-if="index < 2" class="notice-new">new</span>
               <span class="notice-badge" :class="item.type === 2 ? 'is-warning' : 'is-risk'">风险</span>
             </div>
             <div class="notice-content">
               <div class="notice-time">{{ item.time || '--' }}</div>
-              <div class="notice-title">{{ item.title || '暂无风险公告' }}</div>
+              <div class="notice-title" v-html="item.content || '暂无风险公告'"></div>
             </div>
           </div>
           <el-empty v-if="!noticeData.length" description="暂无风险公告" :image-size="80" />
@@ -210,11 +211,15 @@
     <!-- Notice Detail Dialog -->
     <el-dialog v-model="noticeDialogVisible" title="公告详情" width="600px">
       <div v-loading="noticeDetailLoading" class="notice-detail-container" style="min-height: 100px;">
-        <h3 style="font-size: 18px; font-weight: bold; margin-bottom: 8px; text-align: center;">{{ currentNotice?.title }}</h3>
+        <h3 style="font-size: 18px; font-weight: bold; margin-bottom: 8px; text-align: center;">{{ currentNotice?.title
+          }}
+        </h3>
         <div style="font-size: 13px; color: #999; text-align: center; margin-bottom: 20px;">
           发布时间：{{ currentNotice?.time || '--' }}
         </div>
-        <div v-html="currentNotice?.content" class="notice-content-body" style="font-size: 14px; line-height: 1.6; color: #333; overflow-wrap: break-word; border-top: 1px solid #eee; padding-top: 16px;"></div>
+        <div v-html="currentNotice?.content" class="notice-content-body"
+          style="font-size: 14px; line-height: 1.6; color: #333; overflow-wrap: break-word; border-top: 1px solid #eee; padding-top: 16px;">
+        </div>
       </div>
       <template #footer>
         <span class="dialog-footer">
@@ -439,6 +444,7 @@ const getNoticeList = async () => {
       id: item.id,
       time: item.createTime ? formatDate(item.createTime, 'YYYY-MM-DD HH:mm') : '',
       title: item.title,
+      content: item.content,
       type: item.type
     })).filter(item => item.type == 2)
   } catch (error) {
@@ -970,8 +976,23 @@ onMounted(() => {
 }
 
 .notice-title {
-  font-size: 14px;
+  font-size: 14px !important;
   color: #333;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  :deep(*) {
+    display: inline !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+    font-size: inherit !important;
+    line-height: inherit !important;
+    color: inherit !important;
+  }
 }
 
 /* Warning Area */

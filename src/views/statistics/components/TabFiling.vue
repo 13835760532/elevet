@@ -204,6 +204,15 @@ import {
 import { useDict } from '@/hooks/web/useDict'
 import download from '@/utils/download'
 
+const props = withDefaults(
+  defineProps<{
+    queryDeptScope?: number
+  }>(),
+  {
+    queryDeptScope: 0
+  }
+)
+
 const dateRangeType = ref('近一周')
 const dateRange = ref<string[]>([])
 const areaIds = ref<string[]>([])
@@ -270,6 +279,7 @@ const userDeptAreaCode = computed(() => getUserDeptAreaParams().areaCode)
 const dashboardQueryParams = computed(() => ({
   ...buildRangeParams(dateRangeType.value, dateRange.value),
   ...getEffectiveAreaParams(canViewAreaRange.value ? areaParams : undefined),
+  queryDeptScope: props.queryDeptScope,
   deptId: canViewAreaRange.value ? undefined : currentDeptId.value || undefined,
   deptName: canViewAreaRange.value ? undefined : currentDeptName.value || undefined
 }))
@@ -447,6 +457,7 @@ const buildSubjectQuery = (pageNo: number, pageSize: number) => {
     pageSize,
     deptId: canViewAreaRange.value ? undefined : currentDeptId.value || undefined,
     deptName: canViewAreaRange.value ? undefined : currentDeptName.value || undefined,
+    queryDeptScope: props.queryDeptScope,
     name: filtersSubject.name || undefined,
     type: isEmptyValue(filtersSubject.filingType) ? undefined : filtersSubject.filingType,
     category: isEmptyValue(filtersSubject.subjectType) ? undefined : filtersSubject.subjectType,
@@ -465,6 +476,7 @@ const buildProductQuery = (pageNo: number, pageSize: number) => {
     pageSize,
     deptId: canViewAreaRange.value ? undefined : currentDeptId.value || undefined,
     deptName: canViewAreaRange.value ? undefined : currentDeptName.value || undefined,
+    queryDeptScope: props.queryDeptScope,
     productCode: filtersProduct.productCode || undefined,
     productName: filtersProduct.productName || undefined,
     subjectName: filtersProduct.subjectName || undefined,
@@ -728,6 +740,15 @@ watch(areaParams, () => {
   productPageNo.value = 1
   loadData()
 })
+
+watch(
+  () => props.queryDeptScope,
+  () => {
+    subjectPageNo.value = 1
+    productPageNo.value = 1
+    loadData()
+  }
+)
 
 watch(
   canViewAreaRange,

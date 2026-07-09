@@ -118,6 +118,15 @@ import { useDict } from '@/hooks/web/useDict'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import download from '@/utils/download'
 
+const props = withDefaults(
+  defineProps<{
+    queryDeptScope?: number
+  }>(),
+  {
+    queryDeptScope: 0
+  }
+)
+
 const dateRangeType = ref('近一周')
 const dateRange = ref<string[]>([])
 const areaIds = ref<string[]>([])
@@ -154,6 +163,7 @@ const currentDeptName = computed(() => currentUserDeptInfo.value.name || '')
 const queryParams = computed(() => ({
   ...buildRangeParams(dateRangeType.value, dateRange.value),
   ...getEffectiveAreaParams(canViewAreaRange.value ? areaParams : undefined),
+  queryDeptScope: props.queryDeptScope,
   deptId: canViewAreaRange.value ? undefined : currentDeptId.value || undefined,
   deptName: canViewAreaRange.value ? undefined : currentDeptName.value || undefined
 }))
@@ -251,6 +261,7 @@ const buildCertificateQuery = (withPage = true) => {
     endDate: queryParams.value.endDate,
     areaType: queryParams.value.areaType,
     areaCode: queryParams.value.areaCode,
+    queryDeptScope: queryParams.value.queryDeptScope,
     deptId: queryParams.value.deptId,
     deptName: queryParams.value.deptName
   }
@@ -338,6 +349,14 @@ watch(areaParams, () => {
   pageNo.value = 1
   loadData()
 })
+
+watch(
+  () => props.queryDeptScope,
+  () => {
+    pageNo.value = 1
+    loadData()
+  }
+)
 
 watch(
   canViewAreaRange,
