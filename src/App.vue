@@ -5,6 +5,7 @@ import { useDesign } from '@/hooks/web/useDesign'
 import { CACHE_KEY, useCache } from '@/hooks/web/useCache'
 import routerSearch from '@/components/RouterSearch/index.vue'
 import autofit from 'autofit.js'
+import { BIG_SCREEN_AUTOFIT_OPTIONS } from '@/bigScreenAutofit'
 
 defineOptions({ name: 'APP' })
 
@@ -15,12 +16,6 @@ const currentSize = computed(() => appStore.getCurrentSize)
 const greyMode = computed(() => appStore.getGreyMode)
 const { wsCache } = useCache()
 const route = useRoute()
-const bigScreenAutofitOptions = {
-  el: '.big-screen-shell',
-  dh: 1180,
-  dw: 1920,
-  resize: true
-}
 let isBigScreenAutofitActive = false
 
 // 根据浏览器当前主题设置系统主题色
@@ -45,8 +40,8 @@ const bigScreenRoutes = [
 const enableBigScreenAutofit = async () => {
   if (isBigScreenAutofitActive) return
   await nextTick()
-  if (!document.querySelector(bigScreenAutofitOptions.el)) return
-  autofit.init(bigScreenAutofitOptions, false)
+  if (!document.querySelector(BIG_SCREEN_AUTOFIT_OPTIONS.el)) return
+  autofit.init(BIG_SCREEN_AUTOFIT_OPTIONS, false)
   isBigScreenAutofitActive = true
 }
 
