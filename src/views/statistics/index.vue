@@ -232,10 +232,14 @@ const handleDropdownCommand = (tabValue: string, command: unknown) => {
 
 const initTab = () => {
   if (route.query.tab) {
-    currentTab.value = route.query.tab as string
+    handleTabChange(route.query.tab as string)
     return
   }
-  currentTab.value = 'all'
+  if (route.path === '/statistics/quick') {
+    handleTabChange('quick')
+    return
+  }
+  handleTabChange('all')
 }
 
 onMounted(() => {
