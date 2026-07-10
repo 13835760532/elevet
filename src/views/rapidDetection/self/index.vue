@@ -60,8 +60,9 @@
             <div class="table-actions">
                 <div class="action-left">
                     <!-- <el-button type="primary" @click="handleBatchImport" class="primary-btn">检测批量导入</el-button> -->
-                    <el-button type="primary" @click="handleSingleInput" class="primary-btn">检测单条录入</el-button>
-                    <el-button type="primary" @click="handleBatchPublic" :disabled="multipleSelection.length === 0">批量设置</el-button>
+                    <el-button type="primary" @click="handleSingleInput" class="primary-btn">检测单条判读</el-button>
+                    <el-button type="primary" @click="handleBatchPublic"
+                        :disabled="multipleSelection.length === 0">批量设置</el-button>
                 </div>
                 <div class="action-right">
                     <el-button @click="handleExport">导出</el-button>
@@ -73,7 +74,8 @@
             <div class="content-card">
                 <!-- 数据表格 -->
                 <div class="table-wrapper" v-loading="loading" ref="tableWrapperRef">
-                    <el-table :data="tableList" :height="tableHeight" :border="false" @selection-change="handleSelectionChange">
+                    <el-table :data="tableList" :height="tableHeight" :border="false"
+                        @selection-change="handleSelectionChange">
                         <el-table-column type="selection" width="55" align="center" fixed="left" />
                         <el-table-column label="序号" type="index" width="60" align="center" />
                         <el-table-column label="样品编号" prop="sampleCode" width="130" align="center" />
@@ -728,6 +730,7 @@ onMounted(() => {
     .el-checkbox__inner {
         border-radius: 2px !important;
     }
+
     .el-table-column--selection .cell {
         display: flex !important;
         justify-content: center !important;

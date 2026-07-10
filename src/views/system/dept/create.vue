@@ -52,13 +52,13 @@
 
 
           <!-- 机构行政级别 -->
-          <el-form-item label="机构行政级别" prop="adminLevel">
+          <!-- <el-form-item label="机构行政级别" prop="adminLevel">
             <el-select v-model="formData.adminLevel" placeholder="选择机构行政级别" class="full-width">
               <el-option label="省级" :value="1" />
               <el-option label="市级" :value="2" />
               <el-option label="区县级" :value="3" />
             </el-select>
-          </el-form-item>
+          </el-form-item> -->
 
           <!-- 机构行政层级范围 -->
           <el-form-item label="机构行政层级范围" prop="adminCoverage">

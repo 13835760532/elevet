@@ -66,9 +66,12 @@
         <el-table :data="tableList" :border="false" v-loading="loading" height="100%">
           <el-table-column label="序号" type="index" width="60" align="center" />
           <el-table-column label="任务编码" prop="taskCode" width="160" align="center" :formatter="tableColumnFormatter" />
-          <el-table-column label="任务名称" prop="taskName" min-width="180" show-overflow-tooltip :formatter="tableColumnFormatter" />
-          <el-table-column label="检测地区" prop="detectionArea" width="120" align="center" :formatter="tableColumnFormatter" />
-          <el-table-column label="检测品种" prop="detectionVarieties" min-width="120" show-overflow-tooltip :formatter="tableColumnFormatter" />
+          <el-table-column label="任务名称" prop="taskName" min-width="180" show-overflow-tooltip
+            :formatter="tableColumnFormatter" />
+          <el-table-column label="检测地区" prop="detectionArea" width="120" align="center"
+            :formatter="tableColumnFormatter" />
+          <el-table-column label="检测品种" prop="detectionVarieties" min-width="120" show-overflow-tooltip
+            :formatter="tableColumnFormatter" />
           <el-table-column label="检测进度" width="180" align="center">
             <template #default="scope">
               <div class="progress-box">
@@ -274,7 +277,7 @@ const handleUrge = async (row) => {
 const handleView = (row) => {
   router.push({
     path: '/fastCheckPlan/taskAllocate',
-    query: { id: row.id }
+    query: { id: row.id, tab: '2' }
   })
 }
 

@@ -223,7 +223,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, watch } from 'vue'
 import { Lightning, List } from '@element-plus/icons-vue'
 import { useRouter, useRoute } from 'vue-router'
 import DetectionProgress from '@/components/DetectionProgress/index.vue'
@@ -240,6 +240,20 @@ const route = useRoute()
 const taskId = route.query.id
 
 const activeTab = ref('subtask')
+
+watch(
+    () => route.query.tab,
+    (val) => {
+        if (val === '2' || val === 'result') {
+            activeTab.value = 'result'
+        } else if (val === '3' || val === 'monitor') {
+            activeTab.value = 'monitor'
+        } else {
+            activeTab.value = 'subtask'
+        }
+    },
+    { immediate: true }
+)
 const loading = ref(false)
 const detailLoading = ref(false)
 const pageNum = ref(1)

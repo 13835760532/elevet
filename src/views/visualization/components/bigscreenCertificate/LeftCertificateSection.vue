@@ -37,12 +37,7 @@
     </BigPanelCard>
 
     <BigPanelCard class="category-panel" title="各产品品类合格证开具量" :bg-image="leftBg">
-      <BigDataEmpty
-        v-if="categoryEmpty"
-        title="暂无品类数据"
-        description="当前筛选范围未返回合格证品类开具量"
-        compact
-      />
+      <BigDataEmpty v-if="categoryEmpty" title="暂无品类数据" description="当前筛选范围未返回合格证品类开具量" compact />
       <div v-else class="category-layout">
         <div class="pie-container">
           <Echart :options="categoryPieOption" height="100%" width="100%" />
@@ -118,12 +113,12 @@ const overviewData = computed(() => [
     unit: '份',
     type: 'green'
   },
-  {
-    label: '合格证查验',
-    value: Number(overview.value.verificationCount || 0),
-    unit: '次',
-    type: 'cyan'
-  },
+  // {
+  //   label: '合格证查验',
+  //   value: Number(overview.value.verificationCount || 0),
+  //   unit: '次',
+  //   type: 'cyan'
+  // },
   { label: '合格证溯源', value: Number(overview.value.traceCount || 0), unit: '次', type: 'orange' }
 ])
 

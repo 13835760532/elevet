@@ -43,12 +43,12 @@
         fontWeight: 'bold'
       }" :cell-style="{ textAlign: 'center' }" height="400">
         <el-table-column label="序号" type="index" width="60" />
-        <el-table-column label="品类" prop="productCategory" min-width="130" show-overflow-tooltip />
-        <el-table-column label="农产品名称" prop="productName" min-width="140" show-overflow-tooltip />
-        <el-table-column label="检测项" prop="detectionItem" min-width="160" show-overflow-tooltip />
-        <el-table-column label="阳性项次" prop="positiveItemCount" width="110" sortable />
-        <el-table-column label="总项次" prop="totalItemCount" width="100" />
-        <el-table-column label="阳性率" prop="positiveRate" width="100">
+        <el-table-column label="品类" prop="productCategory" min-width="120" show-overflow-tooltip />
+        <el-table-column label="农产品名称" prop="productName" min-width="80" show-overflow-tooltip />
+        <el-table-column label="检测项" prop="detectionItem" min-width="80" show-overflow-tooltip />
+        <el-table-column label="阳性项次" prop="positiveItemCount" width="120" sortable />
+        <el-table-column label="总项次" prop="totalItemCount" width="120" />
+        <el-table-column label="阳性率" prop="positiveRate" width="120">
           <template #default="{ row }">
             {{ formatPositiveRate(row.positiveRate) }}
           </template>
@@ -165,7 +165,7 @@ watch(
 .high-risk-dialog {
   border-radius: 10px !important;
   overflow: hidden;
-  max-width: 1280px;
+  max-width: 1000px;
 
   .el-dialog__header {
     margin-right: 0;

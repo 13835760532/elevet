@@ -9,9 +9,9 @@
           <dict-tag :type="DICT_TYPE.SYSTEM_DEPT_TYPE" :value="deptData.deptType" />
           <span v-if="!deptData.deptType && deptData.deptType !== 0">--</span>
         </el-descriptions-item>
-        <el-descriptions-item label="机构行政级别">
+        <!-- <el-descriptions-item label="机构行政级别">
           {{ formatAreaLevel(deptData.areaLevel) }}
-        </el-descriptions-item>
+        </el-descriptions-item> -->
         <el-descriptions-item label="所属行政区划" :span="2">
           {{ formatArea() || deptData.address || '--' }}
         </el-descriptions-item>
@@ -28,42 +28,28 @@
         <el-descriptions-item label="组织机构代码" :span="2">
           {{ deptData.socialCreditCode || '--' }}
         </el-descriptions-item>
-        
+
         <el-descriptions-item label="营业执照/资质" :span="2">
           <div v-if="deptData.businessLicenseUrl || deptData.certImageUrls" class="image-wrapper">
-            <el-image 
-              style="width: 100px; height: 100px"
-              :src="deptData.businessLicenseUrl || deptData.certImageUrls"
-              :preview-src-list="[deptData.businessLicenseUrl || deptData.certImageUrls]"
-              fit="cover"
-              class="rounded-image"
-            />
+            <el-image style="width: 100px; height: 100px" :src="deptData.businessLicenseUrl || deptData.certImageUrls"
+              :preview-src-list="[deptData.businessLicenseUrl || deptData.certImageUrls]" fit="cover"
+              class="rounded-image" />
           </div>
           <span v-else>--</span>
         </el-descriptions-item>
 
         <el-descriptions-item label="身份证正面">
           <div v-if="deptData.idCardFrontUrl" class="image-wrapper">
-            <el-image 
-              style="width: 100px; height: 100px"
-              :src="deptData.idCardFrontUrl"
-              :preview-src-list="[deptData.idCardFrontUrl]"
-              fit="cover"
-              class="rounded-image"
-            />
+            <el-image style="width: 100px; height: 100px" :src="deptData.idCardFrontUrl"
+              :preview-src-list="[deptData.idCardFrontUrl]" fit="cover" class="rounded-image" />
           </div>
           <span v-else>--</span>
         </el-descriptions-item>
-        
+
         <el-descriptions-item label="身份证反面">
           <div v-if="deptData.idCardBackUrl" class="image-wrapper">
-            <el-image 
-              style="width: 100px; height: 100px"
-              :src="deptData.idCardBackUrl"
-              :preview-src-list="[deptData.idCardBackUrl]"
-              fit="cover"
-              class="rounded-image"
-            />
+            <el-image style="width: 100px; height: 100px" :src="deptData.idCardBackUrl"
+              :preview-src-list="[deptData.idCardBackUrl]" fit="cover" class="rounded-image" />
           </div>
           <span v-else>--</span>
         </el-descriptions-item>
@@ -152,21 +138,22 @@ const formatAreaLevel = (level: number) => {
     color: var(--el-text-color-primary);
   }
 }
+
 .image-wrapper {
   display: flex;
   align-items: center;
   justify-content: flex-start;
   gap: 10px;
-  
+
   .rounded-image {
     border-radius: 6px;
     border: 1px solid var(--el-border-color-light);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
     transition: all 0.3s;
-    
+
     &:hover {
       transform: scale(1.02);
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     }
   }
 }
