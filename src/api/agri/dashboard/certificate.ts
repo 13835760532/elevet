@@ -7,6 +7,19 @@ export interface CertificateDashboardQueryParams {
   cityName?: string
   areaType?: string | number
   areaCode?: string | number
+  queryDeptScope?: number
+}
+
+export const CERTIFICATE_TREND_GRANULARITY = {
+  MONTH: '1',
+  DAY: '2'
+} as const
+
+export type CertificateTrendTimeGranularity =
+  (typeof CERTIFICATE_TREND_GRANULARITY)[keyof typeof CERTIFICATE_TREND_GRANULARITY]
+
+export interface CertificateServiceTrendQueryParams extends CertificateDashboardQueryParams {
+  timeGranularity?: CertificateTrendTimeGranularity
 }
 
 export interface CertificateVerificationTopRespVO {
@@ -76,7 +89,7 @@ export const getCertificateOverview = (params?: CertificateDashboardQueryParams)
 }
 
 // 合格证大屏 - 服务趋势
-export const getCertificateServiceTrend = (params?: CertificateDashboardQueryParams) => {
+export const getCertificateServiceTrend = (params?: CertificateServiceTrendQueryParams) => {
   return request.get<CertificateServiceTrendRespVO>({
     url: '/agri/dashboard/certificate/service-trend',
     params

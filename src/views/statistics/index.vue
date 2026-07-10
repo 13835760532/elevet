@@ -71,13 +71,13 @@ import TabIssue from './components/TabIssue.vue'
 import TabVerify from './components/TabVerify.vue'
 import TabFiling from './components/TabFiling.vue'
 import { isCurrentUserRegulatoryDept } from './components/statisticsData'
+import { getTaskQueryDeptScope, resolveStatisticsTab } from './statisticsTabs'
 
 const route = useRoute()
 const currentTab = ref('all')
 const scopedTabValues = ['issue', 'verify', 'filing'] as const
 type ScopedTabValue = (typeof scopedTabValues)[number]
 type QuickCommand = 'self' | 'task' | 'all'
-type TaskCommand = 'issued' | 'executed' | 'all'
 
 const tabDeptScopes = ref<Record<ScopedTabValue, number>>({
   issue: 0,
@@ -205,16 +205,7 @@ const setQuickScopeByCommand = (command: unknown) => {
 }
 
 const setTaskScopeByCommand = (command: unknown) => {
-  const taskCommand = command as TaskCommand
-  if (taskCommand === 'issued' || taskCommand === 'executed') {
-    taskDeptScope.value = 2
-    return
-  }
-  if (taskCommand === 'all') {
-    taskDeptScope.value = 1
-    return
-  }
-  taskDeptScope.value = 0
+  taskDeptScope.value = getTaskQueryDeptScope(command)
 }
 
 const handleDropdownCommand = (tabValue: string, command: unknown) => {
@@ -231,15 +222,7 @@ const handleDropdownCommand = (tabValue: string, command: unknown) => {
 }
 
 const initTab = () => {
-  if (route.query.tab) {
-    handleTabChange(route.query.tab as string)
-    return
-  }
-  if (route.path === '/statistics/quick') {
-    handleTabChange('quick')
-    return
-  }
-  handleTabChange('all')
+  handleTabChange(resolveStatisticsTab(route.query.tab))
 }
 
 onMounted(() => {

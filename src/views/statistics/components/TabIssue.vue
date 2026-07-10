@@ -89,6 +89,7 @@
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useDebounceFn } from '@vueuse/core'
 import StatisticsRangeFilter from './StatisticsRangeFilter.vue'
+import { buildCertificateTrendQueryParams } from './certificateTrend'
 import AreaCascader from '@/components/AreaCascader/index.vue'
 import { Echart } from '@/components/Echart'
 import {
@@ -168,6 +169,8 @@ const queryParams = computed(() => ({
   deptName: canViewAreaRange.value ? undefined : currentDeptName.value || undefined
 }))
 
+const trendQueryParams = computed(() => buildCertificateTrendQueryParams(queryParams.value))
+
 const userDeptAreaCode = computed(() => getUserDeptAreaParams().areaCode)
 
 const trendOption = computed(() => ({
@@ -238,7 +241,7 @@ const loadDashboardData = async () => {
   try {
     const [overviewData, trendData] = await Promise.all([
       getCertificateOverview(queryParams.value),
-      getCertificateServiceTrend(queryParams.value)
+      getCertificateServiceTrend(trendQueryParams.value)
     ])
     overview.value = overviewData || {}
     trend.value = trendData || {}

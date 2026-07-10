@@ -639,9 +639,9 @@ const normalizeTrackNode = (node: any): TrackNode => ({
 
 const buildTrackNodes = (tree: any[], fallbackRows: any[] = []) => {
   if (Array.isArray(tree) && tree.length) {
-    return tree.slice(0, 6).map((node: any) => normalizeTrackNode(node))
+    return tree.map((node: any) => normalizeTrackNode(node))
   }
-  return fallbackRows.slice(0, 6).map((node: any) => normalizeTrackNode(node))
+  return fallbackRows.map((node: any) => normalizeTrackNode(node))
 }
 
 const getTaskTrackList = async (isInit = false) => {
@@ -1286,11 +1286,15 @@ onMounted(() => {
 }
 
 .track-monitor-shell {
-  min-height: 260px;
+  height: 360px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-gutter: stable;
 }
 
 .track-monitor-card {
-  min-height: 260px;
+  min-height: 100%;
+  box-sizing: border-box;
   padding: 20px 24px;
   border: 1px solid #E5E7EB;
   border-radius: 8px;
