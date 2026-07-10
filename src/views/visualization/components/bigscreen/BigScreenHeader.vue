@@ -144,6 +144,7 @@ import certBgActive from '@/assets/imgs/echarts/首页/hgz_pr.png'
 import warnBg from '@/assets/imgs/echarts/首页/xyyj_nor.png'
 import warnBgActive from '@/assets/imgs/echarts/首页/xyyj_pr.png'
 import {
+  canViewBigScreenJurisdictionScope,
   dispatchBigScreenRefresh,
   getBigScreenConfig,
   getBigScreenUserDeptAreaParams,
@@ -153,6 +154,7 @@ import {
   saveBigScreenConfig,
   type BigScreenDataConfig
 } from './config'
+import { getBigScreenDataScopeOptions, resolveBigScreenDataScope } from './dataScope'
 
 const props = withDefaults(
   defineProps<{
@@ -189,12 +191,10 @@ const configForm = reactive({
   frequency: 5
 })
 
-
-const dataScopeOptions = [
-  { label: '本辖区监管范畴采集检测数', value: 'all' },
-  { label: '本机构下发任务采集数据', value: 'issued' },
-  { label: '本机构执行任务采集数据', value: 'self' }
-]
+const canViewJurisdictionScope = computed(() => canViewBigScreenJurisdictionScope())
+const dataScopeOptions = computed(() =>
+  getBigScreenDataScopeOptions(canViewJurisdictionScope.value)
+)
 
 const areaCascaderProps = {
   value: 'id',
@@ -363,7 +363,7 @@ const saveConfig = () => {
   const regionMeta = resolveRegionMetaByPath(configForm.regionPath)
   const nextConfig: BigScreenDataConfig = {
     timeRange: [...timeRange] as [string, string],
-    dataScope: configForm.dataScope || getDefaultBigScreenConfig().dataScope,
+    dataScope: resolveBigScreenDataScope(configForm.dataScope, canViewJurisdictionScope.value),
     regionPath: [...regionMeta.regionPath],
     regionLabel: regionMeta.regionLabel,
     provinceName: regionMeta.provinceName,

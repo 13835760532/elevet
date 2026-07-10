@@ -121,13 +121,14 @@ const exampleData = ref([
     }
 ]);
 
-const handleDownloadTemplate = async () => {
-    try {
-        const res = await ProductApi.getImportTemplate();
-        download.excel(res, '产品档案导入模板.xls');
-    } catch (error) {
-        console.error('下载模版失败', error);
-    }
+const handleDownloadTemplate = () => {
+    const link = document.createElement('a');
+    link.href = '/template/批量上传产品导入模板.xlsx';
+    link.download = '批量上传产品导入模板.xlsx';
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 };
 
 const handleUpload = async (options) => {
@@ -303,9 +304,10 @@ $bg-light: #F8FAFC;
     span {
         color: $theme-color;
         cursor: pointer;
+        text-decoration: none !important;
 
         &:hover {
-            text-decoration: underline;
+            text-decoration: none !important;
         }
     }
 }

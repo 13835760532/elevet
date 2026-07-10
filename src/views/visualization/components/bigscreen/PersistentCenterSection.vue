@@ -243,7 +243,7 @@ const createDashboardTrendOption = (
   formatter?: string,
   unitText = '（项次）',
   rightTitle = '样品总量',
-  interval = 5,
+  interval?: number,
   yAxisFontSize = 18,
   markerPosition: 'top' | 'right' = 'top'
 ) => ({
@@ -320,7 +320,7 @@ const createDashboardTrendOption = (
     type: 'value',
     min: 0,
     max,
-    interval,
+    ...(interval === undefined ? {} : { interval }),
     axisLabel: {
       color: 'rgba(228, 235, 245, 0.72)',
       fontSize: yAxisFontSize,
@@ -788,6 +788,7 @@ onUnmounted(() => {
   .stat-value-container {
     display: flex;
     align-items: baseline;
+    white-space: nowrap;
   }
 
   .stat-value {
@@ -800,10 +801,12 @@ onUnmounted(() => {
   }
 
   .stat-unit {
+    flex-shrink: 0;
     color: rgba(235, 248, 248, 0.58);
     font-size: 15px;
     font-weight: normal;
     margin-left: 6px;
+    white-space: nowrap;
     text-shadow: none;
   }
 }

@@ -151,13 +151,14 @@ const tableData = ref([
     }
 ]);
 
-const handleDownloadTemplate = async () => {
-    try {
-        const res = await SubjectApi.getImportTemplate();
-        download.excel(res, '主体导入模板.xls');
-    } catch (error) {
-        console.error('下载模版失败', error);
-    }
+const handleDownloadTemplate = () => {
+    const link = document.createElement('a');
+    link.href = '/template/批量上传企业导入模板.xlsx';
+    link.download = '批量上传企业导入模板.xlsx';
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 };
 
 const handleUpload = async (options: any) => {
@@ -333,9 +334,10 @@ $bg-light: #F8FAFC;
     span {
         color: $theme-color;
         cursor: pointer;
+        text-decoration: none !important;
 
         &:hover {
-            text-decoration: underline;
+            text-decoration: none !important;
         }
     }
 }

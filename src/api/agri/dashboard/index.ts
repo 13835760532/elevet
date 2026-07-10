@@ -5,6 +5,7 @@ export interface DashboardQueryParams {
   endDate?: string
   provinceName?: string
   cityName?: string
+  queryDeptScope?: number
   areaType?: string | number
   areaCode?: string | number
 }

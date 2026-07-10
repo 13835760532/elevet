@@ -1,12 +1,18 @@
 import dayjs from 'dayjs'
 import { CACHE_KEY, useCache } from '@/hooks/web/useCache'
+import {
+  getBigScreenDataScopeLabel,
+  getBigScreenQueryDeptScope,
+  resolveBigScreenDataScope,
+  type BigScreenDataScope
+} from './dataScope'
 
 export const BIG_SCREEN_CONFIG_STORAGE_KEY = 'big-screen-data-config'
 export const BIG_SCREEN_REFRESH_EVENT = 'big-screen-refresh'
 
 export interface BigScreenDataConfig {
   timeRange: [string, string]
-  dataScope: string
+  dataScope: BigScreenDataScope
   regionPath: number[]
   regionLabel: string
   provinceName: string
@@ -22,7 +28,7 @@ const defaultStart = dayjs().startOf('year').format('YYYY-MM-DD')
 
 export const getDefaultBigScreenConfig = (): BigScreenDataConfig => ({
   timeRange: [defaultStart, today],
-  dataScope: 'jurisdiction',
+  dataScope: resolveBigScreenDataScope(undefined, canViewBigScreenJurisdictionScope()),
   regionPath: [],
   regionLabel: '',
   provinceName: '',
@@ -45,6 +51,16 @@ export const isBigScreenSuperAdmin = () => {
   return Array.isArray(roles) && roles.includes('super_admin')
 }
 
+export const getBigScreenUserDeptType = () => {
+  const { wsCache } = useCache()
+  const userDept = wsCache.get(CACHE_KEY.USER_DEPT) || {}
+  const userInfo = wsCache.get(CACHE_KEY.USER) || {}
+  return userDept.deptType ?? userInfo?.user?.deptType ?? userInfo.deptType
+}
+
+export const canViewBigScreenJurisdictionScope = () =>
+  isBigScreenSuperAdmin() || Number(getBigScreenUserDeptType()) === 1
+
 export const getBigScreenUserDeptAreaParams = () => {
   if (isBigScreenSuperAdmin()) {
     return {
@@ -66,11 +82,12 @@ export const getBigScreenConfig = (): BigScreenDataConfig => {
   try {
     const raw = window.localStorage.getItem(BIG_SCREEN_CONFIG_STORAGE_KEY)
     if (!raw) return getDefaultBigScreenConfig()
-    const parsed = JSON.parse(raw) as Partial<BigScreenDataConfig>
+    const parsed = JSON.parse(raw) as Partial<BigScreenDataConfig> & { dataScope?: unknown }
     const defaults = getDefaultBigScreenConfig()
     return {
       ...defaults,
       ...parsed,
+      dataScope: resolveBigScreenDataScope(parsed.dataScope, canViewBigScreenJurisdictionScope()),
       timeRange:
         Array.isArray(parsed.timeRange) && parsed.timeRange.length === 2
           ? [String(parsed.timeRange[0]), String(parsed.timeRange[1])]
@@ -108,8 +125,7 @@ export const formatBigScreenDataSummary = (config = getBigScreenConfig()) => {
   const [startDate, endDate] = config.timeRange || []
   const regionLabel = formatBigScreenRegionLabel(config.regionLabel)
   const timeLabel = startDate && endDate ? `${startDate} 至 ${endDate}` : '默认时间'
-  const scopeLabel =
-    config.dataScope === 'all' ? '本辖区全部检测数据' : '本辖区监管采集检测数据'
+  const scopeLabel = getBigScreenDataScopeLabel(config.dataScope)
   return `${regionLabel}｜${timeLabel}｜${scopeLabel}`
 }
 
@@ -123,7 +139,8 @@ export const getBigScreenQueryParams = () => {
     cityName: config.cityName || undefined,
     areaType: config.areaType || userDeptAreaParams.areaType || undefined,
     areaCode: config.areaCode || userDeptAreaParams.areaCode || undefined,
-    dataScope: config.dataScope || undefined
+    dataScope: config.dataScope || undefined,
+    queryDeptScope: getBigScreenQueryDeptScope(config.dataScope)
   }
 }
 
