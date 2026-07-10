@@ -1,21 +1,21 @@
 <template>
   <section class="left-section">
 
-    <BigPanelCard title="合格证概况" :bg-image="leftBg">
+    <BigPanelCard title="合格证概况" :tabs="['检测量', '阳性率']" v-model:active-tab="overviewTab" :bg-image="leftBg">
       <div class="overview-grid">
         <div class="overview-card" :class="[item.type, `card-${index + 1}`, getMetricSizeClass(item.value)]"
           v-for="(item, index) in overviewData" :key="item.label">
+          <span class="corner-light top-left"></span>
+          <span class="corner-light bottom-right"></span>
           <div class="card-inner">
             <div class="icon-box">
               <img src="@/assets/imgs/echarts/合格证/icon.png" alt="" />
             </div>
-            <div class="metric-content">
-              <div class="card-label">{{ item.label }}</div>
-              <div class="num-box">
-                <span class="value-text">{{ item.value ?? 0 }}</span>
-                <span class="unit-text">{{ item.unit }}</span>
-              </div>
+            <div class="num-box">
+              <span class="value-text">{{ item.value ?? 0 }}</span>
+              <span class="unit-text">{{ item.unit }}</span>
             </div>
+            <div class="card-label">{{ item.label }}</div>
           </div>
         </div>
       </div>
@@ -105,20 +105,16 @@ const hexToRgba = (hex: string, alpha: number) => {
 const getCategoryColor = (name: string, index: number) =>
   categoryColorMap[name] || fallbackCategoryColors[index % fallbackCategoryColors.length]
 
+const overviewTab = ref<'检测量' | '阳性率'>('检测量')
+
 const overviewData = computed(() => [
   { label: '合格证开具', value: Number(overview.value.issueCount || 0), unit: '份', type: 'blue' },
   {
-    label: '合格证收证',
+    label: '合格证存证',
     value: Number(overview.value.verificationCount || 0),
     unit: '份',
     type: 'green'
   },
-  // {
-  //   label: '合格证查验',
-  //   value: Number(overview.value.verificationCount || 0),
-  //   unit: '次',
-  //   type: 'cyan'
-  // },
   { label: '合格证溯源', value: Number(overview.value.traceCount || 0), unit: '次', type: 'orange' }
 ])
 
@@ -459,11 +455,12 @@ onUnmounted(() => {
   min-height: 0;
   box-sizing: border-box;
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  grid-template-rows: repeat(2, 1fr);
-  column-gap: 14px;
-  row-gap: 26px;
-  padding: 32px 18px 28px;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: 1fr;
+  column-gap: 12px;
+  row-gap: 0;
+  padding: 26px 14px 18px;
+  height: 195px;
   background:
     linear-gradient(180deg, rgba(0, 2, 31, 0.31) 0%, rgba(0, 2, 31, 0.31) 100%),
     linear-gradient(180deg, rgba(4, 19, 49, 0.18) 0%, rgba(5, 12, 34, 0.04) 100%);
@@ -490,17 +487,48 @@ onUnmounted(() => {
   position: relative;
   width: 100%;
   height: 100%;
-  background-repeat: no-repeat;
-  background-position: center center;
-  background-size: 100% 100%;
+  background: rgba(6, 30, 73, 0.45) !important;
+  border-radius: 4px;
+
+  &.blue {
+  }
+
+  &.green {
+  }
+
+  &.orange {
+  }
+
+  .corner-light {
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    border-color: var(--theme-color) !important;
+    border-style: solid;
+    pointer-events: none;
+
+    &.top-left {
+      top: 0;
+      left: 0;
+      border-width: 2px 0 0 2px;
+    }
+
+    &.bottom-right {
+      bottom: 0;
+      right: 0;
+      border-width: 0 2px 2px 0;
+    }
+  }
 
   .card-inner {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    padding: 0 16px;
+    justify-content: center;
+    padding: 20px 8px;
     height: 100%;
     box-sizing: border-box;
-    gap: 14px;
+    gap: 16px;
   }
 
   .metric-content {
@@ -517,7 +545,7 @@ onUnmounted(() => {
     font-weight: 500;
     line-height: 20px;
     letter-spacing: 0;
-    text-align: left;
+    text-align: center;
     text-shadow: none;
   }
 
@@ -525,27 +553,28 @@ onUnmounted(() => {
     margin-top: 0;
     display: flex;
     align-items: baseline;
+    justify-content: center;
+    width: 100%;
     gap: 4px;
 
     .value-text {
       flex: 0 1 auto;
       min-width: 0;
       font-family: 'DIN Black', 'DIN Alternate', 'Inter', sans-serif;
-      font-size: 36px;
+      font-size: 30px;
       font-weight: 900;
-      line-height: 40px;
+      line-height: 1.2;
       letter-spacing: 0;
-      background: linear-gradient(180deg, #8cecff 0%, #2589ff 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      filter: none;
+      color: #7feaff !important;
+      background: none !important;
+      -webkit-text-fill-color: initial !important;
       white-space: nowrap;
     }
 
     .unit-text {
       flex: 0 0 auto;
       color: #c2d4d4;
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 500;
       line-height: 16px;
       opacity: 1;
@@ -586,20 +615,11 @@ onUnmounted(() => {
     }
   }
 
-  &.card-1 {
-    background-image: url('@/assets/imgs/echarts/合格证/Frame 57_bg.png');
-  }
-
-  &.card-2 {
-    background-image: url('@/assets/imgs/echarts/合格证/Frame 58_bg.png');
-  }
-
-  &.card-3 {
-    background-image: url('@/assets/imgs/echarts/合格证/Frame 59_bg.png');
-  }
-
+  &.card-1,
+  &.card-2,
+  &.card-3,
   &.card-4 {
-    background-image: url('@/assets/imgs/echarts/合格证/Frame 60_bg.png');
+    background-image: none !important;
   }
 
   &.blue {

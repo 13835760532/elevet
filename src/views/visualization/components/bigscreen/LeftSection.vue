@@ -11,12 +11,7 @@
           <span v-else>样品总量</span>
         </div>
         <Echart v-if="!produceRiskEmpty" class="left-chart" :options="currentRiskTopOption" height="100%" />
-        <BigDataEmpty
-          v-else
-          title="暂无农产品风险"
-          description="当前筛选范围未返回农产品风险排行"
-          compact
-        />
+        <BigDataEmpty v-else title="暂无农产品风险" description="当前筛选范围未返回农产品风险排行" compact />
       </div>
     </BigPanelCard>
 
@@ -27,12 +22,7 @@
           <span v-else>检测总量</span>
         </div>
         <Echart v-if="!pesticideRiskEmpty" class="left-chart" :options="currentPesticideTopOption" height="100%" />
-        <BigDataEmpty
-          v-else
-          title="暂无检测项风险"
-          description="当前筛选范围未返回检测项风险排行"
-          compact
-        />
+        <BigDataEmpty v-else title="暂无检测项风险" description="当前筛选范围未返回检测项风险排行" compact />
       </div>
     </BigPanelCard>
   </section>
@@ -80,7 +70,7 @@ const displayPesticideRiskList = computed(() =>
       const valB = pesticideTab.value === '阳性率' ? Number(b.statValue ?? b.positiveRate ?? 0) : Number(b.statValue ?? b.detectionCount ?? 0)
       return valB - valA
     })
-    .slice(0, 9)
+    .slice(0, 10)
 )
 
 const riskNames = computed(() =>
@@ -144,7 +134,7 @@ const pesticideMax = computed(() => {
 })
 
 const formatRiskValue = (value: number, mode: '检测量' | '阳性率') =>
-  mode === '阳性率' ? `${Number(value).toFixed(2)}%` : `${Number(value)}`
+  mode === '阳性率' ? `${Math.round(Number(value))}%` : `${Number(value)}`
 
 const formatRankValue = (value: number, mode: '检测量' | '阳性率') =>
   mode === '阳性率' ? `${Number(value).toFixed(2)}%` : `${Number(value)}/100`
@@ -305,7 +295,7 @@ const currentPesticideTopOption = computed(() => ({
       fontWeight: 400
     }
   },
-  grid: { left: 50, right: 24, top: 30, bottom: 46 },
+  grid: { left: 50, right: 24, top: 30, bottom: 70 },
   xAxis: {
     type: 'category',
     data: pesticideLabels.value,
@@ -315,8 +305,7 @@ const currentPesticideTopOption = computed(() => ({
       lineHeight: 15,
       margin: 10,
       interval: 0,
-      rotate: 0,
-      formatter: formatPesticideLabel
+      rotate: 60
     },
     axisTick: {
       show: true,

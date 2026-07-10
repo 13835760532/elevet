@@ -16,9 +16,22 @@
 
       <div class="map-area" :class="{ 'default-map-area': isDefaultMode }">
         <div v-if="isDefaultMode" class="left-stats">
-          <div class="stat-item" v-for="item in sideStats" :key="item.label">
+          <div class="stat-item" v-for="(item, index) in sideStats" :key="item.label">
             <div class="stat-content">
-              <span class="stat-label">{{ item.label }}</span>
+              <span class="stat-label">
+                {{ item.label }}
+                <el-tooltip v-if="item.tooltip && (index == 0)" placement="bottom-start"
+                  popper-class="bigscreen-task-tooltip" effect="dark" :show-after="0">
+                  <template #content>
+                    <div style="max-width: 420px; line-height: 1.8; font-size: 13px; word-break: break-all;">
+                      <div v-for="tooltipItem in sideStats" :key="tooltipItem.label">
+                        {{ tooltipItem.label }}：{{ tooltipItem.tooltip }}；
+                      </div>
+                    </div>
+                  </template>
+                  <span class="question-icon">!</span>
+                </el-tooltip>
+              </span>
               <div class="stat-value-container">
                 <span class="stat-value">{{ item.value }}</span>
                 <span class="stat-unit" v-if="item.unit">{{ item.unit }}</span>
@@ -40,13 +53,9 @@
           <span v-else>检测总量</span>
         </div>
         <Echart v-if="isCertificateMode && !trendEmpty" :options="certificateTrendOption" height="100%" />
-        <Echart v-else-if="!trendEmpty" :key="`dashboard-trend-${trendTab}`" :options="dashboardTrendOption" height="100%" />
-        <BigDataEmpty
-          v-else
-          :title="isCertificateMode ? '暂无合格证趋势' : '暂无检测态势'"
-          description="当前筛选范围未返回趋势数据"
-          compact
-        />
+        <Echart v-else-if="!trendEmpty" :key="`dashboard-trend-${trendTab}`" :options="dashboardTrendOption"
+          height="100%" />
+        <BigDataEmpty v-else :title="isCertificateMode ? '暂无合格证趋势' : '暂无检测态势'" description="当前筛选范围未返回趋势数据" compact />
       </div>
     </BigPanelCard>
   </section>
@@ -70,7 +79,8 @@ import {
 import BigPanelCard from './BigPanelCard.vue'
 import BigDataEmpty from './BigDataEmpty.vue'
 import VisualizationMap from '../Map.vue'
-import { getBigScreenQueryParams, subscribeBigScreenRefresh } from './config'
+import { getBigScreenConfig, getBigScreenQueryParams, subscribeBigScreenRefresh } from './config'
+import type { BigScreenDataScope } from './dataScope'
 import { cachedBigScreenRequest } from './requestCache'
 
 import fgqtBg from '@/assets/imgs/echarts/首页/fgqt_bg.png'
@@ -110,6 +120,7 @@ const trendTab = ref('检测量')
 const dashboardTrendData = ref<TrendRespVO[]>([])
 const dashboardOverview = ref<DashboardOverviewRespVO>({})
 const certificateTrendData = ref<CertificateServiceTrendRespVO>({})
+const activeDataScope = ref<BigScreenDataScope>(getBigScreenConfig().dataScope)
 
 const isDefaultMode = computed(() => !props.activeMenu || props.activeMenu === 'warn')
 const isCertificateMode = computed(() => props.activeMenu === 'cert')
@@ -162,15 +173,138 @@ const topMetrics = computed(() => [
   { img: n3, label: '生产经营主体', value: Number(dashboardOverview.value.enterpriseCount || 0) }
 ])
 
-const sideStats = computed(() => [
-  { label: '任务下发量', value: Number(dashboardOverview.value.taskIssuedCount || 0), unit: '批次' },
-  { label: '任务完成量', value: Number(dashboardOverview.value.taskCompletedCount || 0), unit: '批次' },
-  { label: '任务完成率', value: Number(dashboardOverview.value.taskCompletionRate || 0).toFixed(2), unit: '%' },
-  { label: '快检样品量', value: Number(dashboardOverview.value.sampleCount || 0), unit: '批次' },
-  { label: '检测项总量', value: Number(dashboardOverview.value.detectionItemCount || 0), unit: '项次' },
-  { label: '合格证开具', value: Number(dashboardOverview.value.certificateIssueCount || 0), unit: '份' },
-  { label: '合格证收证', value: Number(dashboardOverview.value.certificateVerifyCount || 0), unit: '份' }
-])
+interface SideStatCopy {
+  taskQuantity: { label: string; tooltip: string }
+  taskCompleted: { label: string; tooltip: string }
+  taskCompletionRate: { label: string; tooltip: string }
+  sampleCount: { label: string; tooltip: string }
+  detectionItemCount: { label: string; tooltip: string }
+  certificateIssueCount: { label: string; tooltip: string }
+  certificateVerifyCount: { label: string; tooltip: string }
+}
+
+const organizationSideStatCopy = {
+  sampleCount: {
+    label: '快检样品量',
+    tooltip: '本机构的“全部样品抽检量”'
+  },
+  detectionItemCount: {
+    label: '检测项总量',
+    tooltip: '本机构的“全部样品总检测量”'
+  },
+  certificateIssueCount: {
+    label: '合格证开具',
+    tooltip: '本机构的“合格证累计开具份数”'
+  },
+  certificateVerifyCount: {
+    label: '合格证收证',
+    tooltip: '本机构的“合格证累计收证份数”'
+  }
+}
+
+const sideStatCopyByScope: Record<BigScreenDataScope, SideStatCopy> = {
+  all: {
+    taskQuantity: {
+      label: '任务下发量',
+      tooltip: '本辖区全部监管机构任务下发总量（统计：本辖区所有监管机构任务样品量）'
+    },
+    taskCompleted: {
+      label: '任务完成量',
+      tooltip: '本辖区全部监管机构任务下发完成量（统计：已下达任务完成抽样量）'
+    },
+    taskCompletionRate: {
+      label: '任务完成率',
+      tooltip: '本辖区的“任务下发量/完成任务量”'
+    },
+    sampleCount: {
+      label: '快检样品量',
+      tooltip: '本辖区全部监管机构的“全部样品抽检量”'
+    },
+    detectionItemCount: {
+      label: '检测项总量',
+      tooltip: '本辖区全部监管机构的“全部样品总检测量”'
+    },
+    certificateIssueCount: {
+      label: '合格证开具',
+      tooltip: '本辖区合格证累计开具份数'
+    },
+    certificateVerifyCount: {
+      label: '合格证收证',
+      tooltip: '本辖区合格证累计收证份数'
+    }
+  },
+  issued: {
+    taskQuantity: {
+      label: '任务下发量',
+      tooltip: '本机构任务下发总量（统计：下发任务样品量）'
+    },
+    taskCompleted: {
+      label: '任务完成量',
+      tooltip: '本机构下发任务完成量（统计：已下发任务完成抽样量）'
+    },
+    taskCompletionRate: {
+      label: '任务完成率',
+      tooltip: '本机构的“任务下发量/完成任务量”'
+    },
+    ...organizationSideStatCopy
+  },
+  self: {
+    taskQuantity: {
+      label: '任务接收量',
+      tooltip: '本机构任务接收总量（统计：下发任务样品量）'
+    },
+    taskCompleted: {
+      label: '任务完成量',
+      tooltip: '本机构接收任务完成量（统计：已接收任务完成抽样量）'
+    },
+    taskCompletionRate: {
+      label: '任务完成率',
+      tooltip: '本机构的“任务接收量/完成任务量”'
+    },
+    ...organizationSideStatCopy
+  }
+}
+
+const sideStats = computed(() => {
+  const copy = sideStatCopyByScope[activeDataScope.value]
+  return [
+    {
+      ...copy.taskQuantity,
+      value: Number(dashboardOverview.value.taskIssuedCount || 0),
+      unit: '批次'
+    },
+    {
+      ...copy.taskCompleted,
+      value: Number(dashboardOverview.value.taskCompletedCount || 0),
+      unit: '批次'
+    },
+    {
+      ...copy.taskCompletionRate,
+      value: Number(dashboardOverview.value.taskCompletionRate || 0).toFixed(2),
+      unit: '%'
+    },
+    {
+      ...copy.sampleCount,
+      value: Number(dashboardOverview.value.sampleCount || 0),
+      unit: '批次'
+    },
+    {
+      ...copy.detectionItemCount,
+      value: Number(dashboardOverview.value.detectionItemCount || 0),
+      unit: '项次'
+    },
+    {
+      ...copy.certificateIssueCount,
+      value: Number(dashboardOverview.value.certificateIssueCount || 0),
+      unit: '份'
+    },
+    {
+      ...copy.certificateVerifyCount,
+      value: Number(dashboardOverview.value.certificateVerifyCount || 0),
+      unit: '份'
+    }
+  ]
+})
 
 const monthLabels = Array.from({ length: 12 }, (_, index) => `${index + 1}月`)
 
@@ -618,6 +752,7 @@ onMounted(() => {
 })
 
 const disposeRefresh = subscribeBigScreenRefresh(() => {
+  activeDataScope.value = getBigScreenConfig().dataScope
   loadActiveCenterData()
 })
 
@@ -783,6 +918,33 @@ onUnmounted(() => {
     color: rgba(235, 248, 248, 0.7);
     font-size: 16px;
     line-height: 23px;
+    display: flex;
+    align-items: center;
+  }
+
+  .question-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    border-radius: 50%;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 10px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-left: 6px;
+    line-height: 1;
+    transition: all 0.2s ease;
+    user-select: none;
+    flex-shrink: 0;
+
+    &:hover {
+      border-color: #57e2ff;
+      color: #57e2ff;
+      background: rgba(87, 226, 255, 0.1);
+    }
   }
 
   .stat-value-container {
@@ -842,6 +1004,22 @@ onUnmounted(() => {
     font-weight: 700;
     font-family: 'DIN Alternate', Arial, sans-serif;
     text-shadow: 0 0 8px rgba(87, 226, 255, 0.4);
+  }
+}
+</style>
+
+<style lang="scss">
+.bigscreen-task-tooltip.el-popper {
+  background: #061a38 !important;
+  border: 1px solid #188bf5 !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 12px rgba(24, 139, 245, 0.4) !important;
+  font-size: 13px !important;
+  line-height: 1.8 !important;
+
+  .el-popper__arrow::before {
+    background: #061a38 !important;
+    border: 1px solid #188bf5 !important;
   }
 }
 </style>

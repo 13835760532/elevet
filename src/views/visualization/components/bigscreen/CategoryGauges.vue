@@ -87,23 +87,27 @@ const getStatValue = (item: CategoryRiskRespVO) => {
   return Number(item.statValue ?? item.detectionCount ?? 0)
 }
 
-const displayItems = computed(() =>
-  categoryRiskList.value
-    .slice(0, 5)
-    .map((item) => ({
-      name: item.category || '--',
-      value: getStatValue(item)
-    }))
-    .map((item, index) => ({
-      ...item,
-      color: categoryColorMap[item.name]?.color || categoryColors[index % categoryColors.length],
-      valueColor:
-        props.mode === '阳性率'
-          ? rateValueColors[index % rateValueColors.length]
-          : categoryColorMap[item.name]?.valueColor || valueColors[index % valueColors.length],
-      displayValue: props.mode === '阳性率' ? `${Math.round(item.value)}%` : `${item.value}`
-    }))
-)
+const displayItems = computed(() => {
+  const items = categoryRiskList.value.map((item) => ({
+    name: item.category || '--',
+    value: getStatValue(item)
+  }))
+
+  // 从高到低排序
+  items.sort((a, b) => b.value - a.value)
+
+  // 限制最多 10 项（如果是阳性率则保持 5 项以适配 3D 展台）
+  const limitCount = props.mode === '阳性率' ? 5 : 10
+  return items.slice(0, limitCount).map((item, index) => ({
+    ...item,
+    color: categoryColorMap[item.name]?.color || categoryColors[index % categoryColors.length],
+    valueColor:
+      props.mode === '阳性率'
+        ? rateValueColors[index % rateValueColors.length]
+        : categoryColorMap[item.name]?.valueColor || valueColors[index % valueColors.length],
+    displayValue: props.mode === '阳性率' ? `${Math.round(item.value)}%` : `${item.value}`
+  }))
+})
 
 const ratePlatformItems = computed(() =>
   displayItems.value.slice(0, 5).map((item, index) => ({
@@ -349,7 +353,7 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  overflow: visible;
+  overflow-y: auto;
   padding-right: 0;
 }
 
