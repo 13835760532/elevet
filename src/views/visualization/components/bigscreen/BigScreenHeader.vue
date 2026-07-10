@@ -478,7 +478,9 @@ onUnmounted(() => {
 
 <style scoped lang="scss">
 .screen-header {
+  flex: 0 0 98px;
   height: 98px;
+  min-height: 98px;
   width: 100%;
   display: grid;
   grid-template-columns: 1fr 680px 1fr;
@@ -907,6 +909,7 @@ onUnmounted(() => {
 
   h1 {
     margin: 0;
+    line-height: 0;
     color: #e7f6ff;
     font-size: 48px;
     font-weight: 800;
@@ -918,6 +921,13 @@ onUnmounted(() => {
     &:hover {
       text-shadow: 0 0 25px rgba(63, 212, 255, 0.75);
       filter: brightness(1.15);
+    }
+
+    img {
+      display: block;
+      width: auto;
+      height: 72px;
+      object-fit: contain;
     }
   }
 }
