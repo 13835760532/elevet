@@ -37,9 +37,10 @@ const bigScreenRoutes = [
   'BigScreenTaskReceive',
   'BigScreenQuick'
 ]
-const enableBigScreenAutofit = async () => {
-  if (isBigScreenAutofitActive) return
+const enableBigScreenAutofit = async (routeName: unknown) => {
+  disableBigScreenAutofit()
   await nextTick()
+  if (route.name !== routeName) return
   if (!document.querySelector(BIG_SCREEN_AUTOFIT_OPTIONS.el)) return
   autofit.init(BIG_SCREEN_AUTOFIT_OPTIONS, false)
   isBigScreenAutofitActive = true
@@ -55,7 +56,7 @@ watch(
   () => route.name,
   (newName) => {
     if (bigScreenRoutes.includes(newName as string)) {
-      void enableBigScreenAutofit()
+      void enableBigScreenAutofit(newName)
     } else {
       disableBigScreenAutofit()
     }

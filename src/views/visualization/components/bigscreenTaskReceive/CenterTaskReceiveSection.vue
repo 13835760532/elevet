@@ -2,7 +2,7 @@
   <section class="center-section">
     <BigPanelCard class="big-panel-center" title="检测任务地域发布" :bg-image="centerBg">
       <div class="map-area">
-        <Map mode="task" task-label="任务接收" />
+        <ThreeMap mode="task" task-label="任务接收" />
       </div>
     </BigPanelCard>
   </section>
@@ -10,7 +10,7 @@
 
 <script setup lang="ts">
 import BigPanelCard from '../bigscreen/BigPanelCard.vue'
-import Map from '../Map.vue'
+import ThreeMap from '../ThreeMap.vue'
 import centerBg from '@/assets/imgs/echarts/检测任务/rwjcfx_bg.png'
 </script>
 

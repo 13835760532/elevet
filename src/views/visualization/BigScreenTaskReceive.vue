@@ -1,7 +1,11 @@
 <template>
   <div class="big-screen-shell">
-    <BigScreenHeader :show-data-config="false" active-menu="task" />
+    <BigScreenHeader active-menu="task" />
     <BigScreenLoadingOverlay :visible="entranceLoading" />
+    <div class="screen-data-summary" :title="dataSummaryText">
+      <span class="summary-label">当前数据</span>
+      <span class="summary-value">{{ dataSummaryText }}</span>
+    </div>
     <main class="screen-main">
       <div class="task-left-panel">
         <LeftTaskReceiveSection v-if="panelVisibility.left" />
@@ -20,9 +24,15 @@
 </template>
 
 <script setup lang="ts">
-import { defineAsyncComponent, onMounted, onUnmounted, ref } from 'vue'
+import { computed, defineAsyncComponent, onMounted, onUnmounted, ref } from 'vue'
 import BigScreenHeader from './components/bigscreen/BigScreenHeader.vue'
 import BigScreenLoadingOverlay from './components/bigscreen/BigScreenLoadingOverlay.vue'
+import {
+  formatBigScreenDataSummary,
+  getBigScreenConfig,
+  subscribeBigScreenRefresh,
+  type BigScreenDataConfig
+} from './components/bigscreen/config'
 import { useDeferredPanelMount } from './useDeferredPanelMount'
 
 const LeftTaskReceiveSection = defineAsyncComponent(
@@ -41,8 +51,14 @@ const BottomTaskReceiveSection = defineAsyncComponent(
 defineOptions({ name: 'VisualizationBigScreenTaskReceive' })
 
 const entranceLoading = ref(true)
+const dataConfig = ref<BigScreenDataConfig>(getBigScreenConfig())
+const dataSummaryText = computed(() => formatBigScreenDataSummary(dataConfig.value))
 const { visibility: panelVisibility, schedule } = useDeferredPanelMount()
 let loadingTimer: number | null = null
+
+const disposeConfigRefresh = subscribeBigScreenRefresh(() => {
+  dataConfig.value = getBigScreenConfig()
+})
 
 onMounted(() => {
   schedule({
@@ -56,6 +72,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  disposeConfigRefresh()
   if (loadingTimer !== null) {
     window.clearTimeout(loadingTimer)
     loadingTimer = null
@@ -83,16 +100,55 @@ onUnmounted(() => {
   padding: 6px 12px 10px;
   display: grid;
   grid-template-columns: 470px minmax(0, 1fr) 560px;
-  grid-template-rows: minmax(0, 1fr) 280px;
+  grid-template-rows: minmax(0, 1fr) 260px;
   grid-template-areas:
     'left center right'
-    'bottom bottom .';
+    'bottom bottom bottom';
   gap: 10px;
+}
+
+.screen-data-summary {
+  position: absolute;
+  top: 96px;
+  left: 12px;
+  z-index: 2;
+  display: flex;
+  width: 470px;
+  height: 32px;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px;
+  color: rgb(206 230 255 / 86%);
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    rgb(2 20 54 / 82%),
+    rgb(5 35 76 / 42%),
+    rgb(2 20 54 / 10%)
+  );
+  border: 1px solid rgb(55 220 255 / 18%);
+  box-shadow: inset 0 0 14px rgb(34 161 255 / 12%);
+}
+
+.summary-label {
+  flex: 0 0 auto;
+  font-size: 14px;
+  color: #57e2ff;
+}
+
+.summary-value {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 15px;
+  color: rgb(226 241 255 / 90%);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .task-left-panel {
   grid-area: left;
   min-height: 0;
+  padding-top: 34px;
 }
 
 .task-center-panel {
@@ -102,7 +158,13 @@ onUnmounted(() => {
 
 .task-bottom-panel {
   grid-area: bottom;
+  display: flex;
   min-height: 0;
+
+  > * {
+    flex: 1;
+    min-height: 0;
+  }
 }
 
 .task-right-panel {

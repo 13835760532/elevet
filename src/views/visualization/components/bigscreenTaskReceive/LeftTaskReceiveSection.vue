@@ -8,6 +8,7 @@
             <p class="label">{{ item.label }}</p>
             <div class="value-container">
               <span class="value">{{ item.value }}</span>
+              <span v-if="item.unit" class="unit">{{ item.unit }}</span>
               <!-- 全息投影效果 -->
               <img class="holographic-img" src="@/assets/imgs/echarts/合格证/bf67.png" />
             </div>
@@ -86,12 +87,12 @@ const categoryColors = [
 ]
 
 const formatCount = (value?: number) => Number(value || 0)
-const formatRate = (value?: number) => `${Number(value || 0).toFixed(2)}%`
+const formatRate = (value?: number) => Number(value || 0).toFixed(2)
 
 const summaryData = computed(() => [
-  { label: '接收任务', value: formatCount(overview.value.taskIssuedCount) },
-  { label: '任务完成', value: formatCount(overview.value.taskCompletedCount) },
-  { label: '任务完成率', value: formatRate(overview.value.taskCompletionRate) }
+  { label: '接收任务', value: formatCount(overview.value.taskIssuedCount), unit: '批次' },
+  { label: '任务完成', value: formatCount(overview.value.taskCompletedCount), unit: '批次' },
+  { label: '任务完成率', value: formatRate(overview.value.taskCompletionRate), unit: '%' }
 ])
 
 const coverData = computed(() => [
@@ -262,11 +263,19 @@ onUnmounted(() => {
 
     .value {
       color: #7feaff;
-      font-size: 44px;
+      font-size: 28px;
       line-height: 1;
       font-weight: 700;
       font-family: 'DIN Alternate', sans-serif;
       text-shadow: 0 0 15px rgba(127, 234, 255, 0.5);
+    }
+
+    .unit {
+      margin-left: 4px;
+      font-size: 16px;
+      color: #a7caea;
+      font-weight: normal;
+      text-shadow: none;
     }
 
     .holographic-img {
