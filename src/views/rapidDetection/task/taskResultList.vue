@@ -32,17 +32,26 @@
                     <el-form-item label="" prop="isRetest">
                         <el-select v-model="queryParams.isRetest" placeholder="是否复检" clearable class="w120">
                             <el-option label="全部" value="" />
-                            <el-option label="是" :value="true" />
-                            <el-option label="否" :value="false" />
+                            <el-option label="是" value="true" />
+                            <el-option label="否" value="false" />
+                        </el-select>
+                    </el-form-item>
+
+                    <el-form-item label="" prop="overallResult">
+                        <el-select v-model="queryParams.overallResult" placeholder="检测结果" clearable class="w120">
+                            <el-option label="全部" value="" />
+                            <el-option label="阴性" value="0" />
+                            <el-option label="阳性" value="1" />
+                            <el-option label="异常" value="2" />
                         </el-select>
                     </el-form-item>
 
                     <el-form-item label="" prop="status">
                         <el-select v-model="queryParams.status" placeholder="检测状态" clearable class="w120">
                             <el-option label="全部" value="" />
-                            <el-option label="阴性" value="1" />
-                            <el-option label="阳性" value="0" />
-                            <el-option label="异常" value="2" />
+                            <el-option label="未检测" value="0" />
+                            <el-option label="已检测" value="1" />
+                            <el-option label="失败" value="2" />
                         </el-select>
                     </el-form-item>
 
@@ -148,7 +157,7 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, onMounted } from 'vue';
+import { reactive, ref, onMounted, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useDict } from '@/hooks/web/useDict';
 import { formatDate } from '@/utils/formatTime';
@@ -175,6 +184,7 @@ const queryParams = reactive({
     category: '',
     area: '',
     isRetest: '',
+    overallResult: '',
     status: ''
 });
 
@@ -183,6 +193,13 @@ const handleAreaSelect = (area: any) => {
     queryParams.area = [area.province, area.city, area.district].filter(Boolean).join('-');
 };
 
+// 监听地区清空，同步将 queryParams.area 置空
+watch(areaIds, (newVal) => {
+    if (!newVal || newVal.length === 0) {
+        queryParams.area = '';
+    }
+});
+
 const pageParams = reactive({
     pageNo: 1,
     pageSize: 10
@@ -190,7 +207,7 @@ const pageParams = reactive({
 
 const total = ref(0);
 const tableList = ref([]);
-const taskId = route.query.id || route.params.id;
+const taskId = route.query.taskId || route.query.id || route.params.id;
 const taskDetail = ref<any>(null);
 
 const getTaskDetail = async () => {
@@ -209,16 +226,13 @@ const getList = async () => {
             pageSize: pageParams.pageSize,
             sampleCode: queryParams.sampleCode,
             productCategory: queryParams.category,
-            overallResult: queryParams.status,
+            overallResult: queryParams.overallResult,
             detectionArea: queryParams.area,
             rechecked: queryParams.isRetest,
             sampleName: queryParams.productName,
-            taskId: route.query.taskId
+            status: queryParams.status,
+            taskId: taskId
         } as any;
-
-        if (taskId) {
-            req.taskId = taskId;
-        }
 
         const data = await DetectionRecordApi.getDetectionRecordPage(req);
         data.list.forEach((item: any) => {
@@ -266,13 +280,14 @@ const handleExport = async () => {
     try {
         await message.confirm('是否确认导出当前筛选条件下的检测记录数据？');
         const data = await DetectionRecordApi.exportDetectionRecord({
-            taskId: taskId || route.query.taskId || undefined,
+            taskId: taskId || undefined,
             sampleCode: queryParams.sampleCode || undefined,
             sampleName: queryParams.productName || undefined,
             productCategory: queryParams.category || undefined,
             detectionArea: queryParams.area || undefined,
             rechecked: queryParams.isRetest !== '' ? queryParams.isRetest : undefined,
-            overallResult: queryParams.status !== '' ? queryParams.status : undefined,
+            overallResult: queryParams.overallResult !== '' ? queryParams.overallResult : undefined,
+            status: queryParams.status !== '' ? queryParams.status : undefined,
             pageNo: pageParams.pageNo,
             pageSize: pageParams.pageSize
         });
@@ -286,7 +301,7 @@ const handleSingleInput = () => {
     router.push({
         path: '/rapidDetection/taskDetectionCreate',
         query: {
-            taskId: route.query.taskId,
+            taskId: taskId,
             action: 'add'
         }
     });
