@@ -537,6 +537,9 @@ const toBarData = (list: any[], getName: (item: any) => string, statType: '检�
     }
   })
 
+  // 从高到低排序
+  rows.sort((a, b) => b.value - a.value)
+
   let axisMax = 100;
   if (statType === '检测量') {
     const rawMax = Math.max(...rows.map((item) => item.value), 0)
