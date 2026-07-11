@@ -212,7 +212,7 @@
     <el-dialog v-model="noticeDialogVisible" title="公告详情" width="600px">
       <div v-loading="noticeDetailLoading" class="notice-detail-container" style="min-height: 100px;">
         <h3 style="font-size: 18px; font-weight: bold; margin-bottom: 8px; text-align: center;">{{ currentNotice?.title
-          }}
+        }}
         </h3>
         <div style="font-size: 13px; color: #999; text-align: center; margin-bottom: 20px;">
           发布时间：{{ currentNotice?.time || '--' }}
@@ -911,6 +911,26 @@ onMounted(() => {
   padding: 20px;
   flex: 1;
   /* 使公告列表高度拉伸，与右侧预警区域高度对齐 */
+  max-height: 360px;
+  overflow-y: auto;
+
+  /* 美化滚动条 */
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.12);
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.24);
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
 }
 
 .notice-item {
@@ -1354,6 +1374,12 @@ onMounted(() => {
   background: rgba(255, 77, 79, 0.03);
   border-radius: 6px;
   border-left: 3px solid #ff4d4f;
+  margin-bottom: 5px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
   /* 红色高风险标识 */
 }
 

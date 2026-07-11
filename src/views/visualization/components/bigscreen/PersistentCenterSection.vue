@@ -371,6 +371,26 @@ const getDashboardMarkerLabel = (index: number) => {
   return `${item.statValue || 0}项次`
 }
 
+interface DashboardTrendTooltipParam {
+  dataIndex?: number
+}
+
+const formatDashboardTrendTooltip = (
+  params: DashboardTrendTooltipParam | DashboardTrendTooltipParam[]
+) => {
+  const tooltipParam = Array.isArray(params) ? params[0] : params
+  const dataIndex = Number(tooltipParam?.dataIndex)
+  if (!Number.isInteger(dataIndex) || dataIndex < 0 || dataIndex >= monthLabels.length) return ''
+
+  const item = dashboardTrendDataByMonth.value[dataIndex]
+  const monthLabel = `${String(dataIndex + 1).padStart(2, '0')}月`
+  return [
+    `<div style="margin-bottom:6px;">${monthLabel}</div>`,
+    `<div style="display:flex;align-items:center;line-height:24px;"><span style="width:9px;height:9px;margin-right:7px;border-radius:50%;background:#f05a75;"></span><span style="min-width:76px;">阳性数量</span><span>${item.positiveCount}项次</span></div>`,
+    `<div style="display:flex;align-items:center;line-height:24px;"><span style="width:9px;height:9px;margin-right:7px;border-radius:50%;background:#57e2ff;"></span><span style="min-width:76px;">检测总量</span><span>${item.detectionCount}项次</span></div>`
+  ].join('')
+}
+
 const createDashboardTrendOption = (
   data: number[],
   max: number,
@@ -421,9 +441,15 @@ const createDashboardTrendOption = (
   ],
   tooltip: {
     trigger: 'axis',
+    triggerOn: 'mousemove|click',
     backgroundColor: 'rgba(6, 18, 42, 0.92)',
     borderColor: 'rgba(87, 226, 255, 0.35)',
-    textStyle: { color: '#dff7ff' }
+    textStyle: { color: '#dff7ff' },
+    axisPointer: {
+      type: 'line',
+      lineStyle: { color: 'rgba(223, 247, 255, 0.66)', width: 1 }
+    },
+    formatter: formatDashboardTrendTooltip
   },
   xAxis: {
     type: 'category',
