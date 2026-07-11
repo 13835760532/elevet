@@ -353,21 +353,17 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  overflow-x: hidden;
   overflow-y: auto;
   padding-right: 0;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 .category-legend::-webkit-scrollbar {
-  width: 6px;
-}
-
-.category-legend::-webkit-scrollbar-thumb {
-  background: rgba(76, 233, 255, 0.35);
-  border-radius: 999px;
-}
-
-.category-legend::-webkit-scrollbar-track {
-  background: rgba(9, 26, 52, 0.35);
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 .legend-row {
@@ -375,7 +371,8 @@ onUnmounted(() => {
   grid-template-columns: 9px minmax(0, 1fr) auto;
   align-items: center;
   gap: 10px;
-  width: 119px;
+  width: 100%;
+  box-sizing: border-box;
   height: 24px;
   padding: 0 12px;
   background: rgba(39, 49, 59, 0.72);
