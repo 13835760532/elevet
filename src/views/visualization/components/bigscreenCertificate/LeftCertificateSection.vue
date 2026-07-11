@@ -235,28 +235,13 @@ const loadSubjectArchiveStats = (params = getBigScreenQueryParams()) => {
 }
 
 const categoryItems = computed(() => {
-  const defaultItems = [
-    { name: '蔬菜', value: 0 },
-    { name: '水果', value: 0 },
-    { name: '茶叶', value: 0 },
-    { name: '畜禽', value: 0 },
-    { name: '水产', value: 0 }
-  ]
-  const realData = categoryDistribution.value.reduce((map, item) => {
-    const name = item.category || '--'
-    if (name !== '其他' && name !== '--') {
-      map[name] = Number(item.issueCount || 0)
-    }
-    return map
-  }, {} as Record<string, number>)
-
-  return defaultItems
-    .map((d) => {
-      const realVal = realData[d.name] || 0
+  return categoryDistribution.value
+    .map((item, index) => {
+      const name = item.category || '--'
       return {
-        name: d.name,
-        value: realVal, // 使用真实接口请求的数据，默认为 0
-        color: categoryColorMap[d.name] || '#7d60ff'
+        name,
+        value: Number(item.issueCount || 0),
+        color: categoryColorMap[name] || fallbackCategoryColors[index % fallbackCategoryColors.length]
       }
     })
     .sort((a, b) => b.value - a.value)
