@@ -301,7 +301,7 @@
               <span class="risk-subtitle">显示最近5分钟风险公告</span>
             </div>
           </div>
-          <div class="notice-list">
+          <div class="notice-list" @scroll="handleNoticeScroll">
             <div class="notice-item" v-for="item in noticeData" :key="item.id" @click="handleViewNoticeDetail(item)"
               style="cursor: pointer;">
               <div class="notice-tag">
@@ -852,19 +852,61 @@ const loadRiskData = async () => {
 }
 
 
-const loadNotices = async () => {
+const noticePageNo = ref(1)
+const noticeLoading = ref(false)
+const noticeFinished = ref(false)
+
+const loadNotices = async (isLoadMore = false) => {
+  if (noticeLoading.value) return
+  if (isLoadMore && noticeFinished.value) return
+
+  if (!isLoadMore) {
+    noticePageNo.value = 1
+    noticeFinished.value = false
+  }
+
+  noticeLoading.value = true
   try {
-    const res = await getNoticePage({ pageNo: 1, pageSize: 8, type: 2 })
-    noticeData.value = (res?.list || []).map((item: any) => ({
+    const res = await getNoticePage({ pageNo: noticePageNo.value, pageSize: 50, type: 2 })
+    const list = (res?.list || []).map((item: any) => ({
       id: item.id,
       time: item.createTime ? dayjs(item.createTime).format('YYYY-MM-DD HH:mm') : '',
       title: item.title,
       content: item.content,
       type: item.type
-    })).filter(item => item.type == 2).slice(0, 6)
+    })).filter((item: any) => item.type == 2)
+
+    if (isLoadMore) {
+      noticeData.value = [...noticeData.value, ...list]
+    } else {
+      noticeData.value = list
+    }
+
+    if (!res?.list || res.list.length < 50) {
+      noticeFinished.value = true
+    } else {
+      noticePageNo.value++
+    }
   } catch (error) {
     console.error('[StatisticsAll] load notices failed:', error)
-    noticeData.value = []
+    if (!isLoadMore) {
+      noticeData.value = []
+    }
+  } finally {
+    noticeLoading.value = false
+  }
+}
+
+// 下拉滚动加载
+const handleNoticeScroll = (e: Event) => {
+  const target = e.target as HTMLElement
+  const scrollBuffer = 10
+  if (
+    target.scrollHeight - target.scrollTop <= target.clientHeight + scrollBuffer &&
+    !noticeLoading.value &&
+    !noticeFinished.value
+  ) {
+    loadNotices(true)
   }
 }
 
@@ -1788,6 +1830,8 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  max-height: 380px;
+  overflow-y: auto;
 }
 
 .notice-item {

@@ -26,7 +26,7 @@
           <button class="text-action" type="button" @click="handleViewAllNotice">查看所有</button>
         </div>
 
-        <div class="notice-list">
+        <div class="notice-list" @scroll="handleNoticeScroll">
           <div v-for="(item, index) in noticeData" :key="item.id || index" class="notice-item"
             @click="handleViewNoticeDetail(item)">
             <div class="notice-badge-wrap">
@@ -437,19 +437,61 @@ const trackOwnerOptions = computed(() =>
   )
 )
 
-const getNoticeList = async () => {
+const noticePageNo = ref(1)
+const noticeLoading = ref(false)
+const noticeFinished = ref(false)
+
+const getNoticeList = async (isLoadMore = false) => {
+  if (noticeLoading.value) return
+  if (isLoadMore && noticeFinished.value) return
+
+  if (!isLoadMore) {
+    noticePageNo.value = 1
+    noticeFinished.value = false
+  }
+
+  noticeLoading.value = true
   try {
-    const res = await getNoticePage({ pageNo: 1, pageSize: 8 })
-    noticeData.value = (res?.list || []).map((item: any) => ({
+    const res = await getNoticePage({ pageNo: noticePageNo.value, pageSize: 50 })
+    const list = (res?.list || []).map((item: any) => ({
       id: item.id,
       time: item.createTime ? formatDate(item.createTime, 'YYYY-MM-DD HH:mm') : '',
       title: item.title,
       content: item.content,
       type: item.type
-    })).filter(item => item.type == 2)
+    })).filter((item: any) => item.type == 2)
+
+    if (isLoadMore) {
+      noticeData.value = [...noticeData.value, ...list]
+    } else {
+      noticeData.value = list
+    }
+
+    if (!res?.list || res.list.length < 50) {
+      noticeFinished.value = true
+    } else {
+      noticePageNo.value++
+    }
   } catch (error) {
     console.error('获取公告列表失败:', error)
-    noticeData.value = []
+    if (!isLoadMore) {
+      noticeData.value = []
+    }
+  } finally {
+    noticeLoading.value = false
+  }
+}
+
+// 下拉滚动加载
+const handleNoticeScroll = (e: Event) => {
+  const target = e.target as HTMLElement
+  const scrollBuffer = 10
+  if (
+    target.scrollHeight - target.scrollTop <= target.clientHeight + scrollBuffer &&
+    !noticeLoading.value &&
+    !noticeFinished.value
+  ) {
+    getNoticeList(true)
   }
 }
 

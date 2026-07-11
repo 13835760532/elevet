@@ -1,7 +1,7 @@
 <template>
   <section class="right-section">
     <BigPanelCard title="风险公告" :bg-image="noticeBg">
-      <div v-if="!noticeEmpty" class="announcement-list">
+      <div v-if="!noticeEmpty" class="announcement-list" @scroll="handleScroll">
         <div class="announcement-item" v-for="(item, index) in displayNoticeList" :key="index"
           @click="handleViewNoticeDetail(item)" style="cursor: pointer;">
           <p class="time">{{ formatDate(item.createTime, 'YYYY-MM-DD HH:mm') }}</p>
@@ -119,7 +119,7 @@ const projectRiskList = ref<ProductPesticideTopRespVO[]>([])
 const areaLevelTabs = ['城市', '区县']
 const rankBadgeImages = [rankNo1, rankNo2, rankNo3]
 
-const displayNoticeList = computed(() => noticeList.value.slice(0, 6))
+const displayNoticeList = computed(() => noticeList.value)
 const noticeEmpty = computed(() => displayNoticeList.value.length === 0)
 
 const formatRankAreaName = (item: RiskAreaTopRespVO) =>
@@ -308,18 +308,60 @@ const loadProductPesticideTop10 = async () => {
   }
 }
 
-const loadNoticeList = async () => {
+const noticePageNo = ref(1)
+const noticeLoading = ref(false)
+const noticeFinished = ref(false)
+
+const loadNoticeList = async (isLoadMore = false) => {
+  if (noticeLoading.value) return
+  if (isLoadMore && noticeFinished.value) return
+
+  if (!isLoadMore) {
+    noticePageNo.value = 1
+    noticeFinished.value = false
+  }
+
+  noticeLoading.value = true
   try {
     const data = await getNoticePage({
-      pageNo: 1,
-      pageSize: 10,
+      pageNo: noticePageNo.value,
+      pageSize: 50, // 默认50一页
       status: 0, // 开启状态
       type: 2
     } as any)
-    noticeList.value = (data?.list || []).filter(item => item.type == 2)
+    const list = (data?.list || []).filter(item => item.type == 2)
+    if (isLoadMore) {
+      noticeList.value = [...noticeList.value, ...list]
+    } else {
+      noticeList.value = list
+    }
+    
+    // 如果返回的原始数据长度不足 50 条，说明数据已加载完
+    if (!data?.list || data.list.length < 50) {
+      noticeFinished.value = true
+    } else {
+      noticePageNo.value++
+    }
   } catch (error) {
     console.error('加载风险公告失败', error)
-    noticeList.value = []
+    if (!isLoadMore) {
+      noticeList.value = []
+    }
+  } finally {
+    noticeLoading.value = false
+  }
+}
+
+// 下拉滚动加载
+const handleScroll = (e: Event) => {
+  const target = e.target as HTMLElement
+  const scrollBuffer = 10 // 触底缓冲区像素值
+  if (
+    target.scrollHeight - target.scrollTop <= target.clientHeight + scrollBuffer &&
+    !noticeLoading.value &&
+    !noticeFinished.value
+  ) {
+    loadNoticeList(true)
   }
 }
 
