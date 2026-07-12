@@ -104,6 +104,7 @@ import { Picture } from '@element-plus/icons-vue';
 import { ElLoading } from 'element-plus';
 import { CertificatePreview } from '@/components/CertificatePreview';
 import { getVerification } from '@/api/agri/certificateVerification/index';
+import { getCertificate } from '@/api/agri/certificate';
 import { dateFormatter } from '@/utils/formatTime';
 import {
     DEFAULT_AGRI_MEASUREMENT_UNIT,
@@ -181,6 +182,21 @@ onMounted(async () => {
             // 格式化查验时间
             if (data.verificationTime) {
                 formData.verificationTime = dateFormatter(null, null, data.verificationTime);
+            }
+
+            // 如果是本平台合格证，还需要调接口获取 commitmentBasis
+            if (normalizedData.source === 1) {
+                const certId = data.certificateId || data.certificate?.id;
+                if (certId) {
+                    try {
+                        const certDetail = await getCertificate(Number(certId));
+                        if (certDetail && certDetail.commitmentBasis) {
+                            formData.commitmentBasis = certDetail.commitmentBasis;
+                        }
+                    } catch (err) {
+                        console.error('获取合格证详情失败', err);
+                    }
+                }
             }
         }
     } catch (e) {

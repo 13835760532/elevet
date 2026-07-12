@@ -129,10 +129,11 @@
                                 <el-form-item label="">
                                     <el-select v-model="queryParams.status" placeholder="任务状态" style="width: 150px;"
                                         class="w120" clearable>
+                                        <el-option label="待接收" value="待接收" />
+                                        <el-option label="已接收" value="已接收" />
                                         <el-option label="进行中" value="进行中" />
                                         <el-option label="已完成" value="已完成" />
-                                        <el-option label="已延期" value="已延期" />
-                                        <el-option label="未开始" value="未开始" />
+                                        <el-option label="已撤回" value="已撤回" />
                                     </el-select>
                                 </el-form-item>
                                 <el-form-item label="">
@@ -189,7 +190,7 @@
                                     <div class="completion-rate-cell">
                                         <span class="rate-pct">{{ scope.row.percentage }}%</span>
                                         <span class="rate-counts">({{ scope.row.completed }}/{{ scope.row.total
-                                        }})</span>
+                                            }})</span>
                                     </div>
                                 </template>
                             </el-table-column>
@@ -204,7 +205,7 @@
                                 <template #default="scope">
                                     <div class="table-operate-action-btns">
                                         <span class="table-view-operate" @click="handleViewTask(scope.row)">查看</span>
-                                        <span class="table-edit-operate" v-if="[1, 2].includes(+scope.row.status)"
+                                        <span class="table-edit-operate" v-if="[1, 2].includes(scope.row.statusValue)"
                                             style="color: #00B3ED; margin-left: 10px;"
                                             @click="handleCreateSubTask(scope.row)">新建子任务</span>
                                     </div>
@@ -497,7 +498,8 @@ const loadTaskList = async (id) => {
                 total,
                 completed: t.sampleCompletedCount,
                 percentage: t.sampleCompletionRate,
-                status: t.status === 3 ? '已完成' : (t.status === 2 ? '已延期' : (t.status === 1 ? '进行中' : '未开始'))
+                status: t.status === 0 ? '待接收' : (t.status === 1 ? '已接收' : (t.status === 2 ? '进行中' : (t.status === 3 ? '已完成' : (t.status === 4 ? '已撤回' : '未知')))),
+                statusValue: t.status
             };
         });
         allTaskList.value = results;
@@ -658,9 +660,11 @@ const handleViewDetail = (row) => {
 
 const getTaskStatusClass = (status) => {
     const statusMap = {
-        '未开始': 'status-not-started',
+        '待接收': 'status-not-started',
+        '已接收': 'status-processing',
         '进行中': 'status-processing',
-        '已完成': 'status-completed'
+        '已完成': 'status-completed',
+        '已撤回': 'status-finished'
     };
     return statusMap[status] || '';
 };
@@ -1202,7 +1206,6 @@ const handleCreateSubTask = (row) => {
             display: flex;
             align-items: center;
             flex-wrap: wrap;
-            gap: 16px;
 
             :deep(.el-form-item) {
                 margin-right: 0;

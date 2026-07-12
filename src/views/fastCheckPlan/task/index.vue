@@ -31,7 +31,7 @@
         <el-form :inline="true" :model="queryParams" class="custom-query-form custom-query-form-row"
           label-position="left">
           <el-form-item label="">
-            <el-input :prefix-icon="Search" v-model="queryParams.taskName" placeholder="搜索任务名称或编号"
+            <el-input :prefix-icon="Search" v-model="queryParams.keyword" placeholder="搜索任务名称或编号"
               class="custom-input w220" clearable @keyup.enter="handleQuery" />
           </el-form-item>
           <el-form-item label="">
@@ -180,6 +180,7 @@ const queryParams = reactive({
   pageNo: 1,
   pageSize: 10,
   taskName: undefined,
+  keyword: undefined,
   status: undefined,
   startDate: undefined,
   endDate: undefined
@@ -209,6 +210,7 @@ const handleQuery = () => {
 const handleReset = () => {
   queryParams.pageNo = 1
   queryParams.taskName = undefined
+  queryParams.keyword = undefined
   queryParams.status = undefined
   queryParams.startDate = undefined
   queryParams.endDate = undefined

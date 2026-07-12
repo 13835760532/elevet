@@ -290,13 +290,8 @@ const getDeptLabel = (value) => {
 
 const getTaskDeptLabel = (task = {}) => {
     return resolveFirstValue(
-        task.issuerDeptName,
-        task.assignDeptName,
-        task.deptName,
-        task.planInfo?.issuerDeptName,
-        getDeptLabel(task.issuerDeptId),
-        getDeptLabel(task.assignDeptId),
-        getDeptLabel(task.planInfo?.issuerDeptId)
+        task.issueDeptName,
+        getDeptLabel(task.issueDeptId)
     ) || '--'
 }
 
