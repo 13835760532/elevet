@@ -4,6 +4,7 @@ import { isUrl } from '@/utils/is'
 import { cloneDeep, omit } from 'lodash-es'
 import qs from 'qs'
 
+// Vite 在构建期生成页面模块表，后端只需下发 component 路径即可匹配真实组件。
 const modules = import.meta.glob('../views/**/*.{vue,tsx}')
 /**
  * 注册一个异步组件
@@ -60,7 +61,11 @@ export const getRawRoute = (route: RouteLocationNormalized): RouteLocationNormal
   }
 }
 
-// 后端控制路由生成
+/**
+ * 把后端菜单协议转换成 Vue Router 路由。
+ * 需要同时兼容目录、顶级叶子菜单、外链和历史 component 路径，因此组件匹配失败时
+ * 只记录错误并保留菜单结构，避免单条错误配置阻断整套路由初始化。
+ */
 export const generateRoute = (routes: AppCustomRouteRecordRaw[]): AppRouteRecordRaw[] => {
   const res: AppRouteRecordRaw[] = []
   const modulesRoutesKeys = Object.keys(modules)
@@ -97,7 +102,7 @@ export const generateRoute = (routes: AppCustomRouteRecordRaw[]): AppRouteRecord
       redirect: route.redirect,
       meta: meta
     }
-    //处理顶级非目录路由
+    // Vue Router 的顶级业务页仍需挂在 Layout 下，因此包装成一个空路径子路由。
     if (!route.children && route.parentId == 0 && route.component) {
       data.component = Layout
       data.meta = {
@@ -199,7 +204,7 @@ export const pathResolve = (parentPath: string, path: string) => {
   return `${parentPath}${childPath}`.replace(/\/+/g, '/')
 }
 
-// 路由降级
+// 标签页缓存只支持两级结构；把更深的后端菜单提升到同一个路由模块下。
 export const flatMultiLevelRoutes = (routes: AppRouteRecordRaw[]) => {
   const modules: AppRouteRecordRaw[] = cloneDeep(routes)
   for (let index = 0; index < modules.length; index++) {

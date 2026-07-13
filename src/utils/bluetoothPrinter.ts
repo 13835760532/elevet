@@ -1,3 +1,8 @@
+/**
+ * Web Bluetooth 热敏打印适配器。
+ * 打印链路为：浏览器图片 -> Canvas 裁剪/缩放/增强 -> 单色位图 -> ESC/POS 指令
+ * -> 按蓝牙特征值允许的包大小分片写入。不同打印机的服务 UUID 和位图指令由 options 兼容。
+ */
 type BluetoothUUID = string | number;
 
 interface BluetoothPrinterOptions {
@@ -399,6 +404,7 @@ export class BluetoothPrinter {
     for (let y = 0; y < height; y += 1) {
       for (let xByte = 0; xByte < widthBytes; xByte += 1) {
         let value = 0;
+        // GS v 0 每 8 个横向像素压成一个字节，高位对应最左侧像素。
         for (let bit = 0; bit < 8; bit += 1) {
           const x = xByte * 8 + bit;
           if (x >= width) continue;
@@ -464,6 +470,7 @@ export class BluetoothPrinter {
     const height = imageData.height;
     const data = imageData.data;
 
+    // ESC * 的 24 针模式按 24 行一带、每列 3 字节组织，与 GS v 0 的横向位图布局不同。
     for (let y = 0; y < height; y += 24) {
       bytes.push(0x1b, 0x2a, 33, targetWidth & 0xff, (targetWidth >> 8) & 0xff);
 
@@ -543,6 +550,7 @@ export class BluetoothPrinter {
     const maxWidth = options.maxWidth ?? DEFAULT_IMAGE_MAX_WIDTH;
     const fitToWidth = options.fitToWidth ?? true;
     const preferredWidth = fitToWidth ? maxWidth : Math.min(maxWidth, cropWidth);
+    // 位图协议以字节描述宽度，强制对齐到 8 像素避免末字节出现不完整列。
     const targetWidth = Math.max(8, Math.floor(preferredWidth / 8) * 8);
     const scale = targetWidth / Math.max(1, cropWidth);
     const targetHeight = Math.max(1, Math.floor(cropHeight * scale));
@@ -644,6 +652,7 @@ export class BluetoothPrinter {
     data: Uint8Array
   ) {
     let offset = 0;
+    // BLE 特征值通常不接受整张图片；分片并节流可避免设备缓冲区溢出或浏览器写入失败。
     while (offset < data.length) {
       const chunk = data.slice(offset, offset + this.options.packetSize);
       const canWrite = characteristic.properties?.write && typeof characteristic.writeValue === 'function';
@@ -666,6 +675,7 @@ export class BluetoothPrinter {
   }
 
   private async getWritableCharacteristic(server: BluetoothRemoteGATTServer) {
+    // 先查已知 UUID 以减少蓝牙交互；型号不匹配时再遍历服务，兼容厂商自定义特征值。
     for (const serviceUuid of this.options.serviceUUIDs) {
       try {
         const service = await server.getPrimaryService(serviceUuid);

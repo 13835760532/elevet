@@ -84,6 +84,7 @@ export const getBigScreenConfig = (): BigScreenDataConfig => {
     if (!raw) return getDefaultBigScreenConfig()
     const parsed = JSON.parse(raw) as Partial<BigScreenDataConfig> & { dataScope?: unknown }
     const defaults = getDefaultBigScreenConfig()
+    // localStorage 可能来自旧版本；合并默认值，并归一化下方消费的核心字段。
     return {
       ...defaults,
       ...parsed,
@@ -132,6 +133,7 @@ export const formatBigScreenDataSummary = (config = getBigScreenConfig()) => {
 export const getBigScreenQueryParams = () => {
   const config = getBigScreenConfig()
   const userDeptAreaParams = getBigScreenUserDeptAreaParams()
+  // 页面显式选择优先，未选择时回落到所属机构；最终范围仍由后端数据权限校验。
   return {
     startDate: config.timeRange?.[0] || undefined,
     endDate: config.timeRange?.[1] || undefined,
@@ -146,6 +148,7 @@ export const getBigScreenQueryParams = () => {
 
 export const dispatchBigScreenRefresh = (reason: 'save' | 'timer' | 'menu' = 'save') => {
   if (typeof window === 'undefined') return
+  // 各面板彼此独立，通过同一浏览器事件刷新，避免组件之间形成直接引用。
   window.dispatchEvent(
     new CustomEvent(BIG_SCREEN_REFRESH_EVENT, {
       detail: {

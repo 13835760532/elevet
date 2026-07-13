@@ -27,8 +27,8 @@ const ignoreMsgs = [
 ]
 // 是否显示重新登录
 export const isRelogin = { show: false }
-// Axios 无感知刷新令牌，参考 https://www.dashingdog.cn/article/11 与 https://segmentfault.com/a/1190000020210980 实现
-// 请求队列
+// 刷新令牌采用 single-flight：首个 401 负责刷新，其余 401 进入队列等待同一结果。
+// 队列保存的是重放函数而非原始响应，刷新流程释放队列后请求会重新经过完整拦截器链。
 let requestList: any[] = []
 // 是否正在刷新中
 let isRefreshToken = false
@@ -84,7 +84,7 @@ service.interceptors.request.use(
         }
       }
     }
-    // 是否 API 加密
+    // 发起刷新流程的当前请求会设置 isEncrypted，避免它重放时再次加密请求体。
     if ((config!.headers || {}).isEncrypt && !(config!.headers || {}).isEncrypted) {
       try {
         // 加密请求数据
@@ -117,7 +117,7 @@ service.interceptors.response.use(
       throw new Error()
     }
 
-    // 检查是否需要解密响应数据
+    // 业务状态码位于密文内部，必须先按响应头解密，再进入统一错误码处理。
     const encryptHeader = ApiEncrypt.getEncryptHeader()
     const isEncryptResponse =
       response.headers[encryptHeader] === 'true' ||
@@ -152,7 +152,7 @@ service.interceptors.response.use(
       // 如果是忽略的错误码，直接返回 msg 异常
       return Promise.reject(msg)
     } else if (code === 401) {
-      // 如果未认证，并且未进行刷新令牌，说明可能是访问令牌过期了
+      // 首个 401 进入刷新分支；无 refresh token 时转登录，可刷新时独占刷新流程。
       if (!isRefreshToken) {
         isRefreshToken = true
         // 1. 如果获取不到刷新令牌，则只能执行登出操作
@@ -186,7 +186,7 @@ service.interceptors.response.use(
           isRefreshToken = false
         }
       } else {
-        // 添加到队列，等待刷新获取到新的令牌
+        // 后续 401 暂存为重放函数：成功时使用新 token，失败时也会释放并继续失败链路。
         return new Promise((resolve) => {
           requestList.push(() => {
             config.headers!.Authorization = 'Bearer ' + getAccessToken() // 让每个请求携带自定义token 请根据实际情况自行修改
@@ -246,6 +246,7 @@ const refreshToken = async () => {
 }
 const handleAuthorized = () => {
   const { t } = useI18n()
+  // 多个失败请求只能显示一个重新登录弹窗，确认后统一清理路由和用户缓存。
   if (!isRelogin.show) {
     // 如果已经到登录页面则不进行弹窗提示
     if (window.location.href.includes('login')) {

@@ -32,6 +32,7 @@ import { createApp } from 'vue'
 
 import App from './App.vue'
 
+// 该模块通过副作用注册全局路由守卫，必须在 setupRouter 之前完成加载。
 import './permission'
 
 import '@/plugins/tongji' // 百度统计
@@ -56,6 +57,7 @@ const isLightRoute = (path: string) =>
   lightRoutes.includes(path) || lightRoutePrefixes.some((prefix) => path.startsWith(prefix))
 
 const ensureFormCreate = (app: ReturnType<typeof createApp>) => {
+  // Form Create 体积较大；用单例 Promise 保证并发导航时只加载和注册一次。
   if (!formCreateReady) {
     formCreateReady = import('@/plugins/formCreate').then(({ setupFormCreate }) => {
       setupFormCreate(app)
@@ -76,6 +78,7 @@ const setupAll = async () => {
 
   setupElementPlus(app)
 
+  // 登录页和监管大屏不依赖表单设计器，跳过它可以缩短首屏启动时间。
   if (!isLightRoute(getCurrentHashPath())) {
     await ensureFormCreate(app)
   }

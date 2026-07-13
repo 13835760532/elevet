@@ -15,6 +15,7 @@ const { start, done } = useNProgress()
 
 const { loadStart, loadDone } = usePageLoading()
 const { wsCache } = useCache()
+// 多个导航可能同时触发路由初始化。共享 Promise 用于合并请求，ready 标记用于快速返回。
 let dynamicRoutesReady = false
 let dynamicRoutesPromise: Promise<void> | null = null
 const dynamicRouteReadyMark = '404Page'
@@ -27,6 +28,7 @@ const hasBigScreenUserCache = () => {
 }
 
 const addDynamicRoutes = async () => {
+  // 404Page 是动态路由集合的末尾标记；标记存在说明整组路由已经注册完成。
   if (dynamicRoutesReady && router.hasRoute(dynamicRouteReadyMark)) return
   dynamicRoutesReady = false
   if (!dynamicRoutesPromise) {
@@ -53,6 +55,7 @@ const runAfterFirstPaint = (callback: () => void) => {
     return
   }
   window.setTimeout(() => {
+    // 先结束当前同步任务；浏览器支持 requestIdleCallback 时再等待空闲时段执行。
     const requestIdle = (window as any).requestIdleCallback
     if (typeof requestIdle === 'function') {
       requestIdle(callback, { timeout: 3000 })
@@ -63,6 +66,7 @@ const runAfterFirstPaint = (callback: () => void) => {
 }
 
 const refreshBigScreenUserInBackground = (userStore: ReturnType<typeof useUserStoreWithOut>) => {
+  // 缓存只负责快速恢复首屏，后台刷新仍是后续权限和用户信息的最终来源。
   runAfterFirstPaint(() => {
     void userStore
       .setUserInfoAction()
@@ -140,6 +144,7 @@ router.beforeEach(async (to, from, next) => {
       }
       if (!userStore.getIsSetUser) {
         if (isBigScreenRoute(to.path) && hasBigScreenUserCache()) {
+          // 大屏允许先使用缓存进入页面，避免用户信息接口阻塞全屏可视化首屏。
           const hydrated = userStore.hydrateUserInfoFromCache()
           if (hydrated) {
             next()
@@ -150,7 +155,7 @@ router.beforeEach(async (to, from, next) => {
         isRelogin.show = true
         try {
           await userStore.setUserInfoAction()
-          // 后端过滤菜单
+          // 菜单由后端按角色过滤，用户信息完成后才能生成本次会话的动态路由。
           await addDynamicRoutes()
           const redirectPath = from.query.redirect || to.path
           // 修复跳转时不带参数的问题

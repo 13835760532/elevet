@@ -8,6 +8,7 @@ interface WakeWordRecoveryState {
   currentSessionToken: number
 }
 
+// sessionToken 用于废弃旧异步任务：用户关闭或重启语音会话后，旧回调不得重新启动唤醒词。
 const shouldResumeWakeWordAfterVoiceStop = (state: WakeWordRecoveryState) => {
   return (
     state.isWakeWordEnabled &&

@@ -29,6 +29,7 @@ interface CaptureCertificatePrintAreaOptions {
     scale?: number;
 }
 
+/** 兼容数组、数字、JSON 数组字符串和逗号分隔字符串四种历史格式。 */
 export const parseCertificateBasis = (val: unknown): number[] => {
     if (Array.isArray(val)) return val.map(item => Number(item)).filter(item => Number.isFinite(item));
     if (typeof val === 'number') return [val];
@@ -56,6 +57,9 @@ export const getSelectedCertificateBasisOptions = <T extends CertificatePrintBas
     return basisOptions.filter(item => selected.has(Number(item.value)));
 };
 
+/**
+ * 去除自定义承诺中的旧序号；无法按标点拆分时，使用备案依据匹配历史拼接文本。
+ */
 export const resolveCertificateCommitmentLines = (
     content: unknown,
     fallbackBasis: Array<{ label: string }>
@@ -90,6 +94,9 @@ export const resolveCertificateCommitmentLines = (
     return fallbackBasis.map(item => item.label);
 };
 
+/**
+ * 截图前临时隐藏交互区，并为指定节点保留排版空间；无论截图成功与否都会恢复 DOM 样式。
+ */
 export const captureCertificatePrintArea = async (
     area: HTMLElement | null | undefined,
     options: CaptureCertificatePrintAreaOptions = {}

@@ -5,6 +5,7 @@ const RTASR_HOST = 'rtasr.xfyun.cn'
 const RTASR_PATH = '/v1/ws'
 const RTASR_SAMPLE_RATE = 16000
 const SEND_INTERVAL = 40
+// 16 kHz、单声道、16-bit PCM 的 40 ms 音频正好是 1280 字节。
 const CHUNK_SIZE = 1280
 
 type RtasrStatus = 'connecting' | 'recording' | 'stopping' | 'stopped' | 'error'
@@ -56,6 +57,7 @@ const normalizeXfyunErrorMessage = (message: string) => {
 }
 
 const createFrontendSignedUrl = () => {
+  // 未配置后端签名地址时会在前端签名；生产环境应配置后端地址，避免 API_KEY 下发。
   const appId = getEnvValue('VITE_XFYUN_RTASR_APP_ID')
   const apiKey = getEnvValue('VITE_XFYUN_RTASR_API_KEY')
 
@@ -123,6 +125,7 @@ const concatUint8Array = (first: Uint8Array, second: Uint8Array) => {
 const downSampleBuffer = (buffer: Float32Array, inputSampleRate: number) => {
   if (inputSampleRate === RTASR_SAMPLE_RATE) return buffer
 
+  // 浏览器输入常为 44.1/48 kHz；按区间平均降采样到讯飞要求的 16 kHz，减少混叠。
   const ratio = inputSampleRate / RTASR_SAMPLE_RATE
   const newLength = Math.round(buffer.length / ratio)
   const result = new Float32Array(newLength)
@@ -144,6 +147,7 @@ const floatTo16BitPcm = (input: Float32Array) => {
   const output = new Int16Array(input.length)
 
   for (let i = 0; i < input.length; i++) {
+    // Web Audio 使用 [-1, 1] 浮点采样，传输协议要求小端有符号 16-bit PCM。
     const sample = Math.max(-1, Math.min(1, input[i]))
     output[i] = sample < 0 ? sample * 0x8000 : sample * 0x7fff
   }
@@ -212,6 +216,7 @@ export class XfyunRtasrRecognizer {
         const text = parseText(event)
         if (!text) return
 
+        // 讯飞会重复返回不断增长的中间结果，只追加新增后缀以免转写文本重复。
         if (this.lastPartialText && text.startsWith(this.lastPartialText)) {
           this.finalText += text.slice(this.lastPartialText.length)
         } else if (!this.finalText.includes(text)) {
@@ -275,6 +280,7 @@ export class XfyunRtasrRecognizer {
   }
 
   private startSender() {
+    // 固定节奏发送音频，避免直接在高频 AudioWorklet 回调中写 WebSocket 造成突发流量。
     this.sendTimer = window.setInterval(() => {
       if (!this.socket || this.socket.readyState !== WebSocket.OPEN) return
       if (this.pendingAudio.length < CHUNK_SIZE) return

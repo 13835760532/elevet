@@ -28,12 +28,14 @@ export const resolveBigScreenDataScope = (
   scope: unknown,
   canViewJurisdictionScope: boolean
 ): BigScreenDataScope => {
+  // 历史缓存中的 jurisdiction 等价于 all；无辖区权限的用户必须降级为本机构下发数据。
   if (scope === 'issued' || scope === 'self') return scope
   if (canViewJurisdictionScope && (scope === 'all' || scope === 'jurisdiction')) return 'all'
   return canViewJurisdictionScope ? 'all' : 'issued'
 }
 
 const queryDeptScopeByDataScope: Record<BigScreenDataScope, BigScreenQueryDeptScope> = {
+  // 数字值是后端统计接口约定，集中维护可避免各个大屏面板自行硬编码。
   all: 1,
   self: 2,
   issued: 3

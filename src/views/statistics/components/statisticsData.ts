@@ -30,6 +30,7 @@ export const getCurrentUserDeptInfo = () => {
   const userInfo = wsCache.get(CACHE_KEY.USER) || {}
   const user = userInfo.user || {}
 
+  // 兼容新旧登录缓存结构：优先使用独立机构缓存，再回落到用户对象和历史平铺字段。
   return {
     id: userDept.id ?? user.deptId ?? userInfo.deptId,
     name: userDept.name ?? user.deptName ?? userInfo.deptName,
@@ -75,6 +76,7 @@ export const getEffectiveAreaParams = (areaParams?: {
   areaCode?: string | number
 }) => {
   const userDeptAreaParams = getUserDeptAreaParams()
+  // 页面显式选择优先，缺失时使用当前机构范围；空字符串转为 undefined 以免污染查询串。
   return {
     provinceName: areaParams?.provinceName || undefined,
     cityName: areaParams?.cityName || undefined,
@@ -108,6 +110,7 @@ export const buildRangeParams = (rangeType: string, dateRange: string[]): Statis
     }
   }
 
+  // 后端按 31 天作为日/月聚合分界，前端图表必须使用同一口径。
   const diff = dayjs(endDate).diff(dayjs(startDate), 'day')
   const isDaily = diff <= 31
 
