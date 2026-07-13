@@ -98,6 +98,14 @@ const getMonthIndex = (month?: string) => {
     : -1
 }
 
+const filterYear = computed(() => {
+  const { startDate } = getBigScreenQueryParams()
+  if (startDate) {
+    return startDate.split('-')[0]
+  }
+  return String(new Date().getFullYear())
+})
+
 const currentTrendDataByMonth = computed(() => {
   const values = Array.from({ length: 12 }, () => ({
     statValue: 0,
@@ -106,6 +114,10 @@ const currentTrendDataByMonth = computed(() => {
     positiveRate: 0
   }))
   trendData.value.forEach((item) => {
+    if (item.month && item.month.includes('-')) {
+      const year = item.month.split('-')[0]
+      if (year !== filterYear.value) return
+    }
     const index = getMonthIndex(item.month)
     if (index < 0) return
     values[index] = {
@@ -256,28 +268,30 @@ const createLineTrendOption = (data: number[], max: number, formatter?: string) 
       markPoint: {
         symbol: 'circle',
         symbolSize: 8,
-        data: [
-          {
-            coord: [maxPointIndex.value, data[maxPointIndex.value] || 0],
-            value: getMarkerLabel(maxPointIndex.value),
-            label: {
-              show: true,
-              position: 'top',
-              distance: 12,
-              color: '#57e2ff',
-              fontSize: 16,
-              fontWeight: 500,
-              formatter: '{c}'
-            },
-            itemStyle: {
-              color: '#57e2ff',
-              borderColor: 'rgba(177, 249, 255, 0.95)',
-              borderWidth: 2,
-              shadowBlur: 10,
-              shadowColor: 'rgba(87, 226, 255, 0.8)'
+        data: lineValues.value[maxPointIndex.value] > 0
+          ? [
+            {
+              coord: [maxPointIndex.value, data[maxPointIndex.value] || 0],
+              value: getMarkerLabel(maxPointIndex.value),
+              label: {
+                show: true,
+                position: 'top',
+                distance: 12,
+                color: '#57e2ff',
+                fontSize: 16,
+                fontWeight: 500,
+                formatter: '{c}'
+              },
+              itemStyle: {
+                color: '#57e2ff',
+                borderColor: 'rgba(177, 249, 255, 0.95)',
+                borderWidth: 2,
+                shadowBlur: 10,
+                shadowColor: 'rgba(87, 226, 255, 0.8)'
+              }
             }
-          }
-        ]
+          ]
+          : []
       },
       emphasis: {
         focus: 'series',
