@@ -181,7 +181,7 @@
         <el-select v-model="trackForm.owner" placeholder="主管单位" clearable class="track-filter">
           <el-option v-for="item in trackOwnerOptions" :key="item.value" :label="item.label" :value="item.value" />
         </el-select>
-        <el-input v-model="trackForm.keyword" placeholder="输入任务名称" clearable class="track-input" />
+        <el-input v-model="trackForm.keyword" placeholder="输入任务名称" clearable class="track-input" @keyup.enter="handleTrackQuery" />
         <el-button type="primary" class="track-query" @click="handleTrackQuery">查询</el-button>
       </div>
 
@@ -272,6 +272,7 @@ interface TrackNode {
   name: string
   progress?: string
   warning?: boolean
+  highlight?: boolean
   children?: TrackNode[]
 }
 
@@ -676,6 +677,7 @@ const normalizeTrackNode = (node: any): TrackNode => ({
   name: getNodeName(node),
   progress: getNodeProgress(node),
   warning: Number(node.status) === 2,
+  highlight: !!(trackForm.keyword?.trim() && node.taskName?.includes(trackForm.keyword.trim())),
   children: Array.isArray(node.children) ? node.children.map((child: any) => normalizeTrackNode(child)) : []
 })
 

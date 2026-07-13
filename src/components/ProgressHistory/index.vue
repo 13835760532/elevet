@@ -4,7 +4,7 @@
         <div class="tree-root">
             <div class="root-node">
                 <span class="node-dot root-dot"></span>
-                <span class="node-text">{{ treeData.name }}</span>
+                <span class="node-text" :class="{ 'highlight-red': treeData.highlight }">{{ treeData.name }}</span>
             </div>
             <!-- 一级子节点 -->
             <div class="tree-level level-1">
@@ -13,7 +13,7 @@
                     <div class="branch-content">
                         <div class="node-item level1-node">
                             <span class="node-dot"></span>
-                            <span class="node-text">{{ level1.name }}</span>
+                            <span class="node-text" :class="{ 'highlight-red': level1.highlight }">{{ level1.name }}</span>
                             <span v-if="level1.progress" class="node-progress">{{ level1.progress }}</span>
                         </div>
                         <!-- 二级子节点 -->
@@ -23,7 +23,7 @@
                                 <div class="branch-content">
                                     <div class="node-item level2-node">
                                         <span class="node-dot"></span>
-                                        <span class="node-text">{{ level2.name }}</span>
+                                        <span class="node-text" :class="{ 'highlight-red': level2.highlight }">{{ level2.name }}</span>
                                         <span v-if="level2.progress" class="node-progress"
                                             :class="{ 'warning': level2.warning }">{{ level2.progress }}</span>
                                     </div>
@@ -34,7 +34,7 @@
                                             <div class="branch-content">
                                                 <div class="node-item level3-node">
                                                     <span class="node-dot"></span>
-                                                    <span class="node-text">{{ level3.name }}</span>
+                                                    <span class="node-text" :class="{ 'highlight-red': level3.highlight }">{{ level3.name }}</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -88,6 +88,11 @@ const props = defineProps({
         font-size: 14px;
         color: #333;
         font-weight: 500;
+
+        &.highlight-red {
+            color: #F5222D !important;
+            font-weight: bold;
+        }
     }
 }
 
@@ -169,6 +174,11 @@ const props = defineProps({
     .node-text {
         font-size: 14px;
         color: #333;
+
+        &.highlight-red {
+            color: #F5222D !important;
+            font-weight: bold;
+        }
     }
 
     .node-progress {
