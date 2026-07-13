@@ -63,13 +63,13 @@
                 '生产经营企业' : '系统机构管理' }}
             </template>
           </el-table-column>
-          <!-- <el-table-column prop="areaLevel" label="机构行政级别" width="120" align="center">
+          <el-table-column prop="areaLevel" label="机构行政级别" width="120" align="center">
             <template #default="scope">
               {{ scope.row.areaLevel === 1 ? '省级' : scope.row.areaLevel === 2 ? '市级' : scope.row.areaLevel === 3 ? '区级'
                 : ''
               }}
             </template>
-          </el-table-column> -->
+          </el-table-column>
           <el-table-column label="所属行政区划" min-width="180" align="center">
             <template #default="scope">
               {{ formatArea(scope.row) || scope.row.address || '--' }}

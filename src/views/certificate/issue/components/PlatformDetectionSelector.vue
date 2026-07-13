@@ -1,202 +1,170 @@
 <template>
-    <div class="selector-container">
-      <div v-if="!readonly" class="header-toolbar">
-        <div class="search-group">
-          <el-input
-            v-model="keyword"
-            placeholder="查询样品编号或名称..."
-            clearable
-            class="input-minimal"
-            @keyup.enter="handleSearch"
-          />
-          <el-button type="primary" class="theme-primary-btn" :loading="searchLoading" @click="handleSearch">
-            查询
-          </el-button>
-        </div>
-        <el-button type="primary" class="theme-primary-btn outline" @click="handleLink">
-          关联至任务
+  <div class="selector-container">
+    <div v-if="!readonly" class="header-toolbar">
+      <div class="search-group">
+        <el-input v-model="keyword" placeholder="查询样品编号或名称..." clearable class="input-minimal"
+          @keyup.enter="handleSearch" />
+        <el-button type="primary" class="theme-primary-btn" :loading="searchLoading" @click="handleSearch">
+          查询
         </el-button>
       </div>
-
-      <div v-if="!readonly" class="data-table-container">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th class="w-checkbox">
-                <el-checkbox
-                  :model-value="isPageAllChecked"
-                  :indeterminate="isPageIndeterminate"
-                  @change="togglePageSelection"
-                />
-              </th>
-              <th>样品编号</th>
-              <th>样品名称</th>
-              <th>被检单位/主体</th>
-              <th>检测日期</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-if="pagedRows.length === 0">
-              <td class="empty-state" colspan="5">请在上方搜索并选择样品检测结果</td>
-            </tr>
-            <tr v-for="row in pagedRows" :key="row.linkId">
-              <td class="w-checkbox">
-                <el-checkbox
-                  :model-value="isChecked(row.linkId)"
-                  @change="(checked) => toggleOne(row, checked)"
-                />
-              </td>
-              <td><span class="text-strong">{{ row.sampleCode || '-' }}</span></td>
-              <td>{{ row.sampleName || '-' }}</td>
-              <td>{{ row.subjectName || '-' }}</td>
-              <td class="text-muted">{{ formatDateTime(JSON.parse(row.aiRecognitionResult).timestamp) }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div class="pager-wrap" v-if="!readonly && filteredRows.length > pageSize">
-        <el-pagination
-          small
-          layout="total, sizes, prev, pager, next, jumper"
-          :total="filteredRows.length"
-          :page-size="pageSize"
-          v-model:current-page="pageNo"
-        />
-      </div>
-
-      <div class="linked-section" v-if="linkedRows.length">
-        <div class="section-divider">
-          <span>已关联项 ({{ linkedRows.length }})</span>
-        </div>
-
-        <el-tabs
-          v-model="activeTab"
-          class="refined-tabs"
-          @tab-change="handleTabChange"
-          @tab-remove="handleTabRemove"
-          :closable="!readonly"
-        >
-          <el-tab-pane
-            v-for="(row, idx) in linkedRows"
-            :key="row.linkId"
-            :name="String(row.linkId)"
-            :label="`样品 ${idx + 1}`"
-          />
-        </el-tabs>
-
-        <div v-if="activeRow" class="active-detail-pane">
-          <!-- 模块 1: 样品检测信息 -->
-          <div class="info-module">
-            <h4 class="module-title">样品检测信息</h4>
-            <div class="property-table">
-              <div class="property-row">
-                <div class="property-label">样品编号：</div>
-                <div class="property-value">{{ activeRow.sampleCode || '--' }}</div>
-              </div>
-              <div class="property-row">
-                <div class="property-label">样品名称：</div>
-                <div class="property-value">{{ activeRow.sampleName || '--' }}</div>
-              </div>
-              <div class="property-row">
-                <div class="property-label">样品产地：</div>
-                <div class="property-value">{{ activeRow.sampleArea || activeRow.sampleOrigin || activeRow.origin || '--' }}</div>
-              </div>
-              <div class="property-row">
-                <div class="property-label">样品来源：</div>
-                <div class="property-value">{{ activeRow.sampleSource || activeRow.samplingLocation || '--' }}</div>
-              </div>
-              <div class="property-row">
-                <div class="property-label">抽检区域：</div>
-                <div class="property-value">{{ activeRow.detectionArea || '--' }}</div>
-              </div>
-              <div class="property-row">
-                <div class="property-label">主体名称：</div>
-                <div class="property-value">{{ activeRow.subjectName || '--' }}</div>
-              </div>
-              <div class="property-row">
-                <div class="property-label">检测机构：</div>
-                <div class="property-value">{{ activeRow.detectionOrg || activeRow.detectionOrgName || '--' }}</div>
-              </div>
-              <div class="property-row">
-                <div class="property-label">检测日期：</div>
-                <div class="property-value">{{ formatDetectionDate(activeRow) }}</div>
-              </div>
-            </div>
-          </div>
-
-          <!-- 模块 2: 检测结果详情 -->
-          <div class="info-module mt-24">
-            <h4 class="module-title">检测结果详情{{ activeRow.recheckNo ? '（复检）' : '' }}</h4>
-            <div class="result-list-table">
-              <div class="result-thead">
-                <span class="col-idx">通道</span>
-                <span class="col-name">检测项目</span>
-                <span class="col-value">检测值 (T/C值)</span>
-                <span class="col-conc">浓度值 (单位 ppb)</span>
-                <span class="col-status">结果</span>
-              </div>
-              <div v-for="(item, index) in detectionItems" :key="index" class="result-trow">
-                <span class="col-idx">{{ item.channel }}</span>
-                <span class="col-name">{{ item.detectionItem }}</span>
-                <span class="col-value">
-                  {{
-                    item.detectionValue !== null && item.detectionValue !== undefined && item.detectionValue !== ''
-                      ? (isNaN(Number(item.detectionValue)) ? item.detectionValue : Number(item.detectionValue).toFixed(2))
-                      : '--'
-                  }}
-                </span>
-                <span class="col-conc">{{ item.concentration || '--' }}</span>
-                <span class="col-status">
-                  <i :class="['status-dot', item.result === 1 ? 'is-safe' : 'is-danger']"></i>
-                  <span :class="['status-text', item.result === 1 ? 'is-safe' : 'is-danger']">
-                    {{ item.textResult }}
-                  </span>
-                </span>
-              </div>
-              <div v-if="!detectionItems.length" class="result-empty">未获取到检测指标明细</div>
-            </div>
-          </div>
-
-          <div class="info-module mt-24">
-            <h4 class="module-title">检测报告</h4>
-            <div class="report-evidence-box">
-              <template v-if="activeRow.reportFileUrl || activeRow.testPaperImageUrl">
-                <div v-if="isPdf(activeRow.reportFileUrl || activeRow.testPaperImageUrl)" class="pdf-preview-box" @click="handlePreviewPdf(activeRow.reportFileUrl || activeRow.testPaperImageUrl)">
-                  <el-icon class="pdf-icon"><Document /></el-icon>
-                  <div class="pdf-name">检测报告.pdf</div>
-                  <div class="pdf-tip">点击查看 PDF 报告</div>
-                </div>
-                <el-image
-                  v-else
-                  :src="activeRow.reportFileUrl || activeRow.testPaperImageUrl"
-                  fit="contain"
-                  class="evidence-img"
-                  :preview-src-list="[activeRow.reportFileUrl || activeRow.testPaperImageUrl]"
-                  :preview-teleported="true"
-                />
-              </template>
-              <el-empty v-else description="无存证报告" :image-size="48" />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="empty-view" v-else>
-        <el-empty :description="readonly ? '暂无关联检测记录' : '待关联平台记录'" :image-size="64" />
-      </div>
-
-      <!-- PDF 预览弹窗 -->
-      <el-dialog
-        v-model="pdfVisible"
-        title="PDF 报告预览"
-        width="80%"
-        destroy-on-close
-        class="pdf-view-dialog"
-      >
-        <iframe :src="pdfUrl" width="100%" height="700px" frameborder="0"></iframe>
-      </el-dialog>
+      <el-button type="primary" class="theme-primary-btn outline" @click="handleLink">
+        关联至任务
+      </el-button>
     </div>
+
+    <div v-if="!readonly" class="data-table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th class="w-checkbox">
+              <el-checkbox :model-value="isPageAllChecked" :indeterminate="isPageIndeterminate"
+                @change="togglePageSelection" />
+            </th>
+            <th>样品编号</th>
+            <th>样品名称</th>
+            <th>被检单位/主体</th>
+            <th>检测日期</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-if="pagedRows.length === 0">
+            <td class="empty-state" colspan="5">请在上方搜索并选择样品检测结果</td>
+          </tr>
+          <tr v-for="row in pagedRows" :key="row.linkId">
+            <td class="w-checkbox">
+              <el-checkbox :model-value="isChecked(row.linkId)" @change="(checked) => toggleOne(row, checked)" />
+            </td>
+            <td><span class="text-strong">{{ row.sampleCode || '-' }}</span></td>
+            <td>{{ row.sampleName || '-' }}</td>
+            <td>{{ row.detectionOrgName || row.detector || '-' }}</td>
+            <td class="text-muted">{{ formatDetectionDate(row) }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="pager-wrap" v-if="!readonly && filteredRows.length > pageSize">
+      <el-pagination small layout="total, sizes, prev, pager, next, jumper" :total="filteredRows.length"
+        :page-size="pageSize" v-model:current-page="pageNo" />
+    </div>
+
+    <div class="linked-section" v-if="linkedRows.length">
+      <div class="section-divider">
+        <span>已关联项 ({{ linkedRows.length }})</span>
+      </div>
+
+      <el-tabs v-model="activeTab" class="refined-tabs" @tab-change="handleTabChange" @tab-remove="handleTabRemove"
+        :closable="!readonly">
+        <el-tab-pane v-for="(row, idx) in linkedRows" :key="row.linkId" :name="String(row.linkId)"
+          :label="`样品 ${idx + 1}`" />
+      </el-tabs>
+
+      <div v-if="activeRow" class="active-detail-pane">
+        <!-- 模块 1: 样品检测信息 -->
+        <div class="info-module">
+          <h4 class="module-title">样品检测信息</h4>
+          <div class="property-table">
+            <div class="property-row">
+              <div class="property-label">样品编号：</div>
+              <div class="property-value">{{ activeRow.sampleCode || '--' }}</div>
+            </div>
+            <div class="property-row">
+              <div class="property-label">样品名称：</div>
+              <div class="property-value">{{ activeRow.sampleName || '--' }}</div>
+            </div>
+            <div class="property-row">
+              <div class="property-label">样品产地：</div>
+              <div class="property-value">{{ activeRow.sampleArea || activeRow.sampleOrigin || activeRow.origin || '--'
+              }}</div>
+            </div>
+            <div class="property-row">
+              <div class="property-label">样品来源：</div>
+              <div class="property-value">{{ activeRow.sampleSource || activeRow.samplingLocation || '--' }}</div>
+            </div>
+            <div class="property-row">
+              <div class="property-label">抽检区域：</div>
+              <div class="property-value">{{ activeRow.detectionArea || '--' }}</div>
+            </div>
+            <div class="property-row">
+              <div class="property-label">主体名称：</div>
+              <div class="property-value">{{ activeRow.subjectName || '--' }}</div>
+            </div>
+            <div class="property-row">
+              <div class="property-label">检测机构：</div>
+              <div class="property-value">{{ activeRow.detectionOrg || activeRow.detectionOrgName || '--' }}</div>
+            </div>
+            <div class="property-row">
+              <div class="property-label">检测日期：</div>
+              <div class="property-value">{{ formatDetectionDate(activeRow) }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 模块 2: 检测结果详情 -->
+        <div class="info-module mt-24">
+          <h4 class="module-title">检测结果详情{{ activeRow.recheckNo ? '（复检）' : '' }}</h4>
+          <div class="result-list-table">
+            <div class="result-thead">
+              <span class="col-idx">通道</span>
+              <span class="col-name">检测项目</span>
+              <span class="col-value">检测值 (T/C值)</span>
+              <span class="col-conc">浓度值 (单位 ppb)</span>
+              <span class="col-status">结果</span>
+            </div>
+            <div v-for="(item, index) in detectionItems" :key="index" class="result-trow">
+              <span class="col-idx">{{ item.channel }}</span>
+              <span class="col-name">{{ item.detectionItem }}</span>
+              <span class="col-value">
+                {{
+                  item.detectionValue !== null && item.detectionValue !== undefined && item.detectionValue !== ''
+                    ? (isNaN(Number(item.detectionValue)) ? item.detectionValue : Number(item.detectionValue).toFixed(2))
+                    : '--'
+                }}
+              </span>
+              <span class="col-conc">{{ item.concentration || '--' }}</span>
+              <span class="col-status">
+                <i :class="['status-dot', item.result === 1 ? 'is-safe' : 'is-danger']"></i>
+                <span :class="['status-text', item.result === 1 ? 'is-safe' : 'is-danger']">
+                  {{ item.textResult }}
+                </span>
+              </span>
+            </div>
+            <div v-if="!detectionItems.length" class="result-empty">未获取到检测指标明细</div>
+          </div>
+        </div>
+
+        <div class="info-module mt-24">
+          <h4 class="module-title">检测报告</h4>
+          <div class="report-evidence-box">
+            <template v-if="activeRow.reportFileUrl || activeRow.testPaperImageUrl">
+              <div v-if="isPdf(activeRow.reportFileUrl || activeRow.testPaperImageUrl)" class="pdf-preview-box"
+                @click="handlePreviewPdf(activeRow.reportFileUrl || activeRow.testPaperImageUrl)">
+                <el-icon class="pdf-icon">
+                  <Document />
+                </el-icon>
+                <div class="pdf-name">检测报告.pdf</div>
+                <div class="pdf-tip">点击查看 PDF 报告</div>
+              </div>
+              <el-image v-else :src="activeRow.reportFileUrl || activeRow.testPaperImageUrl" fit="contain"
+                class="evidence-img" :preview-src-list="[activeRow.reportFileUrl || activeRow.testPaperImageUrl]"
+                :preview-teleported="true" />
+            </template>
+            <el-empty v-else description="无存证报告" :image-size="48" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="empty-view" v-else>
+      <el-empty :description="readonly ? '暂无关联检测记录' : '待关联平台记录'" :image-size="64" />
+    </div>
+
+    <!-- PDF 预览弹窗 -->
+    <el-dialog v-model="pdfVisible" title="PDF 报告预览" width="80%" destroy-on-close class="pdf-view-dialog">
+      <iframe :src="pdfUrl" width="100%" height="700px" frameborder="0"></iframe>
+    </el-dialog>
+  </div>
 </template>
 
 <script setup>
@@ -288,12 +256,12 @@ const detectionItems = computed(() => {
   if (!active) return [];
 
   let rawItems = [];
-  
+
   // 1. 尝试从 aiRecognitionResult 中解析 (最详尽)
   if (active.aiRecognitionResult) {
     try {
-      const parsed = typeof active.aiRecognitionResult === 'string' 
-        ? JSON.parse(active.aiRecognitionResult) 
+      const parsed = typeof active.aiRecognitionResult === 'string'
+        ? JSON.parse(active.aiRecognitionResult)
         : active.aiRecognitionResult;
       if (parsed && Array.isArray(parsed.results)) {
         rawItems = parsed.results;
@@ -306,22 +274,22 @@ const detectionItems = computed(() => {
   // 2. 如果没有详细结果，尝试从 detectionResults 中获取 (次之)
   if (!rawItems.length && active.detectionResults) {
     try {
-      const parsed = typeof active.detectionResults === 'string' 
-        ? JSON.parse(active.detectionResults) 
+      const parsed = typeof active.detectionResults === 'string'
+        ? JSON.parse(active.detectionResults)
         : active.detectionResults;
       if (Array.isArray(parsed)) {
         rawItems = parsed;
       }
-    } catch (e) {}
+    } catch (e) { }
   }
 
   // 3. 兜底，如果没有明细则显示综合结果
   if (!rawItems.length) {
     if (active.overallResult === 0 || active.overallResult === 1) {
       const res = active.overallResult === 0 ? 1 : 0;
-      return [{ 
+      return [{
         channel: '1',
-        detectionItem: '综合结果', 
+        detectionItem: '综合结果',
         detectionValue: '-',
         concentration: '-',
         result: res,
@@ -337,7 +305,7 @@ const detectionItems = computed(() => {
     // 如果 status 包含原始文本，则优先展示原始文字 (如 "未检出")
     let tr = getQualityText(res);
     if (item.status && (item.status.includes('检') || item.status.includes('格'))) {
-        tr = item.status;
+      tr = item.status;
     }
 
     return {
@@ -367,12 +335,16 @@ const formatDateTime = (value) => {
 const formatDetectionDate = (row) => {
   if (!row) return '--';
   const raw = row.aiRecognitionResult;
-  if (!raw) return row.detectionDate || '--';
+  if (!raw) return formatDateTime(row.detectionDate) || '--';
   try {
     const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
-    return formatDateTime(parsed.timestamp) || row.detectionDate || '--';
+    if (parsed && (parsed.timestamp || parsed.timestamp === 0)) {
+      const formatted = formatDateTime(parsed.timestamp);
+      if (formatted !== '-') return formatted;
+    }
+    return formatDateTime(row.detectionDate) || '--';
   } catch (e) {
-    return row.detectionDate || '--';
+    return formatDateTime(row.detectionDate) || '--';
   }
 };
 
@@ -386,13 +358,13 @@ const handleSearch = async () => {
   try {
     const list = await props.searchMethod(q);
     const incoming = Array.isArray(list) ? list : [];
-    
+
     // 使用 Map 进行去重叠加 (基于 linkId)
     const existingMap = new Map(rawRows.value.map(item => [String(item.linkId), item]));
     incoming.forEach(item => {
       existingMap.set(String(item.linkId), item);
     });
-    
+
     rawRows.value = Array.from(existingMap.values());
     pageNo.value = 1;
   } finally {
@@ -452,18 +424,18 @@ const handleTabChange = (name) => {
 
 const handleTabRemove = (targetName) => {
   const idToRemove = Number(targetName);
-  
+
   // 1. 从关联行中移除
   linkedRows.value = linkedRows.value.filter(row => Number(row.linkId) !== idToRemove);
-  
+
   // 2. 从勾选列表中移除（同步搜索界面的勾选框）
   pickedIdList.value = pickedIdList.value.filter(id => id !== idToRemove);
-  
+
   // 3. 触发更新给父组件
   const ids = linkedRows.value.map((item) => Number(item.linkId)).filter(Boolean);
   emit('update:modelValue', ids);
   emit('update:linkedRecords', linkedRows.value);
-  
+
   // 4. 处理 activeTab 切换
   if (activeTab.value === targetName) {
     activeTab.value = linkedRows.value.length ? String(linkedRows.value[0].linkId) : '';
@@ -492,7 +464,7 @@ const handleTabRemove = (targetName) => {
       box-shadow: 0 0 0 1px #E2E8F0 inset;
       border-radius: 4px;
       padding-left: 12px;
-      
+
       &.is-focus {
         box-shadow: 0 0 0 1px #00B3ED inset;
       }
@@ -528,14 +500,36 @@ const handleTabRemove = (targetName) => {
     border-bottom: 1px solid #F1F5F9;
   }
 
-  tr:last-child td { border-bottom: none; }
-  
-  tr:hover td { background: #F8FAFC; }
+  tr:last-child td {
+    border-bottom: none;
+  }
 
-  .w-checkbox { width: 48px; text-align: center; padding: 0; }
-  .text-strong { font-weight: 600; color: #0F172A; }
-  .text-muted { color: #94A3B8; font-size: 13px; }
-  .empty-state { padding: 40px; text-align: center; color: #94A3B8; font-size: 14px; }
+  tr:hover td {
+    background: #F8FAFC;
+  }
+
+  .w-checkbox {
+    width: 48px;
+    text-align: center;
+    padding: 0;
+  }
+
+  .text-strong {
+    font-weight: 600;
+    color: #0F172A;
+  }
+
+  .text-muted {
+    color: #94A3B8;
+    font-size: 13px;
+  }
+
+  .empty-state {
+    padding: 40px;
+    text-align: center;
+    color: #94A3B8;
+    font-size: 14px;
+  }
 }
 
 .pager-wrap {
@@ -571,17 +565,21 @@ const handleTabRemove = (targetName) => {
 
 .refined-tabs {
   margin-bottom: 0;
-  
+
   :deep(.el-tabs__header) {
     margin: 0;
     border-bottom: none;
   }
-  :deep(.el-tabs__nav-wrap::after) { display: none; }
+
+  :deep(.el-tabs__nav-wrap::after) {
+    display: none;
+  }
+
   :deep(.el-tabs__nav) {
     border: none !important;
     background: transparent;
   }
-  
+
   :deep(.el-tabs__item) {
     font-size: 15px;
     color: #64748B;
@@ -600,7 +598,10 @@ const handleTabRemove = (targetName) => {
       border: 1px solid #d0dfed;
       border-bottom: 2px solid #f4f8fb;
     }
-    &:hover:not(.is-active) { color: #00B3ED; }
+
+    &:hover:not(.is-active) {
+      color: #00B3ED;
+    }
   }
 }
 
@@ -641,6 +642,7 @@ const handleTabRemove = (targetName) => {
   .property-row {
     display: flex;
     border-bottom: 1px solid #e2e8f0;
+
     &:last-child {
       border-bottom: none;
     }
@@ -681,11 +683,28 @@ const handleTabRemove = (targetName) => {
     font-size: 14px;
     font-weight: 700;
 
-    .col-idx { width: 60px; }
-    .col-name { flex: 1 }
-    .col-value {flex: 1; text-align: center; }
-    .col-conc { flex: 1; text-align: center; }
-    .col-status { flex: 1; text-align: center; }
+    .col-idx {
+      width: 60px;
+    }
+
+    .col-name {
+      flex: 1
+    }
+
+    .col-value {
+      flex: 1;
+      text-align: center;
+    }
+
+    .col-conc {
+      flex: 1;
+      text-align: center;
+    }
+
+    .col-status {
+      flex: 1;
+      text-align: center;
+    }
   }
 
   .result-trow {
@@ -697,14 +716,41 @@ const handleTabRemove = (targetName) => {
     color: #1e293b;
     transition: background 0.2s;
 
-    &:last-child { border-bottom: none; }
-    &:hover { background: #f8fafc; }
+    &:last-child {
+      border-bottom: none;
+    }
 
-    .col-idx { width: 60px; color: #64748B; font-family: monospace; }
-    .col-name { flex: 1; font-weight: 500; }
-    .col-value { flex: 1; text-align: center; color: #475569; }
-    .col-conc { flex: 1; text-align: center; color: #475569; }
-    .col-status { flex: 1; text-align: center; }
+    &:hover {
+      background: #f8fafc;
+    }
+
+    .col-idx {
+      width: 60px;
+      color: #64748B;
+      font-family: monospace;
+    }
+
+    .col-name {
+      flex: 1;
+      font-weight: 500;
+    }
+
+    .col-value {
+      flex: 1;
+      text-align: center;
+      color: #475569;
+    }
+
+    .col-conc {
+      flex: 1;
+      text-align: center;
+      color: #475569;
+    }
+
+    .col-status {
+      flex: 1;
+      text-align: center;
+    }
   }
 
   .result-empty {
@@ -728,7 +774,7 @@ const handleTabRemove = (targetName) => {
     max-width: 100%;
     max-height: 520px;
     border-radius: 4px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   }
 
   /* PDF Preview Styles */
@@ -753,8 +799,13 @@ const handleTabRemove = (targetName) => {
       transform: translateY(-2px);
       box-shadow: 0 4px 12px rgba(0, 179, 237, 0.1);
 
-      .pdf-icon { color: #00B3ED; }
-      .pdf-name { color: #00B3ED; }
+      .pdf-icon {
+        color: #00B3ED;
+      }
+
+      .pdf-name {
+        color: #00B3ED;
+      }
     }
 
     .pdf-icon {
@@ -785,17 +836,35 @@ const handleTabRemove = (targetName) => {
   height: 8px;
   border-radius: 50%;
   margin-right: 8px;
-  &.is-safe { background: #52C41A; box-shadow: 0 0 0 3px rgba(82, 196, 26, 0.1); }
-  &.is-danger { background: #F5222D; box-shadow: 0 0 0 3px rgba(245, 34, 45, 0.1); }
+
+  &.is-safe {
+    background: #52C41A;
+    box-shadow: 0 0 0 3px rgba(82, 196, 26, 0.1);
+  }
+
+  &.is-danger {
+    background: #F5222D;
+    box-shadow: 0 0 0 3px rgba(245, 34, 45, 0.1);
+  }
 }
 
 .status-text {
   font-weight: 700;
-  &.is-safe { color: #52C41A; }
-  &.is-danger { color: #F5222D; }
+
+  &.is-safe {
+    color: #52C41A;
+  }
+
+  &.is-danger {
+    color: #F5222D;
+  }
 }
 
-.mt-24 { margin-top: 24px; }
-.empty-view { padding: 60px 0; }
+.mt-24 {
+  margin-top: 24px;
+}
 
+.empty-view {
+  padding: 60px 0;
+}
 </style>

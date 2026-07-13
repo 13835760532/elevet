@@ -125,21 +125,13 @@
                             {{ scope.row.contactName || '-' }}
                         </template>
                     </el-table-column>
-                    <el-table-column min-width="220" align="center">
+                    <el-table-column min-width="150" align="center">
                         <template #header>
                             <div>联系电话</div>
                             <div style="font-size: 12px; color: #999; font-weight: normal;">(生产经营企业/个人)</div>
                         </template>
                         <template #default="scope">
-                            <div v-if="scope.row.contactPhone" class="phone-display">
-                                <span>{{ isPhoneVisible(scope.row.id) ? scope.row.contactPhone :
-                                    hidePhone(scope.row.contactPhone) }}</span>
-                                <el-button link type="primary" @click="togglePhone(scope.row.id)"
-                                    style="margin-left: 8px;">
-                                    {{ isPhoneVisible(scope.row.id) ? '隐藏' : '显示' }}
-                                </el-button>
-                            </div>
-                            <span v-else>-</span>
+                            <span>{{ scope.row.contactPhone || '-' }}</span>
                         </template>
                     </el-table-column>
                     <el-table-column label="开具状态" prop="status" width="100" align="center">
@@ -219,21 +211,7 @@ const tableRef = ref(null);
 const { tableHeight } = useTableHeight(tableRef, 70);
 const productCategoryOptions = getDictOptions(DICT_TYPE.AGRI_PRODUCT_CATEGORY);
 
-// 手机号显示控制
-const visiblePhoneIds = ref<number[]>([]);
-const isPhoneVisible = (id: number) => visiblePhoneIds.value.includes(id);
-const togglePhone = (id: number) => {
-    const index = visiblePhoneIds.value.indexOf(id);
-    if (index > -1) {
-        visiblePhoneIds.value.splice(index, 1);
-    } else {
-        visiblePhoneIds.value.push(id);
-    }
-};
-const hidePhone = (phone: string) => {
-    if (!phone) return '-';
-    return phone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2');
-};
+
 
 // 格式化表格中无内容的值为 -
 const tableColumnFormatter = (row: any, column: any, cellValue: any) => {

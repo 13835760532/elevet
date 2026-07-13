@@ -41,10 +41,10 @@
                         </el-select>
                     </el-form-item>
                     <el-form-item label="">
-                        <el-select v-model="queryParams.status" placeholder="检测状态" class="custom-select w140" clearable>
+                        <el-select v-model="queryParams.overallResult" placeholder="检测结果" class="custom-select w140" clearable>
                             <el-option label="全部" value="" />
-                            <el-option label="阴性" value="1" />
-                            <el-option label="阳性" value="0" />
+                            <el-option label="阴性" value="0" />
+                            <el-option label="阳性" value="1" />
                             <el-option label="异常" value="2" />
                         </el-select>
                     </el-form-item>
@@ -249,7 +249,7 @@ const queryParams = reactive({
     category: '',
     area: '',
     isRetest: '',
-    status: ''
+    overallResult: ''
 });
 
 const areaIds = ref([]);
@@ -322,7 +322,7 @@ const getList = async () => {
             selfDetection: 'true',
             sampleCode: queryParams.sampleCode,
             productCategory: queryParams.category,
-            overallResult: queryParams.status,
+            overallResult: queryParams.overallResult,
             detectionArea: queryParams.area,
             rechecked: queryParams.isRetest,
             sampleName: queryParams.productName // 映射为名称搜索

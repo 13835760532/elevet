@@ -9,9 +9,9 @@
           <dict-tag :type="DICT_TYPE.SYSTEM_DEPT_TYPE" :value="deptData.deptType" />
           <span v-if="!deptData.deptType && deptData.deptType !== 0">--</span>
         </el-descriptions-item>
-        <!-- <el-descriptions-item label="机构行政级别">
+        <el-descriptions-item label="机构行政级别">
           {{ formatAreaLevel(deptData.areaLevel) }}
-        </el-descriptions-item> -->
+        </el-descriptions-item>
         <el-descriptions-item label="所属行政区划" :span="2">
           {{ formatArea() || deptData.address || '--' }}
         </el-descriptions-item>

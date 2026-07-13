@@ -124,7 +124,8 @@
                                     </el-select>
                                 </el-form-item>
                                 <el-form-item label="产品产地" required class="form-col">
-                                    <el-input v-model="formData.origin" placeholder="输入产品的生产地"
+                                    <AreaCascader style="width: 220px!important;" v-model="originAreaVal"
+                                        @select="handleOriginSelect" placeholder="请选择产品产地"
                                         :disabled="formData.linkProfile === 'yes'" />
                                 </el-form-item>
                             </div>
@@ -316,7 +317,7 @@
                                                     <div class="linked-info-value">{{
                                                         upstreamCertificateDetail.productName
                                                         || upstreamCertificateDetail.productDraft?.productName || '--'
-                                                    }}
+                                                        }}
                                                     </div>
                                                 </div>
                                                 <div class="linked-info-row">
@@ -331,7 +332,7 @@
                                                     <div class="linked-info-value">{{
                                                         upstreamCertificateDetail.productionArea ||
                                                         upstreamCertificateDetail.productDraft?.productionArea || '--'
-                                                    }}
+                                                        }}
                                                     </div>
                                                 </div>
                                                 <div class="linked-info-row">
@@ -633,6 +634,7 @@ import { Qrcode } from '@/components/Qrcode';
 import { CertificatePrintTemplate } from '@/components/CertificatePrintTemplate';
 import SubjectFormDrawer from '@/views/filing/subject/components/SubjectFormDrawer.vue';
 import PlatformDetectionSelector from './components/PlatformDetectionSelector.vue';
+import AreaCascader from '@/components/AreaCascader/index.vue';
 import { BluetoothPrinter } from '@/utils';
 import { parseImage } from '@/api/agri/certificateVerification/index';
 import { uploadFile } from '@/api/common/index';
@@ -790,6 +792,19 @@ const formData = reactive({
     commitmentContent: '', // 新增记录字段内容
     upstreamCertificateImageUrl: '', // 上游合格证照片
 });
+
+const originAreaVal = ref(undefined);
+const handleOriginSelect = (area) => {
+    formData.origin = [area.province, area.city, area.district].filter(Boolean).join('-');
+};
+
+watch(() => formData.origin, (val) => {
+    if (!val) {
+        originAreaVal.value = undefined;
+    } else if (typeof val === 'string' && /[\u4e00-\u9fa5]/.test(val)) {
+        originAreaVal.value = val;
+    }
+}, { immediate: true });
 
 const unitRef = computed({
     get: () => formData.unit,

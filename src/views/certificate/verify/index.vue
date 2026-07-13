@@ -34,7 +34,7 @@
                     </el-form-item>
                     <el-form-item label="" prop="productionArea">
                         <AreaCascader v-model="areaIds" @select="handleAreaSelect" placeholder="产品产地"
-                            style="width: 220px;" />
+                            style="width: 200px;" :checkStrictly="true" />
                     </el-form-item>
                     <el-form-item label="" prop="phone">
                         <el-input :prefix-icon="Search" v-model="queryParams.phone" placeholder="联系电话" clearable
@@ -148,7 +148,7 @@ const queryParams = reactive({
     productName: '',
     entity: '',
     certType: undefined,
-    productionArea: '',
+    productionArea: [] as string[],
     province: '',
     city: '',
     county: '',
@@ -169,7 +169,7 @@ const handleAreaSelect = (area: any) => {
     queryParams.city = area.city;
     queryParams.county = area.district;
     // 同时更新拼写的完整产地字符串，如果有需要的话
-    queryParams.productionArea = [area.province, area.city, area.district].filter(Boolean).join('');
+    queryParams.productionArea = [area.province, area.city, area.district].filter(Boolean);
 };
 const loadData = async () => {
     loading.value = true;
@@ -210,6 +210,7 @@ const handleReset = () => {
             queryParams[key] = undefined;
         }
     });
+    areaIds.value = [];
     handleSearch();
 };
 
