@@ -66,7 +66,10 @@ import { ref, onMounted, getCurrentInstance } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage, ElLoading, ElMessageBox } from 'element-plus'
 import * as authUtil from '@/utils/auth'
+import { resetRouter } from '@/router'
+import { deleteUserCache } from '@/hooks/web/useCache'
 import { usePermissionStore } from '@/store/modules/permission'
+import { useUserStore } from '@/store/modules/user'
 import * as LoginApi from '@/api/login'
 
 const loginType = ref('checking') // checking | business
@@ -79,6 +82,7 @@ const { proxy } = getCurrentInstance()
 const router = useRouter()
 const route = useRoute()
 const permissionStore = usePermissionStore()
+const userStore = useUserStore()
 const redirect = ref(route?.query?.redirect || '')
 
 const verify = ref()
@@ -182,6 +186,12 @@ const handleLogin = async (params) => {
     } else {
       authUtil.removeLoginForm()
     }
+
+    // 新 token 不能复用前一个账号的用户、部门、菜单或动态路由状态。
+    resetRouter()
+    deleteUserCache()
+    userStore.resetState()
+    permissionStore.$reset()
     authUtil.setToken(res)
 
     if (!redirect.value) {

@@ -86,7 +86,79 @@ const sideStats = computed(() => [
   { label: '合格证收证份', value: `${Number(overview.value.certificateVerifyCount || 0)}` }
 ])
 
-const monthLabels = Array.from({ length: 12 }, (_, index) => `${index + 1}月`)
+const filterYear = computed(() => {
+  const { startDate, endDate } = getBigScreenQueryParams()
+  const currentYear = new Date().getFullYear()
+  if (startDate && endDate) {
+    const startYear = Number(startDate.split('-')[0])
+    const endYear = Number(endDate.split('-')[0])
+    if (Number.isFinite(startYear) && Number.isFinite(endYear)) {
+      if (currentYear >= startYear && currentYear <= endYear) {
+        return String(currentYear)
+      }
+      return String(endYear)
+    }
+  }
+  if (startDate) {
+    return startDate.split('-')[0]
+  }
+  return String(currentYear)
+})
+
+const uniqueMonthsCount = computed(() => {
+  const set = new Set()
+  trendData.value.forEach((item) => {
+    if (!item.month) return
+    let key = String(item.month).trim()
+    if (key.includes('-')) {
+      const parts = key.split('-')
+      const y = parts[0]
+      const m = parts[1].replace('月', '').padStart(2, '0')
+      key = `${y}-${m}`
+    } else {
+      const m = key.replace('月', '').padStart(2, '0')
+      key = `${filterYear.value}-${m}`
+    }
+    set.add(key)
+  })
+  return set.size
+})
+
+const monthLabels = computed(() => {
+  if (uniqueMonthsCount.value > 12) {
+    const result = []
+    const today = new Date()
+    let year = today.getFullYear()
+    let month = today.getMonth() // 0-indexed, 0是1月
+    for (let i = 0; i < 12; i++) {
+      const mStr = String(month + 1).padStart(2, '0')
+      result.unshift(`${year}-${mStr}`)
+      month--
+      if (month < 0) {
+        month = 11
+        year--
+      }
+    }
+    return result
+  }
+  return Array.from({ length: 12 }, (_, index) => {
+    const mm = String(index + 1).padStart(2, '0')
+    return `${filterYear.value}-${mm}`
+  })
+})
+
+const formatToChineseMonth = (ym?: string) => {
+  if (!ym) return '';
+  const parts = ym.split('-');
+  if (parts.length === 2) {
+    const year = parts[0];
+    const month = Number(parts[1]);
+    return `${year}年${month}月`;
+  }
+  return ym;
+};
+
+const formattedXAxis = computed(() => monthLabels.value.map(item => formatToChineseMonth(item)))
 
 const getMonthIndex = (month?: string) => {
   if (!month) return -1
@@ -98,41 +170,37 @@ const getMonthIndex = (month?: string) => {
     : -1
 }
 
-const filterYear = computed(() => {
-  const { startDate } = getBigScreenQueryParams()
-  if (startDate) {
-    return startDate.split('-')[0]
-  }
-  return String(new Date().getFullYear())
-})
-
 const currentTrendDataByMonth = computed(() => {
-  const values = Array.from({ length: 12 }, () => ({
-    statValue: 0,
-    detectionCount: 0,
-    positiveCount: 0,
-    positiveRate: 0
-  }))
+  const dataMap = new Map()
   trendData.value.forEach((item) => {
-    if (item.month && item.month.includes('-')) {
-      const year = item.month.split('-')[0]
-      if (year !== filterYear.value) return
+    if (!item.month) return
+    let key = String(item.month).trim()
+    if (key.includes('-')) {
+      const parts = key.split('-')
+      const y = parts[0]
+      const m = parts[1].replace('月', '').padStart(2, '0')
+      key = `${y}-${m}`
+    } else {
+      const m = key.replace('月', '').padStart(2, '0')
+      key = `${filterYear.value}-${m}`
     }
-    const index = getMonthIndex(item.month)
-    if (index < 0) return
-    values[index] = {
-      statValue: Number(item.statValue ?? item.detectionCount ?? item.positiveRate ?? 0),
-      detectionCount: Number(item.detectionCount || 0),
-      positiveCount: Number(item.positiveCount || 0),
-      positiveRate: Number(item.positiveRate || 0)
+    dataMap.set(key, item)
+  })
+
+  return monthLabels.value.map((mLabel) => {
+    const item = dataMap.get(mLabel)
+    return {
+      statValue: Number(item?.statValue ?? item?.detectionCount ?? item?.positiveRate ?? 0),
+      detectionCount: Number(item?.detectionCount || 0),
+      positiveCount: Number(item?.positiveCount || 0),
+      positiveRate: Number(item?.positiveRate || 0)
     }
   })
-  return values
 })
 
 const lineValues = computed(() => currentTrendDataByMonth.value.map((item) => item.statValue))
 const trendEmpty = computed(
-  () => trendData.value.length === 0 || !lineValues.value.some((value) => Number(value || 0) > 0)
+  () => trendData.value.length === 0
 )
 
 const maxPointIndex = computed(() => {
@@ -195,7 +263,7 @@ const createLineTrendOption = (data: number[], max: number, formatter?: string) 
   xAxis: {
     type: 'category',
     boundaryGap: false,
-    data: monthLabels,
+    data: formattedXAxis.value,
     axisLabel: {
       color: 'rgba(228, 235, 245, 0.82)',
       fontSize: 18,

@@ -60,13 +60,50 @@ const rightActiveTab = ref('样品阳性率');
 const volumeTrend = ref<TaskVolumeTrendRespVO>({});
 const riskTrend = ref<TaskRiskTrendRespVO>({});
 
+const formatToChineseMonth = (ym?: any) => {
+  if (ym === undefined || ym === null || ym === '') return '';
+  const key = String(ym).trim();
+  const parts = key.split('-');
+  if (parts.length === 2) {
+    const year = parts[0];
+    const month = Number(parts[1]);
+    return `${year}年${month}月`;
+  }
+  const m = key.replace('月', '');
+  if (m && !isNaN(Number(m))) {
+    return `${filterYear.value}年${Number(m)}月`;
+  }
+  return key;
+};
+
+const formatTooltip = (params: any) => {
+  if (!params || params.length === 0) return '';
+  const rawMonth = params[0].axisValue;
+  const formattedMonth = formatToChineseMonth(rawMonth);
+  let html = `<div style="margin-bottom:6px;font-weight:600;color:#dff7ff;">${formattedMonth}</div>`;
+  params.forEach((param: any) => {
+    if (param.value !== undefined) {
+      const marker = param.marker || '';
+      const seriesName = param.seriesName || '';
+      const value = param.value;
+      const unit = param.seriesName.includes('率') ? '%' : '项次';
+      html += `<div style="display:flex;align-items:center;line-height:22px;gap:4px;">` +
+        `<span>${marker}</span>` +
+        `<span style="min-width:76px;color:rgba(228,235,245,0.82);">${seriesName}:</span>` +
+        `<strong style="color:#fff;font-family:DIN Alternate,Arial;font-weight:700;">${value}${unit}</strong></div>`;
+    }
+  });
+  return html;
+};
+
 const lineBase = {
-  grid: { left: 48, right: 16, top: 28, bottom: 18 },
+  grid: { left: 48, right: 16, top: 28, bottom: 32 },
   tooltip: {
     trigger: 'axis',
     backgroundColor: 'rgba(6, 18, 42, 0.92)',
     borderColor: 'rgba(87, 226, 255, 0.35)',
-    textStyle: { color: '#dff7ff' }
+    textStyle: { color: '#dff7ff' },
+    formatter: formatTooltip
   },
   legend: {
     right: 16,
@@ -79,7 +116,7 @@ const lineBase = {
     type: 'category',
     boundaryGap: false,
     data: [],
-    axisLabel: { color: '#d5e6ff', fontSize: 12, margin: 12 },
+    axisLabel: { color: '#d5e6ff', fontSize: 10, margin: 8, rotate: 30 },
     axisTick: {
       show: true,
       length: 7,
@@ -122,9 +159,10 @@ const createTrendOption = (
   data: number[],
   max: number,
   lineColor: string,
+  seriesName: string,
   formatter?: string
 ) => ({
-  grid: { left: 48, right: 16, top: 28, bottom: 18 },
+  grid: { left: 48, right: 16, top: 28, bottom: 32 },
   tooltip: lineBase.tooltip,
   xAxis: {
     ...lineBase.xAxis,
@@ -148,6 +186,7 @@ const createTrendOption = (
   },
   series: [
     {
+      name: seriesName,
       type: 'line',
       smooth: false,
       symbol: 'circle',
@@ -170,33 +209,109 @@ const createTrendOption = (
   ]
 });
 
-const leftTrendXAxis = computed(() => getAxisData(volumeTrend.value.xaxis).map((item) => formatMonthLabel(item)));
+const filterYear = computed(() => {
+  const { startDate, endDate } = getBigScreenQueryParams()
+  const currentYear = new Date().getFullYear()
+  if (startDate && endDate) {
+    const startYear = Number(startDate.split('-')[0])
+    const endYear = Number(endDate.split('-')[0])
+    if (Number.isFinite(startYear) && Number.isFinite(endYear)) {
+      if (currentYear >= startYear && currentYear <= endYear) {
+        return String(currentYear)
+      }
+      return String(endYear)
+    }
+  }
+  if (startDate) {
+    return startDate.split('-')[0]
+  }
+  return String(currentYear)
+})
+
+const rawXaxis = computed(() => {
+  return volumeTrend.value.xaxis || riskTrend.value.xaxis || []
+})
+
+const uniqueMonthsCount = computed(() => {
+  return rawXaxis.value.length
+})
+
+const monthLabels = computed(() => {
+  if (uniqueMonthsCount.value > 12) {
+    const result = []
+    const today = new Date()
+    let year = today.getFullYear()
+    let month = today.getMonth() // 0-indexed, 0是1月
+    for (let i = 0; i < 12; i++) {
+      const mStr = String(month + 1).padStart(2, '0')
+      result.unshift(`${year}-${mStr}`)
+      month--
+      if (month < 0) {
+        month = 11
+        year--
+      }
+    }
+    return result
+  }
+  return rawXaxis.value.map(item => {
+    let key = String(item).trim()
+    if (key.includes('-')) {
+      const parts = key.split('-')
+      const y = parts[0]
+      const m = parts[1].replace('月', '').padStart(2, '0')
+      return `${y}-${m}`
+    }
+    const m = key.replace('月', '').padStart(2, '0')
+    return `${filterYear.value}-${m}`
+  })
+})
+
+const mapTrendData = (xaxis: string[], seriesData: number[]) => {
+  const dataMap = new Map()
+  if (Array.isArray(xaxis)) {
+    xaxis.forEach((item, index) => {
+      let key = String(item).trim()
+      if (key.includes('-')) {
+        const parts = key.split('-')
+        const y = parts[0]
+        const m = parts[1].replace('月', '').padStart(2, '0')
+        key = `${y}-${m}`
+      } else {
+        const m = key.replace('月', '').padStart(2, '0')
+        key = `${filterYear.value}-${m}`
+      }
+      dataMap.set(key, Number(seriesData?.[index] || 0))
+    })
+  }
+  return monthLabels.value.map(mLabel => dataMap.get(mLabel) || 0)
+}
+const leftTrendXAxis = computed(() => monthLabels.value)
 const sampleCounts = computed(() =>
-  normalizeSeries(volumeTrend.value.sampleCounts, leftTrendXAxis.value.length)
-);
+  mapTrendData(volumeTrend.value.xaxis || [], volumeTrend.value.sampleCounts || [])
+)
 const itemCounts = computed(() =>
-  normalizeSeries(volumeTrend.value.itemCounts, leftTrendXAxis.value.length)
-);
-const rightTrendXAxis = computed(() => getAxisData(riskTrend.value.xaxis).map((item) => formatMonthLabel(item)));
+  mapTrendData(volumeTrend.value.xaxis || [], volumeTrend.value.itemCounts || [])
+)
+const rightTrendXAxis = computed(() => monthLabels.value)
 const samplePositiveRates = computed(() =>
-  normalizeSeries(riskTrend.value.samplePositiveRates, rightTrendXAxis.value.length)
-);
+  mapTrendData(riskTrend.value.xaxis || [], riskTrend.value.samplePositiveRates || [])
+)
 const itemPositiveRates = computed(() =>
-  normalizeSeries(riskTrend.value.itemPositiveRates, rightTrendXAxis.value.length)
-);
+  mapTrendData(riskTrend.value.xaxis || [], riskTrend.value.itemPositiveRates || [])
+)
 
 const currentLeftTrendData = computed(() =>
   leftActiveTab.value === '样品量' ? sampleCounts.value : itemCounts.value
-);
+)
 const currentRightTrendData = computed(() =>
   rightActiveTab.value === '样品阳性率' ? samplePositiveRates.value : itemPositiveRates.value
-);
+)
 const leftTrendEmpty = computed(
-  () => leftTrendXAxis.value.length === 0 || !currentLeftTrendData.value.some((value) => Number(value || 0) > 0)
-);
+  () => leftTrendXAxis.value.length === 0
+)
 const rightTrendEmpty = computed(
-  () => rightTrendXAxis.value.length === 0 || !currentRightTrendData.value.some((value) => Number(value || 0) > 0)
-);
+  () => rightTrendXAxis.value.length === 0
+)
 
 
 const leftAxisMax = computed(() => {
@@ -215,19 +330,18 @@ const rightAxisMax = computed(() => {
 });
 
 const currentLeftTrendOption = computed(() => {
-  const isSample = leftActiveTab.value === '样品量';
-  const color = isSample ? '#83d54b' : '#56e8ff';
-  return createTrendOption(leftTrendXAxis.value, currentLeftTrendData.value, leftAxisMax.value, color);
+  const color = '#56e8ff';
+  return createTrendOption(leftTrendXAxis.value, currentLeftTrendData.value, leftAxisMax.value, color, leftActiveTab.value);
 });
 
 const currentRightTrendOption = computed(() => {
-  const isSampleRate = rightActiveTab.value === '样品阳性率';
-  const color = isSampleRate ? '#83d54b' : '#56e8ff';
+  const color = '#56e8ff';
   return createTrendOption(
     rightTrendXAxis.value,
     currentRightTrendData.value,
     rightAxisMax.value,
     color,
+    rightActiveTab.value,
     '{value}%'
   );
 });

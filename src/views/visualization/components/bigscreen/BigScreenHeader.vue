@@ -67,12 +67,12 @@
           </div>
 
           <div class="form-item">
-            <div class="item-label">数据地区设置</div>
+            <div class="item-label">默认显示范围</div>
             <div class="field-shell">
               <!-- 禁止清空地区选择 -->
               <el-cascader v-model="configForm.regionPath" :options="areaOptions" :props="areaCascaderProps"
-                :show-all-levels="true" :teleported="false" separator="" filterable size="large"
-                class="custom-cascader" popper-class="big-screen-area-popper">
+                :show-all-levels="true" :teleported="false" separator="" filterable size="large" class="custom-cascader"
+                popper-class="big-screen-area-popper">
                 <template #default="{ data }">
                   <span>{{ data.name || data.originalName }}</span>
                 </template>
@@ -484,10 +484,10 @@ onUnmounted(() => {
   min-height: 98px;
   width: 100%;
   display: grid;
-  grid-template-columns: 1fr 680px 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(560px, 680px) minmax(0, 1fr);
   align-items: center;
   background: url('@/assets/imgs/echarts/首页/tiile_bg.png') no-repeat center center;
-  background-size: 100% 100%;
+  background-size: cover;
   position: relative;
 }
 
@@ -525,14 +525,13 @@ onUnmounted(() => {
 }
 
 .header-side {
+  min-width: 0;
   display: flex;
   justify-content: flex-end;
   column-gap: 2px;
-  /* 增加间距 */
-  padding: 12px 30px 0;
+  padding: 12px 20px 0;
   align-self: start;
   position: relative;
-  /* 为弹窗定位 */
 
   &.right {
     justify-content: flex-start;
@@ -565,7 +564,8 @@ onUnmounted(() => {
 .nav-btn {
   height: 46px;
   width: 178px;
-  flex: 0 0 178px;
+  min-width: 150px;
+  flex: 0 1 178px;
   padding: 0;
   display: inline-flex;
   align-items: center;
@@ -588,7 +588,8 @@ onUnmounted(() => {
 
 .task-nav-wrapper {
   position: relative;
-  flex: 0 0 178px;
+  min-width: 150px;
+  flex: 0 1 178px;
   height: 46px;
 }
 
@@ -603,7 +604,7 @@ onUnmounted(() => {
   top: 52px;
   left: 4px;
   z-index: 1100;
-  width: 170px;
+  width: calc(100% - 8px);
   height: 30px;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -678,7 +679,7 @@ onUnmounted(() => {
   background: linear-gradient(180deg, rgba(7, 26, 60, 0.98) 0%, rgba(4, 15, 40, 0.98) 100%);
   // border: 1px solid #1d91ff;
   box-shadow: 0 0 30px rgba(29, 145, 255, 0.35);
-  z-index: 1000;
+  z-index: 1500;
   padding: 1px;
   border-radius: 4px;
 
@@ -900,6 +901,7 @@ onUnmounted(() => {
 
 .header-center {
   position: relative;
+  min-width: 0;
   height: 82px;
   display: flex;
   align-items: center;
@@ -927,6 +929,7 @@ onUnmounted(() => {
     img {
       display: block;
       width: auto;
+      max-width: 100%;
       height: 72px;
       object-fit: contain;
     }
@@ -944,13 +947,17 @@ onUnmounted(() => {
 }
 
 .assistant-badge {
+  width: 220px;
+  min-width: 0;
+  flex: 0 1 220px;
+  box-sizing: border-box;
   height: 52px;
   border: 1px solid rgba(79, 152, 255, 0.75);
   background: linear-gradient(90deg, rgba(66, 83, 190, 0.65), rgba(34, 54, 157, 0.35));
-  padding: 4px 10px;
+  padding: 4px 8px;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 6px;
 
   img {
     width: 40px;
@@ -959,6 +966,7 @@ onUnmounted(() => {
 }
 
 .assistant-text {
+  min-width: 0;
   display: flex;
   flex-direction: column;
   line-height: 1.2;
@@ -970,8 +978,12 @@ onUnmounted(() => {
   }
 
   span {
+    display: block;
+    overflow: hidden;
     color: #d4eaff;
-    font-size: 14px;
+    font-size: 12px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
   }
 }
 </style>

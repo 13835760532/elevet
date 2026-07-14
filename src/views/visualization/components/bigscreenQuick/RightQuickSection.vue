@@ -6,7 +6,7 @@
           <span v-if="topTab === '阳性率'">阳性项次/总项次</span>
           <span v-else>检测总量</span>
         </div>
-        <p class="block-title">检测农产品高风险top</p>
+        <p class="block-title">农产品高风险top</p>
         <Echart v-if="!topChartEmpty" :options="currentTopColumnOption" :height="200" />
         <BigDataEmpty
           v-else
@@ -97,9 +97,9 @@ const itemValues = computed(() =>
   pesticideTop10.value.map((item) => Number(item.positiveRate || 0))
 );
 const hasPositiveValue = (list: number[]) => list.some((value) => Number(value || 0) > 0);
-const topChartEmpty = computed(() => categoryNames.value.length === 0 || !hasPositiveValue(categoryValues.value));
-const productChartEmpty = computed(() => productNames.value.length === 0 || !hasPositiveValue(productValues.value));
-const itemChartEmpty = computed(() => itemNames.value.length === 0 || !hasPositiveValue(itemValues.value));
+const topChartEmpty = computed(() => categoryNames.value.length === 0);
+const productChartEmpty = computed(() => productNames.value.length === 0);
+const itemChartEmpty = computed(() => itemNames.value.length === 0);
 
 const topMax = computed(() => {
   const maxValue = Math.max(...categoryValues.value, 0);

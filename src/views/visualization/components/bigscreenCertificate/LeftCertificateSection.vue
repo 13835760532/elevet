@@ -1,7 +1,7 @@
 <template>
   <section class="left-section">
 
-    <BigPanelCard title="合格证概况" :tabs="['检测量', '阳性率']" v-model:active-tab="overviewTab" :bg-image="leftBg">
+    <BigPanelCard title="合格证概况" :bg-image="leftBg">
       <div class="overview-grid">
         <div class="overview-card" :class="[item.type, `card-${index + 1}`, getMetricSizeClass(item.value)]"
           v-for="(item, index) in overviewData" :key="item.label">
@@ -105,7 +105,7 @@ const hexToRgba = (hex: string, alpha: number) => {
 const getCategoryColor = (name: string, index: number) =>
   categoryColorMap[name] || fallbackCategoryColors[index % fallbackCategoryColors.length]
 
-const overviewTab = ref<'检测量' | '阳性率'>('检测量')
+
 
 const overviewData = computed(() => [
   { label: '合格证开具', value: Number(overview.value.issueCount || 0), unit: '份', type: 'blue' },
@@ -235,16 +235,20 @@ const loadSubjectArchiveStats = (params = getBigScreenQueryParams()) => {
 }
 
 const categoryItems = computed(() => {
-  return categoryDistribution.value
-    .map((item, index) => {
-      const name = item.category || '--'
-      return {
-        name,
-        value: Number(item.issueCount || 0),
-        color: categoryColorMap[name] || fallbackCategoryColors[index % fallbackCategoryColors.length]
-      }
-    })
-    .sort((a, b) => b.value - a.value)
+  const standardOrder = ['蔬菜', '水果', '畜禽', '水产', '茶叶', '食用菌', '谷物', '其他']
+  const distributionMap = new Map()
+  categoryDistribution.value.forEach((item) => {
+    if (item.category) {
+      distributionMap.set(item.category, Number(item.issueCount || 0))
+    }
+  })
+  return standardOrder.map((name, index) => {
+    return {
+      name,
+      value: distributionMap.get(name) || 0,
+      color: categoryColorMap[name] || fallbackCategoryColors[index % fallbackCategoryColors.length]
+    }
+  })
 })
 
 const pieItems = computed(() => categoryItems.value.filter((item) => item.value > 0))
@@ -475,14 +479,11 @@ onUnmounted(() => {
   background: rgba(6, 30, 73, 0.45) !important;
   border-radius: 4px;
 
-  &.blue {
-  }
+  &.blue {}
 
-  &.green {
-  }
+  &.green {}
 
-  &.orange {
-  }
+  &.orange {}
 
   .corner-light {
     position: absolute;
@@ -526,7 +527,7 @@ onUnmounted(() => {
   .card-label {
     margin: 0;
     color: #c2d4d4;
-    font-size: 15px;
+    font-size: 18px;
     font-weight: 500;
     line-height: 20px;
     letter-spacing: 0;
@@ -567,16 +568,16 @@ onUnmounted(() => {
   }
 
   .icon-box {
-    width: 41px;
-    height: 23px;
+    width: 80px;
+    height: auto;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
 
     img {
-      width: 41px;
-      height: 23px;
+      width: 80px;
+      height: auto;
       object-fit: contain;
     }
   }
@@ -707,8 +708,8 @@ onUnmounted(() => {
   box-sizing: border-box;
   position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 315px) 76px;
-  align-items: stretch;
+  grid-template-columns: minmax(0, 1fr) 180px;
+  align-items: center;
   gap: 8px;
   height: 100%;
   min-height: 0;
@@ -742,28 +743,18 @@ onUnmounted(() => {
 }
 
 .category-legend {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  height: 118px;
+  height: auto;
   min-height: 0;
-  overflow-y: auto;
-  align-self: end;
-  margin-bottom: 34px;
-  padding-right: 0;
-
-  &::-webkit-scrollbar {
-    width: 6px;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: rgba(65, 190, 255, 0.5);
-    border-radius: 999px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: rgba(8, 18, 42, 0.35);
-  }
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(4, 1fr);
+  grid-auto-flow: column;
+  padding: 8px 0;
+  margin-left: 48px;
+  gap: 10px 0px;
+  overflow: hidden;
+  align-self: center;
+  margin-bottom: 0;
 }
 
 .legend-row {

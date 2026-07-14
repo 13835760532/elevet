@@ -49,10 +49,9 @@ async function unLock() {
 // 返回登录
 async function goLogin() {
   await userStore.loginOut().catch(() => {})
-  // 登出后清理
-  deleteUserCache() // 清空用户缓存
+  resetRouter()
+  deleteUserCache()
   tagsViewStore.delAllViews()
-  // resetRouter() // 重置静态路由表
   lockStore.resetLockInfo()
   replace('/login')
 }

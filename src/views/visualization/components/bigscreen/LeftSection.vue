@@ -89,11 +89,7 @@ const riskMax = computed(() => {
   if (riskTab.value === '阳性率') {
     return 100
   }
-  if (maxValue <= 0) return 10
-  if (maxValue <= 10) return 10
-  if (maxValue <= 20) return 20
-  if (maxValue <= 50) return 50
-  return 100
+  return getNiceAxisMax(maxValue)
 })
 const pesticideLabels = computed(() =>
   displayPesticideRiskList.value.map((item) => item.pesticideName || '--')
@@ -109,10 +105,10 @@ const pesticideValues = computed(() =>
 
 const hasPositiveValue = (list: number[]) => list.some((value) => Number(value || 0) > 0)
 const produceRiskEmpty = computed(
-  () => displayProduceRiskList.value.length === 0 || !hasPositiveValue(riskValues.value)
+  () => displayProduceRiskList.value.length === 0
 )
 const pesticideRiskEmpty = computed(
-  () => displayPesticideRiskList.value.length === 0 || !hasPositiveValue(pesticideValues.value)
+  () => displayPesticideRiskList.value.length === 0
 )
 
 const getNiceAxisMax = (value: number) => {
@@ -134,10 +130,10 @@ const pesticideMax = computed(() => {
 })
 
 const formatRiskValue = (value: number, mode: '检测量' | '阳性率') =>
-  mode === '阳性率' ? `${Math.round(Number(value))}%` : `${Number(value)}`
+  mode === '阳性率' ? `${Number(value).toFixed(0)}%` : `${Number(value)}`
 
 const formatRankValue = (value: number, mode: '检测量' | '阳性率') =>
-  mode === '阳性率' ? `${Number(value).toFixed(2)}%` : `${Number(value)}/100`
+  mode === '阳性率' ? `${Number(value).toFixed(0)}%` : `${Number(value)}`
 
 const formatPesticideLabel = (value: string) => {
   const label = `${value || '--'}`
@@ -170,9 +166,8 @@ const currentRiskTopOption = computed(() => ({
       fontSize: 16,
       margin: 8,
       formatter: (value: number) => {
-        if (riskTab.value === '阳性率') return `${value / 10}`
-        const normalized = value / (riskMax.value / 10)
-        return `${normalized}`
+        if (riskTab.value === '阳性率') return `${value}%`
+        return `${value}`
       }
     },
     splitLine: {
@@ -326,7 +321,7 @@ const currentPesticideTopOption = computed(() => ({
       color: 'rgba(224, 239, 239, 0.72)',
       fontSize: 16,
       margin: 8,
-      formatter: pesticideTab.value === '阳性率' ? '{value}' : '{value}'
+      formatter: pesticideTab.value === '阳性率' ? '{value}%' : '{value}'
     },
     splitLine: {
       show: true,

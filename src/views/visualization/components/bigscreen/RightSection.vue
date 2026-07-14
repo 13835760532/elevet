@@ -30,7 +30,11 @@
                   <span v-else class="rank-badge">{{ String(item.rank).padStart(2, '0') }}</span>
                 </template>
               </td>
-              <td>{{ item.areaName }}</td>
+              <td class="area-name-cell">
+                <el-tooltip :content="item.areaName" placement="top" :show-after="100" effect="dark" popper-class="bigscreen-task-tooltip">
+                  <div class="area-name-text">{{ item.areaName }}</div>
+                </el-tooltip>
+              </td>
               <td>{{ item.isEmpty ? '' : item.positiveCount }}</td>
               <td>{{ formatRateText(item) }}</td>
             </tr>
@@ -150,14 +154,7 @@ const currentRankData = computed(() => {
 })
 
 const rankTableEmpty = computed(
-  () =>
-    rankList.value.length === 0 ||
-    !rankList.value.some(
-      (item) =>
-        Number(item.positiveCount || 0) > 0 ||
-        Number(item.positiveRate || 0) > 0 ||
-        Number(item.detectionCount || 0) > 0
-    )
+  () => rankList.value.length === 0
 )
 
 const formatRateText = (item: any) => {
@@ -178,7 +175,7 @@ const projectValues = computed(() =>
   displayProjectRiskList.value.map((item) => Number(item.statValue || 0))
 )
 const projectRiskEmpty = computed(
-  () => displayProjectRiskList.value.length === 0 || !projectValues.value.some((value) => value > 0)
+  () => displayProjectRiskList.value.length === 0
 )
 const projectMax = computed(() => {
   const maxValue = Math.max(...projectValues.value, 0)
@@ -221,7 +218,12 @@ const currentProjectRiskOption = computed(() => ({
       color: 'rgba(255, 255, 255, 0.6)',
       fontSize: 14,
       margin: 10,
-      formatter: projectRiskTab.value === '阳性率' ? '{value}' : '{value}'
+      formatter: (value: number) => {
+        if (projectRiskTab.value === '阳性率') {
+          return `${Math.round(value * 100)}%`
+        }
+        return String(value)
+      }
     },
     splitLine: {
       lineStyle: {
@@ -537,6 +539,18 @@ onUnmounted(() => {
     font-weight: 600;
   }
 
+  .area-name-cell {
+    padding: 0 4px;
+  }
+
+  .area-name-text {
+    width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: center;
+  }
+
   tbody tr:nth-child(odd) {
     background: rgba(13, 56, 99, 0.44);
   }
@@ -552,7 +566,8 @@ onUnmounted(() => {
 
   th:nth-child(4),
   td:nth-child(4) {
-    width: 130px;
+    width: 160px;
+    white-space: nowrap;
   }
 }
 
@@ -759,6 +774,22 @@ onUnmounted(() => {
     .path {
       stroke: #00b3ed !important;
     }
+  }
+}
+</style>
+
+<style lang="scss">
+.bigscreen-task-tooltip.el-popper {
+  background: #061a38 !important;
+  border: 1px solid #188bf5 !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 12px rgba(24, 139, 245, 0.4) !important;
+  font-size: 13px !important;
+  line-height: 1.8 !important;
+
+  .el-popper__arrow::before {
+    background: #061a38 !important;
+    border: 1px solid #188bf5 !important;
   }
 }
 </style>

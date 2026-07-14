@@ -148,7 +148,11 @@
                                 </template>
                             </el-table-column>
                             <el-table-column prop="productName" label="产品名称" width="100" align="center" />
-                            <el-table-column prop="productCategory" label="产品类别" width="100" align="center" />
+                            <el-table-column prop="productCategory" label="产品类别" width="100" align="center">
+                                <template #default="scope">
+                                    <span>{{ getProductCategoryLabel(scope.row.productCategory) }}</span>
+                                </template>
+                            </el-table-column>
                             <el-table-column prop="productionArea" label="产地" width="150" show-overflow-tooltip />
                             <el-table-column prop="subjectName" label="生产经营主体" min-width="160" show-overflow-tooltip />
                             <el-table-column v-if="activeTab === 'produce'" prop="issueDate" label="开具日期" width="160"
@@ -224,12 +228,14 @@ import { dateFormatter } from '@/utils/formatTime';
 import AreaCascader from '@/components/AreaCascader/index.vue';
 import { useTableHeight } from '@/hooks/web/useTableHeight';
 import { CACHE_KEY, useCache } from '@/hooks/web/useCache';
+import { useDict } from '@/hooks/web/useDict';
 
 const router = useRouter();
 const tableRef = ref(null);
 const { tableHeight } = useTableHeight(tableRef, 70);
 const exportLoading = ref(false);
 const { wsCache } = useCache();
+const { getLabel: getProductCategoryLabel } = useDict('agri_product_category', 'str');
 
 const normalizeAreaValue = (value: unknown) => {
     if (value === undefined || value === null || value === '') return '';

@@ -23,13 +23,14 @@
             </th>
             <th>样品编号</th>
             <th>样品名称</th>
+            <th>检测项目</th>
             <th>被检单位/主体</th>
             <th>检测日期</th>
           </tr>
         </thead>
         <tbody>
           <tr v-if="pagedRows.length === 0">
-            <td class="empty-state" colspan="5">请在上方搜索并选择样品检测结果</td>
+            <td class="empty-state" colspan="6">请在上方搜索并选择样品检测结果</td>
           </tr>
           <tr v-for="row in pagedRows" :key="row.linkId">
             <td class="w-checkbox">
@@ -37,6 +38,7 @@
             </td>
             <td><span class="text-strong">{{ row.sampleCode || '-' }}</span></td>
             <td>{{ row.sampleName || '-' }}</td>
+            <td>{{ getDetectionItemNames(row) }}</td>
             <td>{{ row.detectionOrgName || row.detector || '-' }}</td>
             <td class="text-muted">{{ formatDetectionDate(row) }}</td>
           </tr>
@@ -323,13 +325,45 @@ watch(activeRow, (row) => {
   emit('update:activeRecord', row || null);
 }, { immediate: true });
 
+const getDetectionItemNames = (row) => {
+  if (!row) return '-';
+  let rawItems = [];
+  if (row.aiRecognitionResult) {
+    try {
+      const parsed = typeof row.aiRecognitionResult === 'string'
+        ? JSON.parse(row.aiRecognitionResult)
+        : row.aiRecognitionResult;
+      if (parsed && Array.isArray(parsed.results)) {
+        rawItems = parsed.results;
+      }
+    } catch (e) {}
+  }
+  if (!rawItems.length && row.detectionResults) {
+    try {
+      const parsed = typeof row.detectionResults === 'string'
+        ? JSON.parse(row.detectionResults)
+        : row.detectionResults;
+      if (Array.isArray(parsed)) {
+        rawItems = parsed;
+      }
+    } catch (e) {}
+  }
+  if (rawItems.length) {
+    return rawItems.map(item => item.detectionItem || item.codeName || item.name || item.itemName || '-').join(', ');
+  }
+  if (row.overallResult === 0 || row.overallResult === 1) {
+    return '综合结果';
+  }
+  return '-';
+};
+
 const formatDateTime = (value) => {
   if (!value && value !== 0) return '-';
   if (Number(value) === 0) return '-';
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return String(value);
   const pad = (num) => String(num).padStart(2, '0');
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
 };
 
 const formatDetectionDate = (row) => {
@@ -512,6 +546,11 @@ const handleTabRemove = (targetName) => {
     width: 48px;
     text-align: center;
     padding: 0;
+    padding-left: 10px;
+
+    :deep(.el-checkbox__inner) {
+      border-radius: 4px !important;
+    }
   }
 
   .text-strong {

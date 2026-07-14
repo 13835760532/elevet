@@ -1,11 +1,11 @@
 <template>
   <section class="bottom-quick-trends">
-    <BigPanelCard class="big-panel-center panel-header-bottom" title="检测量态势" :tabs="[]"
-      v-model:active-tab="leftTrendTab" :bg-image="bottomBg">
+    <BigPanelCard class="big-panel-center panel-header-bottom" title="检测量态势" :tabs="['样品总量', '检测项总量']"
+      v-model:activeTab="leftTrendTab" :bg-image="bottomBg">
       <div class="quick-trend-chart">
         <div class="positive-count-summary">
-          <span v-if="leftTrendTab === '阳性率'">阳性项次/总项次</span>
-          <span v-else>检测总量</span>
+          <span v-if="leftTrendTab === '样品总量'">样品总量</span>
+          <span v-else>检测项总量</span>
         </div>
         <Echart v-if="!leftTrendEmpty" :options="currentLeftTrendOption" :height="200" />
         <BigDataEmpty
@@ -20,6 +20,9 @@
 
     <BigPanelCard class="big-panel-center panel-header-bottom" title="风险态势" :tabs="[]" :bg-image="bottomBg">
       <div class="quick-trend-chart">
+        <div class="positive-count-summary">
+          <span>阳性项次/总项次</span>
+        </div>
         <Echart v-if="!rightTrendEmpty" :options="currentRightTrendOption" :height="200" />
         <BigDataEmpty
           v-else
@@ -47,7 +50,7 @@ import {
 } from '@/api/agri/dashboard/fast';
 import { getBigScreenQueryParams, subscribeBigScreenRefresh } from '../bigscreen/config';
 
-const leftTrendTab = ref('检测量');
+const leftTrendTab = ref('样品总量');
 const positiveRateTrend = ref<FastPositiveRateTrendRespVO>({});
 const selfSampleTrend = ref<FastSelfSampleTrendRespVO>({});
 
@@ -56,10 +59,6 @@ const formatMonthLabel = (value?: string) => {
   const matched = value.match(/(\d{1,2})$/);
   return matched ? `${matched[1]}月` : value;
 };
-const getAxisData = (axis?: string[]) =>
-  axis?.length ? axis.map((item) => formatMonthLabel(item) || item) : [];
-const normalizeSeries = <T extends number>(list: T[] | undefined, length: number) =>
-  Array.from({ length }, (_, index) => Number(list?.[index] || 0));
 const sumSeries = (list?: number[]) => (list || []).reduce((total, item) => total + Number(item || 0), 0);
 const calcMax = (data: number[], emptyMax: number) => {
   const max = Math.max(...data, 0);
@@ -75,7 +74,7 @@ const createTrendOption = (
   tooltipFormatter?: (params: any) => string,
   showDots = false
 ) => ({
-  grid: { left: 40, right: 16, top: 18, bottom: 24 },
+  grid: { left: 40, right: 16, top: 18, bottom: 32 },
   tooltip: {
     trigger: 'axis',
     backgroundColor: 'rgba(6, 18, 42, 0.92)',
@@ -87,7 +86,7 @@ const createTrendOption = (
     type: 'category',
     boundaryGap: false,
     data: xAxisData,
-    axisLabel: { color: '#90b5da', fontSize: 11 },
+    axisLabel: { color: '#90b5da', fontSize: 10, rotate: 30 },
     axisLine: { lineStyle: { color: '#2d67ac' } }
   },
   yAxis: {
@@ -123,87 +122,192 @@ const createTrendOption = (
   ]
 });
 
-const positiveRateXAxis = computed(() => getAxisData(positiveRateTrend.value.xaxis));
+const filterYear = computed(() => {
+  const { startDate, endDate } = getBigScreenQueryParams()
+  const currentYear = new Date().getFullYear()
+  if (startDate && endDate) {
+    const startYear = Number(startDate.split('-')[0])
+    const endYear = Number(endDate.split('-')[0])
+    if (Number.isFinite(startYear) && Number.isFinite(endYear)) {
+      if (currentYear >= startYear && currentYear <= endYear) {
+        return String(currentYear)
+      }
+      return String(endYear)
+    }
+  }
+  if (startDate) {
+    return startDate.split('-')[0]
+  }
+  return String(currentYear)
+})
+
+const rawXaxis = computed(() => {
+  return positiveRateTrend.value.xaxis || selfSampleTrend.value.xaxis || []
+})
+
+const uniqueMonthsCount = computed(() => {
+  return rawXaxis.value.length
+})
+
+const monthLabels = computed(() => {
+  if (uniqueMonthsCount.value > 12) {
+    const result = []
+    const today = new Date()
+    let year = today.getFullYear()
+    let month = today.getMonth()
+    for (let i = 0; i < 12; i++) {
+      const mStr = String(month + 1).padStart(2, '0')
+      result.unshift(`${year}-${mStr}`)
+      month--
+      if (month < 0) {
+        month = 11
+        year--
+      }
+    }
+    return result
+  }
+  return rawXaxis.value.map(item => {
+    let key = String(item).trim()
+    if (key.includes('-')) {
+      const parts = key.split('-')
+      const y = parts[0]
+      const m = parts[1].replace('月', '').padStart(2, '0')
+      return `${y}-${m}`
+    }
+    const m = key.replace('月', '').padStart(2, '0')
+    return `${filterYear.value}-${m}`
+  })
+})
+
+const mapTrendData = (xaxis: string[], seriesData: number[]) => {
+  const dataMap = new Map()
+  if (Array.isArray(xaxis)) {
+    xaxis.forEach((item, index) => {
+      let key = String(item).trim()
+      if (key.includes('-')) {
+        const parts = key.split('-')
+        const y = parts[0]
+        const m = parts[1].replace('月', '').padStart(2, '0')
+        key = `${y}-${m}`
+      } else {
+        const m = key.replace('月', '').padStart(2, '0')
+        key = `${filterYear.value}-${m}`
+      }
+      dataMap.set(key, Number(seriesData?.[index] || 0))
+    })
+  }
+  return monthLabels.value.map(mLabel => dataMap.get(mLabel) || 0)
+}
+
+const formatToChineseMonth = (ym?: string) => {
+  if (!ym) return '';
+  const parts = ym.split('-');
+  if (parts.length === 2) {
+    const year = parts[0];
+    const month = Number(parts[1]);
+    return `${year}年${month}月`;
+  }
+  return ym;
+};
+
+const formattedXAxis = computed(() => monthLabels.value.map(item => formatToChineseMonth(item)))
+
+const positiveRateXAxis = computed(() => monthLabels.value);
 const positiveRateData = computed(() =>
-  normalizeSeries(positiveRateTrend.value.positiveRates, positiveRateXAxis.value.length)
+  mapTrendData(positiveRateTrend.value.xaxis || [], positiveRateTrend.value.positiveRates || [])
 );
 const positiveDetectionData = computed(() =>
-  normalizeSeries(positiveRateTrend.value.detectionCounts, positiveRateXAxis.value.length)
+  mapTrendData(positiveRateTrend.value.xaxis || [], positiveRateTrend.value.detectionCounts || [])
 );
-const selfSampleXAxis = computed(() => getAxisData(selfSampleTrend.value.xaxis));
+const selfSampleXAxis = computed(() => monthLabels.value);
 const selfSampleData = computed(() =>
-  normalizeSeries(selfSampleTrend.value.sampleCounts, selfSampleXAxis.value.length)
+  mapTrendData(selfSampleTrend.value.xaxis || [], selfSampleTrend.value.sampleCounts || [])
 );
-const leftTrendEmpty = computed(() =>
-  leftTrendTab.value === '阳性率'
-    ? sumSeries(positiveRateData.value) <= 0
-    : sumSeries(positiveDetectionData.value) <= 0
-);
-const rightTrendEmpty = computed(() => sumSeries(selfSampleData.value) <= 0);
 
-const leftTooltipFormatter = (params: any) => {
+const mappedPositiveCounts = computed(() =>
+  mapTrendData(positiveRateTrend.value.xaxis || [], positiveRateTrend.value.positiveCounts || [])
+)
+const mappedDetectionCounts = computed(() =>
+  mapTrendData(positiveRateTrend.value.xaxis || [], positiveRateTrend.value.detectionCounts || [])
+)
+
+const leftTrendEmpty = computed(() =>
+  leftTrendTab.value === '样品总量'
+    ? selfSampleXAxis.value.length === 0
+    : positiveRateXAxis.value.length === 0
+);
+const rightTrendEmpty = computed(() => positiveRateXAxis.value.length === 0);
+
+const sampleTooltipFormatter = (params: any) => {
   if (!params || params.length === 0) return '';
   const dataIndex = params[0].dataIndex;
-  const month = params[0].axisValue;
+  const month = formatToChineseMonth(params[0].axisValue);
   const val = params[0].value !== undefined ? params[0].value : '--';
 
-  // 阳性数量/检测总量
-  const positiveCounts = positiveRateTrend.value.positiveCounts || [];
-  const detectionCounts = positiveRateTrend.value.detectionCounts || [];
-  const posVal = positiveCounts[dataIndex] !== undefined ? positiveCounts[dataIndex] : '--';
-  const detVal = detectionCounts[dataIndex] !== undefined ? detectionCounts[dataIndex] : '--';
+  const posVal = mappedPositiveCounts.value[dataIndex] !== undefined ? mappedPositiveCounts.value[dataIndex] : '--';
+  const detVal = mappedDetectionCounts.value[dataIndex] !== undefined ? mappedDetectionCounts.value[dataIndex] : '--';
 
   return `${month}<br/>` +
-    `<span style="display:inline-block;margin-right:4px;border-radius:10px;width:10px;height:10px;background-color:#4deaff;"></span>检测总量：${val}<br/>` +
+    `<span style="display:inline-block;margin-right:4px;border-radius:10px;width:10px;height:10px;background-color:#4deaff;"></span>样品总量：${val}批次<br/>` +
     `<span style="display:inline-block;margin-right:4px;border-radius:10px;width:10px;height:10px;background-color:#ff7875;"></span>阳性数量/检测总量：${posVal}/${detVal}`;
 };
 
-const rightTooltipFormatter = (params: any) => {
+const detectionTooltipFormatter = (params: any) => {
   if (!params || params.length === 0) return '';
   const dataIndex = params[0].dataIndex;
-  const month = params[0].axisValue;
+  const month = formatToChineseMonth(params[0].axisValue);
   const val = params[0].value !== undefined ? params[0].value : '--';
 
-  // 阳性数量/检测总量
-  const positiveCounts = positiveRateTrend.value.positiveCounts || [];
-  const detectionCounts = positiveRateTrend.value.detectionCounts || [];
-  const posVal = positiveCounts[dataIndex] !== undefined ? positiveCounts[dataIndex] : '--';
-  const detVal = detectionCounts[dataIndex] !== undefined ? detectionCounts[dataIndex] : '--';
+  const posVal = mappedPositiveCounts.value[dataIndex] !== undefined ? mappedPositiveCounts.value[dataIndex] : '--';
+  const detVal = mappedDetectionCounts.value[dataIndex] !== undefined ? mappedDetectionCounts.value[dataIndex] : '--';
 
   return `${month}<br/>` +
-    `<span style="display:inline-block;margin-right:4px;border-radius:10px;width:10px;height:10px;background-color:#4deaff;"></span>自主检测样本量：${val}批次<br/>` +
+    `<span style="display:inline-block;margin-right:4px;border-radius:10px;width:10px;height:10px;background-color:#4deaff;"></span>检测项总量：${val}项次<br/>` +
+    `<span style="display:inline-block;margin-right:4px;border-radius:10px;width:10px;height:10px;background-color:#ff7875;"></span>阳性数量/检测总量：${posVal}/${detVal}`;
+};
+
+const riskTooltipFormatter = (params: any) => {
+  if (!params || params.length === 0) return '';
+  const dataIndex = params[0].dataIndex;
+  const month = formatToChineseMonth(params[0].axisValue);
+  const val = params[0].value !== undefined ? params[0].value : '--';
+
+  const posVal = mappedPositiveCounts.value[dataIndex] !== undefined ? mappedPositiveCounts.value[dataIndex] : '--';
+  const detVal = mappedDetectionCounts.value[dataIndex] !== undefined ? mappedDetectionCounts.value[dataIndex] : '--';
+
+  return `${month}<br/>` +
+    `<span style="display:inline-block;margin-right:4px;border-radius:10px;width:10px;height:10px;background-color:#4deaff;"></span>检测阳性率：${val}%<br/>` +
     `<span style="display:inline-block;margin-right:4px;border-radius:10px;width:10px;height:10px;background-color:#ff7875;"></span>阳性数量/检测总量：${posVal}/${detVal}`;
 };
 
 const currentLeftTrendOption = computed(() =>
-  leftTrendTab.value === '阳性率'
+  leftTrendTab.value === '样品总量'
     ? createTrendOption(
-      positiveRateXAxis.value,
-      positiveRateData.value,
-      Math.min(calcMax(positiveRateData.value, 60), 100),
-      '{value}%',
-      leftTooltipFormatter,
-      true // 显示圆点
+      selfSampleXAxis.value,
+      selfSampleData.value,
+      calcMax(selfSampleData.value, 60000),
+      undefined,
+      sampleTooltipFormatter,
+      true
     )
     : createTrendOption(
       positiveRateXAxis.value,
       positiveDetectionData.value,
       calcMax(positiveDetectionData.value, 60000),
       undefined,
-      leftTooltipFormatter,
-      true // 显示圆点
+      detectionTooltipFormatter,
+      true
     )
 );
 
-// 右侧风险态势图表 - 圆点可点击，tooltip 显示阳性数量/检测总量
 const currentRightTrendOption = computed(() =>
   createTrendOption(
-    selfSampleXAxis.value,
-    selfSampleData.value,
-    calcMax(selfSampleData.value, 60000),
-    undefined,
-    rightTooltipFormatter,
-    true // 显示圆点
+    positiveRateXAxis.value,
+    positiveRateData.value,
+    Math.min(calcMax(positiveRateData.value, 60), 100),
+    '{value}%',
+    riskTooltipFormatter,
+    true
   )
 );
 

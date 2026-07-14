@@ -173,6 +173,15 @@ const clock = new THREE.Clock()
 const textureLoader = new THREE.TextureLoader()
 let terrainTexture: THREE.Texture | null = null
 
+const getRendererSize = () => {
+  const canvas = canvasRef.value
+  const container = canvas?.parentElement
+  return {
+    width: container?.clientWidth || canvas?.clientWidth || window.innerWidth,
+    height: container?.clientHeight || canvas?.clientHeight || window.innerHeight
+  }
+}
+
 const isCertificateMode = computed(() => props.mode === 'certificate')
 const isFastMapMode = computed(() => props.mode === 'fast')
 const isTaskMapMode = computed(() => props.mode === 'task')
@@ -790,8 +799,7 @@ const fitCameraToGeo = (
     })
   })
 
-  const width = canvasRef.value.clientWidth || window.innerWidth
-  const height = canvasRef.value.clientHeight || window.innerHeight
+  const { width, height } = getRendererSize()
   const aspect = width / Math.max(height, 1)
   const geoWidth = Math.max(maxX - minX, 1)
   const geoHeight = Math.max(maxY - minY, 1)
@@ -913,7 +921,8 @@ const initThree = () => {
       failIfMajorPerformanceCaveat: false
     })
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2))
-    renderer.setSize(canvas.clientWidth || window.innerWidth, canvas.clientHeight || window.innerHeight)
+    const { width, height } = getRendererSize()
+    renderer.setSize(width, height, false)
 
     scene = new THREE.Scene()
     camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 1000)
@@ -1056,7 +1065,9 @@ const goHome = async (force = false) => {
 
 const resizeRenderer = () => {
   if (!renderer || !canvasRef.value) return
-  renderer.setSize(canvasRef.value.clientWidth || window.innerWidth, canvasRef.value.clientHeight || window.innerHeight)
+  const { width, height } = getRendererSize()
+  if (width <= 0 || height <= 0) return
+  renderer.setSize(width, height, false)
   if (currentGeo) {
     const projection = createProjection(currentGeo)
     fitCameraToGeo(currentGeo, projection, 120)
@@ -1145,8 +1156,10 @@ const reloadCurrentLevel = async () => {
 
 watch(
   () => props.mode,
-  () => {
+  async () => {
     syncHomeScope()
+    await nextTick()
+    resizeRenderer()
     void goHome(true)
   }
 )

@@ -517,7 +517,11 @@ const syncCurrentMapData = (geometries?: any[]) => {
           ? (matched as MapDataRespVO | undefined)?.sampleCount || 0
           : (matched as FastMapDataRespVO | undefined)?.sampleCount || 0
       ),
-      detectionItemCount: Number((matched as MapDataRespVO | undefined)?.detectionItemCount || 0),
+      detectionItemCount: Number(
+        isFastMapMode.value
+          ? (matched as any)?.detectionItemCount || (matched as any)?.detectionCount || (matched as any)?.totalCount || 0
+          : (matched as MapDataRespVO | undefined)?.detectionItemCount || 0
+      ),
       positiveCount: Number(
         isDashboardMode.value
           ? (matched as MapDataRespVO | undefined)?.positiveCount || 0
@@ -1295,7 +1299,11 @@ const getTooltipPayload = (e: any) => {
     count: Number(props.count || 0),
     samples,
     items: Number(
-      isDashboardMode.value ? props.detectionItemCount || 0 : props.taskCompletedCount || 0
+      isDashboardMode.value
+        ? props.detectionItemCount || 0
+        : isFastMapMode.value
+          ? props.detectionItemCount || 0
+          : props.taskCompletedCount || 0
     ),
     rate: `${Number(
       isTaskMapMode.value ? props.taskCompletionRate || 0 : props.positiveRate || 0
@@ -1467,13 +1475,18 @@ onUnmounted(() => {
         </div>
         <div v-else-if="isFastMapMode" class="tooltip-lines">
           <div class="tooltip-line">
-            <span>检测样本量</span>
+            <span>检测样品量</span>
             <b>{{ tooltipData.samples }}</b>
+          </div>
+          <div class="tooltip-line">
+            <span>检测项总量</span>
+            <b>{{ tooltipData.items }}</b>
           </div>
           <div class="tooltip-line">
             <span>检测阳性率</span>
             <b>{{ tooltipData.rate }}</b>
           </div>
+          <div class="tooltip-note">（阳性检测项/检测项总量）</div>
         </div>
         <div v-else-if="isTaskMapMode" class="tooltip-lines">
           <div class="tooltip-line">

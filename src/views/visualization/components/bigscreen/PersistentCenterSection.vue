@@ -46,11 +46,10 @@
 
     <BigPanelCard v-if="showTrendPanel" class="big-panel-center trend-panel" :title="trendTitle" :tabs="trendTabs"
       v-model:active-tab="trendTab" :bg-image="trendBgImage" :title-bg-image="trendTitleBgImage">
-      <div v-if="isCertificateMode" class="trend-head">{{ certificateTrendHead }}</div>
       <div class="trend-chart-wrap" style="position: relative;">
         <div v-if="!trendEmpty" class="positive-count-summary">
-          <span v-if="trendTab === '阳性率'">阳性项次/总项次</span>
-          <span v-else>检测总量</span>
+          <!-- <span v-if="trendTab === '阳性率'">阳性项次/总项次</span>
+          <span v-else>检测总量</span> -->
         </div>
         <Echart v-if="isCertificateMode && !trendEmpty" :options="certificateTrendOption" height="100%" />
         <Echart v-else-if="!trendEmpty" :key="`dashboard-trend-${trendTab}`" :options="dashboardTrendOption"
@@ -306,7 +305,79 @@ const sideStats = computed(() => {
   ]
 })
 
-const monthLabels = Array.from({ length: 12 }, (_, index) => `${index + 1}月`)
+const filterYear = computed(() => {
+  const { startDate, endDate } = getBigScreenQueryParams()
+  const currentYear = new Date().getFullYear()
+  if (startDate && endDate) {
+    const startYear = Number(startDate.split('-')[0])
+    const endYear = Number(endDate.split('-')[0])
+    if (Number.isFinite(startYear) && Number.isFinite(endYear)) {
+      if (currentYear >= startYear && currentYear <= endYear) {
+        return String(currentYear)
+      }
+      return String(endYear)
+    }
+  }
+  if (startDate) {
+    return startDate.split('-')[0]
+  }
+  return String(currentYear)
+})
+
+const uniqueMonthsCount = computed(() => {
+  const set = new Set()
+  dashboardTrendData.value.forEach((item) => {
+    if (!item.month) return
+    let key = String(item.month).trim()
+    if (key.includes('-')) {
+      const parts = key.split('-')
+      const y = parts[0]
+      const m = parts[1].replace('月', '').padStart(2, '0')
+      key = `${y}-${m}`
+    } else {
+      const m = key.replace('月', '').padStart(2, '0')
+      key = `${filterYear.value}-${m}`
+    }
+    set.add(key)
+  })
+  return set.size
+})
+
+const monthLabels = computed(() => {
+  if (uniqueMonthsCount.value > 12) {
+    const result = []
+    const today = new Date()
+    let year = today.getFullYear()
+    let month = today.getMonth() // 0-indexed, 0是1月
+    for (let i = 0; i < 12; i++) {
+      const mStr = String(month + 1).padStart(2, '0')
+      result.unshift(`${year}-${mStr}`)
+      month--
+      if (month < 0) {
+        month = 11
+        year--
+      }
+    }
+    return result
+  }
+  return Array.from({ length: 12 }, (_, index) => {
+    const mm = String(index + 1).padStart(2, '0')
+    return `${filterYear.value}-${mm}`
+  })
+})
+
+const formatToChineseMonth = (ym?: string) => {
+  if (!ym) return '';
+  const parts = ym.split('-');
+  if (parts.length === 2) {
+    const year = parts[0];
+    const month = Number(parts[1]);
+    return `${year}年${month}月`;
+  }
+  return ym;
+};
+
+const formattedXAxis = computed(() => monthLabels.value.map(item => formatToChineseMonth(item)))
 
 const getMonthIndex = (month?: string) => {
   if (!month) return -1
@@ -318,43 +389,59 @@ const getMonthIndex = (month?: string) => {
     : -1
 }
 
-const filterYear = computed(() => {
-  const { startDate } = getBigScreenQueryParams()
-  if (startDate) {
-    return startDate.split('-')[0]
-  }
-  return String(new Date().getFullYear())
-})
-
 const dashboardTrendDataByMonth = computed(() => {
-  const values = Array.from({ length: 12 }, () => ({
-    statValue: 0,
-    detectionCount: 0,
-    positiveCount: 0,
-    positiveRate: 0
-  }))
+  const dataMap = new Map()
   dashboardTrendData.value.forEach((item) => {
-    if (item.month && item.month.includes('-')) {
-      const year = item.month.split('-')[0]
-      if (year !== filterYear.value) return
+    if (!item.month) return
+    let key = String(item.month).trim()
+    if (key.includes('-')) {
+      const parts = key.split('-')
+      const y = parts[0]
+      const m = parts[1].replace('月', '').padStart(2, '0')
+      key = `${y}-${m}`
+    } else {
+      const m = key.replace('月', '').padStart(2, '0')
+      key = `${filterYear.value}-${m}`
     }
-    const index = getMonthIndex(item.month)
-    if (index < 0) return
-    values[index] = {
-      statValue: Number(item.statValue ?? item.detectionCount ?? item.positiveRate ?? 0),
-      detectionCount: Number(item.detectionCount || 0),
-      positiveCount: Number(item.positiveCount || 0),
-      positiveRate: Number(item.positiveRate || 0)
+    dataMap.set(key, item)
+  })
+
+  return monthLabels.value.map((mLabel) => {
+    const item = dataMap.get(mLabel)
+    return {
+      statValue: Number(item?.statValue ?? item?.detectionCount ?? item?.positiveRate ?? 0),
+      detectionCount: Number(item?.detectionCount || 0),
+      positiveCount: Number(item?.positiveCount || 0),
+      positiveRate: Number(item?.positiveRate || 0)
     }
   })
-  return values
 })
+
+const mapTrendData = (xaxis: string[], seriesData: number[], targetLabels: string[]) => {
+  const dataMap = new Map()
+  if (Array.isArray(xaxis)) {
+    xaxis.forEach((item, index) => {
+      let key = String(item).trim()
+      if (key.includes('-')) {
+        const parts = key.split('-')
+        const y = parts[0]
+        const m = parts[1].replace('月', '').padStart(2, '0')
+        key = `${y}-${m}`
+      } else {
+        const m = key.replace('月', '').padStart(2, '0')
+        key = `${filterYear.value}-${m}`
+      }
+      dataMap.set(key, Number(seriesData?.[index] || 0))
+    })
+  }
+  return targetLabels.map((mLabel) => dataMap.get(mLabel) || 0)
+}
 
 const dashboardLineValues = computed(() =>
   dashboardTrendDataByMonth.value.map((item) => item.statValue)
 )
 const dashboardTrendEmpty = computed(
-  () => dashboardTrendData.value.length === 0 || !dashboardLineValues.value.some((value) => Number(value || 0) > 0)
+  () => dashboardTrendData.value.length === 0
 )
 
 const dashboardMaxPointIndex = computed(() => {
@@ -392,12 +479,12 @@ const formatDashboardTrendTooltip = (
 ) => {
   const tooltipParam = Array.isArray(params) ? params[0] : params
   const dataIndex = Number(tooltipParam?.dataIndex)
-  if (!Number.isInteger(dataIndex) || dataIndex < 0 || dataIndex >= monthLabels.length) return ''
+  if (!Number.isInteger(dataIndex) || dataIndex < 0 || dataIndex >= monthLabels.value.length) return ''
 
   const item = dashboardTrendDataByMonth.value[dataIndex]
-  const monthLabel = `${String(dataIndex + 1).padStart(2, '0')}月`
+  const monthLabel = monthLabels.value[dataIndex]
   return [
-    `<div style="margin-bottom:6px;">${monthLabel}</div>`,
+    `<div style="margin-bottom:6px;">${formatToChineseMonth(monthLabel)}</div>`,
     `<div style="display:flex;align-items:center;line-height:24px;"><span style="width:9px;height:9px;margin-right:7px;border-radius:50%;background:#f05a75;"></span><span style="min-width:76px;">阳性数量</span><span>${item.positiveCount}项次</span></div>`,
     `<div style="display:flex;align-items:center;line-height:24px;"><span style="width:9px;height:9px;margin-right:7px;border-radius:50%;background:#57e2ff;"></span><span style="min-width:76px;">检测总量</span><span>${item.detectionCount}项次</span></div>`
   ].join('')
@@ -466,7 +553,7 @@ const createDashboardTrendOption = (
   xAxis: {
     type: 'category',
     boundaryGap: false,
-    data: monthLabels,
+    data: monthLabels.value,
     axisLabel: {
       color: 'rgba(228, 235, 245, 0.82)',
       fontSize: 18,
@@ -611,12 +698,30 @@ const createCertificateTrendOption = (
   traceData: number[]
 ) => ({
   animation: false,
-  grid: { left: 52, right: 96, top: 38, bottom: 36 },
+  grid: { left: 52, right: 96, top: 38, bottom: 42 },
   tooltip: {
     trigger: 'axis',
     backgroundColor: 'rgba(6, 18, 42, 0.92)',
     borderColor: 'rgba(87, 226, 255, 0.35)',
-    textStyle: { color: '#dff7ff' }
+    textStyle: { color: '#dff7ff' },
+    formatter: (params: any) => {
+      if (!params || params.length === 0) return '';
+      const rawMonth = params[0].axisValue;
+      const formattedMonth = formatToChineseMonth(rawMonth);
+      let html = `<div style="margin-bottom:6px;font-weight:600;color:#dff7ff;">${formattedMonth}</div>`;
+      params.forEach((param: any) => {
+        if (param.value !== undefined) {
+          const marker = param.marker || '';
+          const seriesName = param.seriesName || '';
+          const value = param.value;
+          html += `<div style="display:flex;align-items:center;line-height:22px;gap:4px;">` +
+            `<span>${marker}</span>` +
+            `<span style="min-width:76px;color:rgba(143,182,218,0.82);">${seriesName}:</span>` +
+            `<strong style="color:#fff;font-family:DIN Alternate,Arial;font-weight:700;">${value}次</strong></div>`;
+        }
+      });
+      return html;
+    }
   },
   legend: {
     orient: 'vertical',
@@ -631,7 +736,7 @@ const createCertificateTrendOption = (
     type: 'category',
     boundaryGap: false,
     data: xAxisData,
-    axisLabel: { color: 'rgba(198, 219, 239, 0.76)', fontSize: 12 },
+    axisLabel: { color: 'rgba(198, 219, 239, 0.76)', fontSize: 10, rotate: 30 },
     axisTick: { show: false },
     axisLine: { lineStyle: { color: 'rgba(72, 149, 214, 0.42)' } }
   },
@@ -680,32 +785,54 @@ const createCertificateTrendOption = (
   ]
 })
 
-const certificateXAxisData = computed(() => certificateTrendData.value.xaxis || [])
+const certUniqueMonthsCount = computed(() => {
+  return (certificateTrendData.value.xaxis || []).length
+})
 
-const certificateTrendOption = computed(() =>
-  createCertificateTrendOption(
-    certificateXAxisData.value,
-    normalizeSeries(certificateTrendData.value.issueCounts, certificateXAxisData.value.length),
-    normalizeSeries(
-      certificateTrendData.value.verificationCounts,
-      certificateXAxisData.value.length
-    ),
-    normalizeSeries(certificateTrendData.value.traceCounts, certificateXAxisData.value.length)
+const certificateXAxisData = computed(() => {
+  const rawX = certificateTrendData.value.xaxis || []
+  if (certUniqueMonthsCount.value > 12) {
+    const result = []
+    const today = new Date()
+    let year = today.getFullYear()
+    let month = today.getMonth() // 0-indexed
+    for (let i = 0; i < 12; i++) {
+      const mStr = String(month + 1).padStart(2, '0')
+      result.unshift(`${year}-${mStr}`)
+      month--
+      if (month < 0) {
+        month = 11
+        year--
+      }
+    }
+    return result
+  }
+  return rawX.map(item => {
+    let key = String(item).trim()
+    if (key.includes('-')) {
+      const parts = key.split('-')
+      const y = parts[0]
+      const m = parts[1].replace('月', '').padStart(2, '0')
+      return `${y}-${m}`
+    }
+    const m = key.replace('月', '').padStart(2, '0')
+    return `${filterYear.value}-${m}`
+  })
+})
+
+const certificateTrendOption = computed(() => {
+  const targetX = certificateXAxisData.value
+  const rawX = certificateTrendData.value.xaxis || []
+  return createCertificateTrendOption(
+    targetX,
+    mapTrendData(rawX, certificateTrendData.value.issueCounts || [], targetX),
+    mapTrendData(rawX, certificateTrendData.value.verificationCounts || [], targetX),
+    mapTrendData(rawX, certificateTrendData.value.traceCounts || [], targetX)
   )
-)
+})
 
 const certificateTrendEmpty = computed(() => {
-  const axisLength = certificateXAxisData.value.length
-  if (!axisLength) return true
-  const total = [
-    certificateTrendData.value.issueCounts,
-    certificateTrendData.value.verificationCounts,
-    certificateTrendData.value.traceCounts
-  ].reduce(
-    (sum, series) => sum + (series || []).reduce((current, item) => current + Number(item || 0), 0),
-    0
-  )
-  return total <= 0
+  return certificateXAxisData.value.length === 0
 })
 
 const trendEmpty = computed(() =>

@@ -448,7 +448,7 @@ onUnmounted(() => {
 .screen-main.task {
   padding: 6px 12px 10px;
   display: grid;
-  grid-template-columns: 470px minmax(0, 1fr) 560px;
+  grid-template-columns: 560px minmax(0, 1fr) 560px;
   grid-template-rows: minmax(0, 1fr) 260px;
   grid-template-areas:
     'left center right'
@@ -458,7 +458,7 @@ onUnmounted(() => {
 
 .screen-main.inspect {
   padding: 6px 12px 10px;
-  grid-template-columns: 470px minmax(0, 1fr) 460px;
+  grid-template-columns: 470px minmax(0, 1fr) 470px;
   grid-template-rows: minmax(0, 1fr) 268px;
   grid-template-areas:
     'left center right'

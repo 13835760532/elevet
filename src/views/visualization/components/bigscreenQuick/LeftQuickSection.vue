@@ -3,7 +3,7 @@
 
     <BigPanelCard title="快速检测概况" :bg-image="leftBg">
       <template #title-extra>
-        <el-tooltip placement="bottom-end" popper-class="bigscreen-quick-tooltip" effect="light">
+        <el-tooltip placement="bottom-end" popper-class="bigscreen-quick-tooltip" effect="dark">
           <template #content>
             <div class="tooltip-text-content">
               样品总量：本机构“任务执行抽样量+自主检测抽样量”；<br />
@@ -748,16 +748,16 @@ onUnmounted(() => {
 
 <style lang="scss">
 .bigscreen-quick-tooltip.el-popper {
-  background: rgba(255, 255, 255, 0.96) !important;
-  border: 1px solid #1890ff !important;
-  color: #333333 !important;
-  --el-bg-color-overlay: rgba(255, 255, 255, 0.96) !important;
-  --el-border-color-light: #1890ff !important;
+  background: rgba(6, 18, 42, 0.96) !important;
+  border: 1px solid rgba(87, 226, 255, 0.45) !important;
+  color: #dff7ff !important;
+  --el-bg-color-overlay: rgba(6, 18, 42, 0.96) !important;
+  --el-border-color-light: rgba(87, 226, 255, 0.45) !important;
 
   .tooltip-text-content {
     font-size: 14px;
     line-height: 1.8;
-    color: #333333;
+    color: #dff7ff !important;
     font-family: sans-serif;
   }
 }

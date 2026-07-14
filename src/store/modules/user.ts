@@ -91,15 +91,8 @@ export const useUserStore = defineStore('admin-user', {
         this.resetState()
         return null
       }
-      let userInfo = wsCache.get(CACHE_KEY.USER)
-      if (!userInfo) {
-        userInfo = await getInfo()
-      } else {
-        // 特殊：在有缓存的情况下，进行加载。但是即使加载失败，也不影响后续的操作，保证可以进入系统
-        try {
-          userInfo = await getInfo()
-        } catch (error) {}
-      }
+      // 当前会话必须以当前 token 对应的接口结果为准，不能在失败时复用其他账号的缓存。
+      const userInfo = await getInfo()
 
       if (!isValidUserInfo(userInfo)) {
         removeToken()
@@ -151,10 +144,14 @@ export const useUserStore = defineStore('admin-user', {
       wsCache.set(CACHE_KEY.USER, userInfo)
     },
     async loginOut() {
-      await loginOut()
-      removeToken()
-      deleteUserCache() // 删除用户缓存
-      this.resetState()
+      try {
+        await loginOut()
+      } finally {
+        // 服务端登出失败也必须清理本地会话，避免回到登录页后继续使用旧 token。
+        removeToken()
+        deleteUserCache()
+        this.resetState()
+      }
     },
     resetState() {
       this.permissions = new Set<string>()

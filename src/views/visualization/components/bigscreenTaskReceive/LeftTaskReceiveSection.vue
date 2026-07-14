@@ -110,18 +110,20 @@ const loadOverviewData = async () => {
   }
 }
 
-const categoryItems = computed(() =>
-  [...categoryDistribution.value]
-    .map((item) => ({
-      name: item.category || '--',
-      value: Number(item.sampleCount || 0)
-    }))
-    .sort((a, b) => b.value - a.value)
-    .map((item, index) => ({
-      ...item,
+const categoryItems = computed(() => {
+  const orderedCategories = ['蔬菜', '水果', '畜禽', '水产', '茶叶', '食用菌', '谷物', '其他']
+  const distMap = new Map(
+    categoryDistribution.value.map((item) => [item.category, Number(item.sampleCount || 0)])
+  );
+  return orderedCategories.map((name, index) => {
+    const value = distMap.get(name) || 0
+    return {
+      name,
+      value,
       color: categoryColors[index % categoryColors.length]
-    }))
-)
+    }
+  })
+})
 
 const pieItems = computed(() => categoryItems.value.filter((item) => item.value > 0))
 const categoryEmpty = computed(() => pieItems.value.length === 0)
@@ -389,7 +391,7 @@ onUnmounted(() => {
   height: 100%;
   padding-top: 10px;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 160px;
+  grid-template-columns: minmax(0, 1fr) 180px;
   align-items: center;
   gap: 10px;
 }
@@ -402,12 +404,13 @@ onUnmounted(() => {
 .category-legend {
   height: 100%;
   min-height: 0;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(4, 1fr);
+  grid-auto-flow: column;
   padding: 8px 0;
-  gap: 8px;
-  overflow-y: auto;
-  padding-right: 6px;
+  gap: 8px 12px;
+  overflow: hidden;
 }
 
 .category-legend::-webkit-scrollbar {
