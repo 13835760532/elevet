@@ -3,6 +3,22 @@ import type { RouteRecordRaw } from 'vue-router'
 import { createRouter, createWebHashHistory } from 'vue-router'
 import remainingRouter from './modules/remaining'
 
+const staticRouteNames = new Set<string>()
+
+const collectStaticRouteNames = (routes: AppRouteRecordRaw[]) => {
+  routes.forEach((route) => {
+    if (route.name) {
+      staticRouteNames.add(String(route.name))
+    }
+    if (route.children?.length) {
+      collectStaticRouteNames(route.children)
+    }
+  })
+}
+
+// remainingRouter 中的页面不依赖后端菜单权限，重置动态路由时必须始终保留。
+collectStaticRouteNames(remainingRouter)
+
 // 创建路由实例
 const router = createRouter({
   history: createWebHashHistory(import.meta.env.VITE_BASE_PATH),
@@ -20,10 +36,9 @@ const router = createRouter({
 })
 
 export const resetRouter = (): void => {
-  const resetWhiteNameList = ['Redirect', 'Login', 'Register', 'ForgotPassword', 'ResetPassword', 'NoFound', 'Home']
   router.getRoutes().forEach((route) => {
     const { name } = route
-    if (name && !resetWhiteNameList.includes(name as string)) {
+    if (name && !staticRouteNames.has(String(name))) {
       router.hasRoute(name) && router.removeRoute(name)
     }
   })

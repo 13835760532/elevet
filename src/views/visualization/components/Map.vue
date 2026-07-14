@@ -21,7 +21,9 @@ import {
   getBigScreenConfig,
   getBigScreenQueryParams,
   getBigScreenUserDeptAreaParams,
-  subscribeBigScreenRefresh
+  subscribeBigScreenRefresh,
+  getCachedAreaLevel,
+  isMunicipality
 } from './bigscreen/config'
 import { cachedBigScreenRequest } from './bigscreen/requestCache'
 
@@ -830,9 +832,20 @@ const loadFastMapData = async (options: LoadMapDataOptions = {}) => {
 const loadDashboardMapData = async (options: LoadMapDataOptions = {}) => {
   if (!isDashboardMode.value) return
   const context = options.context || createMapDataRequestContext()
+  const rawParams = getMapRequestParams(context)
+  
+  // 北京上海等直辖市特殊适配：当为直辖市时，cityName 必传且为直辖市名，同时 areaLevel 强设为 3
+  let areaLevel = getCachedAreaLevel() || (context.drillLevel === 2 ? '2' : '1')
+  let cityName = rawParams.cityName
+  if (isMunicipality(rawParams.provinceName)) {
+    cityName = rawParams.provinceName
+    areaLevel = '3'
+  }
+  
   const params = {
-    ...getMapRequestParams(context),
-    areaLevel: context.drillLevel === 2 ? '2' : '1'
+    ...rawParams,
+    cityName,
+    areaLevel
   }
   try {
     const data = await cachedBigScreenRequest('map-dashboard', params, () =>

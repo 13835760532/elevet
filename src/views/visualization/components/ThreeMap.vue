@@ -19,7 +19,8 @@
         <span>{{ item.label }}</span>
         <strong>{{ item.value }}</strong>
       </div>
-      <div v-if="isFastMapMode" class="tooltip-note" style="margin-top: 6px; font-size: 11px; color: rgba(220, 235, 255, 0.65); text-align: left; padding: 0 4px;">
+      <div v-if="isFastMapMode" class="tooltip-note"
+        style="margin-top: 6px; font-size: 11px; color: rgba(220, 235, 255, 0.65); text-align: left; padding: 0 4px;">
         （阳性检测项/检测项总量）
       </div>
     </div>
@@ -56,7 +57,9 @@ import {
   getBigScreenConfig,
   getBigScreenQueryParams,
   getBigScreenUserDeptAreaParams,
-  subscribeBigScreenRefresh
+  subscribeBigScreenRefresh,
+  getCachedAreaLevel,
+  isMunicipality
 } from './bigscreen/config'
 import { cachedBigScreenRequest } from './bigscreen/requestCache'
 
@@ -522,10 +525,19 @@ const loadCurrentMapData = async () => {
     } else if (isTaskMapMode.value) {
       data = await cachedBigScreenRequest('three-map-task', params, () => getTaskMap(params))
     } else {
-      data = await cachedBigScreenRequest('three-map-dashboard', params, () =>
+      const rawParams = { ...params }
+      let areaLevel = getCachedAreaLevel() || (currentDrillLevel === 2 ? '2' : '1')
+      let cityName = rawParams.cityName
+      if (isMunicipality(rawParams.provinceName)) {
+        cityName = rawParams.provinceName
+        areaLevel = '3'
+      }
+
+      data = await cachedBigScreenRequest('three-map-dashboard', rawParams, () =>
         getDashboardMapData({
-          ...params,
-          areaLevel: currentDrillLevel === 2 ? '2' : '1'
+          ...rawParams,
+          cityName,
+          areaLevel
         })
       )
     }

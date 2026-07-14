@@ -166,3 +166,21 @@ export const subscribeBigScreenRefresh = (callback: () => void) => {
   window.addEventListener(BIG_SCREEN_REFRESH_EVENT, handler)
   return () => window.removeEventListener(BIG_SCREEN_REFRESH_EVENT, handler)
 }
+
+export const getCachedAreaLevel = () => {
+  const { wsCache } = useCache()
+  const userDept = wsCache.get(CACHE_KEY.USER_DEPT) || {}
+  const config = getBigScreenConfig()
+  
+  const level = userDept.areaLevel || userDept.areaType || config.areaType
+  if (level !== undefined && level !== null && level !== '') {
+    return String(level)
+  }
+  return undefined
+}
+
+export const isMunicipality = (name?: string) => {
+  if (!name) return false
+  const n = String(name).trim()
+  return n.includes('北京') || n.includes('上海') || n.includes('天津') || n.includes('重庆')
+}
