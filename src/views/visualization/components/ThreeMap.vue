@@ -504,11 +504,23 @@ const createTooltipLines = (item?: MapDataItem, value = 0) => {
 
 const loadCurrentMapData = async () => {
   const requestId = ++dataRequestSeq
-  const params = {
+  const rawParams = {
     ...getBigScreenQueryParams(),
     provinceName: currentRegionParams.provinceName,
-    cityName: currentRegionParams.cityName,
-    areaLevel: currentDrillLevel === 1 ? '1' : currentDrillLevel === 2 ? '2' : undefined
+    cityName: currentRegionParams.cityName
+  }
+  
+  let areaLevel = currentDrillLevel === 1 ? '1' : currentDrillLevel === 2 ? '2' : undefined
+  let cityName = rawParams.cityName
+  if (isMunicipality(rawParams.provinceName)) {
+    cityName = rawParams.provinceName
+    areaLevel = '3'
+  }
+  
+  const params = {
+    ...rawParams,
+    cityName,
+    areaLevel
   }
   try {
     let data: unknown = []

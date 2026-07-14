@@ -786,9 +786,19 @@ const getMapRequestParams = (context: MapDataRequestContext) => ({
 const loadCertificateMapData = async (options: LoadMapDataOptions = {}) => {
   if (!isCertificateMode.value) return
   const context = options.context || createMapDataRequestContext()
+  const rawParams = getMapRequestParams(context)
+  
+  let areaLevel = context.drillLevel === 1 ? '1' : context.drillLevel === 2 ? '2' : undefined
+  let cityName = rawParams.cityName
+  if (isMunicipality(rawParams.provinceName)) {
+    cityName = rawParams.provinceName
+    areaLevel = '3'
+  }
+  
   const params = {
-    ...getMapRequestParams(context),
-    areaLevel: context.drillLevel === 1 ? '1' : context.drillLevel === 2 ? '2' : undefined
+    ...rawParams,
+    cityName,
+    areaLevel
   }
   try {
     const data = await cachedBigScreenRequest('map-certificate', params, () =>
@@ -810,9 +820,19 @@ const loadCertificateMapData = async (options: LoadMapDataOptions = {}) => {
 const loadFastMapData = async (options: LoadMapDataOptions = {}) => {
   if (!isFastMapMode.value) return
   const context = options.context || createMapDataRequestContext()
+  const rawParams = getMapRequestParams(context)
+  
+  let areaLevel = context.drillLevel === 1 ? '1' : context.drillLevel === 2 ? '2' : undefined
+  let cityName = rawParams.cityName
+  if (isMunicipality(rawParams.provinceName)) {
+    cityName = rawParams.provinceName
+    areaLevel = '3'
+  }
+  
   const params = {
-    ...getMapRequestParams(context),
-    areaLevel: context.drillLevel === 1 ? '1' : context.drillLevel === 2 ? '2' : undefined
+    ...rawParams,
+    cityName,
+    areaLevel
   }
   try {
     const data = await cachedBigScreenRequest('map-fast', params, () => getFastMap(params))
@@ -867,9 +887,19 @@ const loadDashboardMapData = async (options: LoadMapDataOptions = {}) => {
 const loadTaskMapData = async (options: LoadMapDataOptions = {}) => {
   if (!isTaskMapMode.value) return
   const context = options.context || createMapDataRequestContext()
+  const rawParams = getMapRequestParams(context)
+  
+  let areaLevel = context.drillLevel === 1 ? '1' : context.drillLevel === 2 ? '2' : undefined
+  let cityName = rawParams.cityName
+  if (isMunicipality(rawParams.provinceName)) {
+    cityName = rawParams.provinceName
+    areaLevel = '3'
+  }
+  
   const params = {
-    ...getMapRequestParams(context),
-    areaLevel: context.drillLevel === 1 ? '1' : context.drillLevel === 2 ? '2' : undefined
+    ...rawParams,
+    cityName,
+    areaLevel
   }
   try {
     const data = await cachedBigScreenRequest('map-task', params, () => getTaskMap(params))
