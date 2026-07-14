@@ -26,9 +26,6 @@
       :bg-image="bottomBg"
     >
       <div class="task-trend-chart">
-        <div v-if="!rightTrendEmpty" class="positive-count-summary">
-          <span>阳性项次/总项次</span>
-        </div>
         <Echart v-if="!rightTrendEmpty" :options="currentRightTrendOption" :height="200" />
         <BigDataEmpty
           v-else
@@ -76,7 +73,7 @@ const formatToChineseMonth = (ym?: any) => {
   return key;
 };
 
-const formatTooltip = (params: any) => {
+const leftTooltipFormatter = (params: any) => {
   if (!params || params.length === 0) return '';
   const rawMonth = params[0].axisValue;
   const formattedMonth = formatToChineseMonth(rawMonth);
@@ -84,13 +81,53 @@ const formatTooltip = (params: any) => {
   params.forEach((param: any) => {
     if (param.value !== undefined) {
       const marker = param.marker || '';
-      const seriesName = param.seriesName || '';
       const value = param.value;
-      const unit = param.seriesName.includes('率') ? '%' : '项次';
+      const unit = leftActiveTab.value === '样品量' ? '批次' : '项次';
       html += `<div style="display:flex;align-items:center;line-height:22px;gap:4px;">` +
         `<span>${marker}</span>` +
-        `<span style="min-width:76px;color:rgba(228,235,245,0.82);">${seriesName}:</span>` +
+        `<span style="min-width:76px;color:rgba(228,235,245,0.82);">${leftActiveTab.value}:</span>` +
         `<strong style="color:#fff;font-family:DIN Alternate,Arial;font-weight:700;">${value}${unit}</strong></div>`;
+    }
+  });
+  return html;
+};
+
+const rightTooltipFormatter = (params: any) => {
+  if (!params || params.length === 0) return '';
+  const rawMonth = params[0].axisValue;
+  const formattedMonth = formatToChineseMonth(rawMonth);
+  const index = monthLabels.value.indexOf(rawMonth);
+  const isSampleRate = rightActiveTab.value === '样品阳性率';
+  let html = `<div style="margin-bottom:6px;font-weight:600;color:#dff7ff;">${formattedMonth}</div>`;
+  params.forEach((param: any) => {
+    if (param.value !== undefined) {
+      const marker = param.marker || '';
+      const rate = param.value;
+      if (isSampleRate) {
+        const total = index !== -1 ? (sampleCounts.value[index] || 0) : 0;
+        html += `<div style="display:flex;flex-direction:column;line-height:20px;font-size:13px;color:rgba(228,235,245,0.82);">` +
+          `<div style="display:flex;align-items:center;gap:4px;">` +
+            `<span>${marker}</span>` +
+            `<span>样品总量:</span>` +
+            `<strong style="color:#fff;font-family:DIN Alternate,Arial;font-weight:700;margin-left:4px;">${total}批次</strong>` +
+          `</div>` +
+          `<div style="margin-left:14px;color:rgba(228,235,245,0.82);">` +
+            `阳性数量/样品总量 = <strong style="color:#fff;font-family:DIN Alternate,Arial;font-weight:700;">${rate}%</strong>` +
+          `</div>` +
+        `</div>`;
+      } else {
+        const total = index !== -1 ? (itemCounts.value[index] || 0) : 0;
+        html += `<div style="display:flex;flex-direction:column;line-height:20px;font-size:13px;color:rgba(228,235,245,0.82);">` +
+          `<div style="display:flex;align-items:center;gap:4px;">` +
+            `<span>${marker}</span>` +
+            `<span>检测项总量:</span>` +
+            `<strong style="color:#fff;font-family:DIN Alternate,Arial;font-weight:700;margin-left:4px;">${total}项次</strong>` +
+          `</div>` +
+          `<div style="margin-left:14px;color:rgba(228,235,245,0.82);">` +
+            `阳性数量/检测总量 = <strong style="color:#fff;font-family:DIN Alternate,Arial;font-weight:700;">${rate}%</strong>` +
+          `</div>` +
+        `</div>`;
+      }
     }
   });
   return html;
@@ -102,8 +139,7 @@ const lineBase = {
     trigger: 'axis',
     backgroundColor: 'rgba(6, 18, 42, 0.92)',
     borderColor: 'rgba(87, 226, 255, 0.35)',
-    textStyle: { color: '#dff7ff' },
-    formatter: formatTooltip
+    textStyle: { color: '#dff7ff' }
   },
   legend: {
     right: 16,
@@ -147,6 +183,14 @@ const estimatePositiveCount = (rates?: number[], totals?: number[], fallbackTota
   return Math.round((fallbackTotal * sumSeries(rates)) / Math.max(rates?.length || 0, 1) / 100);
 };
 
+const totalSampleCount = computed(() => sumSeries(volumeTrend.value.sampleCounts || []));
+const samplePositiveCount = computed(() => estimatePositiveCount(riskTrend.value.samplePositiveRates || [], volumeTrend.value.sampleCounts || []));
+const totalSamplePositiveRate = computed(() => totalSampleCount.value ? Math.round((samplePositiveCount.value / totalSampleCount.value) * 100) : 0);
+
+const totalItemCount = computed(() => sumSeries(volumeTrend.value.itemCounts || []));
+const itemPositiveCount = computed(() => estimatePositiveCount(riskTrend.value.itemPositiveRates || [], volumeTrend.value.itemCounts || []));
+const totalItemPositiveRate = computed(() => totalItemCount.value ? Math.round((itemPositiveCount.value / totalItemCount.value) * 100) : 0);
+
 const formatMonthLabel = (month?: string) => {
   if (!month) return '--';
   const value = String(month).trim();
@@ -160,10 +204,14 @@ const createTrendOption = (
   max: number,
   lineColor: string,
   seriesName: string,
+  tooltipFormatter: any,
   formatter?: string
 ) => ({
   grid: { left: 48, right: 16, top: 28, bottom: 32 },
-  tooltip: lineBase.tooltip,
+  tooltip: {
+    ...lineBase.tooltip,
+    formatter: tooltipFormatter
+  },
   xAxis: {
     ...lineBase.xAxis,
     data: xAxisData
@@ -331,7 +379,7 @@ const rightAxisMax = computed(() => {
 
 const currentLeftTrendOption = computed(() => {
   const color = '#56e8ff';
-  return createTrendOption(leftTrendXAxis.value, currentLeftTrendData.value, leftAxisMax.value, color, leftActiveTab.value);
+  return createTrendOption(leftTrendXAxis.value, currentLeftTrendData.value, leftAxisMax.value, color, leftActiveTab.value, leftTooltipFormatter);
 });
 
 const currentRightTrendOption = computed(() => {
@@ -342,6 +390,7 @@ const currentRightTrendOption = computed(() => {
     rightAxisMax.value,
     color,
     rightActiveTab.value,
+    rightTooltipFormatter,
     '{value}%'
   );
 });

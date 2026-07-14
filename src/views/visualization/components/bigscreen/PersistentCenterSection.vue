@@ -149,7 +149,7 @@ const mapTitle = computed(() => {
   return '覆盖群体'
 })
 
-const mapTabs = computed(() => (isCertificateMode.value ? ['开具', '存证'] : []))
+const mapTabs = computed(() => [])
 const mapBgImage = computed(() => {
   if (props.activeMenu === 'cert') return certificateMapBg
   if (props.activeMenu === 'inspect' || props.activeMenu === 'task') return taskCenterBg

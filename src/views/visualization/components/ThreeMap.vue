@@ -19,6 +19,9 @@
         <span>{{ item.label }}</span>
         <strong>{{ item.value }}</strong>
       </div>
+      <div v-if="isFastMapMode" class="tooltip-note" style="margin-top: 6px; font-size: 11px; color: rgba(220, 235, 255, 0.65); text-align: left; padding: 0 4px;">
+        （阳性检测项/检测项总量）
+      </div>
     </div>
 
     <div class="map-legend">
@@ -475,7 +478,8 @@ const createTooltipLines = (item?: MapDataItem, value = 0) => {
   if (isFastMapMode.value) {
     const data = item as FastMapDataRespVO | undefined
     return [
-      { label: '检测样本量', value: Number(data?.sampleCount || 0) },
+      { label: '检测样品量', value: Number(data?.sampleCount || 0) },
+      { label: '检测项总量', value: Number((data as any)?.detectionItemCount || (data as any)?.detectionCount || (data as any)?.totalCount || 0) },
       { label: '检测阳性率', value: formatRate(data?.positiveRate) }
     ]
   }
