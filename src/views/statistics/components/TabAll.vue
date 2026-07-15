@@ -402,39 +402,7 @@ const getProvinceFeatureCode = (areaCode?: string | number) => {
   return /^\d{2}/.test(value) ? `${value.slice(0, 2)}0000` : ''
 }
 
-const getUserDeptMapScope = () => {
-  const { areaCode } = getUserDeptAreaParams()
-  const provinceFeatureCode = getProvinceFeatureCode(areaCode)
-  const feature = provinceFeatureCode
-    ? chinaMapFeatures.find((item) => getFeatureAreaCode(item) === provinceFeatureCode)
-    : null
 
-  if (!feature) {
-    return {
-      mapName: STATISTICS_CHINA_MAP_NAME,
-      geoJson: chinaLiteGeo,
-      featureName: '',
-      scoped: false
-    }
-  }
-
-  const featureName = String(feature?.properties?.name || '').trim()
-  return {
-    mapName: `${STATISTICS_CHINA_MAP_NAME}_${provinceFeatureCode}`,
-    geoJson: {
-      ...(chinaLiteGeo as any),
-      features: [feature]
-    },
-    featureName,
-    scoped: true
-  }
-}
-
-const ensureStatisticsMapRegistered = (scope: ReturnType<typeof getUserDeptMapScope>) => {
-  if (registeredStatisticsMapNames.has(scope.mapName)) return
-  echarts.registerMap(scope.mapName, scope.geoJson as any)
-  registeredStatisticsMapNames.add(scope.mapName)
-}
 
 const resolveMapName = (name: string) => {
   const rawName = String(name || '').trim()
@@ -488,11 +456,74 @@ const certificateOverview = ref<DashboardCertificateOverviewRespVO>({})
 const mapType = ref('检测量分布')
 
 const mapRows = ref<any[]>([])
-const mapScope = computed(() => {
-  const scope = getUserDeptMapScope()
-  ensureStatisticsMapRegistered(scope)
-  return scope
+const mapScope = ref<any>({
+  mapName: STATISTICS_CHINA_MAP_NAME,
+  featureName: '',
+  scoped: false
 })
+
+const loadMapScope = async () => {
+  const { areaCode } = getUserDeptAreaParams()
+  const provinceFeatureCode = getProvinceFeatureCode(areaCode)
+
+  if (!provinceFeatureCode) {
+    mapScope.value = {
+      mapName: STATISTICS_CHINA_MAP_NAME,
+      featureName: '',
+      scoped: false
+    }
+    return
+  }
+
+  const feature = chinaMapFeatures.find((item) => getFeatureAreaCode(item) === provinceFeatureCode)
+  const featureName = feature ? String(feature.properties?.name || '').trim() : ''
+  const mapName = `${STATISTICS_CHINA_MAP_NAME}_${provinceFeatureCode}`
+
+  if (registeredStatisticsMapNames.has(mapName)) {
+    mapScope.value = {
+      mapName,
+      featureName,
+      scoped: true
+    }
+    return
+  }
+
+  try {
+    const response = await fetch(`https://geo.datav.aliyun.com/areas_v3/bound/${provinceFeatureCode}_full.json`)
+    if (!response.ok) {
+      throw new Error(`failed to fetch geoJson for ${provinceFeatureCode}`)
+    }
+    const geoJson = await response.json()
+    echarts.registerMap(mapName, geoJson as any)
+    registeredStatisticsMapNames.add(mapName)
+    mapScope.value = {
+      mapName,
+      featureName,
+      scoped: true
+    }
+  } catch (error) {
+    console.warn('[StatisticsAll] fetch online geoJson failed, fallback to local lite geoJson:', error)
+    if (feature) {
+      const geoJson = {
+        ...(chinaLiteGeo as any),
+        features: [feature]
+      }
+      echarts.registerMap(mapName, geoJson as any)
+      registeredStatisticsMapNames.add(mapName)
+      mapScope.value = {
+        mapName,
+        featureName,
+        scoped: true
+      }
+    } else {
+      mapScope.value = {
+        mapName: STATISTICS_CHINA_MAP_NAME,
+        featureName: '',
+        scoped: false
+      }
+    }
+  }
+}
 
 const productRiskType = ref('检测量')
 const testItemRiskType = ref('检测量')
@@ -673,12 +704,42 @@ const loadOverview = async () => {
 
 const loadMapData = async () => {
   try {
+    await loadMapScope()
     const isTaskMap = mapType.value === '任务监督分布' || mapType.value === '检测执行分布'
     const isCertificateMap = mapType.value === '合格证分布'
+    const params = { ...queryParams.value }
+    const currentAreaCode = String(params.areaCode || '').trim()
+    const currentAreaType = String(params.areaType || '').trim()
+
+    const isMunicipality = ['110000', '120000', '310000', '500000'].includes(currentAreaCode) ||
+                           /^(11|12|31|50)0000$/.test(currentAreaCode)
+
+    let finalAreaLevel = '1'
+    let finalProvinceName = params.provinceName
+    let finalCityName = params.cityName
+
+    if (isMunicipality) {
+      finalAreaLevel = '3'
+      let name = ''
+      if (currentAreaCode.startsWith('11')) name = '北京市'
+      else if (currentAreaCode.startsWith('12')) name = '天津市'
+      else if (currentAreaCode.startsWith('31')) name = '上海市'
+      else if (currentAreaCode.startsWith('50')) name = '重庆市'
+      
+      if (name) {
+        finalProvinceName = name
+        finalCityName = name
+      }
+    } else if (currentAreaType === '2' || currentAreaType === '3') {
+      finalAreaLevel = '3'
+    }
+
     const mapParams = {
-      ...queryParams.value,
-      areaLevel: '1'
-    } as const
+      ...params,
+      areaLevel: finalAreaLevel,
+      provinceName: finalProvinceName,
+      cityName: finalCityName
+    }
     const data = isTaskMap
       ? await getTaskMap(mapParams)
       : isCertificateMap
@@ -691,29 +752,43 @@ const loadMapData = async () => {
         : []
     const currentMapScope = mapScope.value
     const rows = mergeProvinceRows(
-      sourceList.map((item) => ({
-        displayName: currentMapScope.scoped
-          ? stripRegionSuffix(currentMapScope.featureName || getProvinceDisplayName(item))
-          : getProvinceDisplayName(item),
-        mapName: currentMapScope.scoped
-          ? currentMapScope.featureName
-          : getProvinceMapName(item),
-        value: Number(
-          mapType.value === '阳性率分布'
-            ? (() => {
-              const rate = Number(item.positiveRate || 0)
-              return rate > 0 && rate <= 1 ? rate * 100 : rate
-            })()
-            : mapType.value === '任务监督分布'
-              ? item.taskIssuedCount || 0
-              : mapType.value === '检测执行分布'
-                ? item.taskCompletedCount || 0
-                : mapType.value === '合格证分布'
-                  ? item.count || 0
-                  : item.sampleCount || 0
-        ),
-        fractionDigits: mapType.value === '阳性率分布' ? 2 : 0
-      }))
+      sourceList.map((item) => {
+        let subAreaName = ''
+        if (isMunicipality) {
+          subAreaName = item.districtName || item.areaName?.split(/[-/]/).pop() || ''
+        } else {
+          subAreaName = item.cityName || item.districtName || item.areaName?.split(/[-/]/).pop() || ''
+        }
+        subAreaName = subAreaName.trim()
+
+        const displayName = currentMapScope.scoped
+          ? stripRegionSuffix(subAreaName || getProvinceDisplayName(item))
+          : getProvinceDisplayName(item)
+          
+        const mapName = currentMapScope.scoped
+          ? (subAreaName || getProvinceDisplayName(item))
+          : getProvinceMapName(item)
+
+        return {
+          displayName,
+          mapName,
+          value: Number(
+            mapType.value === '阳性率分布'
+              ? (() => {
+                const rate = Number(item.positiveRate || 0)
+                return rate > 0 && rate <= 1 ? rate * 100 : rate
+              })()
+              : mapType.value === '任务监督分布'
+                ? item.taskIssuedCount || 0
+                : mapType.value === '检测执行分布'
+                  ? item.taskCompletedCount || 0
+                  : mapType.value === '合格证分布'
+                    ? item.count || 0
+                    : item.sampleCount || 0
+          ),
+          fractionDigits: mapType.value === '阳性率分布' ? 2 : 0
+        }
+      })
     )
       .sort((a, b) => b.value - a.value)
       .slice(0, 15)
