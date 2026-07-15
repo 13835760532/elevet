@@ -65,7 +65,7 @@
       <div class="charts-container">
         <div class="chart-area-wrapper">
           <div class="chart-header">
-            <span class="chart-y-title">主体建档地区 TOP10</span>
+            <span class="chart-y-title">主体建档地区</span>
           </div>
           <Echart :options="subjectAreaOption" height="320px" />
         </div>
@@ -82,7 +82,12 @@
         <el-table v-loading="subjectLoading" :data="tableDataSubject" style="width: 100%" border
           header-cell-class-name="custom-header" empty-text="暂无主体建档记录">
           <el-table-column type="index" label="序号" width="60" align="center" />
-          <el-table-column prop="code" label="主体代码 (企业信用代码/身份证)" align="center" min-width="180" show-overflow-tooltip />
+          <el-table-column prop="code" align="center" min-width="180" show-overflow-tooltip>
+            <template #header>
+              <div>主体代码</div>
+              <div style="font-size: 12px; font-weight: normal; color: #909399; margin-top: 2px;">(企业信用代码/身份证)</div>
+            </template>
+          </el-table-column>
           <el-table-column prop="name" label="主体名称" align="center" min-width="120" show-overflow-tooltip />
           <el-table-column prop="filingType" label="建档类型" align="center" width="120" />
           <el-table-column prop="subjectType" label="主体类型" align="center" width="100" />

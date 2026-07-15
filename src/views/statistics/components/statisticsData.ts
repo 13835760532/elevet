@@ -236,7 +236,7 @@ export const createLineSeries = ({
   data,
   color = statisticsChartColors.primary,
   areaColor,
-  smooth = true
+  smooth = false
 }: {
   name: string
   data: any[]

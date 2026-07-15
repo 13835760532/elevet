@@ -81,6 +81,12 @@
         <el-button type="primary" class="export-btn" @click="handleExport" :loading="exportLoading">导出</el-button>
       </div>
       <div class="table-container">
+        <!-- 检测量趋势图 -->
+        <div class="chart-container" v-if="trendOption">
+          <div class="chart-title">检测量</div>
+          <Echart :options="trendOption" height="320px" />
+        </div>
+
         <el-table v-if="activeTab === 'task'" v-loading="loading" :data="filteredTableData" style="width: 100%"
           empty-text="暂无任务检测分析数据">
           <el-table-column type="index" label="序号" width="80" align="center" />
@@ -103,19 +109,14 @@
           <AreaCascader v-if="canViewAreaRange" v-model="resultFilters.area" placeholder="检测地区" checkStrictly
             :root-area-code="userDeptAreaCode" class="filter-item" style="width: 150px" @select="handleResultAreaSelect"
             @change="handleResultAreaChange" />
-          <el-select v-if="canViewAreaRange" v-model="resultFilters.org" placeholder="检测机构" class="filter-item" clearable></el-select>
+          <el-select v-if="canViewAreaRange" v-model="resultFilters.org" placeholder="检测机构" class="filter-item"
+            clearable></el-select>
           <el-input v-else :model-value="currentDeptName" placeholder="检测机构" class="filter-item" disabled />
           <el-select v-model="resultFilters.result" placeholder="检测结果" class="filter-item" clearable>
             <el-option label="阴性" :value="0" />
             <el-option label="阳性" :value="1" />
             <el-option label="结果异常" :value="2" />
           </el-select>
-        </div>
-
-        <!-- 检测结果趋势图 -->
-        <div class="chart-container" v-if="activeTab === 'result' && trendOption">
-          <div class="chart-title">检测量</div>
-          <Echart :options="trendOption" height="320px" />
         </div>
 
         <el-table v-if="activeTab === 'result'" v-loading="resultLoading" :data="resultTableData" style="width: 100%"
@@ -319,7 +320,7 @@ const buildResultTableQuery = () => {
     pageNo: resultPageNo.value,
     pageSize: resultPageSize.value,
     ...queryParams,
-    recordCode: resultFilters.value.keyword || undefined,
+    keyword: resultFilters.value.keyword || undefined,
     sampleName: resultFilters.value.sample || undefined,
     productCategory: resultFilters.value.category || undefined,
     detectionArea: typeof resultFilters.value.area === 'string' ? resultFilters.value.area : undefined,
@@ -348,7 +349,7 @@ const buildResultExportQuery = () => {
 
   return {
     ...queryParams,
-    recordCode: resultFilters.value.keyword || undefined,
+    keyword: resultFilters.value.keyword || undefined,
     sampleName: resultFilters.value.sample || undefined,
     productCategory: resultFilters.value.category || undefined,
     detectionArea: typeof resultFilters.value.area === 'string' ? resultFilters.value.area : undefined,
@@ -446,10 +447,10 @@ const handleSearch = () => {
   pageNo.value = 1
   resultPageNo.value = 1
   loadOverview()
+  loadTrend()
   if (activeTab.value === 'task') {
     loadTaskPage()
   } else {
-    loadTrend()
     loadResultPage()
   }
 }
@@ -557,10 +558,10 @@ watch(
 )
 
 watch(activeTab, (val) => {
+  loadTrend()
   if (val === 'task') {
     loadTaskPage()
   } else {
-    loadTrend()
     loadResultPage()
   }
 })

@@ -48,9 +48,8 @@
             <el-option v-for="item in productCategoryOptions" :key="item.value" :label="item.label"
               :value="item.value" />
           </el-select>
-          <AreaCascader v-model="detectionAreaIds" placeholder="检测地区" checkStrictly
-            :root-area-code="userDeptAreaCode" class="filter-item" @select="handleDetectionAreaSelect"
-            @change="handleDetectionAreaChange" />
+          <AreaCascader v-model="detectionAreaIds" placeholder="检测地区" checkStrictly :root-area-code="userDeptAreaCode"
+            class="filter-item" @select="handleDetectionAreaSelect" @change="handleDetectionAreaChange" />
           <el-select v-if="canViewAreaRange" v-model="filters.org" placeholder="检测机构" class="filter-item"></el-select>
           <el-input v-else :model-value="currentDeptName" placeholder="检测机构" class="filter-item" disabled />
           <el-select v-model="filters.result" placeholder="检测结果" class="filter-item" clearable>
@@ -139,7 +138,7 @@ import * as DetectionRecordApi from '@/api/agri/detectionRecord'
 import { useDict } from '@/hooks/web/useDict'
 import {
   buildRangeParams,
-  createBarSeries,
+  createLineSeries,
   createCategoryAxis,
   createChartGrid,
   createChartTooltip,
@@ -246,10 +245,11 @@ const sampleTrendOption = computed(() => {
     xAxis: createCategoryAxis(xAxis),
     yAxis: createValueAxis(),
     series: [
-      createBarSeries({
+      createLineSeries({
         name: '样品量',
         data: selfTrend.value.sampleCounts || [],
-        color: statisticsChartColors.primary
+        color: statisticsChartColors.primary,
+        areaColor: statisticsChartColors.primarySoft
       })
     ]
   }
@@ -265,12 +265,20 @@ const positiveTrendOption = computed(() => {
       valueFormatter: (value: any) => value + '%'
     }),
     xAxis: createCategoryAxis(xAxis),
-    yAxis: createValueAxis(),
+    yAxis: createValueAxis('', {
+      min: 0,
+      max: 100,
+      interval: 25,
+      axisLabel: {
+        formatter: '{value}%'
+      }
+    }),
     series: [
-      createBarSeries({
+      createLineSeries({
         name: '阳性率',
         data: positiveTrend.value.positiveRates || [],
-        color: statisticsChartColors.green
+        color: statisticsChartColors.green,
+        areaColor: statisticsChartColors.greenSoft
       })
     ]
   }
@@ -336,7 +344,7 @@ const getResultLabel = (value: any) => {
 const mapRecordRow = (item: any) => ({
   taskNo: item.taskCode || item.task?.taskCode || item.recordCode || '--',
   taskName: item.taskName || item.task?.taskName || item.planName || '--',
-  recordCode: item.recordCode || '--',
+  keyword: item.recordCode || '--',
   planName: item.planName || '--',
   type: item.taskId ? '任务检测' : '自主检测',
   sampleNo: item.sampleCode || item.recordCode || '--',
@@ -394,7 +402,7 @@ const buildTableQuery = () => {
     pageNo: pageNo.value,
     pageSize: pageSize.value,
     ...areaQueryParams,
-    recordCode: filters.keyword || undefined,
+    keyword: filters.keyword || undefined,
     sampleName: filters.sample || undefined,
     productCategory: filters.category || undefined,
     detectionArea: filters.area || undefined,
@@ -436,7 +444,7 @@ const buildExportParams = () => {
 
   return {
     ...areaQueryParams,
-    recordCode: filters.keyword || undefined,
+    keyword: filters.keyword || undefined,
     sampleName: filters.sample || undefined,
     productCategory: filters.category || undefined,
     detectionArea: filters.area || undefined,

@@ -27,8 +27,15 @@
                   v-for="option in tab.dropdownOptions"
                   :key="option.value"
                   :command="option.value"
+                  :class="{ 'is-active-option': dropdownActiveCommands[tab.value] === option.value }"
                 >
                   {{ option.label }}
+                  <Icon
+                    v-if="dropdownActiveCommands[tab.value] === option.value"
+                    icon="ep:check"
+                    :size="14"
+                    style="margin-left: 8px; color: #00b3ed;"
+                  />
                 </el-dropdown-item>
               </el-dropdown-menu>
             </template>
@@ -63,7 +70,7 @@
 
 <script setup lang="ts">
 import { computed, ref, onMounted, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import TabAll from './components/TabAll.vue'
 import TabTask from './components/TabTask.vue'
 import TabQuick from './components/TabQuick.vue'
@@ -74,6 +81,7 @@ import { isCurrentUserRegulatoryDept } from './components/statisticsData'
 import { getTaskQueryDeptScope, resolveStatisticsTab } from './statisticsTabs'
 
 const route = useRoute()
+const router = useRouter()
 const currentTab = ref('all')
 const scopedTabValues = ['issue', 'verify', 'filing'] as const
 type ScopedTabValue = (typeof scopedTabValues)[number]
@@ -87,6 +95,15 @@ const tabDeptScopes = ref<Record<ScopedTabValue, number>>({
 const taskDeptScope = ref(0)
 const quickDeptScope = ref(0)
 const quickSelfDetection = ref<boolean | undefined>(undefined)
+
+const dropdownActiveCommands = ref<Record<string, string>>((() => {
+  try {
+    const saved = localStorage.getItem('statistics_dropdown_commands')
+    return saved ? JSON.parse(saved) : {}
+  } catch {
+    return {}
+  }
+})())
 
 interface TabDropdownOption {
   label: string
@@ -163,17 +180,42 @@ const tabs = computed<StatisticsTab[]>(() => [
   }
 ])
 
+
 const handleTabChange = (tabValue: string) => {
   currentTab.value = tabValue
+  localStorage.setItem('statistics_current_tab', tabValue)
+  if (route.query.tab !== tabValue) {
+    router.replace({
+      query: {
+        ...route.query,
+        tab: tabValue
+      }
+    })
+  }
   if (tabValue === 'task') {
-    taskDeptScope.value = 0
+    const cmd = dropdownActiveCommands.value.task
+    if (cmd) {
+      setTaskScopeByCommand(cmd)
+    } else {
+      taskDeptScope.value = 0
+    }
   }
   if (tabValue === 'quick') {
-    quickDeptScope.value = 0
-    quickSelfDetection.value = undefined
+    const cmd = dropdownActiveCommands.value.quick
+    if (cmd) {
+      setQuickScopeByCommand(cmd)
+    } else {
+      quickDeptScope.value = 0
+      quickSelfDetection.value = undefined
+    }
   }
   if (scopedTabValues.includes(tabValue as ScopedTabValue)) {
-    tabDeptScopes.value[tabValue as ScopedTabValue] = 0
+    const cmd = dropdownActiveCommands.value[tabValue]
+    if (cmd) {
+      tabDeptScopes.value[tabValue as ScopedTabValue] = getQueryDeptScopeByCommand(cmd)
+    } else {
+      tabDeptScopes.value[tabValue as ScopedTabValue] = 0
+    }
   }
 }
 
@@ -210,6 +252,16 @@ const setTaskScopeByCommand = (command: unknown) => {
 
 const handleDropdownCommand = (tabValue: string, command: unknown) => {
   currentTab.value = tabValue
+  localStorage.setItem('statistics_current_tab', tabValue)
+  dropdownActiveCommands.value[tabValue] = String(command)
+  if (route.query.tab !== tabValue) {
+    router.replace({
+      query: {
+        ...route.query,
+        tab: tabValue
+      }
+    })
+  }
   if (tabValue === 'task') {
     setTaskScopeByCommand(command)
   }
@@ -222,7 +274,10 @@ const handleDropdownCommand = (tabValue: string, command: unknown) => {
 }
 
 const initTab = () => {
-  handleTabChange(resolveStatisticsTab(route.query.tab))
+  const queryTab = route.query.tab
+  const savedTab = localStorage.getItem('statistics_current_tab')
+  const targetTab = resolveStatisticsTab(queryTab || savedTab)
+  handleTabChange(targetTab)
 }
 
 onMounted(() => {
@@ -234,6 +289,14 @@ watch(
   () => {
     initTab()
   }
+)
+
+watch(
+  dropdownActiveCommands,
+  (newVal) => {
+    localStorage.setItem('statistics_dropdown_commands', JSON.stringify(newVal))
+  },
+  { deep: true }
 )
 </script>
 
@@ -459,5 +522,11 @@ watch(
   .statistics-tab-body :deep(.stat-content) {
     padding: 16px 24px 24px;
   }
+}
+
+:deep(.el-dropdown-menu__item.is-active-option) {
+  color: #00b3ed !important;
+  font-weight: 600 !important;
+  background-color: #f0f9ff !important;
 }
 </style>

@@ -12,14 +12,14 @@
         <div class="stat-card blue-card">
           <div class="card-bg-icon">¥</div>
           <div class="card-info">
-            <div class="card-title">任务下发项</div>
+            <div class="card-title">任务下发项(样品量)</div>
             <div class="card-value">{{ formatNumber(overview.taskIssuedCount) }}</div>
           </div>
         </div>
         <div class="stat-card blue-card-light">
           <div class="card-bg-icon">¥</div>
           <div class="card-info">
-            <div class="card-title">任务完成项</div>
+            <div class="card-title">任务完成项(样品量)</div>
             <div class="card-value">{{ formatNumber(overview.taskCompletedCount) }}</div>
           </div>
         </div>
@@ -175,7 +175,7 @@
               </el-radio-group>
             </div>
           </div>
-          <div class="chart-content" style="flex: 1; display: flex; flex-direction: column; justify-content: flex-end;">
+          <div class="chart-content" style="flex: 1; display: flex; flex-direction: column;">
             <div class="horizontal-bar-list">
               <div class="h-bar-item" v-for="(item, index) in productRiskData" :key="index">
                 <span class="h-bar-label">NO{{ index + 1 }} {{ item.name }}</span>
@@ -279,7 +279,7 @@
               </el-radio-group>
             </div>
           </div>
-          <div class="chart-content" style="flex: 1; display: flex; flex-direction: column; justify-content: flex-end;">
+          <div class="chart-content" style="flex: 1; display: flex; flex-direction: column;">
             <div class="horizontal-bar-list">
               <div class="h-bar-item" v-for="(item, index) in testItemRiskData" :key="index">
                 <span class="h-bar-label">{{ item.name }}</span>
@@ -1817,8 +1817,7 @@ onMounted(() => {
 
 .v-bar-track {
   width: 30px;
-  height: 100%;
-  min-height: 150px;
+  flex: 1;
   background-color: transparent;
   display: flex;
   align-items: flex-end;
