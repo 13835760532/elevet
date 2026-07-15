@@ -128,8 +128,11 @@
           <el-table :data="detailData.items" border style="width: 100%" class="custom-table">
             <el-table-column prop="channel" label="通道" align="center" width="100" />
             <el-table-column prop="itemName" label="检测项目" align="center" />
-            <el-table-column prop="value" label="检测值 (T/C值)" align="center" />
-            <el-table-column prop="concentration" label="浓度值(单位ppb)" align="center" />
+            <el-table-column label="检测值 (T/C值)" align="center">
+              <template #default="{ row }">
+                {{ formatResult(row.value) }}
+              </template>
+            </el-table-column>
             <el-table-column prop="result" label="检测结果" align="center" width="120">
               <template #default="{ row }">
                 <span :class="row.result === '阳性' ? 'text-danger' : 'text-success'">{{ row.result }}</span>
@@ -206,6 +209,12 @@ const detailData = reactive({
 });
 
 
+
+const formatResult = (val) => {
+  if (val === null || val === undefined || val === '') return '--';
+  const num = Number(val);
+  return isNaN(num) ? val : num.toFixed(2);
+};
 
 const statusClass = computed(() => {
   if (detailData.resultStatus === '阳性' || detailData.resultStatus === '异常' || detailData.resultStatus === '出错') return 'is-danger';

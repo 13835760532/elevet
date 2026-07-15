@@ -1,9 +1,8 @@
 <template>
   <section class="center-section">
-    <BigPanelCard class="big-panel-center" title="合格证地区分布图" :tabs="['开具', '存证']" v-model:active-tab="mapTab"
-      :bg-image="mapBg">
+    <BigPanelCard class="big-panel-center" title="合格证地区分布图" :bg-image="mapBg">
       <div class="map-area">
-        <Map mode="certificate" :certificate-tab="mapTab" />
+        <Map mode="certificate" />
       </div>
     </BigPanelCard>
 
@@ -29,7 +28,7 @@ import { Echart } from '@/components/Echart'
 
 import BigPanelCard from '../bigscreen/BigPanelCard.vue'
 import BigDataEmpty from '../bigscreen/BigDataEmpty.vue'
-import Map from '../Map.vue'
+import Map from '../ThreeMap.vue'
 import mapBg from '@/assets/imgs/echarts/合格证/Frame 57_bg.png'
 import trendBg from '@/assets/imgs/echarts/合格证/Frame 59_bg.png'
 import {
@@ -39,7 +38,7 @@ import {
 import { getBigScreenQueryParams, subscribeBigScreenRefresh } from '../bigscreen/config'
 import { cachedBigScreenRequest } from '../bigscreen/requestCache'
 
-const mapTab = ref('开具')
+
 const trendData = ref<CertificateServiceTrendRespVO>({})
 
 const normalizeSeries = (series?: number[], length = 0) => {

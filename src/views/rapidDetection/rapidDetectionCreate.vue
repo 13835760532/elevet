@@ -372,11 +372,6 @@
                                 }}
                             </template>
                         </el-table-column>
-                        <el-table-column property="concentration" label="浓度值（单位 ppb）">
-                            <template #default="scope">
-                                {{ scope.row.concentration || '--' }}
-                            </template>
-                        </el-table-column>
                         <el-table-column property="status" label="检测结果">
                             <template #default="scope">
                                 <span :class="scope.row.status.includes('阳') ? 'text-red' : 'text-green'">{{

@@ -16612,11 +16612,11 @@
           {
             "name": "productionScale",
             "in": "query",
-            "description": "生产规模",
+            "description": "生产经营主体",
             "required": false,
             "schema": {
               "type": "string",
-              "description": "生产规模"
+              "description": "生产经营主体"
             }
           },
           {
@@ -17008,11 +17008,11 @@
           {
             "name": "productionScale",
             "in": "query",
-            "description": "生产规模",
+            "description": "生产经营主体",
             "required": false,
             "schema": {
               "type": "string",
-              "description": "生产规模"
+              "description": "生产经营主体"
             }
           },
           {
@@ -29012,7 +29012,7 @@
             "maxLength": 100,
             "minLength": 0,
             "type": "string",
-            "description": "生产规模",
+            "description": "生产经营主体",
             "example": "10 亩"
           },
           "legalPerson": {
@@ -29882,11 +29882,11 @@
           },
           "productionScale": {
             "type": "string",
-            "description": "生产规模"
+            "description": "生产经营主体"
           },
           "productionScaleUnit": {
             "type": "string",
-            "description": "生产规模单位（亩/平方米/吨等）",
+            "description": "生产经营主体单位（亩/平方米/吨等）",
             "example": "亩"
           }
         },
@@ -35805,7 +35805,7 @@
           },
           "productionScale": {
             "type": "string",
-            "description": "生产规模",
+            "description": "生产经营主体",
             "example": "10 亩"
           },
           "legalPerson": {
@@ -38317,11 +38317,11 @@
           },
           "productionScale": {
             "type": "string",
-            "description": "生产规模"
+            "description": "生产经营主体"
           },
           "productionScaleUnit": {
             "type": "string",
-            "description": "生产规模单位（亩/平方米/吨等）",
+            "description": "生产经营主体单位（亩/平方米/吨等）",
             "example": "亩"
           }
         },

@@ -51,7 +51,7 @@ import echarts from '@/plugins/echarts'
 import { Echart } from '@/components/Echart'
 import BigPanelCard from './BigPanelCard.vue'
 import BigDataEmpty from './BigDataEmpty.vue'
-import Map from '../Map.vue'
+import Map from '../ThreeMap.vue'
 import fgqtBg from '@/assets/imgs/echarts/首页/fgqt_bg.png'
 import trendBg from '@/assets/imgs/echarts/首页/jcdtl_bg.png'
 import {

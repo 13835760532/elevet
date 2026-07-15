@@ -78,7 +78,7 @@
             <div class="property-row">
               <div class="property-label">样品产地：</div>
               <div class="property-value">{{ activeRow.sampleArea || activeRow.sampleOrigin || activeRow.origin || '--'
-              }}</div>
+                }}</div>
             </div>
             <div class="property-row">
               <div class="property-label">样品来源：</div>
@@ -111,7 +111,6 @@
               <span class="col-idx">通道</span>
               <span class="col-name">检测项目</span>
               <span class="col-value">检测值 (T/C值)</span>
-              <span class="col-conc">浓度值 (单位 ppb)</span>
               <span class="col-status">结果</span>
             </div>
             <div v-for="(item, index) in detectionItems" :key="index" class="result-trow">
@@ -124,7 +123,6 @@
                     : '--'
                 }}
               </span>
-              <span class="col-conc">{{ item.concentration || '--' }}</span>
               <span class="col-status">
                 <i :class="['status-dot', item.result === 1 ? 'is-safe' : 'is-danger']"></i>
                 <span :class="['status-text', item.result === 1 ? 'is-safe' : 'is-danger']">
@@ -137,7 +135,7 @@
         </div>
 
         <div class="info-module mt-24">
-          <h4 class="module-title">检测报告</h4>
+          <h4 class="module-title">检测图片</h4>
           <div class="report-evidence-box">
             <template v-if="activeRow.reportFileUrl || activeRow.testPaperImageUrl">
               <div v-if="isPdf(activeRow.reportFileUrl || activeRow.testPaperImageUrl)" class="pdf-preview-box"
@@ -336,7 +334,7 @@ const getDetectionItemNames = (row) => {
       if (parsed && Array.isArray(parsed.results)) {
         rawItems = parsed.results;
       }
-    } catch (e) {}
+    } catch (e) { }
   }
   if (!rawItems.length && row.detectionResults) {
     try {
@@ -346,7 +344,7 @@ const getDetectionItemNames = (row) => {
       if (Array.isArray(parsed)) {
         rawItems = parsed;
       }
-    } catch (e) {}
+    } catch (e) { }
   }
   if (rawItems.length) {
     return rawItems.map(item => item.detectionItem || item.codeName || item.name || item.itemName || '-').join(', ');

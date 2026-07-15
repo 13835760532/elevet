@@ -39,8 +39,7 @@
             </div>
           </div>
         </div>
-        <ThreeMap v-if="useThreeRenderer" :mode="mapMode" :certificate-tab="mapTab" :task-label="taskLabel" />
-        <VisualizationMap v-else :mode="mapMode" :certificate-tab="mapTab" />
+        <ThreeMap :mode="mapMode" :certificate-tab="mapTab" :task-label="taskLabel" />
       </div>
     </BigPanelCard>
 
@@ -61,7 +60,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, defineAsyncComponent, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import echarts from '@/plugins/echarts'
 import { Echart } from '@/components/Echart'
@@ -77,7 +76,7 @@ import {
 } from '@/api/agri/dashboard/certificate'
 import BigPanelCard from './BigPanelCard.vue'
 import BigDataEmpty from './BigDataEmpty.vue'
-import VisualizationMap from '../Map.vue'
+import ThreeMap from '../ThreeMap.vue'
 import { getBigScreenConfig, getBigScreenQueryParams, subscribeBigScreenRefresh } from './config'
 import type { BigScreenDataScope } from './dataScope'
 import { cachedBigScreenRequest } from './requestCache'
@@ -93,19 +92,7 @@ import n3 from '@/assets/imgs/echarts/首页/fgqt3.png'
 
 defineOptions({ name: 'VisualizationPersistentCenterSection' })
 
-const threeMapLoadFailed = ref(false)
-const ThreeMap = defineAsyncComponent({
-  loader: () => import('../ThreeMap.vue'),
-  onError(error, retry, fail, attempts) {
-    console.error('[PersistentCenterSection] ThreeMap load failed:', error)
-    if (attempts <= 1) {
-      retry()
-      return
-    }
-    threeMapLoadFailed.value = true
-    fail()
-  }
-})
+
 
 type BigScreenMenu = '' | 'task' | 'inspect' | 'cert' | 'warn'
 
@@ -124,7 +111,7 @@ const activeDataScope = ref<BigScreenDataScope>(getBigScreenConfig().dataScope)
 const isDefaultMode = computed(() => !props.activeMenu || props.activeMenu === 'warn')
 const isCertificateMode = computed(() => props.activeMenu === 'cert')
 const showTrendPanel = computed(() => isDefaultMode.value || isCertificateMode.value)
-const useThreeRenderer = computed(() => route.query.renderer !== 'maptalks' && !threeMapLoadFailed.value)
+
 
 const sectionClass = computed(() => {
   if (props.activeMenu === 'cert') return 'cert'

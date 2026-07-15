@@ -80,10 +80,10 @@
                         <el-input v-model="formData.contactPhone" placeholder="请填写联系电话" />
                     </el-form-item>
 
-                    <!-- 生产规模 -->
-                    <el-form-item label="生产规模" prop="productionScale">
+                    <!-- 生产经营主体 -->
+                    <el-form-item label="生产经营主体" prop="productionScale">
                         <div class="scale-row">
-                            <el-input v-model="formData.productionScale" placeholder="请填写生产规模" />
+                            <el-input v-model="formData.productionScale" placeholder="请填写生产经营主体" />
                             <el-select v-model="formData.productionScaleUnit" placeholder="亩" style="width: 100px">
                                 <el-option v-for="unit in productionScaleUnitOptions" :key="unit.value"
                                     :label="unit.label" :value="unit.value" />

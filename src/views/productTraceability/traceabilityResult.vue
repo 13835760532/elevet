@@ -185,8 +185,11 @@
                                         :header-cell-style="{ background: '#f8f8f9', color: '#333' }">
                                         <el-table-column prop="index" label="序号" width="80" align="center" />
                                         <el-table-column prop="item" label="检测项目" />
-                                        <el-table-column prop="value" label="检测值 (T/C值)" align="center" />
-                                        <el-table-column prop="concentration" label="浓度值(单位ppb)" align="center" />
+                                        <el-table-column label="检测值 (T/C值)" align="center">
+                                            <template #default="{ row }">
+                                                {{ formatResult(row.value) }}
+                                            </template>
+                                        </el-table-column>
                                         <el-table-column prop="result" label="检测结果" align="center" />
                                     </el-table>
                                 </div>
@@ -212,9 +215,10 @@ defineOptions({
 const route = useRoute();
 const searchCode = ref((route.query.code as string) || '');
 
-const handleSearch = () => {
-    // Execute search logic here
-    console.log('Searching for:', searchCode.value);
+const formatResult = (val: any) => {
+  if (val === null || val === undefined || val === '') return '--';
+  const num = Number(val);
+  return isNaN(num) ? val : num.toFixed(2);
 };
 
 const tableData = ref([

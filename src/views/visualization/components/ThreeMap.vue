@@ -207,7 +207,7 @@ const tooltipLines = computed(() =>
 const backButtonText = computed(() => `返回${homeScopeLabel.value || '全国'}`)
 
 const legendTitle = computed(() => {
-  if (isCertificateMode.value) return props.certificateTab === '存证' ? '存证分布' : '开具分布'
+  if (isCertificateMode.value) return '合格证分布'
   if (isFastMapMode.value) return '检测样本分布'
   if (isTaskMapMode.value) return `${props.taskLabel}分布`
   return '任务完成量（项次）'
@@ -476,7 +476,12 @@ const formatRate = (value?: number) => `${Number(value || 0).toFixed(0)}%`
 
 const createTooltipLines = (item?: MapDataItem, value = 0) => {
   if (isCertificateMode.value) {
-    return [{ label: tooltipLabel.value, value }]
+    const data = item as any
+    return [
+      { label: '开具数量', value: Number(data?.issueCount || 0) },
+      { label: '存证数量', value: Number(data?.verificationCount || 0) },
+      { label: '合计数量', value }
+    ]
   }
   if (isFastMapMode.value) {
     const data = item as FastMapDataRespVO | undefined
@@ -528,10 +533,33 @@ const loadCurrentMapData = async () => {
       const certData = await cachedBigScreenRequest('three-map-certificate', params, () =>
         getCertificateMap(params)
       )
-      data =
-        props.certificateTab === '存证'
-          ? (certData as DashboardCertificateMapRespVO)?.verificationList || []
-          : (certData as DashboardCertificateMapRespVO)?.issueList || []
+      const issueList = (certData as DashboardCertificateMapRespVO)?.issueList || []
+      const verificationList = (certData as DashboardCertificateMapRespVO)?.verificationList || []
+      const mergedMap = new Map<string, any>()
+
+      const mergeItem = (item: any, type: 'issue' | 'verification') => {
+        const key = `${item.provinceName || ''}-${item.cityName || ''}-${item.districtName || ''}`
+        if (mergedMap.has(key)) {
+          const existing = mergedMap.get(key)
+          existing.count = (existing.count || 0) + (item.count || 0)
+          if (type === 'issue') {
+            existing.issueCount = (existing.issueCount || 0) + (item.count || 0)
+          } else {
+            existing.verificationCount = (existing.verificationCount || 0) + (item.count || 0)
+          }
+        } else {
+          mergedMap.set(key, {
+            ...item,
+            issueCount: type === 'issue' ? item.count : 0,
+            verificationCount: type === 'verification' ? item.count : 0
+          })
+        }
+      }
+
+      issueList.forEach((item) => mergeItem(item, 'issue'))
+      verificationList.forEach((item) => mergeItem(item, 'verification'))
+
+      data = Array.from(mergedMap.values())
     } else if (isFastMapMode.value) {
       data = await cachedBigScreenRequest('three-map-fast', params, () => getFastMap(params))
     } else if (isTaskMapMode.value) {

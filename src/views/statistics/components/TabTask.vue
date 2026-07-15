@@ -23,15 +23,15 @@
         <div class="stat-card blue-card-light">
           <div class="card-bg-icon">¥</div>
           <div class="card-info">
-            <div class="card-title">任务已下发（总检测量）</div>
-            <div class="card-value">{{ formatNumber(overview.taskIssuedCount) }} <span class="unit">项次</span></div>
+            <div class="card-title">任务已下发（总样品量）</div>
+            <div class="card-value">{{ formatNumber(overview.taskIssuedCount) }} <span class="unit">批次</span></div>
           </div>
         </div>
         <div class="stat-card blue-card-light">
           <div class="card-bg-icon">¥</div>
           <div class="card-info">
-            <div class="card-title">任务已完成（总检测量）</div>
-            <div class="card-value">{{ formatNumber(overview.taskCompletedCount) }} <span class="unit">项次</span></div>
+            <div class="card-title">任务已完成（总样品量）</div>
+            <div class="card-value">{{ formatNumber(overview.taskCompletedCount) }} <span class="unit">批次</span></div>
           </div>
         </div>
         <div class="stat-card blue-card-light">

@@ -70,16 +70,13 @@
             <div class="certificate-divider image-divider"></div>
 
             <h4 class="certificate-section-title image-title">产品图片</h4>
-            <div class="certificate-product-image">
+            <div class="certificate-product-image" v-if="productImage">
                 <img
-                    v-if="productImage"
                     :src="productImage"
                     alt="产品图片"
                 />
-                <el-icon v-else class="placeholder-icon">
-                    <Picture />
-                </el-icon>
             </div>
+            <div v-else class="no-image-text" style="color: #909399; font-size: 14px; text-align: left; padding: 4px 12px;">无</div>
         </div>
     </div>
 </template>

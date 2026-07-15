@@ -67,6 +67,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { ElMessage, ElLoading, ElMessageBox } from 'element-plus'
 import * as authUtil from '@/utils/auth'
 import { resetRouter } from '@/router'
+import { addDynamicRoutes, resetDynamicRouteState } from '@/permission'
 import { deleteUserCache } from '@/hooks/web/useCache'
 import { usePermissionStore } from '@/store/modules/permission'
 import { useUserStore } from '@/store/modules/user'
@@ -166,6 +167,7 @@ function handleLoginPre() {
 
 const handleLogin = async (params) => {
   loading.value = true
+  let globalLoading
   try {
     await getTenantId()
     const loginDataForm = { ...loginForm.value }
@@ -175,7 +177,7 @@ const handleLogin = async (params) => {
     if (!res) {
       return
     }
-    const globalLoading = ElLoading.service({
+    globalLoading = ElLoading.service({
       lock: true,
       text: '正在加载系统中...',
       background: 'rgba(0, 0, 0, 0.7)'
@@ -188,11 +190,26 @@ const handleLogin = async (params) => {
     }
 
     // 新 token 不能复用前一个账号的用户、部门、菜单或动态路由状态。
+    resetDynamicRouteState()
     resetRouter()
     deleteUserCache()
     userStore.resetState()
     permissionStore.$reset()
     authUtil.setToken(res)
+
+    // 首页是静态路由，跳转前先完成用户和菜单初始化，避免布局首次挂载时读取到空菜单。
+    try {
+      await userStore.setUserInfoAction()
+      await addDynamicRoutes()
+    } catch (error) {
+      resetDynamicRouteState()
+      resetRouter()
+      authUtil.removeToken()
+      deleteUserCache()
+      userStore.resetState()
+      permissionStore.$reset()
+      throw error
+    }
 
     if (!redirect.value) {
       redirect.value = '/'
@@ -204,8 +221,8 @@ const handleLogin = async (params) => {
     } else {
       await router.push({ path: redirect.value || permissionStore.addRouters[0].path })
     }
-    globalLoading.close()
   } finally {
+    globalLoading?.close()
     loading.value = false
   }
 }

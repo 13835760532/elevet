@@ -53,8 +53,8 @@
                     <el-input v-model="form.phone" placeholder="65776500" class="custom-input" />
                 </el-form-item>
 
-                <!-- 生产规模 -->
-                <el-form-item label="生产规模" prop="scaleSize">
+                <!-- 生产经营主体 -->
+                <el-form-item label="生产经营主体" prop="scaleSize">
                     <div style="display: flex; gap: 10px; width: 100%">
                         <el-input-number v-model="form.scaleSize" :min="0" class="custom-input-number"
                             style="flex: 1" />

@@ -11,7 +11,7 @@
 <script setup lang="ts">
 import BigPanelCard from '../bigscreen/BigPanelCard.vue';
 import centerBg from '@/assets/imgs/echarts/检测任务/rwjcfx_bg.png';
-import VisualizationMap from '../Map.vue';
+import VisualizationMap from '../ThreeMap.vue';
 </script>
 
 <style scoped lang="scss">

@@ -61,7 +61,7 @@
                         <el-table-column prop="idCode" label="信用代码/身份证号" width="180" align="center" />
                         <el-table-column prop="enterpriseType" label="生产企业" width="100" align="center" />
                         <el-table-column prop="mainProduct" label="主营产品" width="100" align="center" />
-                        <el-table-column prop="prodScale" label="生产规模" width="100" align="center" />
+                        <el-table-column prop="prodScale" label="生产经营主体" width="100" align="center" />
                         <el-table-column prop="contact" label="联系人" width="100" align="center" />
                         <el-table-column prop="phone" label="联系电话" width="140" align="center" />
                         <el-table-column prop="region" label="所属地区" min-width="160" show-overflow-tooltip />

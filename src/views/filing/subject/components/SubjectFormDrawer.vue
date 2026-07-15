@@ -71,7 +71,7 @@ const formRules = {
     address: [{ required: true, message: '请输入详细地址', trigger: 'blur' }],
     contactName: [{ required: true, message: '请输入联系人', trigger: 'blur' }],
     contactPhone: [{ required: true, message: '请输入联系电话', trigger: 'blur' }],
-    productionScale: [{ required: true, message: '请输入生产规模', trigger: 'blur' }]
+    productionScale: [{ required: true, message: '请输入生产经营主体', trigger: 'blur' }]
 };
 
 const resetForm = () => {
@@ -194,7 +194,7 @@ const handleSubmit = async () => {
                             formData.districtCode = val.district;
                         }" />
                     </el-form-item>
-                    <el-form-item label="生产规模" prop="productionScale" required style="flex: 1;">
+                    <el-form-item label="生产经营主体" prop="productionScale" required style="flex: 1;">
                         <div class="scale-row">
                             <el-input v-model="formData.productionScale" placeholder="数量" />
                             <el-select v-model="formData.productionScaleUnit" placeholder="单位" style="min-width: 80px">

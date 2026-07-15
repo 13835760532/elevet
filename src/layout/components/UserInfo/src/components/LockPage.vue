@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import { resetRouter } from '@/router'
+import { resetDynamicRouteState } from '@/permission'
 import { deleteUserCache } from '@/hooks/web/useCache'
 import { useLockStore } from '@/store/modules/lock'
 import { useNow } from '@/hooks/web/useNow'
@@ -49,6 +50,7 @@ async function unLock() {
 // 返回登录
 async function goLogin() {
   await userStore.loginOut().catch(() => {})
+  resetDynamicRouteState()
   resetRouter()
   deleteUserCache()
   tagsViewStore.delAllViews()

@@ -152,7 +152,7 @@
                                     </span>
                                 </template>
                             </el-table-column>
-                            <el-table-column label="操作" width="140" align="center" fixed="right">
+                            <el-table-column label="操作" width="170" align="center" fixed="right">
                                 <template #default="scope">
                                     <div class="table-operate-action-btns">
                                         <template v-if="scope.row.status === 0">

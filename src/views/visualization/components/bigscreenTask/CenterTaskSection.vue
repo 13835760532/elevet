@@ -10,7 +10,7 @@
 
 <script setup lang="ts">
 import BigPanelCard from '../bigscreen/BigPanelCard.vue';
-import Map from '../Map.vue';
+import Map from '../ThreeMap.vue';
 import centerBg from '@/assets/imgs/echarts/检测任务/rwjcfx_bg.png';
 
 </script>

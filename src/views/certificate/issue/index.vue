@@ -44,8 +44,8 @@
                         </el-select>
                     </el-form-item>
                     <el-form-item label="" prop="province">
-                        <AreaCascader v-model="areaIds" @select="handleAreaSelect" placeholder="请选择产地"
-                            style="width: 260px;" />
+                        <AreaCascader v-model="areaIds" :checkStrictly="true" @select="handleAreaSelect"
+                            placeholder="请选择产地" style="width: 260px;" />
                         <!-- <el-cascader placeholder="产品产地" v-model="queryParams.province" :options="provinceAndCityData" :props="{label: 'name', value: 'code'}" clearable class="custom-select" /> -->
                         <!-- <el-select v-show="false" v-model="queryParams.province" placeholder="省" clearable class="custom-select">
                             <el-option label="山东省" value="shandong" />

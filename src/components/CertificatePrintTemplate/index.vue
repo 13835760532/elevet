@@ -75,17 +75,14 @@
             <div class="divider no-print"></div>
             <div class="image-section no-print print-keep-space">
                 <h3 class="info-title">产品图片</h3>
-                <div class="image-preview-box">
+                <div class="image-preview-box" v-if="certificate?.productImageUrl">
                     <img
-                        v-if="certificate?.productImageUrl"
                         :src="certificate.productImageUrl"
                         class="cert-product-img"
                         alt="产品图片"
                     />
-                    <el-icon v-else class="placeholder-icon">
-                        <Picture />
-                    </el-icon>
                 </div>
+                <div v-else class="no-image-text" style="color: #909399; font-size: 14px; text-align: left; padding: 4px 12px;">无</div>
             </div>
         </div>
     </div>

@@ -85,7 +85,6 @@
             <th>通道</th>
             <th>检测项目</th>
             <th>检测值 (T/C值)</th>
-            <th>浓度值(单位ppb)</th>
             <th>检测结果</th>
           </tr>
         </thead>
@@ -93,8 +92,7 @@
           <tr v-for="(item, index) in results" :key="index">
             <td>{{ item.cardChannel || (index + 1) }}</td>
             <td>{{ item.codeName }}</td>
-            <td>{{ item.result }}</td>
-            <td>{{ item.concentration || '<500.00' }}</td>
+            <td>{{ formatResult(item.result) }}</td>
             <td :class="item.status?.includes('阳') ? 'text-red' : 'text-green'">{{ item.status }}</td>
           </tr>
         </tbody>
@@ -150,6 +148,12 @@ const stampImageSrc = computed(() => {
     if (overallStatusValue.value === '阴性') return imgYinXing;
     return '';
 });
+
+const formatResult = (val) => {
+  if (val === null || val === undefined || val === '') return '--';
+  const num = Number(val);
+  return isNaN(num) ? val : num.toFixed(2);
+};
 
 const handleDownload = async () => {
     if (!reportRef.value) return;

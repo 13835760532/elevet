@@ -65,7 +65,7 @@
                     <div class="detail-row">
                         <span class="label">*主体类型：</span>
                         <span class="value">{{ subjectInfo.category ? getCategoryLabel(subjectInfo.category) : '--'
-                            }}</span>
+                        }}</span>
                     </div>
                     <div class="detail-row">
                         <span class="label">*建档类型：</span>
@@ -93,7 +93,7 @@
                         <span class="value">{{ subjectInfo.contactPhone || '--' }}</span>
                     </div>
                     <div class="detail-row">
-                        <span class="label">*生产规模：</span>
+                        <span class="label">*生产经营主体：</span>
                         <span class="value">{{ subjectInfo.productionScale ? subjectInfo.productionScale + ' ' +
                             getAgriUnitLabel(subjectInfo.productionScaleUnit) : '--' }}</span>
                     </div>

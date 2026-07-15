@@ -88,7 +88,6 @@
                             </span>
                         </template>
                     </el-table-column>
-                    <el-table-column label="浓度值(单位:ppb)" prop="concentration" width="160" align="center" />
                     <el-table-column label="检测时间" prop="detectionDate" width="160" align="center">
                         <template #default="scope">
                             {{ scope.row.detectionDate ? formatDate(scope.row.detectionDate, 'YYYY-MM-DD HH:mm:ss') :

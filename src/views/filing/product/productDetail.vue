@@ -31,24 +31,20 @@
                     </div>
                     <div class="detail-row">
                         <div class="label">建档时间：</div>
-                        <div class="value">{{ formatDate(productInfo.archiveDate, 'YYYY-MM-DD HH:mm:ss') || '--' }}
+                        <div class="value">{{ formatDate(productInfo.archiveDate, 'YYYY-MM-DD') || '--' }}
                         </div>
                     </div>
                     <div class="detail-row">
                         <div class="label">*宣传照片：</div>
                         <div class="value">
-                            <div class="img-preview-group">
+                            <div class="img-preview-group" v-if="productInfo.productImageUrl">
                                 <div class="preview-box">
-                                    <el-icon v-if="!productInfo.productImageUrl">
-                                        <Picture />
-                                    </el-icon>
-                                    <template v-else>
-                                        <el-image :src="productInfo.productImageUrl"
-                                            :preview-src-list="[productInfo.productImageUrl]" class="preview-img"
-                                            fit="cover" :preview-teleported="true" />
-                                    </template>
+                                    <el-image :src="productInfo.productImageUrl"
+                                        :preview-src-list="[productInfo.productImageUrl]" class="preview-img"
+                                        fit="cover" :preview-teleported="true" />
                                 </div>
                             </div>
+                            <span v-else>无</span>
                         </div>
                     </div>
                     <div class="detail-row">
@@ -100,7 +96,7 @@
                         <div class="value">{{ subjectInfo.contactPhone || '--' }}</div>
                     </div>
                     <div class="detail-row">
-                        <div class="label">*生产规模：</div>
+                        <div class="label">*生产经营主体：</div>
                         <div class="value">{{ subjectInfo.productionScale ? subjectInfo.productionScale + ' ' +
                             getAgriUnitLabel(subjectInfo.productionScaleUnit) : '--' }}</div>
                     </div>
@@ -115,24 +111,20 @@
                     <div class="detail-row" v-if="subjectInfo.type === 1">
                         <div class="label">*营业执照：</div>
                         <div class="value">
-                            <div class="img-preview-group">
+                            <div class="img-preview-group" v-if="subjectInfo.businessLicenseUrl">
                                 <div class="preview-box">
-                                    <el-icon v-if="!subjectInfo.businessLicenseUrl">
-                                        <Picture />
-                                    </el-icon>
-                                    <template v-else>
-                                        <el-image :src="subjectInfo.businessLicenseUrl"
-                                            :preview-src-list="[subjectInfo.businessLicenseUrl]" class="preview-img"
-                                            fit="cover" :preview-teleported="true" />
-                                    </template>
+                                    <el-image :src="subjectInfo.businessLicenseUrl"
+                                        :preview-src-list="[subjectInfo.businessLicenseUrl]" class="preview-img"
+                                        fit="cover" :preview-teleported="true" />
                                 </div>
                             </div>
+                            <span v-else>无</span>
                         </div>
                     </div>
                     <div class="detail-row" v-if="subjectInfo.type === 2">
                         <div class="label">身份证：</div>
                         <div class="value">
-                            <div class="img-preview-group">
+                            <div class="img-preview-group" v-if="subjectInfo.idCardFrontUrl || subjectInfo.idCardBackUrl">
                                 <div class="id-card-boxes">
                                     <div class="preview-box">
                                         <el-icon v-if="!subjectInfo.idCardFrontUrl">
@@ -157,28 +149,23 @@
                                     </div>
                                 </div>
                             </div>
+                            <span v-else>无</span>
                         </div>
                     </div>
                     <div class="detail-row" v-if="subjectInfo.type === 1">
                         <div class="label">企业资质：</div>
                         <div class="value">
-                            <div class="img-preview-group">
-                                <template
-                                    v-if="subjectInfo.qualificationUrls && parseUrls(subjectInfo.qualificationUrls).length">
-                                    <div class="preview-box"
-                                        v-for="(url, index) in parseUrls(subjectInfo.qualificationUrls)" :key="index">
-                                        <el-image :src="url"
-                                            :preview-src-list="parseUrls(subjectInfo.qualificationUrls)"
-                                            :initial-index="index" class="preview-img" fit="cover"
-                                            :preview-teleported="true" />
-                                    </div>
-                                </template>
-                                <div class="preview-box" v-else>
-                                    <el-icon>
-                                        <Picture />
-                                    </el-icon>
+                            <div class="img-preview-group"
+                                v-if="subjectInfo.qualificationUrls && parseUrls(subjectInfo.qualificationUrls).length">
+                                <div class="preview-box"
+                                    v-for="(url, index) in parseUrls(subjectInfo.qualificationUrls)" :key="index">
+                                    <el-image :src="url"
+                                        :preview-src-list="parseUrls(subjectInfo.qualificationUrls)"
+                                        :initial-index="index" class="preview-img" fit="cover"
+                                        :preview-teleported="true" />
                                 </div>
                             </div>
+                            <span v-else>无</span>
                         </div>
                     </div>
                     <div class="detail-row no-border" v-if="subjectInfo.type === 1">
@@ -218,7 +205,7 @@ const parseUrls = (urlsStr) => {
     if (!urlsStr) return [];
     try {
         const parsed = JSON.parse(urlsStr);
-        return Array.isArray(parsed) ? parsed : [];
+        return (Array.isArray(parsed) ? parsed : []).filter(item => !!item);
     } catch {
         return urlsStr.split(',').filter(item => !!item);
     }
@@ -292,7 +279,8 @@ watch(() => route.query.id, (newId) => {
         position: relative;
         padding-left: 12px;
         line-height: 1.4;
-        
+        text-align: left !important;
+
         &::before {
             content: '';
             position: absolute;
@@ -323,7 +311,8 @@ watch(() => route.query.id, (newId) => {
     min-height: 54px;
     transition: background-color 0.2s ease;
 
-    &:last-child, &.no-border {
+    &:last-child,
+    &.no-border {
         border-bottom: none;
     }
 

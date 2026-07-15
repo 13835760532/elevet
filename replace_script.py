@@ -96,7 +96,7 @@ template = """<template>
                             <span class="value">{{ subjectInfo.contactPhone || '--' }}</span>
                         </div>
                         <div class="detail-item">
-                            <span class="label">*生产规模</span>
+                            <span class="label">*生产经营主体</span>
                             <span class="value">{{ subjectInfo.productionScale ? subjectInfo.productionScale + ' ' + getAgriUnitLabel(subjectInfo.productionScaleUnit) : '--' }}</span>
                         </div>
                         <div class="detail-item" v-if="subjectInfo.type === 1">

@@ -27,7 +27,12 @@ const hasBigScreenUserCache = () => {
   return !!userInfo?.user
 }
 
-const addDynamicRoutes = async () => {
+export const resetDynamicRouteState = () => {
+  dynamicRoutesReady = false
+  dynamicRoutesPromise = null
+}
+
+export const addDynamicRoutes = async () => {
   // 404Page 是动态路由集合的末尾标记；标记存在说明整组路由已经注册完成。
   if (dynamicRoutesReady && router.hasRoute(dynamicRouteReadyMark)) return
   dynamicRoutesReady = false
@@ -164,6 +169,7 @@ router.beforeEach(async (to, from, next) => {
           const nextData = to.path === redirect ? { ...to, replace: true } : { path: redirect, query }
           next(nextData)
         } catch (error) {
+          resetDynamicRouteState()
           resetRouter()
           deleteUserCache()
           removeToken()
