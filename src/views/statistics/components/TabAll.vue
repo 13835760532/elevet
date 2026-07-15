@@ -384,6 +384,20 @@ const chinaMapFeatures = ((chinaLiteGeo as any)?.features || []) as any[]
 const chinaMapNameLookup = new Map<string, string>()
 const registeredStatisticsMapNames = new Set<string>([STATISTICS_CHINA_MAP_NAME])
 
+type MapAreaLevel = 0 | 1 | 2 | 3
+
+interface StatisticsMapScope {
+  mapName: string
+  featureName: string
+  scoped: boolean
+  areaCode: string
+  areaLevel: MapAreaLevel
+  featureCount: number
+  aspectScale: number
+}
+
+const statisticsMapScopeCache = new Map<string, StatisticsMapScope>()
+
 chinaMapFeatures.forEach((feature) => {
   const featureName = String(feature?.properties?.name || '').trim()
   if (!featureName) return
@@ -402,7 +416,54 @@ const getProvinceFeatureCode = (areaCode?: string | number) => {
   return /^\d{2}/.test(value) ? `${value.slice(0, 2)}0000` : ''
 }
 
+const resolveMapAreaLevel = (
+  areaType?: string | number,
+  areaCode?: string | number
+): MapAreaLevel => {
+  const code = String(areaCode || '').trim()
+  if (code === '100000') return 0
 
+  const type = Number(areaType)
+  if (type >= 1 && type <= 3) return type as MapAreaLevel
+
+  if (!/^\d{6}$/.test(code)) return 0
+  if (code.endsWith('0000')) return 1
+  if (code.endsWith('00')) return 2
+  return 3
+}
+
+const fetchAreaGeoJson = async (areaCode: string, areaLevel: MapAreaLevel) => {
+  const fileName = areaLevel > 0 && areaLevel < 3 ? `${areaCode}_full` : areaCode
+  const response = await fetch(`https://geo.datav.aliyun.com/areas_v3/bound/${fileName}.json`)
+  if (!response.ok) {
+    throw new Error(`failed to fetch geoJson for ${fileName}`)
+  }
+  return response.json()
+}
+
+const resolveGeoAspectScale = (geoJson: any) => {
+  let minLatitude = Number.POSITIVE_INFINITY
+  let maxLatitude = Number.NEGATIVE_INFINITY
+
+  const visitCoordinates = (coordinates: any) => {
+    if (!Array.isArray(coordinates)) return
+    if (typeof coordinates[0] === 'number' && typeof coordinates[1] === 'number') {
+      minLatitude = Math.min(minLatitude, coordinates[1])
+      maxLatitude = Math.max(maxLatitude, coordinates[1])
+      return
+    }
+    coordinates.forEach(visitCoordinates)
+  }
+
+  const features = Array.isArray(geoJson?.features) ? geoJson.features : []
+  features.forEach((feature: any) => {
+    visitCoordinates(feature?.geometry?.coordinates)
+  })
+
+  if (!Number.isFinite(minLatitude) || !Number.isFinite(maxLatitude)) return 0.75
+  const centerLatitude = (minLatitude + maxLatitude) / 2
+  return Math.max(0.68, Math.min(0.95, Math.cos(centerLatitude * Math.PI / 180)))
+}
 
 const resolveMapName = (name: string) => {
   const rawName = String(name || '').trim()
@@ -456,70 +517,104 @@ const certificateOverview = ref<DashboardCertificateOverviewRespVO>({})
 const mapType = ref('检测量分布')
 
 const mapRows = ref<any[]>([])
-const mapScope = ref<any>({
+const mapScope = ref<StatisticsMapScope>({
   mapName: STATISTICS_CHINA_MAP_NAME,
   featureName: '',
-  scoped: false
+  scoped: false,
+  areaCode: '',
+  areaLevel: 0,
+  featureCount: chinaMapFeatures.length,
+  aspectScale: 0.75
 })
 
 const loadMapScope = async () => {
-  const { areaCode } = getUserDeptAreaParams()
-  const provinceFeatureCode = getProvinceFeatureCode(areaCode)
+  const { areaType, areaCode } = getUserDeptAreaParams()
+  const normalizedAreaCode = String(areaCode || '').trim()
+  const areaLevel = resolveMapAreaLevel(areaType, normalizedAreaCode)
 
-  if (!provinceFeatureCode) {
+  if (!normalizedAreaCode || !areaLevel) {
     mapScope.value = {
       mapName: STATISTICS_CHINA_MAP_NAME,
       featureName: '',
-      scoped: false
+      scoped: false,
+      areaCode: '',
+      areaLevel: 0,
+      featureCount: chinaMapFeatures.length,
+      aspectScale: 0.75
     }
     return
   }
 
-  const feature = chinaMapFeatures.find((item) => getFeatureAreaCode(item) === provinceFeatureCode)
-  const featureName = feature ? String(feature.properties?.name || '').trim() : ''
-  const mapName = `${STATISTICS_CHINA_MAP_NAME}_${provinceFeatureCode}`
+  const provinceFeatureCode = getProvinceFeatureCode(normalizedAreaCode)
+  const provinceFeature = chinaMapFeatures.find(
+    (item) => getFeatureAreaCode(item) === provinceFeatureCode
+  )
+  const provinceFeatureName = provinceFeature
+    ? String(provinceFeature.properties?.name || '').trim()
+    : ''
+  const mapName = `${STATISTICS_CHINA_MAP_NAME}_${normalizedAreaCode}`
 
   if (registeredStatisticsMapNames.has(mapName)) {
-    mapScope.value = {
+    mapScope.value = statisticsMapScopeCache.get(mapName) || {
       mapName,
-      featureName,
-      scoped: true
+      featureName: provinceFeatureName,
+      scoped: true,
+      areaCode: normalizedAreaCode,
+      areaLevel,
+      featureCount: 1,
+      aspectScale: 0.75
     }
     return
   }
 
   try {
-    const response = await fetch(`https://geo.datav.aliyun.com/areas_v3/bound/${provinceFeatureCode}_full.json`)
-    if (!response.ok) {
-      throw new Error(`failed to fetch geoJson for ${provinceFeatureCode}`)
-    }
-    const geoJson = await response.json()
+    const geoJson = await fetchAreaGeoJson(normalizedAreaCode, areaLevel)
+    const features = Array.isArray(geoJson?.features) ? geoJson.features : []
+    const featureName = areaLevel === 3
+      ? String(features[0]?.properties?.name || '').trim()
+      : provinceFeatureName
     echarts.registerMap(mapName, geoJson as any)
     registeredStatisticsMapNames.add(mapName)
-    mapScope.value = {
+    const nextScope: StatisticsMapScope = {
       mapName,
       featureName,
-      scoped: true
+      scoped: true,
+      areaCode: normalizedAreaCode,
+      areaLevel,
+      featureCount: features.length,
+      aspectScale: resolveGeoAspectScale(geoJson)
     }
+    statisticsMapScopeCache.set(mapName, nextScope)
+    mapScope.value = nextScope
   } catch (error) {
     console.warn('[StatisticsAll] fetch online geoJson failed, fallback to local lite geoJson:', error)
-    if (feature) {
+    if (provinceFeature) {
       const geoJson = {
         ...(chinaLiteGeo as any),
-        features: [feature]
+        features: [provinceFeature]
       }
       echarts.registerMap(mapName, geoJson as any)
       registeredStatisticsMapNames.add(mapName)
-      mapScope.value = {
+      const nextScope: StatisticsMapScope = {
         mapName,
-        featureName,
-        scoped: true
+        featureName: provinceFeatureName,
+        scoped: true,
+        areaCode: normalizedAreaCode,
+        areaLevel,
+        featureCount: 1,
+        aspectScale: resolveGeoAspectScale(geoJson)
       }
+      statisticsMapScopeCache.set(mapName, nextScope)
+      mapScope.value = nextScope
     } else {
       mapScope.value = {
         mapName: STATISTICS_CHINA_MAP_NAME,
         featureName: '',
-        scoped: false
+        scoped: false,
+        areaCode: '',
+        areaLevel: 0,
+        featureCount: chinaMapFeatures.length,
+        aspectScale: 0.75
       }
     }
   }
@@ -614,10 +709,21 @@ const getAxisLabels = (data: any[], statType: '检测量' | '阳性率') => {
 const productRiskAxis = computed(() => getAxisLabels(productRiskData.value, productRiskType.value as any))
 const testItemRiskAxis = computed(() => getAxisLabels(testItemRiskData.value, testItemRiskType.value as any))
 
+const mapLayout = computed(() => {
+  const areaLevel = mapScope.value.areaLevel
+  const layoutSize = areaLevel === 0 ? 92 : areaLevel === 1 ? 86 : areaLevel === 2 ? 82 : 74
+  return {
+    center: ['50%', '50%'],
+    size: `${layoutSize}%`,
+    labelFontSize: mapScope.value.featureCount > 24 ? 11 : 12
+  }
+})
+
 const mapChartOption = computed(() => ({
   backgroundColor: 'transparent',
   tooltip: {
     trigger: 'item',
+    confine: true,
     backgroundColor: 'rgba(255, 255, 255, 0.97)',
     borderColor: '#dce6f2',
     borderWidth: 1,
@@ -648,18 +754,14 @@ const mapChartOption = computed(() => ({
       map: mapScope.value.mapName,
       mapType: mapScope.value.mapName,
       roam: false,
-      zoom: mapScope.value.scoped ? 1.18 : 1.08,
-      top: '0%',
-      bottom: '2%',
-      left: '2%',
-      right: '2%',
-      aspectScale: 0.82,
-      layoutCenter: ['50%', '53%'],
-      layoutSize: '100%',
+      zoom: 1,
+      aspectScale: mapScope.value.aspectScale,
+      layoutCenter: mapLayout.value.center,
+      layoutSize: mapLayout.value.size,
       label: {
         show: true,
         color: '#34455f',
-        fontSize: 12,
+        fontSize: mapLayout.value.labelFontSize,
         formatter: (params: any) => stripRegionSuffix(params.name)
       },
       itemStyle: {
@@ -754,7 +856,7 @@ const loadMapData = async () => {
     const rows = mergeProvinceRows(
       sourceList.map((item) => {
         let subAreaName = ''
-        if (isMunicipality) {
+        if (isMunicipality || currentMapScope.areaLevel >= 2) {
           subAreaName = item.districtName || item.areaName?.split(/[-/]/).pop() || ''
         } else {
           subAreaName = item.cityName || item.districtName || item.areaName?.split(/[-/]/).pop() || ''
