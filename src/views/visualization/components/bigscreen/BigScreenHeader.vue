@@ -69,9 +69,9 @@
           <div class="form-item">
             <div class="item-label">默认显示范围</div>
             <div class="field-shell">
-              <!-- 禁止清空地区选择 -->
+              <!-- 允许清空地区选择 -->
               <el-cascader v-model="configForm.regionPath" :options="areaOptions" :props="areaCascaderProps"
-                :show-all-levels="true" :teleported="false" separator="" filterable size="large" class="custom-cascader"
+                :show-all-levels="true" :teleported="false" separator="" filterable clearable size="large" class="custom-cascader"
                 popper-class="big-screen-area-popper">
                 <template #default="{ data }">
                   <span>{{ data.name || data.originalName }}</span>

@@ -432,13 +432,15 @@ const resolveMapAreaLevel = (
   const code = String(areaCode || '').trim()
   if (code === '100000') return 0
 
-  const type = Number(areaType)
-  if (type >= 1 && type <= 3) return type as MapAreaLevel
+  // 六位行政区编码比缓存中的层级字段更可靠，避免 110000 被误判成区县级。
+  if (/^\d{6}$/.test(code)) {
+    if (code.endsWith('0000')) return 1
+    if (code.endsWith('00')) return 2
+    return 3
+  }
 
-  if (!/^\d{6}$/.test(code)) return 0
-  if (code.endsWith('0000')) return 1
-  if (code.endsWith('00')) return 2
-  return 3
+  const type = Number(areaType)
+  return type >= 1 && type <= 3 ? type as MapAreaLevel : 0
 }
 
 const fetchAreaGeoJson = async (areaCode: string, areaLevel: MapAreaLevel) => {

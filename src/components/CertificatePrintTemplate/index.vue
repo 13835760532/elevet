@@ -20,19 +20,14 @@
                         <div v-for="item in basisOptions" :key="item.value" class="basis-item">
                             <span class="basis-box checked">✔</span>
                             <span class="basis-label">
-                                <span v-if="item.indexLabel" class="basis-index">{{ item.indexLabel }}</span>
                                 {{ item.label }}
                             </span>
                         </div>
                     </div>
                 </div>
                 <div class="qr-code-wrapper">
-                    <Qrcode
-                        v-if="resolvedQrText"
-                        :text="resolvedQrText"
-                        :options="{ errorCorrectionLevel: 'L' }"
-                        :width="qrWidth"
-                    />
+                    <Qrcode v-if="resolvedQrText" :text="resolvedQrText" :options="{ errorCorrectionLevel: 'L' }"
+                        :width="qrWidth" />
                 </div>
             </div>
 
@@ -76,13 +71,10 @@
             <div class="image-section no-print print-keep-space">
                 <h3 class="info-title">产品图片</h3>
                 <div class="image-preview-box" v-if="certificate?.productImageUrl">
-                    <img
-                        :src="certificate.productImageUrl"
-                        class="cert-product-img"
-                        alt="产品图片"
-                    />
+                    <img :src="certificate.productImageUrl" class="cert-product-img" alt="产品图片" />
                 </div>
-                <div v-else class="no-image-text" style="color: #909399; font-size: 14px; text-align: left; padding: 4px 12px;">无</div>
+                <div v-else class="no-image-text"
+                    style="color: #909399; font-size: 14px; text-align: left; padding: 4px 12px;">无</div>
             </div>
         </div>
     </div>
@@ -498,5 +490,4 @@ const quantityText = computed(() => {
         }
     }
 }
-
 </style>

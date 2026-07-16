@@ -49,6 +49,8 @@
         <AreaCascader v-model="originAreaIds" placeholder="产地" checkStrictly :root-area-code="userDeptAreaCode"
           class="filter-item" @select="handleOriginAreaSelect" @change="handleOriginAreaChange" />
         <div class="filter-actions">
+          <el-button type="primary" class="search-btn" @click="searchTable">查询</el-button>
+          <el-button class="reset-btn" @click="resetTableFilters">重置</el-button>
           <el-button type="primary" class="export-btn" @click="handleExport" :loading="exportLoading">导出</el-button>
         </div>
       </div>
@@ -501,6 +503,7 @@ onMounted(() => {
     width: 180px;
   }
 
+  .search-btn,
   .export-btn {
     background-color: #00B3ED;
     border-color: #00B3ED;

@@ -78,7 +78,13 @@
           <span class="t-divider">|</span>
           <span class="t-tab" :class="{ active: activeTab === 'result' }" @click="activeTab = 'result'">检测结果</span>
         </div>
-        <el-button type="primary" class="export-btn" @click="handleExport" :loading="exportLoading">导出</el-button>
+        <div class="table-actions">
+          <template v-if="activeTab === 'task'">
+            <el-button type="primary" class="search-btn" @click="handleSearch">查询</el-button>
+            <el-button class="reset-btn" @click="handleReset">重置</el-button>
+          </template>
+          <el-button type="primary" class="export-btn" @click="handleExport" :loading="exportLoading">导出</el-button>
+        </div>
       </div>
       <div class="table-container">
         <!-- 检测量趋势图 -->
@@ -117,6 +123,10 @@
             <el-option label="阳性" :value="1" />
             <el-option label="结果异常" :value="2" />
           </el-select>
+          <div class="filter-actions">
+            <el-button type="primary" class="search-btn" @click="searchResultPage">查询</el-button>
+            <el-button class="reset-btn" @click="resetResultFilters">重置</el-button>
+          </div>
         </div>
 
         <el-table v-if="activeTab === 'result'" v-loading="resultLoading" :data="resultTableData" style="width: 100%"
@@ -397,6 +407,18 @@ const searchResultPage = useDebounceFn(() => {
   resultPageNo.value = 1
   loadResultPage()
 }, 300)
+
+const resetResultFilters = () => {
+  resultFilters.value.keyword = ''
+  resultFilters.value.sample = ''
+  resultFilters.value.category = ''
+  resultFilters.value.area = []
+  resultFilters.value.areaType = ''
+  resultFilters.value.areaCode = ''
+  resultFilters.value.org = ''
+  resultFilters.value.result = ''
+  searchResultPage()
+}
 
 const loadTrend = async () => {
   try {
@@ -715,6 +737,16 @@ onMounted(() => {
   padding-bottom: 16px;
 }
 
+.table-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  :deep(.el-button + .el-button) {
+    margin-left: 0;
+  }
+}
+
 .table-tabs {
   display: flex;
   align-items: center;
@@ -741,6 +773,7 @@ onMounted(() => {
   }
 }
 
+.search-btn,
 .export-btn {
   background-color: #00B3ED;
   border-color: #00B3ED;
@@ -781,6 +814,21 @@ onMounted(() => {
     &.input-item {
       width: 160px;
     }
+  }
+
+  .filter-actions {
+    margin-left: auto;
+    display: flex;
+    gap: 12px;
+  }
+
+  :deep(.el-button + .el-button) {
+    margin-left: 0;
+  }
+
+  .search-btn {
+    background-color: #00B3ED;
+    border-color: #00B3ED;
   }
 }
 

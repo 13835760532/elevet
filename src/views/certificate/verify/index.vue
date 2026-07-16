@@ -121,7 +121,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { Edit, Search } from '@element-plus/icons-vue';
 import { useMessage } from '@/hooks/web/useMessage';
@@ -156,6 +156,15 @@ const queryParams = reactive({
     dateRange: [] as any
 });
 
+watch(areaIds, (newVal) => {
+    if (!newVal || newVal.length === 0) {
+        queryParams.province = '';
+        queryParams.city = '';
+        queryParams.county = '';
+        queryParams.productionArea = [];
+    }
+});
+
 const pageNum = ref(1);
 const pageSize = ref(10);
 const total = ref(0);
@@ -182,7 +191,7 @@ const loadData = async () => {
             subjectName: queryParams.entity || undefined,
             certificateType: queryParams.certType || undefined,
             contactPhone: queryParams.phone || undefined,
-            productionArea: queryParams.productionArea?.length ? queryParams.productionArea.join('/') : undefined,
+            productionArea: queryParams.productionArea?.length ? queryParams.productionArea[queryParams.productionArea.length - 1] : undefined,
             createTime: queryParams.dateRange && queryParams.dateRange.length === 2 ? [queryParams.dateRange[0] + ' 00:00:00', queryParams.dateRange[1] + ' 23:59:59'] : undefined,
         };
         const data = await CertificateApi.getCertificateVerificationPage(params);
@@ -224,7 +233,7 @@ const handleExport = async () => {
             subjectName: queryParams.entity || undefined,
             certificateType: queryParams.certType || undefined,
             contactPhone: queryParams.phone || undefined,
-            productionArea: queryParams.productionArea?.length ? queryParams.productionArea.join('/') : undefined,
+            productionArea: queryParams.productionArea?.length ? queryParams.productionArea[queryParams.productionArea.length - 1] : undefined,
             createTime: queryParams.dateRange && queryParams.dateRange.length === 2 ? [queryParams.dateRange[0] + ' 00:00:00', queryParams.dateRange[1] + ' 23:59:59'] : undefined,
         };
         const data = await CertificateApi.exportCertificateVerification(params);

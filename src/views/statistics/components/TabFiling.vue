@@ -53,8 +53,8 @@
           :root-area-code="userDeptAreaCode" class="filter-item area-filter" @select="handleSubjectAreaSelect"
           @change="handleSubjectAreaChange" />
         <div class="filter-actions">
-          <!-- <el-button class="reset-btn" @click="handleSubjectReset">重置</el-button>
-          <el-button type="primary" class="search-btn" @click="handleSubjectSearch">查询</el-button> -->
+          <el-button type="primary" class="search-btn" @click="handleSubjectSearch">查询</el-button>
+          <el-button class="reset-btn" @click="handleSubjectReset">重置</el-button>
           <el-button type="primary" class="export-btn" :loading="subjectExportLoading" @click="handleSubjectExport">
             导出
           </el-button>
@@ -118,8 +118,8 @@
           :root-area-code="userDeptAreaCode" class="filter-item area-filter" @select="handleProductAreaSelect"
           @change="handleProductAreaChange" />
         <div class="filter-actions">
-          <!-- <el-button class="reset-btn" @click="handleProductReset">重置</el-button>
-          <el-button type="primary" class="search-btn" @click="handleProductSearch">查询</el-button> -->
+          <el-button type="primary" class="search-btn" @click="handleProductSearch">查询</el-button>
+          <el-button class="reset-btn" @click="handleProductReset">重置</el-button>
           <el-button type="primary" class="export-btn" :loading="productExportLoading" @click="handleProductExport">
             导出
           </el-button>

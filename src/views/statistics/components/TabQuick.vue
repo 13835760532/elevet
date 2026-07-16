@@ -64,6 +64,8 @@
           <el-date-picker v-model="filters.date" type="daterange" range-separator="至" start-placeholder="开始日期"
             end-placeholder="结束日期" class="filter-item date-picker-large" />
           <div class="filter-actions">
+            <el-button type="primary" class="search-btn" @click="searchTable">查询</el-button>
+            <el-button class="reset-btn" @click="resetResultFilters">重置</el-button>
             <el-button type="primary" class="export-btn" @click="handleExport" :loading="exportLoading">导出</el-button>
           </div>
         </div>
@@ -761,9 +763,15 @@ $statistics-control-radius: 6px;
     line-height: $statistics-control-height;
   }
 
+  .search-btn,
+  .reset-btn,
   .export-btn {
     height: $statistics-control-height;
     border-radius: $statistics-control-radius;
+  }
+
+  .search-btn,
+  .export-btn {
     background-color: #00B3ED;
     border-color: #00B3ED;
   }
