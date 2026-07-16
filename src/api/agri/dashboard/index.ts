@@ -81,7 +81,7 @@ export interface PesticideRiskTopRespVO {
 }
 
 export interface MapDataQueryParams extends DashboardQueryParams {
-  areaLevel: '1' | '2'
+  areaLevel: '1' | '2' | '3'
 }
 
 export interface MapDataRespVO {

@@ -371,6 +371,7 @@ import {
 } from '@/api/agri/dashboard/certificate'
 import { getTaskMap } from '@/api/agri/dashboard/task'
 import { getNoticePage, getNotice, type NoticeVO } from '@/api/system/notice'
+import { getAreaTree } from '@/api/system/area'
 import {
   buildRangeParams,
   formatNumber,
@@ -389,6 +390,9 @@ const REGION_SUFFIX_RE = /(省|市|壮族自治区|回族自治区|维吾尔自�
 const stripRegionSuffix = (name: string) => String(name || '').replace(REGION_SUFFIX_RE, '')
 
 const STATISTICS_CHINA_MAP_NAME = 'statisticsChina'
+const STATISTICS_GEO_BASE_URL = import.meta.env.DEV
+  ? '/__geo_proxy/assets/data/map/geo'
+  : '/assets/data/map/geo'
 const chinaMapFeatures = ((chinaLiteGeo as any)?.features || []) as any[]
 const chinaMapNameLookup = new Map<string, string>()
 const registeredStatisticsMapNames = new Set<string>([STATISTICS_CHINA_MAP_NAME])
@@ -405,7 +409,13 @@ interface StatisticsMapScope {
   aspectScale: number
 }
 
+interface StatisticsAreaNameParams {
+  provinceName?: string
+  cityName?: string
+}
+
 const statisticsMapScopeCache = new Map<string, StatisticsMapScope>()
+let statisticsAreaTreePromise: Promise<any[]> | null = null
 
 chinaMapFeatures.forEach((feature) => {
   const featureName = String(feature?.properties?.name || '').trim()
@@ -419,6 +429,32 @@ echarts.registerMap(STATISTICS_CHINA_MAP_NAME, chinaLiteGeo as any)
 const getFeatureAreaCode = (feature: any) => String(
   feature?.id || feature?.properties?.adcode || feature?.properties?.code || ''
 ).trim()
+
+const findAreaPathByCode = (areaCode: string, tree: any[], parents: any[] = []): any[] => {
+  for (const node of tree || []) {
+    const path = [...parents, node]
+    if (String(node?.id || '') === areaCode) return path
+    const childPath = findAreaPathByCode(areaCode, node?.children || [], path)
+    if (childPath.length) return childPath
+  }
+  return []
+}
+
+const resolveAreaNameParams = async (areaCode: string): Promise<StatisticsAreaNameParams> => {
+  if (!areaCode) return {}
+  if (!statisticsAreaTreePromise) {
+    statisticsAreaTreePromise = getAreaTree().catch((error) => {
+      statisticsAreaTreePromise = null
+      throw error
+    })
+  }
+
+  const path = findAreaPathByCode(areaCode, await statisticsAreaTreePromise)
+  return {
+    provinceName: path[0]?.name || undefined,
+    cityName: path[1]?.name || undefined
+  }
+}
 
 const getProvinceFeatureCode = (areaCode?: string | number) => {
   const value = String(areaCode || '').trim()
@@ -443,13 +479,33 @@ const resolveMapAreaLevel = (
   return type >= 1 && type <= 3 ? type as MapAreaLevel : 0
 }
 
+const getGeoJsonFileAreaCode = (areaCode: string, areaLevel: MapAreaLevel) => {
+  if (areaLevel !== 3) return areaCode
+  const provincePrefix = areaCode.slice(0, 2)
+  if (['11', '12', '31', '50'].includes(provincePrefix)) return `${provincePrefix}0000`
+  return `${areaCode.slice(0, 4)}00`
+}
+
 const fetchAreaGeoJson = async (areaCode: string, areaLevel: MapAreaLevel) => {
-  const fileName = areaLevel > 0 && areaLevel < 3 ? `${areaCode}_full` : areaCode
-  const response = await fetch(`https://geo.datav.aliyun.com/areas_v3/bound/${fileName}.json`)
+  const fileAreaCode = getGeoJsonFileAreaCode(areaCode, areaLevel)
+  const response = await fetch(`${STATISTICS_GEO_BASE_URL}/${fileAreaCode}.json`)
   if (!response.ok) {
-    throw new Error(`failed to fetch geoJson for ${fileName}`)
+    throw new Error(`failed to fetch geoJson for ${fileAreaCode}, level ${areaLevel}`)
   }
-  return response.json()
+  const geoJson = await response.json()
+  if (areaLevel !== 3) return geoJson
+
+  const features = Array.isArray(geoJson?.features) ? geoJson.features : []
+  const matchedFeatures = features.filter(
+    (feature: any) => getFeatureAreaCode(feature) === areaCode
+  )
+  if (!matchedFeatures.length) {
+    throw new Error(`district ${areaCode} not found in geoJson ${fileAreaCode}`)
+  }
+  return {
+    ...geoJson,
+    features: matchedFeatures
+  }
 }
 
 const resolveGeoAspectScale = (geoJson: any) => {
@@ -824,13 +880,17 @@ const loadMapData = async () => {
     const params = { ...queryParams.value }
     const currentAreaCode = String(params.areaCode || '').trim()
     const currentAreaType = String(params.areaType || '').trim()
+    const areaNameParams = await resolveAreaNameParams(currentAreaCode).catch((error) => {
+      console.warn('[StatisticsAll] resolve area names failed:', error)
+      return {} as StatisticsAreaNameParams
+    })
 
     const isMunicipality = ['110000', '120000', '310000', '500000'].includes(currentAreaCode) ||
       /^(11|12|31|50)0000$/.test(currentAreaCode)
 
-    let finalAreaLevel = '1'
-    let finalProvinceName = params.provinceName
-    let finalCityName = params.cityName
+    let finalAreaLevel: '1' | '2' | '3' = '1'
+    let finalProvinceName = areaNameParams.provinceName || params.provinceName
+    let finalCityName = areaNameParams.cityName || params.cityName
 
     if (isMunicipality) {
       finalAreaLevel = '3'
@@ -844,12 +904,15 @@ const loadMapData = async () => {
         finalProvinceName = name
         finalCityName = name
       }
+    } else if (currentAreaType === '1') {
+      finalAreaLevel = '2'
     } else if (currentAreaType === '2' || currentAreaType === '3') {
       finalAreaLevel = '3'
     }
 
     const mapParams = {
-      ...params,
+      startDate: params.startDate,
+      endDate: params.endDate,
       areaLevel: finalAreaLevel,
       provinceName: finalProvinceName,
       cityName: finalCityName
