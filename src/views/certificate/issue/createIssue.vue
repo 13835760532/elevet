@@ -671,6 +671,7 @@ const PRINTER_CHARACTERISTIC_UUIDS = [
 const id = route.query.id;
 const isUpdate = !!id;
 const currentStep = computed(() => certStore.currentStep);
+const finalCertificateDetail = ref(null);
 
 const isSubmitted = ref(false);
 const submissionFailed = ref(false);
@@ -688,6 +689,7 @@ onBeforeRouteLeave(async (to) => {
 
     if (to.path === '/certificate/issue') {
         certStore.resetAll();
+        finalCertificateDetail.value = null;
     }
 });
 
@@ -859,31 +861,60 @@ const computedCommitment = computed(() => {
 });
 const displayCertNo = computed(() => certStore.certificate.certNo || formData.productNo || '');
 
-const generatedCertificateQrText = computed(() =>
-    displayCertNo.value
+const generatedCertificateQrText = computed(() => {
+    if (finalCertificateDetail.value) {
+        return finalCertificateDetail.value.qrCode || '';
+    }
+    return displayCertNo.value
         ? `https://yishizhijian.jikeyun.net/web/index.html#/pages/index?id=${formData.id || ''}&code=${displayCertNo.value}`
-        : ''
-);
+        : '';
+});
 
-const generatedCertificatePreview = computed(() => ({
-    certificateCode: displayCertNo.value,
-    qrCode: generatedCertificateQrText.value,
-    productName: formData.productName,
-    quantity: formData.quantity ?? formData.batchSize,
-    unit: formData.unit,
-    productionArea: formData.origin,
-    subjectName: formData.entity,
-    contactPhone: formData.contactPhone,
-    issueDate: formatPrintDate(certStore.certificate.issueDate || formData.createDate),
-    commitmentBasis: formData.basis,
-    productImageUrl: formData.productImageUrl
-}));
+const generatedCertificatePreview = computed(() => {
+    if (finalCertificateDetail.value) {
+        const detail = finalCertificateDetail.value;
+        return {
+            certificateCode: detail.certificateCode || detail.certificateNo || '',
+            qrCode: detail.qrCode || '',
+            productName: detail.productName || '',
+            quantity: detail.quantity || 0,
+            unit: detail.unit || '',
+            productionArea: detail.productionArea || '',
+            subjectName: detail.subjectName || '',
+            contactPhone: detail.contactPhone || '',
+            issueDate: formatPrintDate(detail.issueDate || detail.createTime),
+            commitmentBasis: detail.commitmentBasis ? (typeof detail.commitmentBasis === 'string' ? JSON.parse(detail.commitmentBasis) : detail.commitmentBasis) : [],
+            productImageUrl: detail.productImageUrl || ''
+        };
+    }
+    return {
+        certificateCode: displayCertNo.value,
+        qrCode: generatedCertificateQrText.value,
+        productName: formData.productName,
+        quantity: formData.quantity ?? formData.batchSize,
+        unit: formData.unit,
+        productionArea: formData.origin,
+        subjectName: formData.entity,
+        contactPhone: formData.contactPhone,
+        issueDate: formatPrintDate(certStore.certificate.issueDate || formData.createDate),
+        commitmentBasis: formData.basis,
+        productImageUrl: formData.productImageUrl
+    };
+});
 
-const selectedGeneratedBasisOptions = computed(() =>
-    getSelectedCertificateBasisOptions(basisOptions, formData.basis)
-);
+const selectedGeneratedBasisOptions = computed(() => {
+    const basisValue = finalCertificateDetail.value
+        ? (finalCertificateDetail.value.commitmentBasis ? (typeof finalCertificateDetail.value.commitmentBasis === 'string' ? JSON.parse(finalCertificateDetail.value.commitmentBasis) : finalCertificateDetail.value.commitmentBasis) : [])
+        : formData.basis;
+    return getSelectedCertificateBasisOptions(basisOptions, basisValue);
+});
 
-const generatedCommitmentLines = computed(() => computedCommitment.value);
+const generatedCommitmentLines = computed(() => {
+    if (finalCertificateDetail.value && finalCertificateDetail.value.commitmentContent) {
+        return finalCertificateDetail.value.commitmentContent.split('\n');
+    }
+    return computedCommitment.value;
+});
 
 const STEP1_FIELD_KEYS = [
     'linkProfile',
@@ -1541,6 +1572,15 @@ const handleGenerate = async () => {
         const newId = await CertificateApi.createCertificate(submitData);
         formData.id = newId;
         message.success('创建成功');
+
+        // 根据创建得到的 id 二次查询合格证详情，用于第三步详情回显
+        try {
+            const detail = await CertificateApi.getCertificate(newId);
+            finalCertificateDetail.value = detail;
+        } catch (err) {
+            console.error('二次查询合格证详情失败:', err);
+            finalCertificateDetail.value = null;
+        }
 
         certStore.updateIssueInfo(formData);
         certStore.generateCertificate();
