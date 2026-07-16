@@ -48,7 +48,7 @@ import {
   type FastPositiveRateTrendRespVO,
   type FastSelfSampleTrendRespVO
 } from '@/api/agri/dashboard/fast';
-import { getBigScreenQueryParams, subscribeBigScreenRefresh } from '../bigscreen/config';
+import { getBigScreenConfig, getBigScreenQueryParams, subscribeBigScreenRefresh } from '../bigscreen/config';
 
 const leftTrendTab = ref('样品总量');
 const positiveRateTrend = ref<FastPositiveRateTrendRespVO>({});
@@ -149,34 +149,87 @@ const uniqueMonthsCount = computed(() => {
   return rawXaxis.value.length
 })
 
+const generateMonthRange = (startStr?: string, endStr?: string): string[] => {
+  if (!startStr || !endStr) return []
+  const result: string[] = []
+  try {
+    const startParts = startStr.split('-')
+    const endParts = endStr.split('-')
+    if (startParts.length < 2 || endParts.length < 2) return []
+
+    let startY = Number(startParts[0])
+    let startM = Number(startParts[1])
+    const endY = Number(endParts[0])
+    const endM = Number(endParts[1])
+
+    if (Number.isNaN(startY) || Number.isNaN(startM) || Number.isNaN(endY) || Number.isNaN(endM)) {
+      return []
+    }
+
+    let currentY = startY
+    let currentM = startM
+
+    let limit = 0
+    while ((currentY < endY || (currentY === endY && currentM <= endM)) && limit < 120) {
+      result.push(`${currentY}-${String(currentM).padStart(2, '0')}`)
+      currentM++
+      if (currentM > 12) {
+        currentM = 1
+        currentY++
+      }
+      limit++
+    }
+  } catch (e) {
+    console.error('generateMonthRange error', e)
+  }
+  return result
+}
+
+const bigScreenConfig = ref(getBigScreenConfig())
+
 const monthLabels = computed(() => {
-  if (uniqueMonthsCount.value > 12) {
-    const result = []
-    const today = new Date()
-    let year = today.getFullYear()
-    let month = today.getMonth()
-    for (let i = 0; i < 12; i++) {
-      const mStr = String(month + 1).padStart(2, '0')
-      result.unshift(`${year}-${mStr}`)
-      month--
-      if (month < 0) {
-        month = 11
-        year--
+  const startDate = bigScreenConfig.value.timeRange?.[0]
+  const endDate = bigScreenConfig.value.timeRange?.[1]
+
+  const now = new Date()
+  const currentYear = now.getFullYear()
+  const currentMonth = now.getMonth() + 1
+  const currentYM = `${currentYear}-${String(currentMonth).padStart(2, '0')}`
+
+  if (startDate && endDate) {
+    const allMonths = generateMonthRange(startDate, endDate)
+    if (allMonths.length > 0) {
+      if (allMonths.length <= 12) {
+        // 1. 不足 12 月 有多少显示多少
+        return allMonths
+      } else {
+        const idx = allMonths.indexOf(currentYM)
+        if (idx !== -1) {
+          // 2. 跨度超 12 月且包含当前年月：只显示当前年往前的12个月的数据
+          const startIdx = Math.max(0, idx - 11)
+          return allMonths.slice(startIdx, idx + 1)
+        } else {
+          // 3. 跨度超 12 月但不含当前年月：截取选择终点月份往前12个月数据
+          return allMonths.slice(-12)
+        }
       }
     }
-    return result
   }
-  return rawXaxis.value.map(item => {
-    let key = String(item).trim()
-    if (key.includes('-')) {
-      const parts = key.split('-')
-      const y = parts[0]
-      const m = parts[1].replace('月', '').padStart(2, '0')
-      return `${y}-${m}`
+
+  // 兜底逻辑：显示当前年往前的 12 个月
+  const result = []
+  let year = currentYear
+  let month = now.getMonth() // 0-indexed, 0 is Jan
+  for (let i = 0; i < 12; i++) {
+    const mStr = String(month + 1).padStart(2, '0')
+    result.unshift(`${year}-${mStr}`)
+    month--
+    if (month < 0) {
+      month = 11
+      year--
     }
-    const m = key.replace('月', '').padStart(2, '0')
-    return `${filterYear.value}-${m}`
-  })
+  }
+  return result
 })
 
 const mapTrendData = (xaxis: string[], seriesData: number[]) => {
@@ -331,6 +384,7 @@ onMounted(() => {
 });
 
 const disposeRefresh = subscribeBigScreenRefresh(() => {
+  bigScreenConfig.value = getBigScreenConfig();
   loadTrendData();
 });
 

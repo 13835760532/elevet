@@ -31,3 +31,7 @@ Recent history uses short, imperative messages such as `fix bug`, `fix input`, a
 ## Agent-Specific Instructions
 
 When code discovery is needed, prefer the codebase-memory MCP tools first: `search_graph`, `trace_path`, `get_code_snippet`, `query_graph`, then fallback text search for literals, configs, and non-code files.
+
+不足 12 个月：按实际月份有多少显示多少。
+跨度超 12 个月且包含今年（如 23 - 29 年）：由于包含当前时间（2026-07），统一显示当前年月往前的 12 个月数据（2025-08 到 2026-07）。
+历史时间区间（如 23 - 24 年）：不包含当前年月，截取选择的截止月份（2024-12）往回推 12 个月数据（2024-01 到 2024-12）

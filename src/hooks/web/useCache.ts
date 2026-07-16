@@ -39,5 +39,12 @@ export const deleteUserCache = () => {
   wsCache.delete(CACHE_KEY.USER_DEPT)
   wsCache.delete(CACHE_KEY.ROLE_ROUTERS)
   wsCache.delete(CACHE_KEY.VisitTenantId)
+  
+  // 清除大屏配置与数据统计和用户/权限相关的 localStorage 缓存
+  localStorage.removeItem('big-screen-data-config')
+  localStorage.removeItem('statistics_dropdown_commands')
+  localStorage.removeItem('statistics_current_tab')
+  
   // 注意，不要清理 LoginForm 登录表单
 }
+

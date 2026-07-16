@@ -34,12 +34,7 @@
           <span v-else>检测总量</span>
         </div>
         <Echart v-if="!trendEmpty" :options="currentLineTrendOption" height="100%" />
-        <BigDataEmpty
-          v-else
-          title="暂无检测态势"
-          description="当前筛选范围未返回趋势数据"
-          compact
-        />
+        <BigDataEmpty v-else title="暂无检测态势" description="当前筛选范围未返回趋势数据" compact />
       </div>
     </BigPanelCard>
   </section>
@@ -60,7 +55,7 @@ import {
   type DashboardOverviewRespVO,
   type TrendRespVO
 } from '@/api/agri/dashboard'
-import { getBigScreenQueryParams, subscribeBigScreenRefresh } from './config'
+import { getBigScreenConfig, getBigScreenQueryParams, subscribeBigScreenRefresh } from './config'
 
 import n1 from '@/assets/imgs/echarts/首页/fgqt1.png'
 import n2 from '@/assets/imgs/echarts/首页/fgqt2.png'
@@ -124,7 +119,52 @@ const uniqueMonthsCount = computed(() => {
   return set.size
 })
 
+const generateMonthRange = (startStr?: string, endStr?: string): string[] => {
+  if (!startStr || !endStr) return []
+  const result: string[] = []
+  try {
+    const startParts = startStr.split('-')
+    const endParts = endStr.split('-')
+    if (startParts.length < 2 || endParts.length < 2) return []
+
+    let startY = Number(startParts[0])
+    let startM = Number(startParts[1])
+    const endY = Number(endParts[0])
+    const endM = Number(endParts[1])
+
+    if (Number.isNaN(startY) || Number.isNaN(startM) || Number.isNaN(endY) || Number.isNaN(endM)) {
+      return []
+    }
+
+    let currentY = startY
+    let currentM = startM
+
+    let limit = 0
+    while ((currentY < endY || (currentY === endY && currentM <= endM)) && limit < 48) {
+      result.push(`${currentY}-${String(currentM).padStart(2, '0')}`)
+      currentM++
+      if (currentM > 12) {
+        currentM = 1
+        currentY++
+      }
+      limit++
+    }
+  } catch (e) {
+    console.error('generateMonthRange error', e)
+  }
+  return result
+}
+
+const bigScreenConfig = ref(getBigScreenConfig())
+
 const monthLabels = computed(() => {
+  const startDate = bigScreenConfig.value.timeRange?.[0]
+  const endDate = bigScreenConfig.value.timeRange?.[1]
+  if (startDate && endDate) {
+    const list = generateMonthRange(startDate, endDate)
+    if (list.length > 0) return list
+  }
+
   if (uniqueMonthsCount.value > 12) {
     const result = []
     const today = new Date()
@@ -239,21 +279,21 @@ const createLineTrendOption = (data: number[], max: number, formatter?: string) 
       top: 20,
       style: {
         text: trendTab.value === '阳性率' ? '（%）' : '（项次）',
-          fill: 'rgba(228, 235, 245, 0.72)',
-          font: '16px sans-serif'
-        }
-      },
-      {
-        type: 'text',
-        right: 10,
-        bottom: 18,
-        style: {
-          text: '（月份）',
-          fill: 'rgba(228, 235, 245, 0.86)',
-          font: '20px sans-serif'
-        }
+        fill: 'rgba(228, 235, 245, 0.72)',
+        font: '16px sans-serif'
       }
-    ],
+    },
+    {
+      type: 'text',
+      right: 10,
+      bottom: 18,
+      style: {
+        text: '（月份）',
+        fill: 'rgba(228, 235, 245, 0.86)',
+        font: '20px sans-serif'
+      }
+    }
+  ],
   tooltip: {
     trigger: 'axis',
     backgroundColor: 'rgba(6, 18, 42, 0.92)',
@@ -416,6 +456,7 @@ onMounted(() => {
 })
 
 const disposeRefresh = subscribeBigScreenRefresh(() => {
+  bigScreenConfig.value = getBigScreenConfig()
   loadOverviewData()
   loadTrendData()
 })
