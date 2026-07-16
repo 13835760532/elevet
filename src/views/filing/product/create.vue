@@ -27,8 +27,8 @@
 
                     <!-- 建档时间 -->
                     <el-form-item label="建档时间" prop="archiveDate">
-                        <el-date-picker v-model="formData.archiveDate" type="date" placeholder="请选择建档时间"
-                            value-format="YYYY-MM-DD" class="full-width" />
+                        <el-date-picker v-model="formData.archiveDate" type="datetime" placeholder="请选择建档时间"
+                            value-format="YYYY-MM-DD HH:mm:ss" class="full-width" />
                     </el-form-item>
 
                     <!-- 产品类别 -->

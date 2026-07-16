@@ -59,32 +59,32 @@
             </div>
 
             <div class="warning-records-list">
-              <div v-for="(item, index) in monthlyWarningRecords" :key="item.id || index" class="warning-record-item">
+              <div v-if="monthlyReportData && monthlyReportData.hasData" class="warning-record-item">
                 <div class="warning-record-header">
-                  <span class="record-badge">阳性/不合格</span>
-                  <span class="record-product">{{ item.productName || '未命名产品' }}</span>
-                  <button class="record-view-btn" type="button" @click="handleViewWarningDetail(item)">查看</button>
+                  <span class="record-badge">月度汇总</span>
+                  <span class="record-product">{{ `${reportForm.year}年${reportForm.month}月` }}</span>
+                  <button class="record-view-btn" type="button" @click="handleViewMonthlyWarningDetail">查看</button>
                 </div>
                 <div class="warning-record-detail">
                   <div class="detail-row">
-                    <span>检测项目：</span>
-                    <strong>{{ item.parsedItems || '-' }}</strong>
+                    <span style="width: 100px;">检出阳性批次：</span>
+                    <strong>{{ monthlyReportData.positiveCount ?? 0 }}次</strong>
                   </div>
                   <div class="detail-row">
-                    <span>抽检地区：</span>
-                    <span>{{ item.detectionArea || '-' }}</span>
+                    <span style="width: 100px;">高风险产品：</span>
+                    <span>{{ monthlyReportData.highRiskProducts?.length ? monthlyReportData.highRiskProducts.join('，') : '暂无数据' }}</span>
                   </div>
                   <div class="detail-row">
-                    <span>被检主体：</span>
-                    <span>{{ item.subjectName || '-' }}</span>
+                    <span style="width: 100px;">高风险药物：</span>
+                    <span>{{ monthlyReportData.highRiskItems?.length ? monthlyReportData.highRiskItems.join('，') : '暂无数据' }}</span>
                   </div>
                   <div class="detail-row">
-                    <span>检测时间：</span>
-                    <span>{{ item.testTime.slice(0, 7) || '-' }}</span>
+                    <span style="width: 100px;">检测时间：</span>
+                    <span>{{ `${reportForm.year}-${pad(reportForm.month)}` }}</span>
                   </div>
                 </div>
               </div>
-              <el-empty v-if="!monthlyWarningRecords.length" description="当月暂无高风险预警" :image-size="80" />
+              <el-empty v-else description="当月暂无高风险预警" :image-size="80" />
             </div>
           </article>
           <article class="report-card">
@@ -94,32 +94,32 @@
             </div>
 
             <div class="warning-records-list">
-              <div v-for="(item, index) in dailyWarningRecords" :key="item.id || index" class="warning-record-item">
+              <div v-if="dailyReportData && dailyReportData.hasData" class="warning-record-item">
                 <div class="warning-record-header">
-                  <span class="record-badge">阳性/不合格</span>
-                  <span class="record-product">{{ item.productName || '未命名产品' }}</span>
-                  <button class="record-view-btn" type="button" @click="handleViewWarningDetail(item)">查看</button>
+                  <span class="record-badge">日报汇总</span>
+                  <span class="record-product">{{ `${reportForm.year}年${reportForm.month}月${reportForm.day}日` }}</span>
+                  <button class="record-view-btn" type="button" @click="handleViewDailyWarningDetail">查看</button>
                 </div>
                 <div class="warning-record-detail">
                   <div class="detail-row">
-                    <span>检测项目：</span>
-                    <strong>{{ item.parsedItems || '-' }}</strong>
+                    <span style="width: 100px;">检出阳性批次：</span>
+                    <strong>{{ dailyReportData.positiveCount ?? 0 }}次</strong>
                   </div>
                   <div class="detail-row">
-                    <span>抽检地区：</span>
-                    <span>{{ item.detectionArea || '-' }}</span>
+                    <span style="width: 100px;">高风险产品：</span>
+                    <span>{{ dailyReportData.highRiskProducts?.length ? dailyReportData.highRiskProducts.join('，') : '暂无数据' }}</span>
                   </div>
                   <div class="detail-row">
-                    <span>被检主体：</span>
-                    <span>{{ item.subjectName || '-' }}</span>
+                    <span style="width: 100px;">高风险药物：</span>
+                    <span>{{ dailyReportData.highRiskItems?.length ? dailyReportData.highRiskItems.join('，') : '暂无数据' }}</span>
                   </div>
                   <div class="detail-row">
-                    <span>检测时间：</span>
-                    <span>{{ item.testTime.slice(0, 11) || '-' }}</span>
+                    <span style="width: 100px;">检测时间：</span>
+                    <span>{{ `${reportForm.year}-${pad(reportForm.month)}-${pad(reportForm.day)}` }}</span>
                   </div>
                 </div>
               </div>
-              <el-empty v-if="!dailyWarningRecords.length" description="当天暂无高风险预警" :image-size="80" />
+              <el-empty v-else description="当天暂无高风险预警" :image-size="80" />
             </div>
           </article>
 
@@ -244,6 +244,7 @@ import {
 } from '@/api/agri/detectionTask'
 import { getHighRiskList, type StaticRiskListVO } from '@/api/agri/staticRiskList'
 import { getDetectionRecordPage } from '@/api/agri/detectionRecord'
+import { getRiskMonthly, getRiskDaily, type WorkbenchRiskReportRespVO } from '@/api/agri/workbench'
 import { formatDate } from '@/utils/formatTime'
 import dayjs from 'dayjs'
 
@@ -511,97 +512,28 @@ const getRiskList = async () => {
 
 const dailyWarningRecords = ref<any[]>([])
 const monthlyWarningRecords = ref<any[]>([])
+const monthlyReportData = ref<WorkbenchRiskReportRespVO | null>(null)
+const dailyReportData = ref<WorkbenchRiskReportRespVO | null>(null)
 
 const getWarningRecordList = async () => {
   riskLoading.value = true
   try {
     const selectedDateStr = `${reportForm.year}-${pad(reportForm.month)}-${pad(reportForm.day)}`
 
-    // 1. 获取日报数据：单日
-    const dailyRes = await getDetectionRecordPage({
-      pageNo: 1,
-      pageSize: 50,
-      detectionDate: [
-        `${selectedDateStr} 00:00:00`,
-        `${selectedDateStr} 23:59:59`
-      ],
-      overallResult: 1 // 1：阳性/不合格
-    })
+    // 1. 获取日报数据：调用工作台风险日报接口
+    const dailyRes = await getRiskDaily({ reportDate: selectedDateStr })
+    dailyReportData.value = dailyRes || null
 
-    const dailyRaw = dailyRes?.list || []
-    dailyWarningRecords.value = dailyRaw.map((item: any) => {
-      let testTime = item.detectionDate ? dayjs(item.detectionDate).format('YYYY-MM-DD HH:mm') : ''
-      let parsedItems = '-'
-      if (item.aiRecognitionResult) {
-        try {
-          const aiData = JSON.parse(item.aiRecognitionResult)
-          if (aiData.results && Array.isArray(aiData.results)) {
-            parsedItems = aiData.results.map((r: any) => r.codeName).join(', ')
-          }
-          if (aiData.timestamp) {
-            testTime = dayjs(aiData.timestamp).format('YYYY-MM-DD HH:mm')
-          }
-        } catch (e) {
-          // ignore
-        }
-      }
-      return {
-        ...item,
-        testTime,
-        parsedItems
-      }
-    }).sort((a: any, b: any) => {
-      const timeA = a.testTime ? dayjs(a.testTime).valueOf() : 0
-      const timeB = b.testTime ? dayjs(b.testTime).valueOf() : 0
-      return timeB - timeA
-    })
-
-    // 2. 获取月报数据：当月整月数据
-    const startOfMonth = dayjs(selectedDateStr).startOf('month').format('YYYY-MM-DD')
-    const endOfMonth = dayjs(selectedDateStr).endOf('month').format('YYYY-MM-DD')
-
-    const monthlyRes = await getDetectionRecordPage({
-      pageNo: 1,
-      pageSize: 50,
-      detectionDate: [
-        `${startOfMonth} 00:00:00`,
-        `${endOfMonth} 23:59:59`
-      ],
-      overallResult: 1 // 1：阳性/不合格
-    })
-
-    const monthlyRaw = monthlyRes?.list || []
-    monthlyWarningRecords.value = monthlyRaw.map((item: any) => {
-      let testTime = item.detectionDate ? dayjs(item.detectionDate).format('YYYY-MM-DD HH:mm') : ''
-      let parsedItems = '-'
-      if (item.aiRecognitionResult) {
-        try {
-          const aiData = JSON.parse(item.aiRecognitionResult)
-          if (aiData.results && Array.isArray(aiData.results)) {
-            parsedItems = aiData.results.map((r: any) => r.codeName).join(', ')
-          }
-          if (aiData.timestamp) {
-            testTime = dayjs(aiData.timestamp).format('YYYY-MM-DD HH:mm')
-          }
-        } catch (e) {
-          // ignore
-        }
-      }
-      return {
-        ...item,
-        testTime,
-        parsedItems
-      }
-    }).sort((a: any, b: any) => {
-      const timeA = a.testTime ? dayjs(a.testTime).valueOf() : 0
-      const timeB = b.testTime ? dayjs(b.testTime).valueOf() : 0
-      return timeB - timeA
-    })
+    // 2. 获取月报数据：调用工作台风险月报接口
+    const monthlyRes = await getRiskMonthly({ monthDate: selectedDateStr })
+    monthlyReportData.value = monthlyRes || null
 
   } catch (error) {
     console.error('获取预警日报/月报数据失败:', error)
     dailyWarningRecords.value = []
     monthlyWarningRecords.value = []
+    monthlyReportData.value = null
+    dailyReportData.value = null
   } finally {
     riskLoading.value = false
   }
@@ -626,6 +558,35 @@ const handleViewWarningDetail = (item: any) => {
       overallResult: '1', // 阳性/不合格
       startDate: dateStr,
       endDate: dateStr
+    }
+  })
+}
+
+const handleViewMonthlyWarningDetail = () => {
+  const startOfMonth = dayjs(`${reportForm.year}-${pad(reportForm.month)}-01`).format('YYYY-MM-DD')
+  const endOfMonth = dayjs(`${reportForm.year}-${pad(reportForm.month)}-01`).endOf('month').format('YYYY-MM-DD')
+
+  router.push({
+    path: '/statistics/quick',
+    query: {
+      tab: 'quick', // 默认选中“快速检测”选项卡
+      overallResult: '1', // 阳性/不合格
+      startDate: startOfMonth,
+      endDate: endOfMonth
+    }
+  })
+}
+
+const handleViewDailyWarningDetail = () => {
+  const selectedDateStr = `${reportForm.year}-${pad(reportForm.month)}-${pad(reportForm.day)}`
+
+  router.push({
+    path: '/statistics/quick',
+    query: {
+      tab: 'quick', // 默认选中“快速检测”选项卡
+      overallResult: '1', // 阳性/不合格
+      startDate: selectedDateStr,
+      endDate: selectedDateStr
     }
   })
 }
@@ -1418,7 +1379,6 @@ onMounted(() => {
   }
 }
 
-/* Warning Records List */
 .warning-records-list {
   display: flex;
   flex-direction: column;

@@ -273,8 +273,8 @@ const handleAreaSelect = (area: any) => {
     queryParams.province = area.province;
     queryParams.city = area.city;
     queryParams.county = area.district;
-    // 同时更新拼写的完整产地字符串，如果有需要的话
-    queryParams.productionArea = [area.province, area.city, area.district].filter(Boolean).join('');
+    // 产地搜索只传最后一级
+    queryParams.productionArea = area.district || area.city || area.province || undefined;
 };
 
 onMounted(() => {
@@ -294,6 +294,7 @@ const handleReset = () => {
             queryParams[key] = undefined;
         }
     });
+    areaIds.value = []; // 清空产地区划的级联绑定变量
     queryParams.status = 1; // 重置时恢复默认有效状态
     handleQuery();
 };

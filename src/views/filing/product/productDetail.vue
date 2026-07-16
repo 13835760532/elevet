@@ -31,7 +31,7 @@
                     </div>
                     <div class="detail-row">
                         <div class="label">建档时间：</div>
-                        <div class="value">{{ formatDate(productInfo.archiveDate, 'YYYY-MM-DD') || '--' }}
+                        <div class="value">{{ formatDate(productInfo.archiveDate, 'YYYY-MM-DD HH:mm:ss') || '--' }}
                         </div>
                     </div>
                     <div class="detail-row">
@@ -124,7 +124,8 @@
                     <div class="detail-row" v-if="subjectInfo.type === 2">
                         <div class="label">身份证：</div>
                         <div class="value">
-                            <div class="img-preview-group" v-if="subjectInfo.idCardFrontUrl || subjectInfo.idCardBackUrl">
+                            <div class="img-preview-group"
+                                v-if="subjectInfo.idCardFrontUrl || subjectInfo.idCardBackUrl">
                                 <div class="id-card-boxes">
                                     <div class="preview-box">
                                         <el-icon v-if="!subjectInfo.idCardFrontUrl">
@@ -159,8 +160,7 @@
                                 v-if="subjectInfo.qualificationUrls && parseUrls(subjectInfo.qualificationUrls).length">
                                 <div class="preview-box"
                                     v-for="(url, index) in parseUrls(subjectInfo.qualificationUrls)" :key="index">
-                                    <el-image :src="url"
-                                        :preview-src-list="parseUrls(subjectInfo.qualificationUrls)"
+                                    <el-image :src="url" :preview-src-list="parseUrls(subjectInfo.qualificationUrls)"
                                         :initial-index="index" class="preview-img" fit="cover"
                                         :preview-teleported="true" />
                                 </div>

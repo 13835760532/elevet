@@ -280,7 +280,7 @@ const initData = async () => {
             checkArea: res.detectionArea || '--',
             producer: res.subjectName || '--',
             region: res.detectionArea || '--',
-            testOrg: res.sourceType === 'PLAN_TASK' ? '检测服务中心' : '自主录入',
+            testOrg: res.detectionOrgName || res.sourceType === 'PLAN_TASK' ? '检测服务中心' : '自主录入',
             tester: res.detector || '--',
             testDate: res.createTime ? formatDate(res.createTime, 'YYYY-MM-DD') : '--',
             photo: res.testPaperImageUrl || '',
