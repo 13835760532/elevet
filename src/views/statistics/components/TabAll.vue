@@ -239,30 +239,39 @@
           </div>
         </div>
 
-        <div class="risk-card">
-          <div class="risk-header">
-            <span class="risk-title">区域风险排序</span>
-            <div class="risk-actions">
-              <el-radio-group v-model="regionRiskType" class="map-radio" size="small">
-                <el-radio-button label="产地" />
-                <el-radio-button label="检测地" />
-              </el-radio-group>
+        <div class="risk-card"
+          style="display: flex; flex-direction: column; justify-content: space-between; position: relative;">
+          <div>
+            <div class="risk-header">
+              <span class="risk-title">区域风险排序</span>
+              <div class="risk-actions">
+                <el-radio-group v-model="regionRiskType" class="map-radio" size="small">
+                  <el-radio-button label="产地" />
+                  <el-radio-button label="检测地" />
+                </el-radio-group>
+              </div>
+            </div>
+            <div class="chart-content">
+              <div class="ranking-list">
+                <div class="ranking-header">
+                  <span class="header-rank">排名</span>
+                  <span class="header-name">区域名称</span>
+                  <span class="header-value">检测量</span>
+                </div>
+                <div class="ranking-item" v-for="(item, index) in regionRiskData" :key="index">
+                  <span :class="['rank-num', { 'top-three': index < 3 }]">{{ item.rank }}</span>
+                  <span :class="['rank-name', { 'top-three-label': index < 3 }]">{{ item.name }}</span>
+                  <span :class="['rank-value', { 'top-three-val': index < 3 }]">{{ formatNumber(item.value,
+                    item.fractionDigits || 0) }}</span>
+                </div>
+              </div>
             </div>
           </div>
-          <div class="chart-content">
-            <div class="ranking-list">
-              <div class="ranking-header">
-                <span class="header-rank">排名</span>
-                <span class="header-name">区域名称</span>
-                <span class="header-value">检测量</span>
-              </div>
-              <div class="ranking-item" v-for="(item, index) in regionRiskData" :key="index">
-                <span :class="['rank-num', { 'top-three': index < 3 }]">{{ item.rank }}</span>
-                <span :class="['rank-name', { 'top-three-label': index < 3 }]">{{ item.name }}</span>
-                <span :class="['rank-value', { 'top-three-val': index < 3 }]">{{ formatNumber(item.value,
-                  item.fractionDigits || 0) }}</span>
-              </div>
-            </div>
+          <div class="rank-level-tabs">
+            <button v-for="tab in ['城市', '区县']" :key="tab" type="button" class="rank-level-tab"
+              :class="{ active: tab === regionRiskLevel }" @click="regionRiskLevel = tab">
+              {{ tab }}
+            </button>
           </div>
         </div>
       </div>
@@ -624,6 +633,7 @@ const productRiskType = ref('检测量')
 const testItemRiskType = ref('检测量')
 const categoryRiskType = ref('检测量')
 const regionRiskType = ref('产地')
+const regionRiskLevel = ref('城市')
 const pesticideRiskType = ref('检测量')
 
 const productRiskData = ref<any[]>([])
@@ -814,7 +824,7 @@ const loadMapData = async () => {
     const currentAreaType = String(params.areaType || '').trim()
 
     const isMunicipality = ['110000', '120000', '310000', '500000'].includes(currentAreaCode) ||
-                           /^(11|12|31|50)0000$/.test(currentAreaCode)
+      /^(11|12|31|50)0000$/.test(currentAreaCode)
 
     let finalAreaLevel = '1'
     let finalProvinceName = params.provinceName
@@ -827,7 +837,7 @@ const loadMapData = async () => {
       else if (currentAreaCode.startsWith('12')) name = '天津市'
       else if (currentAreaCode.startsWith('31')) name = '上海市'
       else if (currentAreaCode.startsWith('50')) name = '重庆市'
-      
+
       if (name) {
         finalProvinceName = name
         finalCityName = name
@@ -866,7 +876,7 @@ const loadMapData = async () => {
         const displayName = currentMapScope.scoped
           ? stripRegionSuffix(subAreaName || getProvinceDisplayName(item))
           : getProvinceDisplayName(item)
-          
+
         const mapName = currentMapScope.scoped
           ? (subAreaName || getProvinceDisplayName(item))
           : getProvinceMapName(item)
@@ -1014,11 +1024,46 @@ const loadRiskData = async () => {
         ...queryParams.value,
         statType: categoryRiskType.value === '阳性率' ? '2' : '1'
       }),
-      getRiskAreaTop10({
-        ...queryParams.value,
-        areaType: regionRiskType.value === '产地' ? '1' : '2',
-        areaLevel: '1'
-      }),
+      (() => {
+        const params = { ...queryParams.value }
+        const currentAreaCode = String(params.areaCode || '').trim()
+        const isMunicipality = ['110000', '120000', '310000', '500000'].includes(currentAreaCode) ||
+          /^(11|12|31|50)0000$/.test(currentAreaCode)
+
+        let finalAreaLevel = regionRiskLevel.value === '区县' ? '3' : '2'
+        let finalProvinceName = params.provinceName
+        let finalCityName = params.cityName
+
+        if (isMunicipality) {
+          let name = ''
+          if (currentAreaCode.startsWith('11')) name = '北京市'
+          else if (currentAreaCode.startsWith('12')) name = '天津市'
+          else if (currentAreaCode.startsWith('31')) name = '上海市'
+          else if (currentAreaCode.startsWith('50')) name = '重庆市'
+
+          if (name) {
+            finalProvinceName = name
+            finalCityName = name
+          }
+        } else {
+          const currentAreaType = String(params.areaType || '').trim()
+          if (currentAreaType === '2' || currentAreaType === '3') {
+            finalAreaLevel = '3'
+          } else if (currentAreaType === '1') {
+            finalAreaLevel = regionRiskLevel.value === '区县' ? '3' : '2'
+          } else {
+            finalAreaLevel = regionRiskLevel.value === '区县' ? '3' : '2'
+          }
+        }
+
+        return getRiskAreaTop10({
+          ...params,
+          areaLevel: finalAreaLevel,
+          provinceName: finalProvinceName,
+          cityName: finalCityName,
+          areaType: regionRiskType.value === '产地' ? '1' : '2'
+        })
+      })(),
       getPesticideRiskTop10({
         ...queryParams.value,
         statType: pesticideRiskType.value === '阳性率' ? '2' : '1'
@@ -1129,7 +1174,7 @@ const handleReset = () => {
 
 watch([dateRangeType, dateRange], loadData)
 watch([mapType], loadMapData)
-watch([productRiskType, testItemRiskType, categoryRiskType, regionRiskType, pesticideRiskType], loadRiskData)
+watch([productRiskType, testItemRiskType, categoryRiskType, regionRiskType, pesticideRiskType, regionRiskLevel], loadRiskData)
 
 onMounted(() => {
   loadData()
@@ -2073,6 +2118,38 @@ onMounted(() => {
     font-size: inherit !important;
     line-height: inherit !important;
     color: inherit !important;
+  }
+}
+
+.rank-level-tabs {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 15px;
+}
+
+.rank-level-tab {
+  min-width: 52px;
+  height: 28px;
+  border: 1px solid #dcdfe6;
+  background: #ffffff;
+  color: #606266;
+  font-size: 13px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  outline: none;
+
+  &:hover {
+    color: #409eff;
+    border-color: #c6e2ff;
+    background-color: #ecf5ff;
+  }
+
+  &.active {
+    color: #ffffff;
+    background-color: #409eff;
+    border-color: #409eff;
   }
 }
 </style>

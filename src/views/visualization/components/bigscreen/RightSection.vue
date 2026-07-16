@@ -285,10 +285,34 @@ const currentProjectRiskOption = computed(() => ({
 
 const loadRiskAreaTop10 = async () => {
   try {
+    const params = { ...getBigScreenQueryParams() }
+    const currentAreaCode = String(params.areaCode || '').trim()
+    const isMunicipality = ['110000', '120000', '310000', '500000'].includes(currentAreaCode) ||
+                           /^(11|12|31|50)0000$/.test(currentAreaCode)
+
+    let finalAreaLevel = rankAreaLevelTab.value === '区县' ? '3' : '2'
+    let finalProvinceName = params.provinceName
+    let finalCityName = params.cityName
+
+    if (isMunicipality) {
+      let name = ''
+      if (currentAreaCode.startsWith('11')) name = '北京市'
+      else if (currentAreaCode.startsWith('12')) name = '天津市'
+      else if (currentAreaCode.startsWith('31')) name = '上海市'
+      else if (currentAreaCode.startsWith('50')) name = '重庆市'
+      
+      if (name) {
+        finalProvinceName = name
+        finalCityName = name
+      }
+    }
+
     const data = await getRiskAreaTop10({
-      ...getBigScreenQueryParams(),
+      ...params,
       areaType: rankTab.value === '产地' ? '1' : '2',
-      areaLevel: rankAreaLevelTab.value === '区县' ? '2' : '1'
+      areaLevel: finalAreaLevel,
+      provinceName: finalProvinceName,
+      cityName: finalCityName
     })
     rankList.value = Array.isArray(data) ? data : []
   } catch (error) {
