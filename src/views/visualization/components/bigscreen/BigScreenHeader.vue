@@ -467,9 +467,42 @@ const handleBack = () => {
   router.push('/index')
 }
 
-onMounted(() => {
-  syncConfigForm(getBigScreenConfig())
-  startRefreshTimer(getBigScreenConfig().frequency)
+onMounted(async () => {
+  const cachedConfig = getBigScreenConfig()
+  syncConfigForm(cachedConfig)
+  startRefreshTimer(cachedConfig.frequency)
+
+  // 切换账号或老账号缓存的地区不在当前账号的管辖范围内时，自动同步保存并应用当前账号的默认管理地区
+  const needAutoReset =
+    !isBigScreenSuperAdmin() &&
+    (!cachedConfig.regionPath.length ||
+      !isPathInRootArea(cachedConfig.regionPath, userDeptAreaCode.value))
+
+  if (needAutoReset) {
+    try {
+      await ensureAreaOptionsLoaded()
+      if (configForm.regionPath.length > 0) {
+        const regionMeta = resolveRegionMetaByPath(configForm.regionPath)
+        const nextConfig: BigScreenDataConfig = {
+          timeRange: [...configForm.timeRange] as [string, string],
+          dataScope: resolveBigScreenDataScope(configForm.dataScope, canViewJurisdictionScope.value),
+          regionPath: [...regionMeta.regionPath],
+          regionLabel: regionMeta.regionLabel,
+          provinceName: regionMeta.provinceName,
+          cityName: regionMeta.cityName,
+          districtName: regionMeta.districtName,
+          areaType: regionMeta.areaType,
+          areaCode: regionMeta.areaCode,
+          frequency: Math.max(1, Number(configForm.frequency || 5))
+        }
+        saveBigScreenConfig(nextConfig)
+        syncConfigForm(nextConfig)
+        dispatchBigScreenRefresh('save')
+      }
+    } catch (e) {
+      console.error('自动初始化并应用默认行政区划失败', e)
+    }
+  }
 })
 
 onUnmounted(() => {
