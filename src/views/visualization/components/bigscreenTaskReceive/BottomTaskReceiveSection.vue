@@ -85,7 +85,7 @@ const leftTooltipFormatter = (params: any) => {
       const unit = leftActiveTab.value === '样品量' ? '批次' : '项次';
       html += `<div style="display:flex;align-items:center;line-height:22px;gap:4px;">` +
         `<span>${marker}</span>` +
-        `<span style="min-width:76px;color:rgba(228,235,245,0.82);">${leftActiveTab.value}:</span>` +
+        `<span style="color:rgba(228,235,245,0.82);">${leftActiveTab.value}:</span>` +
         `<strong style="color:#fff;font-family:DIN Alternate,Arial;font-weight:700;">${value}${unit}</strong></div>`;
     }
   });

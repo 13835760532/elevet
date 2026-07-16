@@ -18,10 +18,12 @@
       </div>
     </BigPanelCard>
 
-    <BigPanelCard class="big-panel-center panel-header-bottom" title="风险态势" :tabs="[]" :bg-image="bottomBg">
+    <BigPanelCard class="big-panel-center panel-header-bottom" title="风险态势" :tabs="['样品阳性率', '检测项阳性率']"
+      v-model:activeTab="rightTrendTab" :bg-image="bottomBg">
       <div class="quick-trend-chart">
         <div class="positive-count-summary">
-          <span>阳性项次/总项次</span>
+          <span v-if="rightTrendTab === '样品阳性率'">样品阳性率</span>
+          <span v-else>检测项阳性率</span>
         </div>
         <Echart v-if="!rightTrendEmpty" :options="currentRightTrendOption" :height="200" />
         <BigDataEmpty
@@ -51,6 +53,7 @@ import {
 import { getBigScreenConfig, getBigScreenQueryParams, subscribeBigScreenRefresh } from '../bigscreen/config';
 
 const leftTrendTab = ref('样品总量');
+const rightTrendTab = ref('样品阳性率');
 const positiveRateTrend = ref<FastPositiveRateTrendRespVO>({});
 const selfSampleTrend = ref<FastSelfSampleTrendRespVO>({});
 
@@ -284,6 +287,19 @@ const mappedDetectionCounts = computed(() =>
   mapTrendData(positiveRateTrend.value.xaxis || [], positiveRateTrend.value.detectionCounts || [])
 )
 
+const samplePositiveRates = computed(() => {
+  return monthLabels.value.map((_, index) => {
+    const total = selfSampleData.value[index] || 0;
+    const positive = mappedPositiveCounts.value[index] || 0;
+    if (total <= 0) return 0;
+    return Number(((positive / total) * 100).toFixed(2));
+  });
+});
+
+const currentRightTrendData = computed(() =>
+  rightTrendTab.value === '样品阳性率' ? samplePositiveRates.value : positiveRateData.value
+);
+
 const leftTrendEmpty = computed(() =>
   leftTrendTab.value === '样品总量'
     ? selfSampleXAxis.value.length === 0
@@ -326,11 +342,19 @@ const riskTooltipFormatter = (params: any) => {
   const val = params[0].value !== undefined ? params[0].value : '--';
 
   const posVal = mappedPositiveCounts.value[dataIndex] !== undefined ? mappedPositiveCounts.value[dataIndex] : '--';
-  const detVal = mappedDetectionCounts.value[dataIndex] !== undefined ? mappedDetectionCounts.value[dataIndex] : '--';
+  const isSampleRate = rightTrendTab.value === '样品阳性率';
 
-  return `${month}<br/>` +
-    `<span style="display:inline-block;margin-right:4px;border-radius:10px;width:10px;height:10px;background-color:#4deaff;"></span>检测阳性率：${val}%<br/>` +
-    `<span style="display:inline-block;margin-right:4px;border-radius:10px;width:10px;height:10px;background-color:#ff7875;"></span>阳性数量/检测总量：${posVal}/${detVal}`;
+  if (isSampleRate) {
+    const sampleVal = selfSampleData.value[dataIndex] !== undefined ? selfSampleData.value[dataIndex] : '--';
+    return `${month}<br/>` +
+      `<span style="display:inline-block;margin-right:4px;border-radius:10px;width:10px;height:10px;background-color:#4deaff;"></span>样品总量：${sampleVal}批次<br/>` +
+      `<span style="display:inline-block;margin-right:4px;border-radius:10px;width:10px;height:10px;background-color:#ff7875;"></span>阳性数量/样品总量：${val}% (${posVal}/${sampleVal})`;
+  } else {
+    const detVal = mappedDetectionCounts.value[dataIndex] !== undefined ? mappedDetectionCounts.value[dataIndex] : '--';
+    return `${month}<br/>` +
+      `<span style="display:inline-block;margin-right:4px;border-radius:10px;width:10px;height:10px;background-color:#4deaff;"></span>检测总量：${detVal}项次<br/>` +
+      `<span style="display:inline-block;margin-right:4px;border-radius:10px;width:10px;height:10px;background-color:#ff7875;"></span>阳性数量/检测总量：${val}% (${posVal}/${detVal})`;
+  }
 };
 
 const currentLeftTrendOption = computed(() =>
@@ -356,8 +380,8 @@ const currentLeftTrendOption = computed(() =>
 const currentRightTrendOption = computed(() =>
   createTrendOption(
     positiveRateXAxis.value,
-    positiveRateData.value,
-    Math.min(calcMax(positiveRateData.value, 60), 100),
+    currentRightTrendData.value,
+    Math.min(calcMax(currentRightTrendData.value, 60), 100),
     '{value}%',
     riskTooltipFormatter,
     true
