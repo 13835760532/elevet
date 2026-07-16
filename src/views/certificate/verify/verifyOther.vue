@@ -131,9 +131,9 @@
                                             </p>
                                             <p class="basis-title">承诺依据:</p>
                                             <div class="basis-list">
-                                                <el-checkbox label="质量安全控制符合要求" disabled />
-                                                <el-checkbox label="自行检测合格" disabled />
-                                                <el-checkbox label="委托检测合格" disabled />
+                                                <el-checkbox label="质量安全控制符合要求" :model-value="basisList.includes(1)" disabled />
+                                                <el-checkbox label="自行检测合格" :model-value="basisList.includes(2)" disabled />
+                                                <el-checkbox label="委托检测合格" :model-value="basisList.includes(3)" disabled />
                                             </div>
                                         </div>
                                         <div class="qr-code-mock">
@@ -226,7 +226,8 @@ const formData = reactive({
     productCategory: '',
     subjectId: null,
     certificateType: null,
-    source: 1
+    source: 1,
+    commitmentBasis: ''
 });
 
 const unitRef = computed({
@@ -243,6 +244,24 @@ const measurementUnitOptions = usePreferredAgriMeasurementUnitOptions(
 );
 
 const qrCodeText = computed(() => String(formData.qrCode || formData.certificateCode || 'HGZ9191991111'));
+
+const basisList = computed(() => {
+    try {
+        if (!formData.commitmentBasis) return [];
+        if (typeof formData.commitmentBasis === 'string') {
+            if (formData.commitmentBasis.startsWith('[')) {
+                return JSON.parse(formData.commitmentBasis).map(Number);
+            }
+            return formData.commitmentBasis.split(',').map(Number);
+        }
+        if (Array.isArray(formData.commitmentBasis)) {
+            return formData.commitmentBasis.map(Number);
+        }
+    } catch (e) {
+        console.error('解析承诺依据失败', e);
+    }
+    return [];
+});
 
 const getUploadInput = () => {
     const uploadEl = uploadRef.value?.$el || uploadRef.value;
@@ -299,6 +318,7 @@ const onFileChange = async (uploadFile) => {
             formData.certificateCode = cert.certificateCode;
             formData.qrCode = cert.qrCode || data.qrCode || cert.certificateCode || '';
             formData.certificateType = cert.certificateType;
+            formData.commitmentBasis = cert.commitmentBasis || '';
         } else if (data.source === 2 && data.ocrData) {
             const ocr = data.ocrData;
             formData.productName = ocr.productName || '';
@@ -313,6 +333,7 @@ const onFileChange = async (uploadFile) => {
             formData.certificateCode = ocr.certificateCode || '';
             formData.qrCode = ocr.qrCode || data.qrCode || ocr.certificateCode || '';
             formData.certificateType = ocr.certificateType;
+            formData.commitmentBasis = ocr.commitmentBasis || '';
         }
 
     } catch (e) {
@@ -815,6 +836,20 @@ const handleSubmit = async () => {
         :deep(.el-checkbox) {
             height: 18px;
             margin-right: 0;
+        }
+
+        :deep(.el-checkbox__inner) {
+            border-radius: 4px !important;
+        }
+
+        :deep(.el-checkbox__input.is-checked .el-checkbox__inner),
+        :deep(.el-checkbox__input.is-disabled.is-checked .el-checkbox__inner) {
+            background-color: #00B3ED !important;
+            border-color: #00B3ED !important;
+        }
+
+        :deep(.el-checkbox__input.is-disabled.is-checked .el-checkbox__inner::after) {
+            border-color: #fff !important;
         }
 
         :deep(.el-checkbox__input.is-disabled .el-checkbox__inner) {

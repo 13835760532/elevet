@@ -10,6 +10,7 @@ type UnitOption = Pick<DictDataType, 'label' | 'value'> & Partial<DictDataType>
 type MaybeRef<T> = Ref<T> | T
 
 const LEGACY_AGRI_UNIT_LABELS: Record<string, string> = {
+  '1': '个',
   t: '吨',
   ton: '吨',
   kg: '千克',
