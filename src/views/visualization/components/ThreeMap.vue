@@ -102,6 +102,7 @@ type RegionGroup = THREE.Group & {
     feature: GeoFeature
     value: number
     item?: MapDataItem
+    tooltipPosition?: THREE.Vector3
   }
 }
 
@@ -157,6 +158,7 @@ let resizeObserver: ResizeObserver | null = null
 let frameId = 0
 let currentGeo: GeoJson | null = null
 let hovered: RegionGroup | null = null
+let defaultTooltipRegion: RegionGroup | null = null
 let currentLevel: LevelState = HOME_LEVEL
 let currentDrillLevel: 0 | 1 | 2 = 0
 let currentRegionParams: { provinceName?: string; cityName?: string } = {}
@@ -805,19 +807,29 @@ const addLabel = (
   projection: ReturnType<typeof geoMercator>,
   scale: number
 ) => {
-  const cp = feature.properties?.cp
   const name = feature.properties?.name
-  if (!cp || !name || !labelsRef.value) return
-  const point = projection(cp)
-  if (!point) return
+  const position = getFeatureAnchorPosition(feature, projection, scale)
+  if (!position || !name || !labelsRef.value) return
   const el = document.createElement('div')
   el.className = 'map-label'
   el.textContent = formatRegionLabel(name)
   labelsRef.value.appendChild(el)
   labelItems.push({
     el,
-    position: new THREE.Vector3(point[0] * scale, -point[1] * scale, 4)
+    position
   })
+}
+
+const getFeatureAnchorPosition = (
+  feature: GeoFeature,
+  projection: ReturnType<typeof geoMercator>,
+  scale: number
+) => {
+  const cp = feature.properties?.cp
+  if (!cp) return undefined
+  const point = projection(cp)
+  if (!point) return undefined
+  return new THREE.Vector3(point[0] * scale, -point[1] * scale, 4)
 }
 
 const updateLabels = () => {
@@ -876,6 +888,9 @@ const fitCameraToGeo = (
 const renderGeo = async (geo: GeoJson, level: LevelState) => {
   if (!mapGroup || !glowGroup || !lineGroup) return
   const renderId = ++renderSeq
+  hovered = null
+  defaultTooltipRegion = null
+  tooltip.show = false
   clearGroup(mapGroup)
   clearGroup(glowGroup)
   clearGroup(lineGroup)
@@ -893,6 +908,7 @@ const renderGeo = async (geo: GeoJson, level: LevelState) => {
 
   fitCameraToGeo(geo, projection, scale)
 
+  let maxRegion: RegionGroup | null = null
   geo.features.forEach((feature) => {
     const geoProps = feature.properties || {}
     const matched = getMatchedMapItem(geoProps, dataIndex)
@@ -901,6 +917,7 @@ const renderGeo = async (geo: GeoJson, level: LevelState) => {
     region.userData.feature = feature
     region.userData.value = value
     region.userData.item = matched
+    region.userData.tooltipPosition = getFeatureAnchorPosition(feature, projection, scale)
     const regionMaterial = createRegionMaterial(value)
     const lineMaterial = createLineMaterial('inner')
 
@@ -960,9 +977,16 @@ const renderGeo = async (geo: GeoJson, level: LevelState) => {
 
     mapGroup?.add(region)
     addLabel(feature, projection, scale)
+
+    if (!region.userData.tooltipPosition) {
+      const bounds = new THREE.Box3().setFromObject(region)
+      if (!bounds.isEmpty()) region.userData.tooltipPosition = bounds.getCenter(new THREE.Vector3())
+    }
+    if (matched && (!maxRegion || value > maxRegion.userData.value)) maxRegion = region
   })
 
-  tooltip.show = false
+  defaultTooltipRegion = maxRegion
+  showDefaultTooltip()
 }
 
 const initThree = () => {
@@ -1041,7 +1065,6 @@ const setHovered = (region: RegionGroup | null) => {
   }
   hovered = region
   if (!hovered) {
-    tooltip.show = false
     // 所有区域恢复正常
     mapGroup?.children.forEach((r: any) => {
       r.userData.hoverTarget = 0
@@ -1056,20 +1079,51 @@ const setHovered = (region: RegionGroup | null) => {
   })
 }
 
-const handlePointerMove = (event: MouseEvent) => {
-  const region = getIntersectedRegion(event)
-  setHovered(region)
-  if (!region) return
+const getRegionTooltipPoint = (region: RegionGroup) => {
+  if (!camera || !renderer || !region.userData.tooltipPosition) return undefined
+  const projected = region.userData.tooltipPosition.clone().project(camera)
+  const width = renderer.domElement.clientWidth || window.innerWidth
+  const height = renderer.domElement.clientHeight || window.innerHeight
+  return {
+    x: (projected.x * 0.5 + 0.5) * width,
+    y: (-projected.y * 0.5 + 0.5) * height
+  }
+}
+
+const showRegionTooltip = (region: RegionGroup, point = getRegionTooltipPoint(region)) => {
+  if (!point) {
+    tooltip.show = false
+    return
+  }
   tooltip.name = region.userData.feature.properties?.name || '--'
   tooltip.value = region.userData.value
   tooltip.lines = createTooltipLines(region.userData.item, region.userData.value)
-  tooltip.x = event.offsetX
-  tooltip.y = event.offsetY
+  tooltip.x = point.x
+  tooltip.y = point.y
   tooltip.show = true
+}
+
+const showDefaultTooltip = () => {
+  if (hovered || !defaultTooltipRegion) {
+    if (!hovered) tooltip.show = false
+    return
+  }
+  showRegionTooltip(defaultTooltipRegion)
+}
+
+const handlePointerMove = (event: MouseEvent) => {
+  const region = getIntersectedRegion(event)
+  setHovered(region)
+  if (!region) {
+    showDefaultTooltip()
+    return
+  }
+  showRegionTooltip(region, { x: event.offsetX, y: event.offsetY })
 }
 
 const handlePointerLeave = () => {
   setHovered(null)
+  showDefaultTooltip()
 }
 
 const drillToFeature = async (feature?: GeoFeature) => {
@@ -1130,6 +1184,7 @@ const resizeRenderer = () => {
     fitCameraToGeo(currentGeo, projection, 120)
   }
   updateLabels()
+  showDefaultTooltip()
 }
 
 const animate = () => {
