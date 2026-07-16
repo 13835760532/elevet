@@ -46,7 +46,7 @@
                             </div>
                             <div class="info-item">
                                 <span class="info-label">产品分类</span>
-                                <span class="info-value">{{ schemeInfo.category }}</span>
+                                <span class="info-value">{{ getCategoryLabelFromTree(schemeInfo.category) }}</span>
                             </div>
                             <div class="info-item">
                                 <span class="info-label">执行时间</span>
@@ -252,6 +252,8 @@ import * as DetectionTaskApi from '@/api/agri/detectionTask';
 import * as DeptApi from '@/api/system/dept';
 import * as DetectionRecordApi from '@/api/agri/detectionRecord';
 import { useDict, DICT_TYPE } from '@/hooks/web/useDict';
+import * as ProduceCategoryApi from '@/api/agri/produceCategory';
+import { handleTree } from '@/utils/tree';
 import download from '@/utils/download';
 import { formatDate } from '@/utils/formatTime';
 import DetectionProgress from '@/components/DetectionProgress/index.vue';
@@ -264,6 +266,41 @@ const route = useRoute();
 
 const { getLabel: getPlanTypeLabel } = useDict(DICT_TYPE.AGRI_PLAN_TYPE);
 const { getLabel: getProductCategoryLabel, options: productCategoryOptions } = useDict(DICT_TYPE.AGRI_PRODUCT_CATEGORY);
+
+const produceCategoryTree = ref([]);
+
+const getCategoryLabelFromTree = (val) => {
+    if (!val) return '--';
+    const findLabel = (nodes) => {
+        for (const node of nodes) {
+            if (String(node.code) === String(val) || String(node.name) === String(val) || String(node.id) === String(val)) {
+                return node.name;
+            }
+            if (node.children?.length) {
+                const found = findLabel(node.children);
+                if (found) return found;
+            }
+        }
+        return null;
+    }
+    const foundName = findLabel(produceCategoryTree.value);
+    return foundName || getProductCategoryLabel(val) || val;
+}
+
+/** 加载农产品行业分类树 */
+const loadProduceCategoryTree = async () => {
+    try {
+        const res = await ProduceCategoryApi.getProduceCategoryPage({
+            pageNo: 1,
+            pageSize: 1000,
+            type: '1' // 1-分类
+        });
+        const list = res?.list || [];
+        produceCategoryTree.value = handleTree(list);
+    } catch (error) {
+        console.error('加载农产品分类失败:', error);
+    }
+}
 
 // --- 状态定义 ---
 const loading = ref(false);
@@ -408,8 +445,8 @@ const loadPlanData = async (id) => {
             schemeInfo.type = getPlanTypeLabel(data.planType);
             schemeInfo.period = formatPeriod(data);
             schemeInfo.region = data.targetArea || '--';
-            // 使用字典获取分类名称
-            schemeInfo.category = data.targetCategory ? getProductCategoryLabel(data.targetCategory) : '--';
+            // 保存分类编码值，在界面层响应式翻译
+            schemeInfo.category = data.targetCategory || '--';
             schemeInfo.executionTime = `${data.planStartDate || ''} 至 ${data.planEndDate || ''}`;
             schemeInfo.status = statusMap[data.status]?.text || '未知';
             schemeInfo.statusValue = data.status;
@@ -570,6 +607,7 @@ onMounted(async () => {
         // 初始化进度树形分类选项
         categoryOptions.value = (productCategoryOptions.value || []).map(opt => ({ label: opt.label, value: opt.value }));
 
+        await loadProduceCategoryTree();
         await loadPlanData(Number(id));
         await loadTaskList(Number(id));
         // 初始化加载检测结果

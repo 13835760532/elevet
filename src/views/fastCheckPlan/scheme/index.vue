@@ -34,10 +34,9 @@
               class="custom-input w220" clearable />
           </el-form-item>
           <el-form-item label="">
-            <el-select v-model="queryParams.targetCategory" placeholder="产品分类" class="custom-select" clearable>
-              <el-option v-for="dict in productCategoryOptions" :key="dict.value" :label="dict.label"
-                :value="dict.value" />
-            </el-select>
+            <el-tree-select v-model="queryParams.targetCategory" :data="produceCategoryTree"
+              :props="{ label: 'name', value: 'code', children: 'children' }" node-key="code"
+              placeholder="产品分类" class="custom-select" clearable filterable check-strictly />
           </el-form-item>
           <el-form-item label="">
             <el-select v-model="queryParams.status" placeholder="全部状态" class="custom-select" clearable>
@@ -96,7 +95,7 @@
           <el-table-column label="方案名称" prop="planName" min-width="200" show-overflow-tooltip />
           <el-table-column label="产品分类" prop="targetCategory" width="110" align="center">
             <template #default="scope">
-              <span>{{ getProductCategoryLabel(scope.row.targetCategory) || scope.row.targetCategory || '--' }}</span>
+              <span>{{ getCategoryLabelFromTree(scope.row.targetCategory) }}</span>
             </template>
           </el-table-column>
           <el-table-column label="检测区域" prop="targetArea" width="110" align="center" />
@@ -151,6 +150,8 @@ import { Plus, Delete, Download } from '@element-plus/icons-vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { Search } from '@element-plus/icons-vue'
 import * as DetectionPlanApi from '@/api/agri/detectionPlan'
+import * as ProduceCategoryApi from '@/api/agri/produceCategory'
+import { handleTree } from '@/utils/tree'
 import download from '@/utils/download'
 import { useDict, DICT_TYPE } from '@/hooks/web/useDict'
 
@@ -196,6 +197,41 @@ const statusMap = {
 
 // 使用字典
 const { options: productCategoryOptions, getLabel: getProductCategoryLabel } = useDict(DICT_TYPE.AGRI_PRODUCT_CATEGORY, 'str')
+
+const produceCategoryTree = ref([])
+
+const getCategoryLabelFromTree = (val) => {
+  if (!val) return '--'
+  const findLabel = (nodes) => {
+    for (const node of nodes) {
+      if (String(node.code) === String(val) || String(node.name) === String(val) || String(node.id) === String(val)) {
+        return node.name
+      }
+      if (node.children?.length) {
+        const found = findLabel(node.children)
+        if (found) return found
+      }
+    }
+    return null
+  }
+  const foundName = findLabel(produceCategoryTree.value)
+  return foundName || getProductCategoryLabel(val) || val
+}
+
+/** 加载农产品行业分类树 */
+const loadProduceCategoryTree = async () => {
+  try {
+    const res = await ProduceCategoryApi.getProduceCategoryPage({
+      pageNo: 1,
+      pageSize: 1000,
+      type: '1' // 1-分类
+    })
+    const list = res?.list || []
+    produceCategoryTree.value = handleTree(list)
+  } catch (error) {
+    console.error('加载农产品分类失败:', error)
+  }
+}
 
 // 表格数据
 const tableList = ref([]);
@@ -380,6 +416,7 @@ const handleExport = async () => {
 
 // 页面初始化时加载数据
 onMounted(() => {
+  loadProduceCategoryTree()
   getList()
 })
 </script>

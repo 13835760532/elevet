@@ -163,6 +163,8 @@ import * as DetectionPlanApi from '@/api/agri/detectionPlan/index'
 import * as OrganizationApi from '@/api/agri/organization/index'
 import * as DistRelationApi from '@/api/agri/dist-relation/index'
 import { useDict, DICT_TYPE } from '@/hooks/web/useDict'
+import * as ProduceCategoryApi from '@/api/agri/produceCategory'
+import { handleTree } from '@/utils/tree'
 
 const router = useRouter()
 const route = useRoute()
@@ -182,6 +184,41 @@ const schemeInfo = reactive({
 const { getLabel: getPlanTypeLabel } = useDict(DICT_TYPE.AGRI_PLAN_TYPE, 'int')
 const { getLabel: getProductCategoryLabel } = useDict(DICT_TYPE.AGRI_PRODUCT_CATEGORY, 'str')
 
+const produceCategoryTree = ref([])
+
+const getCategoryLabelFromTree = (val) => {
+    if (!val) return '--'
+    const findLabel = (nodes) => {
+        for (const node of nodes) {
+            if (String(node.code) === String(val) || String(node.name) === String(val) || String(node.id) === String(val)) {
+                return node.name
+            }
+            if (node.children?.length) {
+                const found = findLabel(node.children)
+                if (found) return found
+            }
+        }
+        return null
+    }
+    const foundName = findLabel(produceCategoryTree.value)
+    return foundName || getProductCategoryLabel(val) || val
+}
+
+/** 加载农产品行业分类树 */
+const loadProduceCategoryTree = async () => {
+    try {
+        const res = await ProduceCategoryApi.getProduceCategoryPage({
+            pageNo: 1,
+            pageSize: 1000,
+            type: '1' // 1-分类
+        })
+        const list = res?.list || []
+        produceCategoryTree.value = handleTree(list)
+    } catch (error) {
+        console.error('加载农产品分类失败:', error)
+    }
+}
+
 // 加载方案详情
 const loadSchemeDetail = async () => {
     if (!planId) return
@@ -191,7 +228,7 @@ const loadSchemeDetail = async () => {
         schemeInfo.name = data.planName
         schemeInfo.dept = data.issuerDeptName || `部门ID: ${data.issuerDeptId}`
         schemeInfo.type = getPlanTypeLabel(data.planType)
-        schemeInfo.category = data.targetCategory ? getProductCategoryLabel(data.targetCategory) : '--'
+        schemeInfo.category = data.targetCategory ? getCategoryLabelFromTree(data.targetCategory) : '--'
         // 同步已选的 taskList 品种
         if (taskList.value.length) {
             taskList.value.forEach(item => {
@@ -536,7 +573,8 @@ const handleSubmit = useDebounceFn(async () => {
 }, 300)
 
 // 页面初始化
-onMounted(() => {
+onMounted(async () => {
+    await loadProduceCategoryTree()
     loadSchemeDetail()
     loadOrgOptions()
 })

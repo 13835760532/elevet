@@ -95,10 +95,9 @@
                     <!-- 第五行：分类与项目 -->
                     <el-col :span="12">
                         <el-form-item label="农产品行业分类" prop="targetCategory">
-                            <el-select v-model="formData.targetCategory" placeholder="请选择产品类别" class="full-width">
-                                <el-option v-for="dict in uniqueCategoryOptions" :key="dict.value" :label="dict.label"
-                                    :value="dict.value" />
-                            </el-select>
+                            <el-tree-select v-model="formData.targetCategory" :data="produceCategoryTree"
+                                :props="{ label: 'name', value: 'code', children: 'children' }" node-key="code"
+                                placeholder="请选择农产品类别" class="full-width" clearable filterable check-strictly />
                         </el-form-item>
                     </el-col>
                     <!-- <el-col :span="12">
@@ -205,7 +204,7 @@
                         <!-- <div class="info-item">
                             <span class="dot d6"></span>
                             <span class="label">目标品种：</span>
-                            <span class="value">{{ getProductCategoryLabel(formData.targetCategory) }}</span>
+                            <span class="value">{{ getCategoryLabelFromTree(formData.targetCategory) }}</span>
                         </div> -->
                         <div class="info-item">
                             <span class="dot d7"></span>
@@ -263,6 +262,7 @@ import { Plus, UploadFilled, Document, Close } from '@element-plus/icons-vue';
 import { ElMessage } from 'element-plus';
 import * as DetectionPlanApi from '@/api/agri/detectionPlan'
 import * as DeptApi from '@/api/system/dept'
+import * as ProduceCategoryApi from '@/api/agri/produceCategory'
 import { handleTree } from '@/utils/tree'
 import { useFileUpload } from '@/hooks/web/useFileUpload'
 import { useDict, DICT_TYPE } from '@/hooks/web/useDict'
@@ -281,15 +281,40 @@ const issuerDeptName = ref(''); // 缓存当前选中的部门名称，用于回
 const { options: planTypeOptions, getLabel: getPlanTypeLabel } = useDict(DICT_TYPE.AGRI_PLAN_TYPE, 'int')
 const { options: productCategoryOptions, getLabel: getProductCategoryLabel } = useDict(DICT_TYPE.AGRI_PRODUCT_CATEGORY, 'str')
 
-// 分类去重，防止字典项重复渲染
-const uniqueCategoryOptions = computed(() => {
-    const seen = new Set()
-    return productCategoryOptions.value.filter(item => {
-        if (seen.has(item.value)) return false
-        seen.add(item.value)
-        return true
-    })
-})
+const produceCategoryTree = ref([])
+
+const getCategoryLabelFromTree = (val) => {
+    if (!val) return '--'
+    const findLabel = (nodes) => {
+        for (const node of nodes) {
+            if (String(node.code) === String(val) || String(node.name) === String(val) || String(node.id) === String(val)) {
+                return node.name
+            }
+            if (node.children?.length) {
+                const found = findLabel(node.children)
+                if (found) return found
+            }
+        }
+        return null
+    }
+    const foundName = findLabel(produceCategoryTree.value)
+    return foundName || getProductCategoryLabel(val) || val
+}
+
+/** 加载农产品行业分类树 */
+const loadProduceCategoryTree = async () => {
+    try {
+        const res = await ProduceCategoryApi.getProduceCategoryPage({
+            pageNo: 1,
+            pageSize: 1000,
+            type: 1 // 1-分类
+        })
+        const list = res?.list || []
+        produceCategoryTree.value = res?.list || []
+    } catch (error) {
+        console.error('加载农产品分类失败:', error)
+    }
+}
 
 // 使用文件上传 hook
 const {
@@ -536,6 +561,7 @@ const getExecutionTime = () => {
 // 页面初始化
 onMounted(() => {
     loadDeptList()
+    loadProduceCategoryTree()
     const id = route.query.id
     if (id) {
         // 编辑模式：加载方案详情
