@@ -79,10 +79,10 @@
           <span class="t-tab" :class="{ active: activeTab === 'result' }" @click="activeTab = 'result'">检测结果</span>
         </div>
         <div class="table-actions">
-          <template v-if="activeTab === 'task'">
+          <!-- <template v-if="activeTab === 'result'">
             <el-button type="primary" class="search-btn" @click="handleSearch">查询</el-button>
             <el-button class="reset-btn" @click="handleReset">重置</el-button>
-          </template>
+          </template> -->
           <el-button type="primary" class="export-btn" @click="handleExport" :loading="exportLoading">导出</el-button>
         </div>
       </div>
