@@ -108,7 +108,11 @@ import {
   type RiskAreaTopRespVO
 } from '@/api/agri/dashboard'
 import { getNoticePage, getNotice, type NoticeVO } from '@/api/system/notice'
-import { getBigScreenQueryParams, subscribeBigScreenRefresh } from './config'
+import {
+  getBigScreenQueryParams,
+  getBigScreenRiskAreaQueryParams,
+  subscribeBigScreenRefresh
+} from './config'
 import { formatDate } from '@/utils/formatTime'
 
 const noticeList = ref<NoticeVO[]>([])
@@ -285,7 +289,7 @@ const currentProjectRiskOption = computed(() => ({
 
 const loadRiskAreaTop10 = async () => {
   try {
-    const params = { ...getBigScreenQueryParams() }
+    const params = getBigScreenRiskAreaQueryParams()
     const currentAreaCode = String(params.areaCode || '').trim()
     const isMunicipality = ['110000', '120000', '310000', '500000'].includes(currentAreaCode) ||
                            /^(11|12|31|50)0000$/.test(currentAreaCode)

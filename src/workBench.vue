@@ -52,43 +52,6 @@
         </div>
 
         <div class="report-grid" v-loading="riskLoading">
-          <article class="report-card">
-            <div class="report-brand">
-              <span class="shield-mark is-alert"></span>
-              <strong>链安食检-农产品质量安全预警（日报）</strong>
-            </div>
-
-            <div class="warning-records-list">
-              <div v-for="(item, index) in dailyWarningRecords" :key="item.id || index"
-                class="warning-record-item">
-                <div class="warning-record-header">
-                  <span class="record-badge">阳性/不合格</span>
-                  <span class="record-product">{{ item.productName || '未命名产品' }}</span>
-                  <button class="record-view-btn" type="button" @click="handleViewWarningDetail(item)">查看</button>
-                </div>
-                <div class="warning-record-detail">
-                  <div class="detail-row">
-                    <span>检测项目：</span>
-                    <strong>{{ item.parsedItems || '-' }}</strong>
-                  </div>
-                  <div class="detail-row">
-                    <span>抽检地区：</span>
-                    <span>{{ item.detectionArea || '-' }}</span>
-                  </div>
-                  <div class="detail-row">
-                    <span>被检主体：</span>
-                    <span>{{ item.subjectName || '-' }}</span>
-                  </div>
-                  <div class="detail-row">
-                    <span>检测时间：</span>
-                    <span>{{ item.testTime || '-' }}</span>
-                  </div>
-                </div>
-              </div>
-              <el-empty v-if="!dailyWarningRecords.length" description="当天暂无高风险预警" :image-size="80" />
-            </div>
-          </article>
-
           <article class="report-card report-stack">
             <div class="report-brand">
               <span class="shield-mark is-alert"></span>
@@ -96,8 +59,7 @@
             </div>
 
             <div class="warning-records-list">
-              <div v-for="(item, index) in monthlyWarningRecords" :key="item.id || index"
-                class="warning-record-item">
+              <div v-for="(item, index) in monthlyWarningRecords" :key="item.id || index" class="warning-record-item">
                 <div class="warning-record-header">
                   <span class="record-badge">阳性/不合格</span>
                   <span class="record-product">{{ item.productName || '未命名产品' }}</span>
@@ -118,13 +80,50 @@
                   </div>
                   <div class="detail-row">
                     <span>检测时间：</span>
-                    <span>{{ item.testTime || '-' }}</span>
+                    <span>{{ item.testTime.slice(0, 7) || '-' }}</span>
                   </div>
                 </div>
               </div>
               <el-empty v-if="!monthlyWarningRecords.length" description="当月暂无高风险预警" :image-size="80" />
             </div>
           </article>
+          <article class="report-card">
+            <div class="report-brand">
+              <span class="shield-mark is-alert"></span>
+              <strong>链安食检-农产品质量安全预警（日报）</strong>
+            </div>
+
+            <div class="warning-records-list">
+              <div v-for="(item, index) in dailyWarningRecords" :key="item.id || index" class="warning-record-item">
+                <div class="warning-record-header">
+                  <span class="record-badge">阳性/不合格</span>
+                  <span class="record-product">{{ item.productName || '未命名产品' }}</span>
+                  <button class="record-view-btn" type="button" @click="handleViewWarningDetail(item)">查看</button>
+                </div>
+                <div class="warning-record-detail">
+                  <div class="detail-row">
+                    <span>检测项目：</span>
+                    <strong>{{ item.parsedItems || '-' }}</strong>
+                  </div>
+                  <div class="detail-row">
+                    <span>抽检地区：</span>
+                    <span>{{ item.detectionArea || '-' }}</span>
+                  </div>
+                  <div class="detail-row">
+                    <span>被检主体：</span>
+                    <span>{{ item.subjectName || '-' }}</span>
+                  </div>
+                  <div class="detail-row">
+                    <span>检测时间：</span>
+                    <span>{{ item.testTime.slice(0, 11) || '-' }}</span>
+                  </div>
+                </div>
+              </div>
+              <el-empty v-if="!dailyWarningRecords.length" description="当天暂无高风险预警" :image-size="80" />
+            </div>
+          </article>
+
+
         </div>
       </main>
     </section>
@@ -181,7 +180,8 @@
         <el-select v-model="trackForm.owner" placeholder="主管单位" clearable class="track-filter">
           <el-option v-for="item in trackOwnerOptions" :key="item.value" :label="item.label" :value="item.value" />
         </el-select>
-        <el-input v-model="trackForm.keyword" placeholder="输入任务名称" clearable class="track-input" @keyup.enter="handleTrackQuery" />
+        <el-input v-model="trackForm.keyword" placeholder="输入任务名称" clearable class="track-input"
+          @keyup.enter="handleTrackQuery" />
         <el-button type="primary" class="track-query" @click="handleTrackQuery">查询</el-button>
       </div>
 
@@ -516,7 +516,7 @@ const getWarningRecordList = async () => {
   riskLoading.value = true
   try {
     const selectedDateStr = `${reportForm.year}-${pad(reportForm.month)}-${pad(reportForm.day)}`
-    
+
     // 1. 获取日报数据：单日
     const dailyRes = await getDetectionRecordPage({
       pageNo: 1,
@@ -527,7 +527,7 @@ const getWarningRecordList = async () => {
       ],
       overallResult: 1 // 1：阳性/不合格
     })
-    
+
     const dailyRaw = dailyRes?.list || []
     dailyWarningRecords.value = dailyRaw.map((item: any) => {
       let testTime = item.detectionDate ? dayjs(item.detectionDate).format('YYYY-MM-DD HH:mm') : ''

@@ -205,16 +205,12 @@ const loadSubjectArchiveStats = (params = getBigScreenQueryParams()) => {
         pageNo: 1,
         pageSize: 1,
         type: 1,
-        provinceCode: params.provinceName,
-        cityCode: params.cityName,
         queryDeptScope: params.queryDeptScope
       }),
       getSubjectPage({
         pageNo: 1,
         pageSize: 1,
         type: 2,
-        provinceCode: params.provinceName,
-        cityCode: params.cityName,
         queryDeptScope: params.queryDeptScope
       })
     ])

@@ -132,17 +132,23 @@ export const formatBigScreenDataSummary = (config = getBigScreenConfig()) => {
 
 export const getBigScreenQueryParams = () => {
   const config = getBigScreenConfig()
-  const userDeptAreaParams = getBigScreenUserDeptAreaParams()
-  // 页面显式选择优先，未选择时回落到所属机构；最终范围仍由后端数据权限校验。
   return {
     startDate: config.timeRange?.[0] || undefined,
     endDate: config.timeRange?.[1] || undefined,
-    provinceName: config.provinceName || undefined,
-    cityName: config.cityName || undefined,
-    areaType: config.areaType || userDeptAreaParams.areaType || undefined,
-    areaCode: config.areaCode || userDeptAreaParams.areaCode || undefined,
     dataScope: config.dataScope || undefined,
     queryDeptScope: getBigScreenQueryDeptScope(config.dataScope)
+  }
+}
+
+export const getBigScreenRiskAreaQueryParams = () => {
+  const config = getBigScreenConfig()
+  const userDeptAreaParams = getBigScreenUserDeptAreaParams()
+  // 只有区域风险 TOP10 按页面选择地区过滤；未选择时回落到所属机构。
+  return {
+    ...getBigScreenQueryParams(),
+    provinceName: config.provinceName || undefined,
+    cityName: config.cityName || undefined,
+    areaCode: config.areaCode || userDeptAreaParams.areaCode || undefined
   }
 }
 

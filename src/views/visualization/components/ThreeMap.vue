@@ -509,19 +509,20 @@ const createTooltipLines = (item?: MapDataItem, value = 0) => {
 
 const loadCurrentMapData = async () => {
   const requestId = ++dataRequestSeq
+  // 各 Tab 只有地图接口需要地区，用于加载当前地图层级。
   const rawParams = {
     ...getBigScreenQueryParams(),
     provinceName: currentRegionParams.provinceName,
     cityName: currentRegionParams.cityName
   }
-  
+
   let areaLevel = currentDrillLevel === 1 ? '1' : currentDrillLevel === 2 ? '2' : undefined
   let cityName = rawParams.cityName
-  if (isMunicipality(rawParams.provinceName)) {
-    cityName = rawParams.provinceName
+  if (isMunicipality(currentRegionParams.provinceName)) {
+    cityName = currentRegionParams.provinceName
     areaLevel = '3'
   }
-  
+
   const params = {
     ...rawParams,
     cityName,
