@@ -85,6 +85,14 @@
                                     <el-input :prefix-icon="Search" v-model="queryParams.subjectName"
                                         placeholder="生产经营企业" clearable class="custom-input w140" />
                                 </el-form-item>
+                                <el-form-item label="" prop="certificateType">
+                                    <el-select v-model="queryParams.certificateType" placeholder="出证类型" clearable
+                                        class="custom-select w140">
+                                        <el-option label="生产者" :value="1" />
+                                        <el-option label="收购者" :value="2" />
+                                        <el-option label="批发市场" :value="3" />
+                                    </el-select>
+                                </el-form-item>
                                 <el-form-item v-if="activeTab === 'produce'" label="" prop="status">
                                     <el-select v-model="queryParams.status" placeholder="开具状态" clearable
                                         class="custom-select w140">
@@ -138,23 +146,39 @@
                     <div class="table-wrapper">
                         <el-table ref="tableRef" :data="tableData" v-loading="loading" :height="tableHeight">
                             <el-table-column type="index" label="序号" width="60" align="center" />
-                            <el-table-column prop="certificateCode" label="合格证编号" width="150" />
+                            <el-table-column prop="certificateCode" label="合格证编号" width="150" align="center">
+                                <template #default="scope">
+                                    <span>{{ scope.row.certificateCode || '-' }}</span>
+                                </template>
+                            </el-table-column>
                             <el-table-column prop="certificateType" label="出证类型" width="100" align="center">
                                 <template #default="scope">
                                     <el-tag v-if="scope.row.certificateType === 1">生产者</el-tag>
                                     <el-tag v-else-if="scope.row.certificateType === 2" type="success">收购者</el-tag>
                                     <el-tag v-else-if="scope.row.certificateType === 3" type="warning">批发市场</el-tag>
-                                    <span v-else>--</span>
+                                    <span v-else>-</span>
                                 </template>
                             </el-table-column>
-                            <el-table-column prop="productName" label="产品名称" width="100" align="center" />
+                            <el-table-column prop="productName" label="产品名称" width="100" align="center">
+                                <template #default="scope">
+                                    <span>{{ scope.row.productName || '-' }}</span>
+                                </template>
+                            </el-table-column>
                             <el-table-column prop="productCategory" label="产品类别" width="100" align="center">
                                 <template #default="scope">
-                                    <span>{{ getProductCategoryLabel(scope.row.productCategory) }}</span>
+                                    <span>{{ getProductCategoryLabel(scope.row.productCategory) || '-' }}</span>
                                 </template>
                             </el-table-column>
-                            <el-table-column prop="productionArea" label="产地" width="150" show-overflow-tooltip />
-                            <el-table-column prop="subjectName" label="生产经营主体" min-width="160" show-overflow-tooltip />
+                            <el-table-column prop="productionArea" label="产地" width="150" show-overflow-tooltip align="center">
+                                <template #default="scope">
+                                    <span>{{ scope.row.productionArea || '-' }}</span>
+                                </template>
+                            </el-table-column>
+                            <el-table-column prop="subjectName" label="生产经营主体" min-width="160" show-overflow-tooltip align="center">
+                                <template #default="scope">
+                                    <span>{{ scope.row.subjectName || '-' }}</span>
+                                </template>
+                            </el-table-column>
                             <el-table-column v-if="activeTab === 'produce'" prop="issueDate" label="开具日期" width="160"
                                 align="center" :formatter="dateFormatter" />
 
@@ -167,13 +191,6 @@
                                         </el-tag>
                                     </template>
                                 </el-table-column>
-                                <!-- <el-table-column prop="verificationType" label="查验状态" width="100" align="center">
-                                    <template #default="scope">
-                                        <el-tag :type="scope.row.verificationType === 2 ? 'success' : 'warning'">
-                                            {{ scope.row.verificationType === 2 ? '已存证' : '仅查验' }}
-                                        </el-tag>
-                                    </template>
-                                </el-table-column> -->
                                 <el-table-column prop="verificationTime" label="查验时间" width="160" align="center"
                                     :formatter="dateFormatter" />
                             </template>
@@ -183,11 +200,17 @@
                                     <div>联系人</div>
                                     <div class="sub-header">(生产经营企业/个人)</div>
                                 </template>
+                                <template #default="scope">
+                                    <span>{{ scope.row.contactName || '-' }}</span>
+                                </template>
                             </el-table-column>
                             <el-table-column prop="contactPhone" label="联系电话" width="120" align="center">
                                 <template #header>
                                     <div>联系电话</div>
                                     <div class="sub-header">(生产经营企业/个人)</div>
+                                </template>
+                                <template #default="scope">
+                                    <span>{{ scope.row.contactPhone || '-' }}</span>
                                 </template>
                             </el-table-column>
                             <el-table-column label="操作" width="180" fixed="right" align="center">
@@ -343,7 +366,7 @@ const queryParams = reactive({
     certificateCode: '',
     productName: '',
     subjectName: '',
-    certificateType: 1 as number | undefined,
+    certificateType: undefined as number | undefined,
     productionArea: '',
     province: '',
     city: '',
@@ -428,14 +451,13 @@ const buildPageParams = () => {
         areaLevel: areaParams.areaLevel
     };
 
+    params.certificateType = queryParams.certificateType || undefined;
     if (activeTab.value === 'produce') {
-        params.certificateType = 1;
         params.status =
             queryParams.status === 0 || queryParams.status
                 ? queryParams.status
                 : undefined;
     } else {
-        params.certificateType = '2';
         params.certificateSource = queryParams.certificateSource || undefined;
         params.verificationType = queryParams.verificationType || undefined;
     }
@@ -483,7 +505,7 @@ onMounted(() => {
 // 页签切换处理
 const handleTabChange = (tab: string) => {
     activeTab.value = tab;
-    queryParams.certificateType = tab === 'produce' ? 1 : undefined;
+    queryParams.certificateType = undefined;
     queryParams.status = undefined;
     queryParams.certificateSource = undefined;
     queryParams.verificationType = undefined;
@@ -512,7 +534,6 @@ const handleReset = () => {
     queryParams.verificationType = undefined;
     queryParams.contactPhone = '';
     queryParams.status = undefined;
-    queryParams.certificateType = activeTab.value === 'produce' ? 1 : undefined;
     handleSearch();
 };
 

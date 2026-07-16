@@ -55,11 +55,11 @@
           <article class="report-card">
             <div class="report-brand">
               <span class="shield-mark is-alert"></span>
-              <strong>链安食检-农产品质量安全预警</strong>
+              <strong>链安食检-农产品质量安全预警（日报）</strong>
             </div>
 
             <div class="warning-records-list">
-              <div v-for="(item, index) in warningRecords.slice(0, 2)" :key="item.id || index"
+              <div v-for="(item, index) in dailyWarningRecords" :key="item.id || index"
                 class="warning-record-item">
                 <div class="warning-record-header">
                   <span class="record-badge">阳性/不合格</span>
@@ -85,18 +85,18 @@
                   </div>
                 </div>
               </div>
-              <el-empty v-if="warningRecords.length < 1" description="当天暂无高风险预警" :image-size="80" />
+              <el-empty v-if="!dailyWarningRecords.length" description="当天暂无高风险预警" :image-size="80" />
             </div>
           </article>
 
           <article class="report-card report-stack">
             <div class="report-brand">
               <span class="shield-mark is-alert"></span>
-              <strong>链安食检-农产品质量安全预警</strong>
+              <strong>链安食检-农产品质量安全预警（月报）</strong>
             </div>
 
             <div class="warning-records-list">
-              <div v-for="(item, index) in warningRecords.slice(2, 4)" :key="item.id || index"
+              <div v-for="(item, index) in monthlyWarningRecords" :key="item.id || index"
                 class="warning-record-item">
                 <div class="warning-record-header">
                   <span class="record-badge">阳性/不合格</span>
@@ -122,7 +122,7 @@
                   </div>
                 </div>
               </div>
-              <el-empty v-if="warningRecords.length < 3" description="当天暂无更多高风险预警" :image-size="80" />
+              <el-empty v-if="!monthlyWarningRecords.length" description="当月暂无高风险预警" :image-size="80" />
             </div>
           </article>
         </div>
@@ -509,32 +509,27 @@ const getRiskList = async () => {
   }
 }
 
-const warningRecords = ref<any[]>([])
-const isTodayWarning = ref(true)
+const dailyWarningRecords = ref<any[]>([])
+const monthlyWarningRecords = ref<any[]>([])
 
 const getWarningRecordList = async () => {
   riskLoading.value = true
   try {
     const selectedDateStr = `${reportForm.year}-${pad(reportForm.month)}-${pad(reportForm.day)}`
-    const endDate = selectedDateStr
-    const startDate = dayjs(selectedDateStr).subtract(6, 'day').format('YYYY-MM-DD')
-
-    console.log('安全预警接口请求参数:', { startDate, endDate, selectedDateStr })
-    const res = await getDetectionRecordPage({
+    
+    // 1. 获取日报数据：单日
+    const dailyRes = await getDetectionRecordPage({
       pageNo: 1,
       pageSize: 50,
-      startDate,
-      endDate,
-      dateType: 1,
-      timeUnit: 'DAY',
+      detectionDate: [
+        `${selectedDateStr} 00:00:00`,
+        `${selectedDateStr} 23:59:59`
+      ],
       overallResult: 1 // 1：阳性/不合格
     })
-
-    const rawList = res?.list || []
-    console.log('安全预警接口返回原始数据列表:', rawList)
-
-    // 1. 全部数据的解析和清洗
-    const parsedList = rawList.map((item: any) => {
+    
+    const dailyRaw = dailyRes?.list || []
+    dailyWarningRecords.value = dailyRaw.map((item: any) => {
       let testTime = item.detectionDate ? dayjs(item.detectionDate).format('YYYY-MM-DD HH:mm') : ''
       let parsedItems = '-'
       if (item.aiRecognitionResult) {
@@ -555,35 +550,58 @@ const getWarningRecordList = async () => {
         testTime,
         parsedItems
       }
-    })
-
-    // 2. 按检测时间由近到远（倒序）排序
-    parsedList.sort((a: any, b: any) => {
+    }).sort((a: any, b: any) => {
       const timeA = a.testTime ? dayjs(a.testTime).valueOf() : 0
       const timeB = b.testTime ? dayjs(b.testTime).valueOf() : 0
       return timeB - timeA
     })
 
-    // 3. 筛选出当天的数据
-    const filteredToday = parsedList.filter((item: any) => {
-      const dateA = item.detectionDate ? dayjs(item.detectionDate).format('YYYY-MM-DD') : ''
-      const dateB = item.testTime ? dayjs(item.testTime).format('YYYY-MM-DD') : ''
-      return dateA === selectedDateStr || dateB === selectedDateStr
+    // 2. 获取月报数据：当月整月数据
+    const startOfMonth = dayjs(selectedDateStr).startOf('month').format('YYYY-MM-DD')
+    const endOfMonth = dayjs(selectedDateStr).endOf('month').format('YYYY-MM-DD')
+
+    const monthlyRes = await getDetectionRecordPage({
+      pageNo: 1,
+      pageSize: 50,
+      detectionDate: [
+        `${startOfMonth} 00:00:00`,
+        `${endOfMonth} 23:59:59`
+      ],
+      overallResult: 1 // 1：阳性/不合格
     })
 
-    // 4. 当天有数据优先展示当天，无数据则展示最近的4条记录
-    if (filteredToday.length > 0) {
-      isTodayWarning.value = true
-      warningRecords.value = filteredToday.slice(0, 4)
-      console.log('展示选定当天的预警数据:', warningRecords.value)
-    } else {
-      isTodayWarning.value = false
-      warningRecords.value = parsedList.slice(0, 4)
-      console.log('当天无数据，降级展示最近的预警记录:', warningRecords.value)
-    }
+    const monthlyRaw = monthlyRes?.list || []
+    monthlyWarningRecords.value = monthlyRaw.map((item: any) => {
+      let testTime = item.detectionDate ? dayjs(item.detectionDate).format('YYYY-MM-DD HH:mm') : ''
+      let parsedItems = '-'
+      if (item.aiRecognitionResult) {
+        try {
+          const aiData = JSON.parse(item.aiRecognitionResult)
+          if (aiData.results && Array.isArray(aiData.results)) {
+            parsedItems = aiData.results.map((r: any) => r.codeName).join(', ')
+          }
+          if (aiData.timestamp) {
+            testTime = dayjs(aiData.timestamp).format('YYYY-MM-DD HH:mm')
+          }
+        } catch (e) {
+          // ignore
+        }
+      }
+      return {
+        ...item,
+        testTime,
+        parsedItems
+      }
+    }).sort((a: any, b: any) => {
+      const timeA = a.testTime ? dayjs(a.testTime).valueOf() : 0
+      const timeB = b.testTime ? dayjs(b.testTime).valueOf() : 0
+      return timeB - timeA
+    })
+
   } catch (error) {
-    console.error('获取质量安全预警数据失败:', error)
-    warningRecords.value = []
+    console.error('获取预警日报/月报数据失败:', error)
+    dailyWarningRecords.value = []
+    monthlyWarningRecords.value = []
   } finally {
     riskLoading.value = false
   }
