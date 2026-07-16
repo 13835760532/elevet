@@ -269,35 +269,43 @@ const formatToChineseMonth = (ym?: string) => {
 const formattedXAxis = computed(() => monthLabels.value.map(item => formatToChineseMonth(item)))
 
 const positiveRateXAxis = computed(() => monthLabels.value);
-const positiveRateData = computed(() =>
-  mapTrendData(positiveRateTrend.value.xaxis || [], positiveRateTrend.value.positiveRates || [])
-);
-const positiveDetectionData = computed(() =>
-  mapTrendData(positiveRateTrend.value.xaxis || [], positiveRateTrend.value.detectionCounts || [])
-);
 const selfSampleXAxis = computed(() => monthLabels.value);
+
 const selfSampleData = computed(() =>
   mapTrendData(selfSampleTrend.value.xaxis || [], selfSampleTrend.value.sampleCounts || [])
 );
 
-const mappedPositiveCounts = computed(() =>
-  mapTrendData(positiveRateTrend.value.xaxis || [], positiveRateTrend.value.positiveCounts || [])
-)
+// 样品总量 (分母)
 const mappedDetectionCounts = computed(() =>
   mapTrendData(positiveRateTrend.value.xaxis || [], positiveRateTrend.value.detectionCounts || [])
 )
+// 样品阳性数 (分子)
+const mappedPositiveCounts = computed(() =>
+  mapTrendData(positiveRateTrend.value.xaxis || [], positiveRateTrend.value.positiveCounts || [])
+)
+// 样品阳性率
+const samplePositiveRates = computed(() =>
+  mapTrendData(positiveRateTrend.value.xaxis || [], positiveRateTrend.value.positiveRates || [])
+)
 
-const samplePositiveRates = computed(() => {
-  return monthLabels.value.map((_, index) => {
-    const total = selfSampleData.value[index] || 0;
-    const positive = mappedPositiveCounts.value[index] || 0;
-    if (total <= 0) return 0;
-    return Number(((positive / total) * 100).toFixed(2));
-  });
-});
+// 检测项总量 (分母)
+const mappedDetectionItemCounts = computed(() =>
+  mapTrendData(positiveRateTrend.value.xaxis || [], positiveRateTrend.value.detectionItemCounts || [])
+)
+// 检测项阳性数 (分子)
+const mappedItemPositiveCounts = computed(() =>
+  mapTrendData(positiveRateTrend.value.xaxis || [], positiveRateTrend.value.itemPositiveCounts || [])
+)
+// 检测项阳性率
+const itemPositiveRates = computed(() =>
+  mapTrendData(positiveRateTrend.value.xaxis || [], positiveRateTrend.value.itemPositiveRates || [])
+)
+
+// 左侧“检测量”折线数据对应检测项总量
+const positiveDetectionData = computed(() => mappedDetectionItemCounts.value)
 
 const currentRightTrendData = computed(() =>
-  rightTrendTab.value === '样品阳性率' ? samplePositiveRates.value : positiveRateData.value
+  rightTrendTab.value === '样品阳性率' ? samplePositiveRates.value : itemPositiveRates.value
 );
 
 const leftTrendEmpty = computed(() =>
@@ -327,8 +335,8 @@ const detectionTooltipFormatter = (params: any) => {
   const month = formatToChineseMonth(params[0].axisValue);
   const val = params[0].value !== undefined ? params[0].value : '--';
 
-  const posVal = mappedPositiveCounts.value[dataIndex] !== undefined ? mappedPositiveCounts.value[dataIndex] : '--';
-  const detVal = mappedDetectionCounts.value[dataIndex] !== undefined ? mappedDetectionCounts.value[dataIndex] : '--';
+  const posVal = mappedItemPositiveCounts.value[dataIndex] !== undefined ? mappedItemPositiveCounts.value[dataIndex] : '--';
+  const detVal = mappedDetectionItemCounts.value[dataIndex] !== undefined ? mappedDetectionItemCounts.value[dataIndex] : '--';
 
   return `${month}<br/>` +
     `<span style="display:inline-block;margin-right:4px;border-radius:10px;width:10px;height:10px;background-color:#4deaff;"></span>检测项总量：${val}项次<br/>` +
@@ -341,16 +349,17 @@ const riskTooltipFormatter = (params: any) => {
   const month = formatToChineseMonth(params[0].axisValue);
   const val = params[0].value !== undefined ? params[0].value : '--';
 
-  const posVal = mappedPositiveCounts.value[dataIndex] !== undefined ? mappedPositiveCounts.value[dataIndex] : '--';
   const isSampleRate = rightTrendTab.value === '样品阳性率';
 
   if (isSampleRate) {
-    const sampleVal = selfSampleData.value[dataIndex] !== undefined ? selfSampleData.value[dataIndex] : '--';
-    return `${month}<br/>` +
-      `<span style="display:inline-block;margin-right:4px;border-radius:10px;width:10px;height:10px;background-color:#4deaff;"></span>样品总量：${sampleVal}批次<br/>` +
-      `<span style="display:inline-block;margin-right:4px;border-radius:10px;width:10px;height:10px;background-color:#ff7875;"></span>阳性数量/样品总量：${val}% (${posVal}/${sampleVal})`;
-  } else {
+    const posVal = mappedPositiveCounts.value[dataIndex] !== undefined ? mappedPositiveCounts.value[dataIndex] : '--';
     const detVal = mappedDetectionCounts.value[dataIndex] !== undefined ? mappedDetectionCounts.value[dataIndex] : '--';
+    return `${month}<br/>` +
+      `<span style="display:inline-block;margin-right:4px;border-radius:10px;width:10px;height:10px;background-color:#4deaff;"></span>样品总量：${detVal}批次<br/>` +
+      `<span style="display:inline-block;margin-right:4px;border-radius:10px;width:10px;height:10px;background-color:#ff7875;"></span>阳性数量/样品总量：${val}% (${posVal}/${detVal})`;
+  } else {
+    const posVal = mappedItemPositiveCounts.value[dataIndex] !== undefined ? mappedItemPositiveCounts.value[dataIndex] : '--';
+    const detVal = mappedDetectionItemCounts.value[dataIndex] !== undefined ? mappedDetectionItemCounts.value[dataIndex] : '--';
     return `${month}<br/>` +
       `<span style="display:inline-block;margin-right:4px;border-radius:10px;width:10px;height:10px;background-color:#4deaff;"></span>检测总量：${detVal}项次<br/>` +
       `<span style="display:inline-block;margin-right:4px;border-radius:10px;width:10px;height:10px;background-color:#ff7875;"></span>阳性数量/检测总量：${val}% (${posVal}/${detVal})`;
