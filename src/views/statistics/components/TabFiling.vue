@@ -153,7 +153,7 @@
           <el-table-column prop="origin" label="产品产地" align="center" width="120" show-overflow-tooltip />
           <el-table-column prop="subjectName" label="主体名称" align="center" min-width="160" show-overflow-tooltip />
           <el-table-column prop="filingDate" label="建档日期" align="center" width="120" />
-          <el-table-column prop="createOrg" label="创建机构" align="center" min-width="140" show-overflow-tooltip />
+          <el-table-column prop="deptName" label="创建机构" align="center" min-width="140" show-overflow-tooltip />
         </el-table>
 
         <div class="pagination-container">
