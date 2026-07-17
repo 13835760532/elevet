@@ -279,6 +279,10 @@ const formatDetectionTime = (value: any) => {
     return formatDate(date, 'YYYY-MM-DD HH:mm:ss');
 };
 
+/**
+ * 解析自主检测的 AI 识别结果。
+ * 兼容 results、detentionResult、detectionResult 等历史字段，识别时间缺失时回退记录时间。
+ */
 const parseAiRecognition = (raw: any, fallbackTime?: any) => {
     if (!raw) {
         return {
@@ -313,6 +317,7 @@ const parseAiRecognition = (raw: any, fallbackTime?: any) => {
     }
 };
 
+/** 加载当前账号的自主检测记录，并将 AI 结果转换为表格可读的项目和时间。 */
 const getList = async () => {
     loading.value = true;
     try {
@@ -388,6 +393,7 @@ const ruleForm = reactive<{
     dateRange: []
 });
 
+/** 加载当前自主检测上报规则；未配置规则时保留默认表单供首次创建。 */
 const handleSetRule = async () => {
     try {
         const data = await SelfDetectionReportRuleApi.getCurrentSelfDetectionReportRule();
@@ -411,6 +417,7 @@ const handleSetRule = async () => {
     }
 };
 
+/** 根据规则主键决定新增或更新，并在成功后刷新列表的公开状态。 */
 const handleSaveRule = async () => {
     try {
         const submitData = {
@@ -449,6 +456,7 @@ const handleBatchPublic = () => {
     batchPublicDialogVisible.value = true;
 };
 
+/** 批量更新所选记录的公开状态，成功后清空跨行选择并重新加载数据。 */
 const confirmBatchPublic = async () => {
     loading.value = true;
     const publicFlag = batchPublicValue.value;
@@ -494,6 +502,7 @@ const handleView = (row) => {
     router.push('/rapidDetection/taskResult?id=' + row.id);
 };
 
+/** 确认后进入复检流程；是否已复检的最终约束仍由后端校验。 */
 const handleRetest = async (row) => {
     try {
         await message.confirm('确认对该检测记录发起复检？复检仅支持一次。');

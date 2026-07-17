@@ -205,7 +205,7 @@ const reportImage = ref('');
 const reportDialogVisible = ref(false);
 const reportComponentRef = ref(null);
 
-// 格式化数据供给报表组件
+/** 将检测记录转换为报告组件约定的数据结构，并补齐报告展示所需默认值。 */
 const formattedData = computed(() => {
     if (!recordData.value) return {};
     const res = recordData.value;
@@ -228,6 +228,7 @@ const formattedData = computed(() => {
     };
 });
 
+/** 将 AI 返回的多种结果文字归一为阴性、阳性、弱阳或出错状态。 */
 const formattedResults = computed(() => {
     return resultList.value.map(item => {
         // 标准化结果文字
@@ -253,7 +254,8 @@ const formattedResults = computed(() => {
 });
 
 /**
- * 获取检测详情及报告
+ * 加载检测详情并解析 AI 识别快照。
+ * AI 快照中的项目、识别时间和试纸图片优先于记录基础字段，用于还原检测当时的报告内容。
  */
 const initData = async () => {
     const id = route.query.id;

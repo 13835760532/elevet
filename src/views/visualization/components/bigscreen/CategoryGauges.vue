@@ -201,6 +201,7 @@ const pieOption = computed(() => ({
   ]
 }))
 
+/** 根据组件当前口径加载农产品品类风险分布。 */
 const loadCategoryRiskData = async () => {
   try {
     const data = await getCategoryRisk({

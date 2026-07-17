@@ -189,6 +189,7 @@ const { getLabel: getPlanTypeLabel } = useDict(DICT_TYPE.AGRI_PLAN_TYPE, 'int')
 const { getLabel: getProductCategoryLabel } = useDict(DICT_TYPE.AGRI_PRODUCT_CATEGORY, 'str')
 
 // 加载方案详情
+/** 加载方案详情及统计数据，作为任务数量、品种和执行周期的默认约束。 */
 const loadSchemeDetail = async () => {
     try {
         let data = JSON.parse(window.sessionStorage.getItem('planInfo'))
@@ -273,6 +274,7 @@ const isExceedLimit = computed(() => {
     return Number(taskForm.quantity) > Number(schemeInfo.sampleCount)
 })
 
+/** 过滤当前机构结果中已失效的选择，并同步全选和半选状态。 */
 const reconcileSelectionState = () => {
     const currentIds = new Set(orgOptions.value.map((item) => item.id))
     selectedOrgs.value = selectedOrgs.value.filter((id) => currentIds.has(id))
@@ -281,6 +283,7 @@ const reconcileSelectionState = () => {
     isIndeterminate.value = checkedCount > 0 && checkedCount < orgOptions.value.length
 }
 
+/** 按机构类型、关键字和行政区划加载当前账号可下发的部门。 */
 const loadOrgOptions = async () => {
     orgLoading.value = true
     try {
@@ -348,6 +351,10 @@ const buildDefaultDetectionArea = () => {
     return [taskForm.province, taskForm.city, taskForm.district].filter(Boolean).join('')
 }
 
+/**
+ * 将任务总量拆分到已选部门。
+ * 平均模式按商和余数分配，手动模式生成数量为 0 的行供后续编辑。
+ */
 const buildTaskRowsBySelectedOrgs = () => {
     const orgIds = selectedOrgs.value || []
     if (!orgIds.length) return []
@@ -375,6 +382,7 @@ const buildTaskRowsBySelectedOrgs = () => {
     })
 }
 
+/** 兼容任务行中部门 ID 或部门名称两种数据形式，解析最终下发部门。 */
 const resolveDeptId = (item) => {
     if (item.deptId) return Number(item.deptId)
     if (item.dept) {
@@ -472,6 +480,10 @@ const handleCancel = () => {
     router.back()
 }
 
+/**
+ * 校验拆分数量并提交子任务列表。
+ * 将页面中的执行时间文本、区域和数量转换成后端任务拆分结构。
+ */
 const handleSubmit = async () => {
     if (selectedOrgs.value.length === 0 && taskList.value.length === 0) {
         ElMessage.warning('请选择任务承担单位')

@@ -430,6 +430,7 @@ const getFeatureAreaCode = (feature: any) => String(
   feature?.id || feature?.properties?.adcode || feature?.properties?.code || ''
 ).trim()
 
+/** 在行政区树中递归查找指定编码的完整省/市/县路径。 */
 const findAreaPathByCode = (areaCode: string, tree: any[], parents: any[] = []): any[] => {
   for (const node of tree || []) {
     const path = [...parents, node]
@@ -440,6 +441,10 @@ const findAreaPathByCode = (areaCode: string, tree: any[], parents: any[] = []):
   return []
 }
 
+/**
+ * 将行政区编码解析为统计接口需要的省、市、区县名称。
+ * 地区树只在首次解析时请求并缓存；解析失败返回空名称，不阻断统计页其他模块。
+ */
 const resolveAreaNameParams = async (areaCode: string): Promise<StatisticsAreaNameParams> => {
   if (!areaCode) return {}
   if (!statisticsAreaTreePromise) {
@@ -479,6 +484,7 @@ const resolveMapAreaLevel = (
   return type >= 1 && type <= 3 ? type as MapAreaLevel : 0
 }
 
+/** 根据行政级别选择 DataV GeoJSON 文件编码；直辖市和县级编码按接口规则归一化。 */
 const getGeoJsonFileAreaCode = (areaCode: string, areaLevel: MapAreaLevel) => {
   if (areaLevel !== 3) return areaCode
   const provincePrefix = areaCode.slice(0, 2)
@@ -486,6 +492,7 @@ const getGeoJsonFileAreaCode = (areaCode: string, areaLevel: MapAreaLevel) => {
   return `${areaCode.slice(0, 4)}00`
 }
 
+/** 加载当前行政层级的边界数据；省市使用带下级分区的 `_full` 文件。 */
 const fetchAreaGeoJson = async (areaCode: string, areaLevel: MapAreaLevel) => {
   const fileAreaCode = getGeoJsonFileAreaCode(areaCode, areaLevel)
   const response = await fetch(`${STATISTICS_GEO_BASE_URL}/${fileAreaCode}.json`)
@@ -508,6 +515,7 @@ const fetchAreaGeoJson = async (areaCode: string, areaLevel: MapAreaLevel) => {
   }
 }
 
+/** 根据 GeoJSON 中心纬度计算经纬度地图横向校正比例，避免地区图被容器拉伸。 */
 const resolveGeoAspectScale = (geoJson: any) => {
   let minLatitude = Number.POSITIVE_INFINITY
   let maxLatitude = Number.NEGATIVE_INFINITY
@@ -594,6 +602,12 @@ const mapScope = ref<StatisticsMapScope>({
   aspectScale: 0.75
 })
 
+/**
+ * 根据当前账号机构地区加载地图展示范围。
+ *
+ * 优先使用六位行政区编码判断层级并注册对应 GeoJSON；在线边界加载失败时回退到
+ * 本地全国轻量地图中的省级轮廓，保证页面仍可展示。
+ */
 const loadMapScope = async () => {
   const { areaType, areaCode } = getUserDeptAreaParams()
   const normalizedAreaCode = String(areaCode || '').trim()
@@ -857,6 +871,7 @@ const mapRankRows = computed(() => mapRows.value.slice(0, 13))
 const mapMaxValue = computed(() => mapRankRows.value[0]?.value || 0)
 const mapMinValue = computed(() => mapRankRows.value[mapRankRows.value.length - 1]?.value || 0)
 
+/** 并行加载任务、检测、合格证等整体业务概览。 */
 const loadOverview = async () => {
   try {
     const [overviewData, certificateData] = await Promise.all([
@@ -872,6 +887,11 @@ const loadOverview = async () => {
   }
 }
 
+/**
+ * 加载当前分布类型的地图统计数据并匹配行政区名称。
+ *
+ * 直辖市按区县聚合；阳性率统一换算为百分比，其余指标按地区合并后生成排行进度。
+ */
 const loadMapData = async () => {
   try {
     await loadMapScope()
@@ -1068,6 +1088,7 @@ const applyFallbackData = (
   pesticideRiskData.value = toBarData(pestRisk, (item) => item.pesticideName || '--', pesticideRiskType.value as any)
 }
 
+/** 并行加载产品、检测项、品类和区域风险数据，接口异常时使用页面兜底数据。 */
 const loadRiskData = async () => {
   try {
     const [
@@ -1146,6 +1167,7 @@ const noticePageNo = ref(1)
 const noticeLoading = ref(false)
 const noticeFinished = ref(false)
 
+/** 分页加载风险公告；追加模式保留已有列表，首次加载重置分页状态。 */
 const loadNotices = async (isLoadMore = false) => {
   if (noticeLoading.value) return
   if (isLoadMore && noticeFinished.value) return
@@ -1200,6 +1222,7 @@ const handleNoticeScroll = (e: Event) => {
   }
 }
 
+/** 打开公告详情并按公告 ID 获取完整正文。 */
 const handleViewNoticeDetail = async (item: any) => {
   if (!item.id) return
   currentNotice.value = {

@@ -170,6 +170,11 @@ const subjectData = computed(() => [
   { label: '存证服务主体', value: enterpriseCount.value || 0 }
 ])
 
+/**
+ * 并行加载合格证业务概览和平台主体概览。
+ *
+ * 当合格证概览接口未返回企业/个人主体拆分时，再调用主体分页接口补齐数据。
+ */
 const loadOverviewData = () => {
   const params = getBigScreenQueryParams()
 
@@ -198,6 +203,11 @@ const loadOverviewData = () => {
     })
 }
 
+/**
+ * 通过主体分页总数补齐企业和个人建档数量。
+ *
+ * 两类请求使用 `allSettled` 独立容错，单类失败不会清空另一类已经成功的数据。
+ */
 const loadSubjectArchiveStats = (params = getBigScreenQueryParams()) => {
   cachedBigScreenRequest('certificate-subject-archive-stats', params, () =>
     Promise.allSettled([
@@ -347,6 +357,7 @@ const categoryPieOption = computed(() => {
   }
 })
 
+/** 加载合格证产品品类分布，并通过公共请求缓存合并重复调用。 */
 const loadCategoryDistribution = async () => {
   const params = getBigScreenQueryParams()
   try {

@@ -20,18 +20,27 @@ let dynamicRoutesReady = false
 let dynamicRoutesPromise: Promise<void> | null = null
 const dynamicRouteReadyMark = '404Page'
 
+/** 判断目标地址是否属于允许优先使用缓存渲染的监管大屏路由。 */
 const isBigScreenRoute = (path: string) => path.startsWith('/big-screen')
 
+/** 检查大屏首屏所需的用户缓存是否完整。 */
 const hasBigScreenUserCache = () => {
   const userInfo = wsCache.get(CACHE_KEY.USER)
   return !!userInfo?.user
 }
 
+/** 重置动态路由初始化状态，登录、退出或切换账号时调用。 */
 export const resetDynamicRouteState = () => {
   dynamicRoutesReady = false
   dynamicRoutesPromise = null
 }
 
+/**
+ * 根据当前账号菜单生成并注册动态路由。
+ *
+ * 多个导航同时触发时共享同一个 Promise，避免重复请求菜单和重复注册路由；末尾
+ * `404Page` 作为整组路由已经完成注册的标记。
+ */
 export const addDynamicRoutes = async () => {
   // 404Page 是动态路由集合的末尾标记；标记存在说明整组路由已经注册完成。
   if (dynamicRoutesReady && router.hasRoute(dynamicRouteReadyMark)) return
@@ -54,6 +63,7 @@ export const addDynamicRoutes = async () => {
   await dynamicRoutesPromise
 }
 
+/** 将非首屏关键任务推迟到首次绘制或浏览器空闲阶段执行。 */
 const runAfterFirstPaint = (callback: () => void) => {
   if (typeof window === 'undefined') {
     callback()
@@ -70,6 +80,10 @@ const runAfterFirstPaint = (callback: () => void) => {
   }, 0)
 }
 
+/**
+ * 大屏使用缓存快速恢复后，在后台重新获取当前 Token 对应的用户信息。
+ * 缓存只负责缩短首屏时间，接口结果仍是权限和机构信息的最终来源。
+ */
 const refreshBigScreenUserInBackground = (userStore: ReturnType<typeof useUserStoreWithOut>) => {
   // 缓存只负责快速恢复首屏，后台刷新仍是后续权限和用户信息的最终来源。
   runAfterFirstPaint(() => {

@@ -171,6 +171,7 @@ const props = withDefaults(
 
 const route = useRoute()
 
+/** 从路由查询参数恢复快检筛选条件，支持其他业务页面带条件跳转。 */
 const initFiltersFromQuery = () => {
   // 回显检测结果（将字符串转成数字以匹配下拉框 :value="1" 等选项）
   if (route.query.overallResult !== undefined && route.query.overallResult !== null && route.query.overallResult !== '') {
@@ -322,6 +323,7 @@ const handleDetectionAreaChange = (value: any) => {
   }
 }
 
+/** 解析接口可能返回的 JSON、数组或文本检测项，统一生成表格展示字符串。 */
 const parseDetectionItems = (value: any) => {
   if (!value) return '--'
   if (typeof value !== 'string') return '--'
@@ -361,6 +363,7 @@ const mapRecordRow = (item: any) => ({
   result: getResultLabel(item.overallResult)
 })
 
+/** 并行加载快检概览、样品趋势和阳性率趋势图表数据。 */
 const loadDashboardData = async () => {
   try {
     const [overviewData, selfTrendData, positiveTrendData] = await Promise.all([
@@ -379,6 +382,11 @@ const loadDashboardData = async () => {
   }
 }
 
+/**
+ * 组装快检列表查询参数。
+ *
+ * 合并顶部时间/地区范围、二级筛选、机构权限和自主/任务检测入口条件。
+ */
 const buildTableQuery = () => {
   let rawStartDate: any = undefined
   let rawEndDate: any = undefined
@@ -423,6 +431,7 @@ const formatExportDate = (dateVal: any, isEnd: boolean) => {
   return isEnd ? d.endOf('day').format('YYYY-MM-DD HH:mm:ss') : d.startOf('day').format('YYYY-MM-DD HH:mm:ss')
 }
 
+/** 组装导出参数，并将日期范围扩展到起止日完整时刻。 */
 const buildExportParams = () => {
   let rawStartDate: any = undefined
   let rawEndDate: any = undefined
@@ -458,6 +467,7 @@ const buildExportParams = () => {
   }
 }
 
+/** 加载快检分页并将接口记录标准化为表格行。 */
 const loadTable = async () => {
   loading.value = true
   try {
@@ -513,6 +523,7 @@ const handleReset = () => {
   resetResultFilters()
 }
 
+/** 用户确认后按当前全部筛选条件导出快速检测记录。 */
 const handleExport = async () => {
   try {
     await ElMessageBox.confirm('确定要导出快速检测记录吗？', '导出确认', {

@@ -433,6 +433,9 @@ const formatPeriod = (data) => {
     return parts.join(' ') || '--';
 };
 
+/**
+ * 加载方案详情、附件和统计概览，供方案头部及任务汇总区域展示。
+ */
 const loadPlanData = async (id) => {
     try {
         const data = await DetectionPlanApi.getDetectionPlan(id);
@@ -510,6 +513,10 @@ const loadPlanData = async (id) => {
     }
 };
 
+/**
+ * 加载方案全部任务，计算完成比例并按父任务关系构建树形结构。
+ * 同时保留扁平数据用于前端筛选和分页。
+ */
 const loadTaskList = async (id) => {
     try {
         const tasks = await DetectionPlanApi.getPlanTasks(id);
@@ -634,6 +641,7 @@ const handleTaskPageChange = (val) => {
 
 
 /** 加载检测结果列表 */
+/** 按方案和进度筛选项加载检测记录，并转换为进度表格的展示字段。 */
 const loadDetectionResults = async (params = {}) => {
     if (isLoadingResults) return; // 防止递归调用
     isLoadingResults = true;
@@ -719,6 +727,10 @@ const handleReset = () => {
     applyFilters();
 };
 
+/**
+ * 在已加载任务上执行关键字、部门类型和日期范围过滤，再更新当前分页。
+ * 部门类型同时兼容部门 ID 映射和历史部门名称映射。
+ */
 const applyFilters = () => {
     let filtered = [...allTaskList.value];
 
@@ -756,6 +768,7 @@ const applyFilters = () => {
     taskList.value = filtered;
 };
 
+/** 根据当前方案及任务筛选条件导出任务数据。 */
 const handleExport = async () => {
     try {
         await ElMessageBox.confirm('是否确认导出所有检测任务数据？', '提示', {

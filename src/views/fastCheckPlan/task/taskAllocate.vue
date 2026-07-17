@@ -288,6 +288,7 @@ const getDeptLabel = (value) => {
     return deptMap.value[value] || '--'
 }
 
+/** 兼容任务、方案及部门映射中的多种部门字段，解析责任单位名称。 */
 const getTaskDeptLabel = (task = {}) => {
     return resolveFirstValue(
         task.issueDeptName,
@@ -308,12 +309,16 @@ const getTaskCategoryLabel = (task = {}) => {
     return label !== '--' ? label : category
 }
 
+/** 将数组、JSON 字符串或普通文本形式的检测项目统一为可读文本。 */
 const getDetectionItemsLabel = (task = {}) => {
     return resolveFirstValue(task.detectionItems, task.planInfo?.detectionItems) || '--'
 }
 
 
 
+/**
+ * 加载待分配任务并补齐部门、品种和检测项目标签，保留原始列表供本地筛选分页。
+ */
 const loadTaskList = async () => {
     loading.value = true;
     try {
@@ -365,6 +370,7 @@ const loadTaskList = async () => {
 }
 
 // 处理前端搜索和分页
+/** 在完整任务列表上执行关键字、状态和日期过滤，然后重新计算分页结果。 */
 const handleFilter = () => {
     let result = [...allTableData.value];
 
@@ -398,6 +404,7 @@ const handleFilter = () => {
     tableData.value = result.slice(startIdx, endIdx);
 }
 
+/** 加载路由指定任务详情，并补查列表中缺失的部门名称。 */
 const getDetail = async () => {
     detailLoading.value = true;
     try {
@@ -414,6 +421,7 @@ const getDetail = async () => {
     }
 }
 
+/** 收集详情中的部门 ID 并按需补查，避免重复请求已缓存的部门名称。 */
 const loadMissingDeptNames = async (detail = {}) => {
     const deptIds = [
         detail.issuerDeptId,
@@ -507,6 +515,7 @@ const progressList = ref([])
 
 let isLoadingResults = false; // 防重入锁
 
+/** 按当前任务加载检测进度，并转换结果、状态和日期的展示口径。 */
 const loadDetectionResults = async (params = {}) => {
     if (isLoadingResults) return; // 防止递归调用
     isLoadingResults = true;

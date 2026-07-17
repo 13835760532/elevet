@@ -102,7 +102,7 @@ const loginRules = {
   password: [{ required: true, trigger: "blur", message: "请输入密码" }]
 }
 
-// 获取租户 ID
+/** 根据登录表单中的租户名称解析并写入请求头使用的租户 ID。 */
 const getTenantId = async () => {
   if (tenantEnabled) {
     const res = await LoginApi.getTenantIdByName(loginForm.value.tenantName)
@@ -110,7 +110,7 @@ const getTenantId = async () => {
   }
 }
 
-// 记住我
+/** 从本地“记住我”缓存恢复账号、密码和租户，不覆盖环境变量提供的默认值。 */
 const getLoginFormCache = () => {
   const cacheForm = authUtil.getLoginForm()
   if (cacheForm) {
@@ -124,7 +124,7 @@ const getLoginFormCache = () => {
   }
 }
 
-// 根据域名，获得租户信息
+/** 根据当前访问域名识别租户，用于多租户独立域名登录场景。 */
 const getTenantByWebsite = async () => {
   if (tenantEnabled) {
     const website = location.host
@@ -148,6 +148,12 @@ const handleRegister = () => {
   }
 }
 
+/**
+ * 执行登录前置校验。
+ *
+ * 先确认用户已同意服务条款，再校验表单；启用验证码时打开验证码组件，否则直接
+ * 进入登录请求，确保两条登录路径共用同一提交逻辑。
+ */
 function handleLoginPre() {
   if (!policyAgreed.value) {
     ElMessage.warning('请阅读并勾选服务条款和隐私政策')
@@ -165,6 +171,12 @@ function handleLoginPre() {
   })
 }
 
+/**
+ * 完成登录、账号状态隔离和首次路由初始化。
+ *
+ * 新 Token 写入前会清理前一账号的用户、部门、菜单和动态路由缓存；随后重新获取
+ * 当前账号信息并注册菜单路由，避免多账号切换时出现菜单串用或首次进入 404。
+ */
 const handleLogin = async (params) => {
   loading.value = true
   let globalLoading

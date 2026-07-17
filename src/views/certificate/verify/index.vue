@@ -180,6 +180,10 @@ const handleAreaSelect = (area: any) => {
     // 同时更新拼写的完整产地字符串，如果有需要的话
     queryParams.productionArea = [area.province, area.city, area.district].filter(Boolean);
 };
+/**
+ * 加载收证查验记录。
+ * 产地只提交地区级联的末级名称，日期范围扩展到起止日全天。
+ */
 const loadData = async () => {
     loading.value = true;
     try {
@@ -211,6 +215,7 @@ const handleSearch = () => {
     loadData();
 };
 
+/** 清空普通筛选项和地区级联值，并从第一页重新查询。 */
 const handleReset = () => {
     Object.keys(queryParams).forEach(key => {
         if (Array.isArray(queryParams[key])) {
@@ -223,6 +228,7 @@ const handleReset = () => {
     handleSearch();
 };
 
+/** 按当前筛选条件导出查验记录，参数口径与列表查询保持一致。 */
 const handleExport = async () => {
     try {
         await message.exportConfirm();

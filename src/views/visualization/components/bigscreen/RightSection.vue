@@ -287,6 +287,12 @@ const currentProjectRiskOption = computed(() => ({
   ]
 }))
 
+/**
+ * 加载区域风险 TOP10。
+ *
+ * 同时处理产地/检测地、城市/区县维度；直辖市需要将省市名称设置为同一值，以匹配
+ * 后端区县聚合规则。
+ */
 const loadRiskAreaTop10 = async () => {
   try {
     const params = getBigScreenRiskAreaQueryParams()
@@ -325,6 +331,7 @@ const loadRiskAreaTop10 = async () => {
   }
 }
 
+/** 加载“产品-检测项”组合风险 TOP10，并应用当前检测量/阳性率口径。 */
 const loadProductPesticideTop10 = async () => {
   try {
     const data = await getProductPesticideTop10({
@@ -342,6 +349,11 @@ const noticePageNo = ref(1)
 const noticeLoading = ref(false)
 const noticeFinished = ref(false)
 
+/**
+ * 分页加载风险公告。
+ *
+ * @param isLoadMore 是否追加下一页；首次加载会重置页码和完成状态。
+ */
 const loadNoticeList = async (isLoadMore = false) => {
   if (noticeLoading.value) return
   if (isLoadMore && noticeFinished.value) return
@@ -382,7 +394,7 @@ const loadNoticeList = async (isLoadMore = false) => {
   }
 }
 
-// 下拉滚动加载
+/** 公告列表滚动到底部缓冲区时自动加载下一页。 */
 const handleScroll = (e: Event) => {
   const target = e.target as HTMLElement
   const scrollBuffer = 10 // 触底缓冲区像素值
@@ -395,6 +407,7 @@ const handleScroll = (e: Event) => {
   }
 }
 
+/** 打开公告详情并按公告 ID 加载完整正文。 */
 const handleViewNoticeDetail = async (item: any) => {
   if (!item.id) return
   currentNotice.value = {

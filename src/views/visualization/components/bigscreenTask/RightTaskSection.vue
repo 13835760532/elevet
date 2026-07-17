@@ -67,6 +67,7 @@ const tableData = computed(() =>
 );
 const tableEmpty = computed(() => tableData.value.length === 0);
 
+/** 加载任务执行分析首屏数据，固定最多展示 15 条任务。 */
 const loadAnalysisPage = async () => {
   try {
     const data = await getTaskAnalysisPage({

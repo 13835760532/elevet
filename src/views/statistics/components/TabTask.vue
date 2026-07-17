@@ -283,6 +283,7 @@ const filteredTableData = computed(() => {
   )
 })
 
+/** 加载检测任务整体概览，接口失败时保留空指标。 */
 const loadOverview = async () => {
   try {
     overview.value = (await getTaskOverview(currentQueryParams.value)) || {}
@@ -292,6 +293,7 @@ const loadOverview = async () => {
   }
 }
 
+/** 按当前时间和机构数据范围加载检测任务分页。 */
 const loadTaskPage = async () => {
   loading.value = true
   try {
@@ -312,6 +314,7 @@ const loadTaskPage = async () => {
   }
 }
 
+/** 组装检测结果分页参数，合并地区、机构、检测结论及任务条件。 */
 const buildResultTableQuery = () => {
   const queryParams = { ...currentQueryParams.value } as any
   const detectionDate = queryParams.startDate && queryParams.endDate ? [
@@ -343,6 +346,7 @@ const buildResultTableQuery = () => {
   }
 }
 
+/** 组装检测结果导出参数；与分页查询保持相同筛选口径但不包含页码。 */
 const buildResultExportQuery = () => {
   const queryParams = { ...currentQueryParams.value } as any
   const detectionDate = queryParams.startDate && queryParams.endDate ? [
@@ -372,6 +376,7 @@ const buildResultExportQuery = () => {
   }
 }
 
+/** 加载检测结果分页并转换任务、样品、地区和状态展示字段。 */
 const loadResultPage = async () => {
   resultLoading.value = true
   try {
@@ -420,6 +425,7 @@ const resetResultFilters = () => {
   searchResultPage()
 }
 
+/** 加载任务样品量与检测量趋势，并生成折线图配置。 */
 const loadTrend = async () => {
   try {
     const data = await getTaskVolumeTrend(currentQueryParams.value)
@@ -484,6 +490,7 @@ const handleReset = () => {
   handleSearch()
 }
 
+/** 根据当前“检测任务/检测结果”子页签调用对应导出接口。 */
 const handleExport = async () => {
   if (activeTab.value === 'task') {
     try {

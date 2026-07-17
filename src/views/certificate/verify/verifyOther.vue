@@ -245,6 +245,7 @@ const measurementUnitOptions = usePreferredAgriMeasurementUnitOptions(
 
 const qrCodeText = computed(() => String(formData.qrCode || formData.certificateCode || 'HGZ9191991111'));
 
+/** 兼容 JSON 字符串、逗号字符串和数组三种承诺依据存储格式。 */
 const basisList = computed(() => {
     try {
         if (!formData.commitmentBasis) return [];
@@ -268,6 +269,7 @@ const getUploadInput = () => {
     return uploadEl?.querySelector?.('input[type="file"]');
 };
 
+/** 同时清空 Upload 组件和原生 input，确保同一文件可再次触发识别。 */
 const resetUploadSelection = () => {
     uploadRef.value?.clearFiles?.();
     const inputEl = getUploadInput();
@@ -280,6 +282,10 @@ const triggerUpload = () => {
     inputEl?.click();
 };
 
+/**
+ * 上传证书图片并按识别来源回填表单。
+ * 本平台证书使用匹配到的证书详情，外部证书使用 OCR 结果，并保留来源类型供提交映射。
+ */
 const onFileChange = async (uploadFile) => {
     const loading = ElLoading.service({
         target: '.upload-drag-box',
@@ -350,6 +356,7 @@ const handleCancel = () => {
     router.back();
 };
 
+/** 编辑场景加载原查验记录，并根据证书来源恢复对应页签。 */
 onMounted(async () => {
     if (isEdit.value) {
         try {
@@ -366,6 +373,10 @@ onMounted(async () => {
     }
 });
 
+/**
+ * 创建或更新收证存证记录。
+ * 不同来源分别写入平台证书编号或外部证书编号，并保留详情接口返回的扩展字段。
+ */
 const handleSubmit = async () => {
     if (!formData.certificateImageUrl) {
         ElMessage.warning('请先上传并识别合格证照片');

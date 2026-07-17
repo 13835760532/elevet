@@ -239,6 +239,7 @@ const mapRow = (item: any) => ({
   phone: maskPhone(item.contactPhone)
 })
 
+/** 并行加载合格证开具概览和服务趋势。 */
 const loadDashboardData = async () => {
   try {
     const [overviewData, trendData] = await Promise.all([
@@ -254,6 +255,7 @@ const loadDashboardData = async () => {
   }
 }
 
+/** 组装合格证开具列表或导出查询；`withPage=false` 时移除分页字段。 */
 const buildCertificateQuery = (withPage = true) => {
   return {
     ...(withPage ? { pageNo: pageNo.value, pageSize: pageSize.value } : { pageNo: 1, pageSize: 1000 }),
@@ -272,6 +274,7 @@ const buildCertificateQuery = (withPage = true) => {
   }
 }
 
+/** 加载合格证开具分页并转换敏感字段和显示枚举。 */
 const loadTable = async () => {
   loading.value = true
   try {
@@ -324,6 +327,7 @@ const handleReset = () => {
   resetTableFilters()
 }
 
+/** 用户确认后按当前筛选范围导出合格证开具数据。 */
 const handleExport = async () => {
   try {
     await ElMessageBox.confirm('确定要导出当前筛选条件下的合格证开具数据吗？', '导出确认', {

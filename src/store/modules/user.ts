@@ -26,10 +26,12 @@ interface UserInfoVO {
   deptInfo: DeptApi.DeptVO | null
 }
 
+/** 判断接口或缓存中的用户信息是否具备可用的主体结构。 */
 const isValidUserInfo = (userInfo: any) => {
   return userInfo && typeof userInfo === 'object' && userInfo.user
 }
 
+/** 校验部门缓存是否属于当前用户，防止账号切换后读取上一账号部门。 */
 const isCachedDeptMatched = (deptInfo: any, deptId?: number) => {
   if (!deptInfo) return false
   if (!deptId) return true
@@ -67,6 +69,7 @@ export const useUserStore = defineStore('admin-user', {
     }
   },
   actions: {
+    /** 将用户、角色、权限和菜单同时写入 Pinia 与持久化缓存。 */
     applyUserInfo(userInfo: any) {
       this.permissions = new Set(userInfo.permissions || []) // 兜底为 [] https://t.zsxq.com/xCJew
       this.roles = userInfo.roles || []
@@ -75,6 +78,11 @@ export const useUserStore = defineStore('admin-user', {
       wsCache.set(CACHE_KEY.USER, userInfo)
       wsCache.set(CACHE_KEY.ROLE_ROUTERS, userInfo.menus || [])
     },
+    /**
+     * 从缓存快速恢复用户状态。
+     *
+     * 部门缓存只有在部门 ID 与当前用户一致时才会恢复，调用方仍应在后台刷新接口。
+     */
     hydrateUserInfoFromCache() {
       const userInfo = wsCache.get(CACHE_KEY.USER)
       if (!isValidUserInfo(userInfo)) return false
@@ -86,6 +94,10 @@ export const useUserStore = defineStore('admin-user', {
         : null
       return true
     },
+    /**
+     * 使用当前 Token 重新获取用户信息和所属部门。
+     * 无 Token 或接口返回非法结构时清理全部本地会话，禁止回退到其他账号的旧缓存。
+     */
     async setUserInfoAction() {
       if (!getAccessToken()) {
         this.resetState()
@@ -104,6 +116,7 @@ export const useUserStore = defineStore('admin-user', {
       this.applyUserInfo(userInfo)
       await this.setUserDeptInfoAction(this.user.deptId)
     },
+    /** 获取并缓存用户所属部门；部门不存在时同步删除旧部门缓存。 */
     async setUserDeptInfoAction(deptId?: number) {
       if (!deptId) {
         this.deptInfo = null

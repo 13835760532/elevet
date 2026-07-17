@@ -697,7 +697,10 @@ onBeforeRouteLeave(async (to) => {
 const certificateTypeOptions = getIntDictOptions(DICT_TYPE.AGRI_CERTIFICATE_TYPE);
 const productCategoryOptions = getDictOptions(DICT_TYPE.AGRI_PRODUCT_CATEGORY);
 
-// 农产品自动补全与类别回显逻辑
+/**
+ * 按输入名称查询农产品档案，为自动补全组件提供候选项。
+ * 查询失败时向组件回传空数组，避免网络异常阻断表单录入。
+ */
 const queryProduce = async (queryString, cb) => {
     if (!queryString) {
         cb([]);
@@ -711,6 +714,10 @@ const queryProduce = async (queryString, cb) => {
     }
 };
 
+/**
+ * 将档案中的完整分类路径映射为当前表单使用的一级分类字典值。
+ * 无法匹配字典时保留接口原值，兼容历史分类数据。
+ */
 const matchCategoryFromFullCategory = (item) => {
     if (item.fullCategory) return item.fullCategory;
     const fullCategory = item.category;
@@ -730,6 +737,10 @@ const handleProduceSelect = (item) => {
     }
 };
 
+/**
+ * 用户手工输入产品名称后补查分类。
+ * 表单已有分类时不覆盖，且仅在接口返回名称完全一致的产品时回填。
+ */
 const handleProduceBlur = async () => {
     if (!formData.productName || formData.category) return; // 已有类别则不覆盖
     try {
@@ -980,6 +991,10 @@ const normalizeDetectionRecordIds = (value) => {
     return Number.isFinite(singleId) && singleId > 0 ? [singleId] : [];
 };
 
+/**
+ * 查询可关联的本平台检测记录。
+ * 业务上仅允许合格证关联阴性结果，并统一不同接口包装和记录主键字段。
+ */
 const searchPlatformRecords = async (query) => {
     const keyword = String(query || '').trim();
     if (!keyword) return [];
@@ -1011,6 +1026,10 @@ const handlePlatformActiveRecordChange = (record) => {
 const upstreamLoading = ref(false);
 const upstreamCertificateDetail = ref({});
 
+/**
+ * 将数组或 JSON 字符串形式的承诺依据统一转换为数字数组。
+ * 历史脏数据解析失败时返回空数组，不影响证书主体信息展示。
+ */
 const parseBasisList = (value) => {
     if (Array.isArray(value)) return value.map(item => Number(item));
     if (!value) return [];
@@ -1057,6 +1076,10 @@ const upstreamCommitmentIntro = computed(() => {
     return '已按规定收取并保存该批次产品的承诺达标合格证或者其他质量安全合格证明。';
 });
 
+/**
+ * 按编号查询本平台上游合格证并建立关联。
+ * 查询前移除不同形态的连接符；查询结果只回填关联及预览信息，不覆盖当前产品档案。
+ */
 const handleSearchUpstream = async () => {
     if (!formData.upstreamCertNo) {
         message.warning('请输入上游合格证编号');
@@ -1095,6 +1118,10 @@ const handleSearchUpstream = async () => {
     }
 };
 
+/**
+ * 处理上游合格证文件。
+ * 本平台来源预留图片识别能力，其他平台来源只上传原图并清空平台证书编号。
+ */
 const onUpstreamFileChange = async (fileObj) => {
     const loading = ElLoading.service({
         target: '.other-platform-area',
@@ -1170,6 +1197,10 @@ const handleEntityChange = (val) => {
 };
 
 
+/**
+ * 加载待编辑合格证，并将证书、产品草稿、主体和检测记录等字段回填到分步表单。
+ * 关联检测记录支持单个 ID 和 ID 数组两种历史数据格式。
+ */
 const loadDetails = async () => {
     if (!id) return;
     try {
@@ -1287,6 +1318,9 @@ const searchEntity = async (query) => {
 const productLoading = ref(false);
 const productOptions = ref([]);
 
+/**
+ * 根据输入内容搜索产品档案：纯中文按产品名称查询，其他内容按产品编号查询。
+ */
 const searchProduct = async (query) => {
     if (query !== '') {
         productLoading.value = true;
@@ -1309,6 +1343,10 @@ const searchProduct = async (query) => {
     }
 };
 
+/**
+ * 选择产品档案后回填产品及所属主体信息。
+ * @param options.keepCurrentUnit 是否保留当前已选择的计量单位，用于编辑回填时避免被档案默认值覆盖
+ */
 const handleProductSelect = async (id, options = {}) => {
     if (!id) return;
     try {
@@ -1400,6 +1438,7 @@ const isEmptyValue = (value) => {
     return String(value).trim() === '';
 };
 
+/** 校验第一步产品与主体的必填信息，并提示第一个缺失字段。 */
 const validateStep1Required = () => {
     const requiredFields = [
         { key: 'productNo', label: '产品编号' },
@@ -1459,6 +1498,11 @@ watch([() => formData.p1, () => formData.p2, () => formData.p3], () => {
     formData.basis = basis;
 }, { immediate: true });
 
+/**
+ * 保存当前证书草稿。
+ * @param isSilent 是否静默保存；路由离开时使用静默模式，避免额外成功提示
+ * @returns 保存成功返回 true，失败时继续抛出异常供离开页面逻辑记录
+ */
 const handleSaveDraft = async (isSilent = false) => {
     const draftData = {
         id: id ? Number(id) : undefined,
@@ -1505,6 +1549,11 @@ const handleSaveDraft = async (isSilent = false) => {
     }
 };
 
+/**
+ * 校验第二步并生成合格证。
+ * 未关联产品档案时先创建产品；随后组装承诺依据、上游证书和检测记录等关联字段，
+ * 创建成功后重新查询详情，供第三步预览及打印使用。
+ */
 const handleGenerate = async () => {
     submissionFailed.value = false;
     if (submitLoading.value) return;
@@ -1680,6 +1729,7 @@ const connectBluetoothPrinter = async () => {
     }
 };
 
+/** 定时探测已连接打印机，避免长时间停留在预览页后蓝牙连接失效。 */
 const startBluetoothKeepAlive = () => {
     if (keepAliveTimer.value) return;
     keepAliveTimer.value = window.setInterval(async () => {
@@ -1698,6 +1748,7 @@ const pauseBluetoothKeepAlive = () => {
     keepAliveTimer.value = null;
 };
 
+/** 周期性尝试重连浏览器曾授权的打印机；连接中或已就绪时跳过本轮。 */
 const startAutoReconnect = () => {
     if (autoReconnectTimer.value) return;
     autoReconnectTimer.value = window.setInterval(async () => {
@@ -1740,6 +1791,10 @@ const captureAreaToImg = async () => {
     return captureCertificatePrintArea(printAreaRef.value);
 };
 
+/**
+ * 截取证书打印区域并预生成打印机位图数据。
+ * 预览阶段缓存打印字节，正式打印时可直接发送，减少重复图像转换等待。
+ */
 const handlePreview = async () => {
     captureLoading.value = true;
     printEffectLoading.value = true;
@@ -1770,6 +1825,10 @@ const handlePreview = async () => {
     }
 };
 
+/**
+ * 向已连接的蓝牙打印机发送证书位图。
+ * 打印期间暂停保活写入，防止心跳指令与大批量打印数据竞争特征通道。
+ */
 const handlePrint = async (prepared) => {
     const dataUrl = typeof prepared === 'string' ? prepared : await captureAreaToImg();
     if (!dataUrl) {

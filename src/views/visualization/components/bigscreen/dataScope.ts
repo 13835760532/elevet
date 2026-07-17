@@ -17,6 +17,11 @@ const organizationScopeOptions: BigScreenDataScopeOption[] = [
   { label: '本机构执行任务采集数据', value: 'self' }
 ]
 
+/**
+ * 返回当前账号可选择的数据范围。
+ *
+ * 监管机构和超级管理员可查看辖区数据；普通机构只允许选择本机构下发或执行的数据。
+ */
 export const getBigScreenDataScopeOptions = (
   canViewJurisdictionScope: boolean
 ): BigScreenDataScopeOption[] =>
@@ -24,6 +29,12 @@ export const getBigScreenDataScopeOptions = (
     ? [jurisdictionScopeOption, ...organizationScopeOptions]
     : [...organizationScopeOptions]
 
+/**
+ * 校验并归一化数据范围。
+ *
+ * 兼容旧缓存值 `jurisdiction`。当账号不再具有辖区权限时，强制降级为本机构下发
+ * 数据，防止账号切换后沿用前一账号的越权配置。
+ */
 export const resolveBigScreenDataScope = (
   scope: unknown,
   canViewJurisdictionScope: boolean
@@ -41,9 +52,11 @@ const queryDeptScopeByDataScope: Record<BigScreenDataScope, BigScreenQueryDeptSc
   issued: 3
 }
 
+/** 将前端语义化数据范围转换为后端约定的机构查询枚举。 */
 export const getBigScreenQueryDeptScope = (scope: BigScreenDataScope): BigScreenQueryDeptScope =>
   queryDeptScopeByDataScope[scope]
 
+/** 根据数据范围返回配置面板和摘要中使用的中文名称。 */
 export const getBigScreenDataScopeLabel = (scope: BigScreenDataScope) =>
   [jurisdictionScopeOption, ...organizationScopeOptions].find((option) => option.value === scope)
     ?.label || organizationScopeOptions[0].label

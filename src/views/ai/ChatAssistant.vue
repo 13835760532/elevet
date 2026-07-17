@@ -353,6 +353,7 @@ const renderRiskProducts = (list?: RiskProductItemVO[]) => {
   }))
 }
 
+/** 将月度风险报告转换为聊天消息的摘要、表格、结论和追问建议。 */
 const renderMonthlyReport = (report: RiskMonthlyReportRespVO, voiceText: string): RenderedAnswer => {
   const summary = report.summary
   const content = voiceText || `${report.area || ''}${report.month || ''}农产品风险情况已生成。`
@@ -375,6 +376,7 @@ const renderMonthlyReport = (report: RiskMonthlyReportRespVO, voiceText: string)
   }
 }
 
+/** 将地区风险排名转换为统一的聊天表格结构，并补齐空指标占位。 */
 const renderRegionRanking = (ranking: RegionRiskRankingRespVO, voiceText: string): RenderedAnswer => {
   return {
     title: `${ranking.month || ''}${ranking.parentArea || ''}地区风险排名`,
@@ -423,6 +425,7 @@ const renderProjectRanking = (ranking: ProjectRiskRankingRespVO, voiceText: stri
   }
 }
 
+/** 将本月/上月风险对比转换为指标表，并翻译后端趋势枚举。 */
 const renderTrendCompare = (trend: RiskTrendCompareRespVO, voiceText: string): RenderedAnswer => {
   const trendMap: Record<string, string> = {
     IMPROVED: '好转',
@@ -486,6 +489,7 @@ const renderGenericAnswer = (response: VoiceAssistantAskRespVO): RenderedAnswer 
   suggestions: ['4月份农产品风险情况怎么样？', '哪些地区抽检不合格比较多？', '哪些检测项目不合格最多？']
 })
 
+/** 按接口实际返回的数据块选择对应渲染器，无法识别时使用通用回答兜底。 */
 const renderAnswer = (response: VoiceAssistantAskRespVO): RenderedAnswer => {
   if (response.monthReport) return renderMonthlyReport(response.monthReport, response.voiceText || '')
   if (response.regionRanking) return renderRegionRanking(response.regionRanking, response.voiceText || '')
@@ -495,6 +499,7 @@ const renderAnswer = (response: VoiceAssistantAskRespVO): RenderedAnswer => {
   return renderGenericAnswer(response)
 }
 
+/** 逐字写入回答正文或结论，并在内容增长时保持聊天区域滚动到底部。 */
 const typeWriter = async (targetMsg: Message, text: string, prop: 'content' | 'conclusion') => {
   let currentText = ''
   for (let i = 0; i < text.length; i++) {
@@ -516,6 +521,10 @@ const stopVoiceInput = () => {
   }
 }
 
+/**
+ * 开关实时语音听写。
+ * 听写结束后仅在唤醒会话仍有效、当前无回答生成时恢复唤醒词监听，避免重复占用麦克风。
+ */
 const toggleVoiceInput = async () => {
   if (isTyping.value) return
 
@@ -582,6 +591,7 @@ const updateWakeWordStatusText = (status: WakeWordStatus, message?: string) => {
   voiceStatusText.value = message || (isWakeWordEnabled.value ? '正在等待唤醒词' : '')
 }
 
+/** 销毁唤醒引擎并递增会话令牌，使已排队的异步恢复操作立即失效。 */
 const stopWakeWord = () => {
   wakeWordSessionToken.value += 1
   wakeWordEngine.value?.destroy()
@@ -594,6 +604,10 @@ const stopWakeWord = () => {
   }
 }
 
+/**
+ * 启动浏览器本地唤醒词监听。
+ * 检测到唤醒词后暂停引擎、切换到云端听写，听写结束且会话未失效时再恢复监听。
+ */
 const startWakeWord = async () => {
   if (isTyping.value || wakeWordEngine.value) return
 
@@ -684,7 +698,10 @@ const toggleWakeWord = async () => {
   await startWakeWord()
 }
 
-// --- 核心交互逻辑 ---
+/**
+ * 发送问题并维护用户消息、思考态、逐字回答、结构化表格和结论的完整生命周期。
+ * @param options.appendUser 重新生成回答时设为 false，复用上一条用户消息而不重复插入
+ */
 const handleSend = async (text: string, options: { appendUser?: boolean } = {}) => {
   if (!text || !text.trim() || isTyping.value) return
   stopVoiceInput()
@@ -753,6 +770,7 @@ const handleSend = async (text: string, options: { appendUser?: boolean } = {}) 
   }
 }
 
+/** 删除指定回答及其后消息，并使用紧邻的上一条用户问题重新请求。 */
 const handleRegenerate = (id: string) => {
   // 找到上一条 user 消息
   const index = messages.value.findIndex(m => m.id === id)

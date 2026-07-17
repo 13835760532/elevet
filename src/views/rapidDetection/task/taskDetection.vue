@@ -226,6 +226,7 @@ const loadingInfo = ref(false);
 const taskDetail = ref({});
 const deptMap = ref({});
 
+/** 初始化部门名称映射和当前任务详情，供任务概览及责任单位回显。 */
 const initData = async () => {
     // 获取部门字典供映射使用
     try {
@@ -277,6 +278,9 @@ const total = ref(0);
 const tableList = ref([]);
 const loadingList = ref(false);
 
+/**
+ * 加载当前任务下的检测记录，并统一 AI 识别时间、检测项目、来源和结果状态的展示口径。
+ */
 const getList = async () => {
     loadingList.value = true;
     try {
@@ -325,6 +329,7 @@ const getList = async () => {
     }
 }
 
+/** 从 AI 识别 JSON 中提取检测项目名称，旧数据不是标准 JSON 时直接保留原文本。 */
 const formatDetectionItems = (value) => {
     if (!value) return '-';
     try {
@@ -371,6 +376,7 @@ const handleReset = () => {
     handleQuery();
 };
 
+/** 按当前任务及筛选条件导出检测记录，导出前由用户确认数据范围。 */
 const handleExport = async () => {
     try {
         await message.confirm('是否确认导出当前筛选条件下的检测记录数据？');

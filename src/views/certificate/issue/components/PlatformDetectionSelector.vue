@@ -232,6 +232,7 @@ const isPageIndeterminate = computed(() => {
 
 const activeRow = computed(() => linkedRows.value.find((row) => String(row.linkId) === String(activeTab.value)) || null);
 
+/** 将不同接口返回的文字或数字检测结果统一为组件内部状态值。 */
 const parseQualityResult = (result) => {
   if (result === 1 || String(result).includes('阴') || String(result).includes('合格') || String(result).includes('未检') || String(result).includes('未检出')) {
     return 1;
@@ -323,6 +324,9 @@ watch(activeRow, (row) => {
   emit('update:activeRecord', row || null);
 }, { immediate: true });
 
+/**
+ * 从 AI 识别结果或人工检测结果中提取项目名称，兼容 JSON 字符串和对象数组格式。
+ */
 const getDetectionItemNames = (row) => {
   if (!row) return '-';
   let rawItems = [];
@@ -364,6 +368,7 @@ const formatDateTime = (value) => {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
 };
 
+/** 优先使用 AI 识别时间戳，缺失或解析失败时回退检测记录时间。 */
 const formatDetectionDate = (row) => {
   if (!row) return '--';
   const raw = row.aiRecognitionResult;
@@ -380,6 +385,10 @@ const formatDetectionDate = (row) => {
   }
 };
 
+/**
+ * 查询检测记录并与既有搜索结果按 linkId 合并。
+ * 保留旧结果可避免用户分多次关键词查询时丢失先前勾选项。
+ */
 const handleSearch = async () => {
   const q = keyword.value.trim();
   if (!q) {
@@ -415,6 +424,7 @@ const toggleOne = (row, checked) => {
   }
 };
 
+/** 只切换当前分页的勾选状态，不影响其他页已经选择的记录。 */
 const togglePageSelection = (checked) => {
   const pageIds = pagedRows.value.map((row) => Number(row.linkId));
   if (checked) {
@@ -424,6 +434,9 @@ const togglePageSelection = (checked) => {
   pickedIdList.value = pickedIdList.value.filter((id) => !pageIds.includes(Number(id)));
 };
 
+/**
+ * 将所有勾选记录合并到已关联列表，并同步 ID、完整记录及当前活动记录给父表单。
+ */
 const handleLink = () => {
   if (!pickedIdList.value.length) {
     message.warning('请先选择需要关联的样品');
@@ -454,6 +467,7 @@ const handleTabChange = (name) => {
   activeTab.value = String(name);
 };
 
+/** 移除关联记录，同时同步搜索勾选状态和父表单绑定值。 */
 const handleTabRemove = (targetName) => {
   const idToRemove = Number(targetName);
 

@@ -330,6 +330,7 @@ const uniqueMonthsCount = computed(() => {
   return set.size
 })
 
+/** 按自然月生成闭区间月份列表，用于补齐接口没有返回的零值月份。 */
 const generateMonthRange = (startStr?: string, endStr?: string): string[] => {
   if (!startStr || !endStr) return []
   const result: string[] = []
@@ -891,6 +892,7 @@ const certificateTrendHead = computed(() => {
   return `${axis[0]} - ${axis[axis.length - 1]}`
 })
 
+/** 加载首页检测量/阳性率月度趋势，并根据当前趋势页签传递统计口径。 */
 const loadDashboardTrendData = async () => {
   const params = {
     ...getBigScreenQueryParams(),
@@ -909,6 +911,7 @@ const loadDashboardTrendData = async () => {
   }
 }
 
+/** 加载首页顶部概览指标；失败时回退为空对象以保持组件可渲染。 */
 const loadDashboardOverviewData = async () => {
   const params = getBigScreenQueryParams()
   try {
@@ -922,6 +925,7 @@ const loadDashboardOverviewData = async () => {
   }
 }
 
+/** 加载合格证开具与存证趋势数据。 */
 const loadCertificateTrendData = async () => {
   const params = getBigScreenQueryParams()
   try {
@@ -935,6 +939,7 @@ const loadCertificateTrendData = async () => {
   }
 }
 
+/** 根据当前一级菜单仅加载中心区域实际可见的数据，避免隐藏面板发起无效请求。 */
 const loadActiveCenterData = () => {
   if (isDefaultMode.value) {
     void loadDashboardOverviewData()

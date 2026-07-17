@@ -208,6 +208,12 @@ const areaCascaderProps = {
 
 const userDeptAreaCode = computed(() => getBigScreenUserDeptAreaParams().areaCode)
 
+/**
+ * 格式化级联选择器地区树。
+ *
+ * 直辖市数据中父子节点可能同名；此处保留原始名称用于回显，同时将重复子节点的
+ * 展示名置空，避免界面出现“北京市北京市”一类重复文本。
+ */
 const formatCascaderAreaTree = (tree: AreaNodeRespVO[] = [], parentName = ''): AreaNodeRespVO[] =>
   tree.map((item) => {
     const node = { ...item }
@@ -223,6 +229,12 @@ const formatCascaderAreaTree = (tree: AreaNodeRespVO[] = [], parentName = ''): A
     return node
   })
 
+/**
+ * 按需加载行政区划树，并将可选范围限制在当前账号所属机构地区内。
+ *
+ * 同一组件生命周期只请求一次；账号不是超级管理员且历史配置越界时，自动回填
+ * 当前机构地区。加载失败时保留空选项并记录错误，不影响大屏其他数据展示。
+ */
 const ensureAreaOptionsLoaded = async () => {
   if (areaOptionsLoaded.value || areaOptionsLoading.value) return
   areaOptionsLoading.value = true
@@ -252,6 +264,7 @@ const ensureAreaOptionsLoaded = async () => {
   }
 }
 
+/** 打开或关闭配置面板；首次打开时异步加载地区树。 */
 const toggleConfig = () => {
   showConfig.value = !showConfig.value
   if (showConfig.value) {
@@ -259,6 +272,7 @@ const toggleConfig = () => {
   }
 }
 
+/** 将已生效的大屏配置复制到表单，避免直接修改缓存对象。 */
 const syncConfigForm = (config: BigScreenDataConfig) => {
   configForm.timeRange = [...config.timeRange] as [string, string]
   configForm.dataScope = config.dataScope || getDefaultBigScreenConfig().dataScope
@@ -266,6 +280,7 @@ const syncConfigForm = (config: BigScreenDataConfig) => {
   configForm.frequency = config.frequency
 }
 
+/** 递归复制地区树，并删除叶子节点的空 `children` 字段以兼容级联组件。 */
 const formatAreaTree = (tree: AreaNodeRespVO[] = []): AreaNodeRespVO[] =>
   tree.map((item) => {
     const node = { ...item }
@@ -277,6 +292,7 @@ const formatAreaTree = (tree: AreaNodeRespVO[] = []): AreaNodeRespVO[] =>
     return node
   })
 
+/** 在地区树中递归查找指定行政区编码对应的节点。 */
 const findNodeById = (id: number | string, tree: AreaNodeRespVO[]): AreaNodeRespVO | undefined => {
   if (!id) return undefined
   for (const node of tree) {
@@ -289,6 +305,11 @@ const findNodeById = (id: number | string, tree: AreaNodeRespVO[]): AreaNodeResp
   return undefined
 }
 
+/**
+ * 查找从根节点到指定行政区编码的完整路径。
+ *
+ * @returns 级联组件使用的编码数组；未找到时返回空数组。
+ */
 const findPathById = (id: number | string, tree: AreaNodeRespVO[]): number[] => {
   if (!id) return []
   for (const node of tree) {
@@ -301,20 +322,29 @@ const findPathById = (id: number | string, tree: AreaNodeRespVO[]): number[] => 
   return []
 }
 
+/** 将完整地区树裁剪为当前机构所属地区及其下级节点。 */
 const limitTreeByRootArea = (tree: AreaNodeRespVO[], rootAreaCode?: string) => {
   if (!rootAreaCode) return tree
   const rootNode = findNodeById(rootAreaCode, tree)
   return rootNode ? [rootNode] : tree
 }
 
+/** 根据行政区编码生成级联选择器路径。 */
 const resolvePathByAreaCode = (areaCode: number | string) =>
   findPathById(areaCode, originalAreaOptions.value)
 
+/** 判断已保存的地区路径是否仍属于当前账号管辖根节点。 */
 const isPathInRootArea = (path: number[], rootAreaCode?: string) => {
   if (!rootAreaCode) return true
   return Array.isArray(path) && path.some((id) => String(id) === String(rootAreaCode))
 }
 
+/**
+ * 将级联路径解析为接口和界面共同使用的地区元数据。
+ *
+ * 返回完整路径、展示名称、省市县名称、末级行政区编码及层级。路径来自旧缓存时会
+ * 先按末级编码重新解析，修复地区树结构升级造成的路径缺失。
+ */
 const resolveRegionMetaByPath = (path?: number[] | null) => {
   const labels: string[] = []
   const safePath = path || []
@@ -338,6 +368,7 @@ const resolveRegionMetaByPath = (path?: number[] | null) => {
   }
 }
 
+/** 清理当前数据自动刷新定时器。 */
 const clearRefreshTimer = () => {
   if (refreshTimer !== null) {
     window.clearInterval(refreshTimer)
@@ -345,6 +376,11 @@ const clearRefreshTimer = () => {
   }
 }
 
+/**
+ * 按分钟启动大屏自动刷新。
+ *
+ * 频率最小为 1 分钟；每次重建定时器前先清理旧实例，防止重复刷新。
+ */
 const startRefreshTimer = (frequency: number) => {
   clearRefreshTimer()
   const intervalMinutes = Math.max(1, Number(frequency || 5))
@@ -356,6 +392,12 @@ const startRefreshTimer = (frequency: number) => {
   )
 }
 
+/**
+ * 校验并保存配置表单。
+ *
+ * 保存后会同步持久化、重建刷新定时器并广播刷新事件，使所有独立面板在同一轮更新
+ * 中读取一致的时间、地区和数据范围。
+ */
 const saveConfig = () => {
   const timeRange = configForm.timeRange && configForm.timeRange.length === 2
     ? configForm.timeRange
@@ -405,6 +447,11 @@ const activeTaskEntry = computed<TaskEntryKey>(() =>
 
 const isMenuActive = (key: '' | 'task' | 'inspect' | 'cert' | 'warn') => activeMenu.value === key
 
+/**
+ * 处理“任务下发/任务接收”二级入口。
+ *
+ * 当前已经位于大屏主页时仅更新菜单状态；跨页面时通过路由跳转，避免产生重复导航。
+ */
 const selectTaskEntry = (key: TaskEntryKey) => {
   if (key === 'receive') {
     if (route.path !== '/big-screen-task-receive') {
@@ -424,6 +471,12 @@ const selectTaskEntry = (key: TaskEntryKey) => {
   })
 }
 
+/**
+ * 处理大屏一级菜单点击。
+ *
+ * 任务菜单交由二级入口处理，预警菜单进入 AI 助手，其余菜单在大屏主页内切换或
+ * 从其他页面导航回大屏并带上对应查询参数。
+ */
 const handleMenuClick = (key: '' | 'task' | 'inspect' | 'cert' | 'warn') => {
   if (key === 'task') {
     selectTaskEntry('issue')
@@ -451,6 +504,7 @@ const handleMenuClick = (key: '' | 'task' | 'inspect' | 'cert' | 'warn') => {
   })
 }
 
+/** 返回大屏总览；在当前页面时只清空菜单状态。 */
 const handleGoHome = () => {
   if (route.path === '/big-screen') {
     emit('update:activeMenu', '')
@@ -459,6 +513,7 @@ const handleGoHome = () => {
   router.push('/big-screen')
 }
 
+/** 优先返回浏览历史；没有可返回页面时跳转系统首页。 */
 const handleBack = () => {
   if (window.history.length > 1) {
     router.back()

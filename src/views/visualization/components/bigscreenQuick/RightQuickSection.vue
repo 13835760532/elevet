@@ -357,6 +357,7 @@ const currentTopColumnOption = computed(() =>
   })
 );
 
+/** 按当前检测量/阳性率口径加载快检农产品品类 TOP10。 */
 const loadCategoryTop10 = async () => {
   try {
     const data = await getFastCategoryTop10({
@@ -370,6 +371,7 @@ const loadCategoryTop10 = async () => {
   }
 };
 
+/** 加载快速检测检测项 TOP10。 */
 const loadPesticideTop10 = async () => {
   try {
     const data = await getFastPesticideTop10(getBigScreenQueryParams());
@@ -380,6 +382,7 @@ const loadPesticideTop10 = async () => {
   }
 };
 
+/** 加载“产品品类-检测项”组合 TOP10。 */
 const loadCategoryPesticideTop10 = async () => {
   try {
     const data = await getFastCategoryPesticideTop10(getBigScreenQueryParams());

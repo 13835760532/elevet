@@ -186,6 +186,7 @@ const getCategoryValue = (item: FastCategoryDistributionRespVO) => {
   return toNumber(value)
 }
 
+/** 加载快速检测概览指标，异常时清空数据但保留面板结构。 */
 const loadOverview = async () => {
   try {
     const data = await getFastOverview(getBigScreenQueryParams())
@@ -297,6 +298,7 @@ const categoryPieOption = computed(() => ({
   ]
 }))
 
+/** 加载快速检测品类分布，并兼容接口返回数组或包装对象两种结构。 */
 const loadCategoryDistribution = async () => {
   try {
     const data = await getFastCategoryDistribution(getBigScreenQueryParams())

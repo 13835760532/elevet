@@ -181,6 +181,7 @@ const clock = new THREE.Clock()
 const textureLoader = new THREE.TextureLoader()
 let terrainTexture: THREE.Texture | null = null
 
+/** 获取地图实际可用的渲染尺寸，优先采用画布父容器，避免窗口尺寸与面板尺寸不一致。 */
 const getRendererSize = () => {
   const canvas = canvasRef.value
   const container = canvas?.parentElement
@@ -226,6 +227,7 @@ const legendItems = [
   { label: '0', color: '#11184A' }
 ]
 
+/** 创建并缓存地图表面纹理，避免每个行政区重复加载图片和占用显存。 */
 const getTerrainTexture = () => {
   if (terrainTexture) return terrainTexture
   terrainTexture = textureLoader.load(terrainTextureUrl)
@@ -237,8 +239,13 @@ const getTerrainTexture = () => {
   return terrainTexture
 }
 
-// 程序化生成不规则发光纹理：多层偏移渐变 + 噪点扰动，模拟自然光晕
 let radialGlowTexture: THREE.Texture | null = null
+/**
+ * 程序化生成并缓存不规则发光纹理。
+ *
+ * 通过多层偏移径向渐变、固定种子噪点和柔化重绘模拟自然光晕，固定种子保证每次
+ * 进入页面的视觉结果一致，便于测试和客户验收。
+ */
 const getRadialGlowTexture = () => {
   if (radialGlowTexture) return radialGlowTexture
   const size = 512
@@ -313,6 +320,12 @@ const getRadialGlowTexture = () => {
   return radialGlowTexture
 }
 
+/**
+ * 解码 ECharts 压缩格式的单个 GeoJSON Feature。
+ *
+ * 压缩坐标采用增量和 ZigZag 编码；解码后统一转换为标准经纬度数组，供 D3 投影和
+ * Three.js 几何构建使用。
+ */
 const decodeFeature = (feature: GeoFeature) => {
   const geometry = feature.geometry
   if (!geometry || !geometry.encodeOffsets) return feature
@@ -349,19 +362,23 @@ const decodeFeature = (feature: GeoFeature) => {
   return feature
 }
 
+/** 深拷贝并解码 GeoJSON，防止修改静态资源或缓存中的共享对象。 */
 const cloneAndDecodeGeo = (geo: GeoJson) => {
   const nextGeo = structuredClone(geo) as GeoJson
   nextGeo.features?.forEach(decodeFeature)
   return nextGeo
 }
 
+/** 加载全国轻量地图，作为没有地区限制时的初始范围。 */
 const loadHomeGeo = () => cloneAndDecodeGeo(chinaLiteSafeGeo as GeoJson)
 
+/** 将任意六位行政区编码归一化为对应省级编码。 */
 const getProvinceFeatureCode = (areaCode?: string | number) => {
   const value = String(areaCode || '').trim()
   return /^\d{2}/.test(value) ? `${value.slice(0, 2)}0000` : ''
 }
 
+/** 在全国 GeoJSON 中按省级行政区编码查找 Feature。 */
 const findChinaFeatureByCode = (provinceCode?: string) => {
   const code = String(provinceCode || '').trim()
   if (!code) return undefined
@@ -373,6 +390,12 @@ const findChinaFeatureByCode = (provinceCode?: string) => {
   })
 }
 
+/**
+ * 根据账号机构地区和大屏配置确定地图首页范围。
+ *
+ * 无有效省份时展示全国；普通账号或已选地区至少定位到所属省份，并同步生成地图
+ * 下钻层级和接口查询所需的省份参数。
+ */
 const resolveInitialHomeScope = (): HomeScopeState => {
   const config = getBigScreenConfig()
   const userDeptAreaParams = getBigScreenUserDeptAreaParams()
@@ -407,9 +430,15 @@ const resolveInitialHomeScope = (): HomeScopeState => {
   }
 }
 
+/** 生成首页范围的稳定标识，用于判断配置变化是否要求重建地图。 */
 const getHomeScopeKey = (scope: HomeScopeState) =>
   [scope.level.geoId, scope.drillLevel, scope.regionParams.provinceName || '', scope.regionParams.cityName || ''].join('|')
 
+/**
+ * 将最新配置同步到运行时首页范围。
+ *
+ * @returns 首页范围是否发生变化，刷新订阅方据此决定回首页或只刷新当前层级。
+ */
 const syncHomeScope = () => {
   const previousKey = getHomeScopeKey(homeScope)
   homeScope = resolveInitialHomeScope()
@@ -417,6 +446,11 @@ const syncHomeScope = () => {
   return previousKey !== getHomeScopeKey(homeScope)
 }
 
+/**
+ * 加载指定行政区的明细 GeoJSON。
+ *
+ * 结果按行政区编码缓存；返回前再次深拷贝，避免渲染过程污染缓存数据。
+ */
 const loadDetailGeo = async (geoId: string) => {
   const cacheKey = geoId
   if (geoCache.has(cacheKey)) return cloneAndDecodeGeo(geoCache.get(cacheKey) as GeoJson)
@@ -427,6 +461,7 @@ const loadDetailGeo = async (geoId: string) => {
   return cloneAndDecodeGeo(geo)
 }
 
+/** 去除省、市、自治区等后缀，生成跨接口稳定的地区匹配键。 */
 const normalizeRegionName = (name?: string | number | null) =>
   String(name || '')
     .trim()
@@ -445,6 +480,7 @@ const getAreaCandidates = (item: MapDataItem) =>
     .filter(Boolean)
     .map((name) => String(name).trim())
 
+/** 建立地区名称到业务数据行的索引，兼容省、市、区县字段及带/不带后缀名称。 */
 const createMapDataIndex = (list: MapDataItem[]) => {
   const index = new Map<string, MapDataItem>()
   list.forEach((item) => {
@@ -456,6 +492,7 @@ const createMapDataIndex = (list: MapDataItem[]) => {
   return index
 }
 
+/** 通过 Feature 名称候选集合查找当前行政区对应的业务数据。 */
 const getMatchedMapItem = (geoProps: any, dataIndex: Map<string, MapDataItem>) => {
   const candidates = getFeatureCandidates(geoProps)
   for (const name of candidates) {
@@ -465,6 +502,7 @@ const getMatchedMapItem = (geoProps: any, dataIndex: Map<string, MapDataItem>) =
   return undefined
 }
 
+/** 根据当前业务模式选择地图着色和排行使用的主统计值。 */
 const getItemValue = (item?: MapDataItem) => {
   if (isFastMapMode.value) return Number((item as FastMapDataRespVO | undefined)?.sampleCount || 0)
   if (isDashboardMode.value) return Number((item as MapDataRespVO | undefined)?.sampleCount || 0)
@@ -476,6 +514,7 @@ const getItemValue = (item?: MapDataItem) => {
 
 const formatRate = (value?: number) => `${Number(value || 0).toFixed(0)}%`
 
+/** 按大屏模式组装地图浮层明细，保证指标名称与当前业务口径一致。 */
 const createTooltipLines = (item?: MapDataItem, value = 0) => {
   if (isCertificateMode.value) {
     const data = item as any
@@ -509,6 +548,12 @@ const createTooltipLines = (item?: MapDataItem, value = 0) => {
   ]
 }
 
+/**
+ * 按当前模式、下钻层级和地区参数加载地图业务数据。
+ *
+ * 默认、快检、任务和合格证模式分别调用对应接口；合格证模式会合并开具与存证列表。
+ * 请求序号用于丢弃快速切换模式后返回的旧响应，防止旧数据覆盖新地图。
+ */
 const loadCurrentMapData = async () => {
   const requestId = ++dataRequestSeq
   // 各 Tab 只有地图接口需要地区，用于加载当前地图层级。
@@ -592,6 +637,7 @@ const loadCurrentMapData = async () => {
   }
 }
 
+/** 将 Polygon 和 MultiPolygon 统一转换为多边形数组。 */
 const getPolygons = (feature: GeoFeature) => {
   const { type, coordinates } = feature.geometry || {}
   if (type === 'Polygon') return [coordinates]
@@ -599,6 +645,7 @@ const getPolygons = (feature: GeoFeature) => {
   return []
 }
 
+/** 根据当前 GeoJSON 地理中心创建墨卡托投影，降低局部地图形变。 */
 const createProjection = (geo: GeoJson) => {
   const bounds = geoBounds(geo as any)
   const center: [number, number] = [
@@ -608,6 +655,7 @@ const createProjection = (geo: GeoJson) => {
   return geoMercator().center(center).scale(1).translate([0, 0])
 }
 
+/** 将经纬度环投影到 Three.js 平面坐标，并反转 Y 轴适配屏幕坐标系。 */
 const projectRing = (
   ring: number[][],
   projection: ReturnType<typeof geoMercator>,
@@ -618,6 +666,12 @@ const projectRing = (
     .filter((point): point is [number, number] => !!point && Number.isFinite(point[0]) && Number.isFinite(point[1]))
     .map(([x, y]) => [x * scale, -y * scale] as [number, number])
 
+/**
+ * 将一个 GeoJSON 多边形构建为可渲染的 BufferGeometry。
+ *
+ * 外环和孔洞先投影，再使用 Earcut 完成三角剖分；同时返回投影后的边界环，供行政
+ * 区轮廓线和外发光层复用。
+ */
 const buildPolygonGeometry = (
   polygon: number[][][],
   projection: ReturnType<typeof geoMercator>,
@@ -659,6 +713,7 @@ const buildPolygonGeometry = (
   }
 }
 
+/** 根据业务数值创建区域表面材质，数值越高时蓝色亮度越强。 */
 const createRegionMaterial = (value: number) => {
   const intensity = Math.min(value / 800, 1)
   const color = new THREE.Color(0x146fbb).lerp(new THREE.Color(0x1ba0ee), 0.18 + intensity * 0.16)
@@ -691,7 +746,7 @@ const createGlowMaterial = (opacity = 0.2, color = 0x37ffc2) =>
     side: THREE.DoubleSide
   })
 
-// 区域内发光材质：使用不规则渐变纹理 + 叠加混合，产生柔和的内部光晕
+/** 使用不规则渐变纹理和叠加混合创建行政区内部光晕材质。 */
 const createInnerGlowMaterial = (intensity: number = 0.5) =>
   new THREE.MeshBasicMaterial({
     color: new THREE.Color(0x30d5ff).lerp(new THREE.Color(0x80eeff), intensity * 0.5),
@@ -703,7 +758,11 @@ const createInnerGlowMaterial = (intensity: number = 0.5) =>
     side: THREE.DoubleSide
   })
 
-// 为每个区域创建以其中心为原点的发光几何体（让径向渐变纹理正确居中映射）
+/**
+ * 克隆区域几何体，并以其包围盒中心重新计算 UV。
+ *
+ * 这样径向渐变始终以当前行政区中心展开，不会因全国坐标范围不同而偏移。
+ */
 const createCenteredGlowGeometry = (sourceGeometry: THREE.BufferGeometry) => {
   const geo = sourceGeometry.clone()
   const posAttr = geo.getAttribute('position') as THREE.BufferAttribute
@@ -761,6 +820,7 @@ const setLineState = (line: THREE.Object3D, active: boolean) => {
   material.opacity = active ? 1 : 0.5
 }
 
+/** 递归释放对象中的几何体和材质，防止地图重绘后持续占用 GPU 内存。 */
 const disposeObject = (object: THREE.Object3D) => {
   object.traverse((child: any) => {
     child.geometry?.dispose?.()
@@ -769,6 +829,7 @@ const disposeObject = (object: THREE.Object3D) => {
   })
 }
 
+/** 清空 Three.js 分组并释放组内全部渲染资源。 */
 const clearGroup = (group: THREE.Group | null) => {
   if (!group) return
   while (group.children.length) {
@@ -777,11 +838,17 @@ const clearGroup = (group: THREE.Group | null) => {
   }
 }
 
+/** 清除覆盖在画布上方的 DOM 行政区标签。 */
 const clearLabels = () => {
   labelItems = []
   if (labelsRef.value) labelsRef.value.innerHTML = ''
 }
 
+/**
+ * 为投影后的多边形环添加轮廓线。
+ *
+ * `scale` 与 `pulse` 用于创建外扩呼吸光晕；普通行政边界保持原始位置和静态透明度。
+ */
 const addOutline = (
   rings: Array<Array<[number, number]>>,
   z: number,
@@ -802,6 +869,7 @@ const addOutline = (
   })
 }
 
+/** 创建行政区 DOM 标签，并记录对应三维锚点供渲染循环定位。 */
 const addLabel = (
   feature: GeoFeature,
   projection: ReturnType<typeof geoMercator>,
@@ -820,6 +888,7 @@ const addLabel = (
   })
 }
 
+/** 从 GeoJSON 的推荐中心点计算标签和默认浮层使用的三维锚点。 */
 const getFeatureAnchorPosition = (
   feature: GeoFeature,
   projection: ReturnType<typeof geoMercator>,
@@ -832,6 +901,7 @@ const getFeatureAnchorPosition = (
   return new THREE.Vector3(point[0] * scale, -point[1] * scale, 4)
 }
 
+/** 将三维标签锚点投影为画布像素坐标，并隐藏视锥外标签。 */
 const updateLabels = () => {
   if (!camera || !renderer) return
   const width = renderer.domElement.clientWidth || window.innerWidth
@@ -844,6 +914,12 @@ const updateLabels = () => {
   })
 }
 
+/**
+ * 根据 GeoJSON 边界和容器宽高调整正交相机。
+ *
+ * 同时考虑地图和画布宽高比并保留固定留白，保证全国、省、市地图都保持原比例，
+ * 不因面板尺寸变化出现拉伸或裁切。
+ */
 const fitCameraToGeo = (
   geo: GeoJson,
   projection: ReturnType<typeof geoMercator>,
@@ -885,6 +961,12 @@ const fitCameraToGeo = (
   camera.updateProjectionMatrix()
 }
 
+/**
+ * 渲染一个行政层级的完整地图。
+ *
+ * 方法会清理上一层资源、请求业务数据、构建地区索引和 Three.js 几何体，随后添加
+ * 表面纹理、内外光效、边界与标签。渲染序号用于丢弃已经过期的异步结果。
+ */
 const renderGeo = async (geo: GeoJson, level: LevelState) => {
   if (!mapGroup || !glowGroup || !lineGroup) return
   const renderId = ++renderSeq
@@ -989,6 +1071,12 @@ const renderGeo = async (geo: GeoJson, level: LevelState) => {
   showDefaultTooltip()
 }
 
+/**
+ * 初始化 Three.js 渲染环境。
+ *
+ * 创建 WebGL 渲染器、正交相机、射线拾取器和地图图层；初始化失败时收集页面画布
+ * 数量等诊断信息，并通知父组件显示可恢复的错误提示。
+ */
 const initThree = () => {
   const canvas = canvasRef.value
   if (!canvas) return false
@@ -1031,12 +1119,14 @@ const initThree = () => {
   }
 }
 
+/** 处理浏览器回收 WebGL 上下文，阻止默认销毁并显示恢复提示。 */
 const handleContextLost = (event: Event) => {
   event.preventDefault()
   webglContextLost = true
   webglError.value = 'WebGL 上下文已丢失，请关闭其它大屏/地图标签后刷新'
 }
 
+/** WebGL 上下文恢复后清理错误状态并强制重建地图首页。 */
 const handleContextRestored = () => {
   if (!webglContextLost) return
   webglError.value = ''
@@ -1044,6 +1134,7 @@ const handleContextRestored = () => {
   void goHome(true)
 }
 
+/** 通过射线检测将鼠标位置转换为当前命中的行政区分组。 */
 const getIntersectedRegion = (event: MouseEvent) => {
   if (!canvasRef.value || !raycaster || !camera || !mapGroup) return null
   const rect = canvasRef.value.getBoundingClientRect()
@@ -1057,6 +1148,7 @@ const getIntersectedRegion = (event: MouseEvent) => {
 const canDrillFurther = () =>
   (!isCertificateMode.value && !isTaskMapMode.value) || currentDrillLevel < 2
 
+/** 更新悬停行政区，并为其他区域设置平滑暗化的目标状态。 */
 const setHovered = (region: RegionGroup | null) => {
   if (hovered === region) return
   // 标记离开旧区域
@@ -1079,6 +1171,7 @@ const setHovered = (region: RegionGroup | null) => {
   })
 }
 
+/** 将行政区三维锚点转换为浮层使用的画布像素坐标。 */
 const getRegionTooltipPoint = (region: RegionGroup) => {
   if (!camera || !renderer || !region.userData.tooltipPosition) return undefined
   const projected = region.userData.tooltipPosition.clone().project(camera)
@@ -1090,6 +1183,7 @@ const getRegionTooltipPoint = (region: RegionGroup) => {
   }
 }
 
+/** 使用指定行政区的统计数据更新并显示地图浮层。 */
 const showRegionTooltip = (region: RegionGroup, point = getRegionTooltipPoint(region)) => {
   if (!point) {
     tooltip.show = false
@@ -1103,6 +1197,7 @@ const showRegionTooltip = (region: RegionGroup, point = getRegionTooltipPoint(re
   tooltip.show = true
 }
 
+/** 没有鼠标悬停时显示当前层级最大值地区的默认浮层。 */
 const showDefaultTooltip = () => {
   if (hovered || !defaultTooltipRegion) {
     if (!hovered) tooltip.show = false
@@ -1126,6 +1221,12 @@ const handlePointerLeave = () => {
   showDefaultTooltip()
 }
 
+/**
+ * 下钻到选中的省或市级行政区。
+ *
+ * 下钻前保存原层级和查询参数；GeoJSON 请求失败时恢复原状态，保证地图层级和接口
+ * 查询条件始终一致。合格证和任务模式最多下钻到区县层。
+ */
 const drillToFeature = async (feature?: GeoFeature) => {
   const geoId = String(feature?.id || feature?.properties?.geoId || '').trim()
   if (!geoId || loading.value || !canDrillFurther()) return
@@ -1160,6 +1261,7 @@ const handleClick = () => {
   if (hovered) void drillToFeature(hovered.userData.feature)
 }
 
+/** 返回当前账号和配置定义的地图首页，并重置下钻地区参数。 */
 const goHome = async (force = false) => {
   if (loading.value && !force) return
   loading.value = true
@@ -1174,6 +1276,7 @@ const goHome = async (force = false) => {
   }
 }
 
+/** 响应窗口或容器尺寸变化，重设画布、相机、标签和默认浮层位置。 */
 const resizeRenderer = () => {
   if (!renderer || !canvasRef.value) return
   const { width, height } = getRendererSize()
@@ -1187,6 +1290,12 @@ const resizeRenderer = () => {
   showDefaultTooltip()
 }
 
+/**
+ * 执行持续渲染循环。
+ *
+ * 每帧更新外发光呼吸、区域悬停/暗化插值、边界高亮和 DOM 标签位置，最后提交场景。
+ * 时间步长设置上限，避免浏览器标签页恢复后动画突跳。
+ */
 const animate = () => {
   if (!renderer || !scene || !camera) return
   frameId = requestAnimationFrame(animate)
@@ -1256,6 +1365,7 @@ const animate = () => {
   updateLabels()
 }
 
+/** 保持当前下钻层级，仅重新请求数据并重建地图材质。 */
 const reloadCurrentLevel = async () => {
   if (!currentGeo) return
   loading.value = true

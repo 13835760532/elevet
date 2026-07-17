@@ -573,7 +573,10 @@ const formData = reactive({
 // 获取部门名称用于回显
 const issuerDeptName = ref('');
 
-// 初始化获取部门信息
+/**
+ * 使用当前登录账号所属部门初始化签发部门、检测单位和检测区划。
+ * 仅填充尚未录入的字段，避免覆盖继续检测或复检场景的原记录数据。
+ */
 const initDeptInfo = async () => {
     const userDeptId = userStore.user?.deptId
     if (userDeptId) {
@@ -635,6 +638,10 @@ const remoteSearchSubject = async (query) => {
     }
 };
 
+/**
+ * 选择生产经营主体后回填主体及地区信息。
+ * 样品产地仅在用户尚未手工选择时跟随主体地区，保护用户已录入内容。
+ */
 const handleSubjectSelect = (item) => {
     formState.selectedSubject = item;
     formData.subjectName = item.name;
@@ -664,6 +671,10 @@ const remoteSearchTask = async (query) => {
     }
 };
 
+/**
+ * 选择产品档案后回填样品、单位、产地及关联主体。
+ * 产地优先使用结构化省市区字段，历史数据仅有拼接文本时再按连接符拆分。
+ */
 const handleProductChange = async (val) => {
     const p = productOptions.value.find(item => item.id === val);
     if (p) {
@@ -730,7 +741,9 @@ const handleDetectionAreaSelect = (area) => {
 };
 
 /**
- * 获取提交给接口的数据（处理多选的样品来源为字符串）
+ * 生成检测记录接口入参。
+ * 深拷贝用于隔离格式转换对响应式表单的影响；任务检测补充 taskId，
+ * 同时将多选来源和页面判定文字转换成后端约定格式。
  */
 const getSubmitData = () => {
     const submitData = JSON.parse(JSON.stringify(formData));
@@ -762,6 +775,11 @@ const handlePrint = () => {
 
 const handleResetForm = () => { window.location.reload(); };
 
+/**
+ * 推进四步检测流程。
+ * 第一步校验并预存样品记录，第二步保存 AI 识别结果，第三步保存备注并生成报告，
+ * 复检场景在结果保存阶段改用复检接口且不会重复创建产品档案。
+ */
 const handleNext = async () => {
     if (currentStep.value === 1) {
         // 第一步校验：基础信息
@@ -891,6 +909,9 @@ const handleFileChange = (file) => {
     // 这里也可以选择自动触发一次 AI 识别
 };
 
+/**
+ * 上传试纸原图执行 AI 识别，并保存完整响应 JSON 供后端存档及结果页解析。
+ */
 const handleAiDetect = async () => {
     if (!formState.rawFile) return;
 
@@ -944,6 +965,10 @@ const handleSave = async () => {
     }
 };
 
+/**
+ * 完成检测记录存档。
+ * 第一步已经创建过主记录时只更新；复检操作使用专用接口，避免覆盖原检测链路。
+ */
 const handleSubmit = async () => {
     submitting.value = true;
     try {
@@ -981,6 +1006,10 @@ const handleSubjectSuccess = (id) => {
     remoteSearchTask(''); // 尝试刷新任务列表
 };
 
+/**
+ * 预加载产品与主体选项，并根据路由 action 恢复继续检测或复检记录。
+ * 新建场景从第一步开始，继续检测和复检直接进入试纸识别步骤。
+ */
 onMounted(async () => {
     // 预加载
     const [pData, sData] = await Promise.all([

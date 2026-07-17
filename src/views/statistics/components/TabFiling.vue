@@ -433,6 +433,7 @@ const getLastAreaName = (areaNames: string[]) => {
   return effectiveAreaNames[effectiveAreaNames.length - 1] || ''
 }
 
+/** 将主体所属地区名称转换为后端要求的省市县和行政级别参数。 */
 const buildSubjectAreaParams = (areaNames: string[]) => {
   const lastAreaName = getLastAreaName(areaNames)
   const level = areaNames.filter(Boolean).length
@@ -443,6 +444,7 @@ const buildSubjectAreaParams = (areaNames: string[]) => {
   }
 }
 
+/** 将产品产地选择转换为后端查询使用的地区参数。 */
 const buildProductAreaParams = (areaNames: string[]) => {
   const lastAreaName = getLastAreaName(areaNames)
   const level = areaNames.filter(Boolean).length
@@ -454,6 +456,7 @@ const buildProductAreaParams = (areaNames: string[]) => {
   }
 }
 
+/** 组装主体建档分页/导出查询，合并时间、机构权限和地区筛选。 */
 const buildSubjectQuery = (pageNo: number, pageSize: number) => {
   const createTime = buildDateTimeRange()
   const areaNames = subjectAreaNames.value.length ? subjectAreaNames.value : globalAreaNames.value
@@ -473,6 +476,7 @@ const buildSubjectQuery = (pageNo: number, pageSize: number) => {
   }
 }
 
+/** 组装产品建档分页/导出查询，确保页面选择地区优先于全局地区范围。 */
 const buildProductQuery = (pageNo: number, pageSize: number) => {
   const createTime = buildDateTimeRange()
   const areaNames = productAreaNames.value.length ? productAreaNames.value : globalAreaNames.value
@@ -565,6 +569,7 @@ const mapProductRow = (item: any) => ({
     '--'
 })
 
+/** 并行加载建档概览、地区分布、主体类型和产品趋势等图表数据。 */
 const loadDashboardData = async () => {
   try {
     const [overviewData, productTrendData, productCategoryData, subjectTypeData, subjectAreaData] =
@@ -592,6 +597,7 @@ const loadDashboardData = async () => {
   }
 }
 
+/** 加载主体建档分页并转换为表格展示结构。 */
 const loadSubjectTable = async () => {
   subjectLoading.value = true
   try {
@@ -610,6 +616,7 @@ const loadSubjectTable = async () => {
   }
 }
 
+/** 加载产品建档分页并转换为表格展示结构。 */
 const loadProductTable = async () => {
   productLoading.value = true
   try {
@@ -692,6 +699,7 @@ const handleProductReset = () => {
   handleProductSearch()
 }
 
+/** 按当前主体筛选条件导出最多 1000 条建档数据。 */
 const handleSubjectExport = async () => {
   try {
     await ElMessageBox.confirm('确定要导出主体建档数据吗？', '导出确认', {
@@ -713,6 +721,7 @@ const handleSubjectExport = async () => {
   }
 }
 
+/** 按当前产品筛选条件导出最多 1000 条建档数据。 */
 const handleProductExport = async () => {
   try {
     await ElMessageBox.confirm('确定要导出产品建档数据吗？', '导出确认', {

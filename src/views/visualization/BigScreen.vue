@@ -101,11 +101,17 @@ const menuToQueryKey: Record<Exclude<BigScreenMenu, '' | 'warn'>, Exclude<BigScr
   cert: 'cert'
 }
 
+/** 将 URL 中的 `key` 查询参数转换为页面内部菜单状态。 */
 const getMenuFromRouteKey = (key: unknown): BigScreenMenu => {
   const queryKey = Array.isArray(key) ? key[0] : key
   return queryKeyToMenu[String(queryKey || '') as Exclude<BigScreenQueryKey, ''>] || ''
 }
 
+/**
+ * 从 Hash 路由中读取原始菜单参数。
+ *
+ * 这里不直接依赖 Vue Router，保证页面首次创建响应式状态前也能得到正确菜单。
+ */
 const getRouteKeyFromLocation = () => {
   if (typeof window === 'undefined') return ''
   const hash = window.location.hash || ''
@@ -114,6 +120,7 @@ const getRouteKeyFromLocation = () => {
   return new URLSearchParams(hash.slice(queryStartIndex + 1)).get('key') || ''
 }
 
+/** 判断当前是否使用 Three.js 地图渲染器；旧 maptalks 模式保留为兼容入口。 */
 const isThreeRendererRoute = () => {
   if (typeof window === 'undefined') return true
   const hash = window.location.hash || ''
@@ -122,6 +129,11 @@ const isThreeRendererRoute = () => {
   return new URLSearchParams(hash.slice(queryStartIndex + 1)).get('renderer') !== 'maptalks'
 }
 
+/**
+ * 将菜单状态同步回 Hash 地址栏，但不产生新的浏览历史记录。
+ *
+ * 保留 `renderer` 等其他查询参数，只维护当前方法拥有的 `key` 参数。
+ */
 const syncLocationKey = (mode: BigScreenMenu) => {
   if (typeof window === 'undefined') return
   const nextKey = mode && mode !== 'warn' ? menuToQueryKey[mode] : ''
@@ -156,6 +168,7 @@ let mounted = false
 
 const dataSummaryText = computed(() => formatBigScreenDataSummary(dataConfig.value))
 
+/** 清理入口/菜单切换遮罩的关闭定时器。 */
 const clearLoadingTimer = () => {
   if (loadingTimer !== null) {
     window.clearTimeout(loadingTimer)
@@ -163,6 +176,7 @@ const clearLoadingTimer = () => {
   }
 }
 
+/** 清理尚未执行的菜单内容切换任务。 */
 const clearSwitchRenderTimer = () => {
   if (switchRenderTimer !== null) {
     window.clearTimeout(switchRenderTimer)
@@ -170,6 +184,11 @@ const clearSwitchRenderTimer = () => {
   }
 }
 
+/**
+ * 展示指定时长的加载遮罩。
+ *
+ * 重复调用会替换上一轮计时，避免快速切换菜单时旧定时器提前关闭新遮罩。
+ */
 const showLoadingFor = (delay: number) => {
   entranceLoading.value = true
   clearLoadingTimer()
@@ -179,6 +198,12 @@ const showLoadingFor = (delay: number) => {
   }, delay)
 }
 
+/**
+ * 生成页面首次进入时的面板挂载计划。
+ *
+ * Three.js 模式优先挂载中心地图，旧渲染器模式优先挂载两侧数据，降低首帧同时创建
+ * 多个图表和 WebGL 上下文造成的卡顿。
+ */
 const getPanelPlan = (mode: BigScreenMenu): DeferredPanelPlan => {
   if (isThreeRendererRoute()) {
     if (mode === 'task' || mode === 'inspect') {
@@ -217,6 +242,12 @@ const getPanelPlan = (mode: BigScreenMenu): DeferredPanelPlan => {
   }
 }
 
+/**
+ * 生成菜单切换时的面板挂载计划。
+ *
+ * 切换阶段所有面板均延迟创建，配合遮罩让旧组件先卸载，再按中心/左右/底部顺序
+ * 渐进渲染，减少瞬时内存和 GPU 压力。
+ */
 const getSwitchPanelPlan = (mode: BigScreenMenu): DeferredPanelPlan => {
   if (isThreeRendererRoute()) {
     if (mode === 'task' || mode === 'inspect') {

@@ -152,6 +152,12 @@ const uniqueMonthsCount = computed(() => {
   return rawXaxis.value.length
 })
 
+/**
+ * 生成闭区间自然月列表。
+ *
+ * 后续月份窗口遵循统一规则：不足 12 个月全部展示；超过 12 个月且包含当前月时取
+ * 当前月向前 12 个月，否则取所选截止月向前 12 个月。
+ */
 const generateMonthRange = (startStr?: string, endStr?: string): string[] => {
   if (!startStr || !endStr) return []
   const result: string[] = []
@@ -397,6 +403,7 @@ const currentRightTrendOption = computed(() =>
   )
 );
 
+/** 并行加载快检阳性率趋势与自主检测样品趋势，保证两张图使用同一查询范围。 */
 const loadTrendData = async () => {
   try {
     const [positiveRateRes, selfSampleRes] = await Promise.all([

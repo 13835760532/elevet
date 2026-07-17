@@ -9,7 +9,12 @@ const DEFAULT_CACHE_TTL = 30 * 1000
 const MAX_CACHE_SIZE = 80
 const requestCache = new Map<string, CacheEntry<unknown>>()
 
-// 对对象键排序，保证属性插入顺序不同但语义相同的查询能够命中同一缓存键。
+/**
+ * 稳定序列化查询参数。
+ *
+ * 对对象键排序，保证属性插入顺序不同但语义相同的查询能够命中同一缓存键；数组
+ * 保留原始顺序，因为数组顺序可能具有业务含义。
+ */
 const stableSerialize = (value: unknown): string => {
   if (value === undefined) return ''
   if (value === null || typeof value !== 'object') return JSON.stringify(value)
@@ -21,6 +26,15 @@ const stableSerialize = (value: unknown): string => {
     .join(',')}}`
 }
 
+/**
+ * 执行带短期缓存和并发合并的大屏请求。
+ *
+ * @param scope 业务域名称，用于隔离不同接口的缓存。
+ * @param params 参与缓存键计算的查询参数。
+ * @param request 真正发起网络请求的函数，仅在缓存未命中时调用。
+ * @param ttl 缓存有效期，默认 30 秒。
+ * @returns 接口结果；同一时刻的相同请求会共享一个 Promise。
+ */
 export const cachedBigScreenRequest = <T>(
   scope: string,
   params: unknown,
@@ -66,10 +80,16 @@ export const cachedBigScreenRequest = <T>(
   return pending
 }
 
+/** 清空所有大屏接口缓存，通常在配置保存或强制刷新时调用。 */
 export const clearBigScreenRequestCache = () => {
   requestCache.clear()
 }
 
+/**
+ * 将缓存容量限制在上限以内。
+ *
+ * 淘汰顺序遵循 Map 的插入顺序；执行中的 Promise 会被跳过，避免同一请求被重复发起。
+ */
 const trimBigScreenRequestCache = () => {
   let pendingSkipped = 0
   while (requestCache.size > MAX_CACHE_SIZE && pendingSkipped < requestCache.size) {
@@ -88,6 +108,7 @@ const trimBigScreenRequestCache = () => {
   }
 }
 
+/** 删除已经过期且不在执行中的缓存项。 */
 export const pruneBigScreenRequestCache = (now = Date.now()) => {
   requestCache.forEach((entry, key) => {
     if (!entry.pending && entry.expireAt <= now) {

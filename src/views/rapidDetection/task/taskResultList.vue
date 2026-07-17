@@ -210,6 +210,7 @@ const tableList = ref([]);
 const taskId = route.query.taskId || route.query.id || route.params.id;
 const taskDetail = ref<any>(null);
 
+/** 加载路由指定的任务详情，失败时保留列表功能可用。 */
 const getTaskDetail = async () => {
     if (taskId) {
         try {
@@ -218,6 +219,10 @@ const getTaskDetail = async () => {
     }
 }
 
+/**
+ * 加载当前任务的检测结果，并解析 AI 项目及检测时间。
+ * AI 数据缺失或格式异常时回退记录检测时间，保证历史记录仍可展示。
+ */
 const getList = async () => {
     loading.value = true;
     try {
@@ -276,6 +281,7 @@ const resetQuery = () => {
     handleQuery();
 };
 
+/** 按当前任务及完整筛选条件导出结果，参数口径与列表查询保持一致。 */
 const handleExport = async () => {
     try {
         await message.confirm('是否确认导出当前筛选条件下的检测记录数据？');

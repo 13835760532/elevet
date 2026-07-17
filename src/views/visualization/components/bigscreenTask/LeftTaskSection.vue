@@ -148,6 +148,7 @@ const coverData = computed(() => [
   { label: '生产经营主体', value: formatCount(overview.value.enterpriseCount), icon: iconFactory }
 ]);
 
+/** 加载检测任务概览指标。 */
 const loadOverviewData = async () => {
   try {
     const data = await getTaskOverview(getBigScreenQueryParams());
@@ -158,6 +159,7 @@ const loadOverviewData = async () => {
   }
 };
 
+/** 加载快速检测概览，用于任务大屏的补充业务指标。 */
 const loadFastOverviewData = async () => {
   try {
     const data = await getFastOverview(getBigScreenQueryParams());
@@ -259,6 +261,7 @@ const categoryPieOption = computed(() => ({
   ]
 }));
 
+/** 加载任务样品品类分布，并按固定业务品类顺序展示。 */
 const loadCategoryDistribution = async () => {
   try {
     const data = await getTaskCategoryDistribution(getBigScreenQueryParams());

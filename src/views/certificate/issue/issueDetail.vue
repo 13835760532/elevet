@@ -196,6 +196,7 @@ const selectedUpstreamBasisOptions = computed(() =>
     getSelectedCertificateBasisOptions(basisOptions, upstreamCommitmentBasis.value)
 );
 
+/** 根据证书详情生成移动端查验地址；无二维码时退回展示证书编号。 */
 const getCertificateQrText = (data: any) => {
     if (!data?.qrCode) return data?.certificateCode || '';
     return `https://yishizhijian.jikeyun.net/web/index.html#/pages/index?id=${data.id || ''}&code=${data.qrCode}`;
@@ -265,6 +266,10 @@ const setUpstreamCertificate = (data: any | null) => {
     upstreamCommitmentBasis.value = data ? parseCertificateBasis(data.commitmentBasis) : [];
 };
 
+/**
+ * 加载主证书及其上游证书信息。
+ * 接口未内嵌本平台上游详情时，再按上游编号补查；无可打印上游联时强制选择主证联。
+ */
 const loadDetail = async (id: number) => {
     loading.value = true;
     try {
@@ -291,6 +296,7 @@ const loadDetail = async (id: number) => {
     }
 };
 
+/** 清洗上游编号中的连接符后查询本平台证书，失败时清空旧的上游详情。 */
 const loadUpstreamDetail = async (code: string) => {
     try {
         const cleanedCode = String(code || '').replace(/[－—\-]/g, '').trim();
@@ -316,6 +322,7 @@ const connectBluetoothPrinter = async () => {
     }
 };
 
+/** 定时探测已连接打印机，维持详情页长时间打开时的蓝牙会话。 */
 const startBluetoothKeepAlive = () => {
     if (keepAliveTimer.value) return;
     keepAliveTimer.value = window.setInterval(async () => {
@@ -334,6 +341,7 @@ const pauseBluetoothKeepAlive = () => {
     keepAliveTimer.value = null;
 };
 
+/** 定时重连最近授权设备，连接中或设备已就绪时不重复发起连接。 */
 const startAutoReconnect = () => {
     if (autoReconnectTimer.value) return;
     autoReconnectTimer.value = window.setInterval(async () => {
@@ -381,6 +389,10 @@ const captureAreaToImg = async () => {
     return captureCertificatePrintArea(printAreaRef.value);
 };
 
+/**
+ * 根据用户选择的主证联/上游联生成预览，并提前构建蓝牙打印字节。
+ * 上游详情不可打印时自动退回主证联，防止生成空白打印内容。
+ */
 const handlePreview = async () => {
     if (isSelected2.value && !canPrintUpstream.value) {
         isSelected2.value = false;
@@ -417,6 +429,9 @@ const handlePreview = async () => {
     }
 };
 
+/**
+ * 发送当前证书联的打印数据；打印过程中暂停保活，结束后按连接状态恢复。
+ */
 const handlePrint = async (prepared?: string | null) => {
     if (isSelected2.value && !canPrintUpstream.value) {
         isSelected2.value = false;

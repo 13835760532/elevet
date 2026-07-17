@@ -283,6 +283,7 @@ const { options: productCategoryOptions, getLabel: getProductCategoryLabel } = u
 
 const produceCategoryTree = ref([])
 
+/** 在行业分类树中递归查找名称，找不到时依次回退字典标签和原值。 */
 const getCategoryLabelFromTree = (val) => {
     if (!val) return '--'
     const findLabel = (nodes) => {
@@ -422,7 +423,10 @@ const handlePreview = () => {
     });
 };
 
-/** 组装提交数据 */
+/**
+ * 组装方案保存参数。
+ * 附件由上传组件统一序列化，并移除空字段，避免更新时用空值覆盖服务端默认数据。
+ */
 const buildSubmitData = () => {
     const data = { ...formData }
     // 通过 hook 获取已上传附件的 URL JSON
@@ -439,7 +443,7 @@ const buildSubmitData = () => {
     return data
 }
 
-/** 提交方案 */
+/** 校验并新增或更新检测方案，成功后返回方案列表。 */
 const handleSubmit = async () => {
     // 表单校验
     const valid = await formRef.value.validate().catch(() => false)
@@ -475,7 +479,10 @@ const handleSubmitFromPreview = () => {
     handleSubmit();
 };
 
-/** 编辑模式：加载方案详情 */
+/**
+ * 编辑模式加载方案详情、附件及下发部门名称。
+ * 仅回填接口明确返回的字段，避免 undefined 覆盖表单默认值。
+ */
 const loadPlanDetail = async (id) => {
     formLoading.value = true
     try {
@@ -558,7 +565,7 @@ const getExecutionTime = () => {
     return '--';
 };
 
-// 页面初始化
+/** 初始化分类和部门数据；新建时默认使用当前账号部门，编辑时加载原方案。 */
 onMounted(() => {
     loadDeptList()
     loadProduceCategoryTree()

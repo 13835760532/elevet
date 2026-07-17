@@ -284,6 +284,12 @@ const uniqueMonthsCount = computed(() => {
   return rawXaxis.value.length
 })
 
+/**
+ * 生成闭区间自然月列表。
+ *
+ * 趋势窗口不足 12 个月时全部展示；超过 12 个月且包含当前月时取当前月向前 12 个
+ * 月，纯历史区间则取所选截止月向前 12 个月。
+ */
 const generateMonthRange = (startStr?: string, endStr?: string): string[] => {
   if (!startStr || !endStr) return []
   const result: string[] = []
@@ -448,6 +454,7 @@ const currentRightTrendOption = computed(() => {
   );
 });
 
+/** 加载任务样品量和检测项次数量趋势。 */
 const loadVolumeTrend = async () => {
   try {
     const data = await getTaskVolumeTrend(getBigScreenQueryParams());
@@ -458,6 +465,7 @@ const loadVolumeTrend = async () => {
   }
 };
 
+/** 加载任务样品阳性率和检测项阳性率趋势。 */
 const loadRiskTrend = async () => {
   try {
     const data = await getTaskRiskTrend(getBigScreenQueryParams());

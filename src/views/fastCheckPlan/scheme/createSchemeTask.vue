@@ -219,7 +219,7 @@ const loadProduceCategoryTree = async () => {
     }
 }
 
-// 加载方案详情
+/** 加载方案摘要，并将方案周期与品种作为后续任务拆分的默认值。 */
 const loadSchemeDetail = async () => {
     if (!planId) return
     try {
@@ -286,6 +286,9 @@ const selectedOrgOptions = computed(() => {
     return selectedOrgs.value.map((id) => orgMapById.value.get(id)).filter(Boolean)
 })
 
+/**
+ * 在机构筛选结果变化后剔除不可见的失效选择，并重算全选和半选状态。
+ */
 const reconcileSelectionState = () => {
     const currentIds = new Set(orgOptions.value.map((item) => item.id))
     selectedOrgs.value = selectedOrgs.value.filter((id) => currentIds.has(id))
@@ -294,6 +297,7 @@ const reconcileSelectionState = () => {
     isIndeterminate.value = checkedCount > 0 && checkedCount < orgOptions.value.length
 }
 
+/** 按系统关系、机构类型和行政区划查询当前方案可分配的承担单位。 */
 const loadOrgOptions = async () => {
     orgLoading.value = true
     try {
@@ -359,6 +363,10 @@ const buildDefaultDetectionArea = () => {
     return [taskForm.province, taskForm.city, taskForm.district].filter(Boolean).join('')
 }
 
+/**
+ * 根据已选机构生成任务拆分行。
+ * 平均分配时余数按机构顺序逐个补 1；手动分配时保留总量供用户逐行调整。
+ */
 const buildTaskRowsBySelectedOrgs = () => {
     const orgIds = selectedOrgs.value || []
     if (!orgIds.length) return []
@@ -386,6 +394,7 @@ const buildTaskRowsBySelectedOrgs = () => {
     })
 }
 
+/** 从任务行主键、机构名称或当前选择中解析后端要求的承担部门 ID。 */
 const resolveDeptId = (item) => {
     if (item.deptId) return Number(item.deptId)
     if (item.dept) {
@@ -424,7 +433,10 @@ watch(
 
 const taskList = ref([])
 
-// 核心修复：监听选中机构变化，实时同步任务列表行
+/**
+ * 同步机构选择与任务拆分行：取消机构时移除对应行，新增机构时补充默认任务行。
+ * 已存在行保留用户手工修改的数量、区域和检测项目。
+ */
 watch(
     () => selectedOrgs.value,
     (newIds) => {
@@ -498,7 +510,10 @@ const handleCancel = () => {
     router.back()
 }
 
-/** 提交并下发任务 */
+/**
+ * 校验承担单位和任务总量后批量下发任务。
+ * 每行执行时间拆分为起止日期，机构和样本数量转换为接口所需的 taskSplits。
+ */
 const handleSubmit = useDebounceFn(async () => {
     if (selectedOrgs.value.length === 0 && taskList.value.length === 0) {
         ElMessage.warning('请选择任务承担单位')

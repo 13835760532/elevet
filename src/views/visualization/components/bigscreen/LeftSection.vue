@@ -358,6 +358,7 @@ const currentPesticideTopOption = computed(() => ({
   ]
 }))
 
+/** 按当前“检测量/阳性率”口径加载农产品风险 TOP10。 */
 const loadProduceRiskTop10 = async () => {
   try {
     const data = await getProduceRiskTop10({
@@ -371,6 +372,7 @@ const loadProduceRiskTop10 = async () => {
   }
 }
 
+/** 按当前统计口径加载检测项风险 TOP10。 */
 const loadPesticideRiskTop10 = async () => {
   try {
     const data = await getPesticideRiskTop10({

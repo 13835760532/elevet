@@ -210,6 +210,7 @@ const handleLinkFiling = async () => {
   await loadEnterpriseList();
 };
 
+/** 加载当前账号可关联的已备案企业，并重置上一次选择。 */
 const loadEnterpriseList = async () => {
   enterpriseLoading.value = true;
   try {
@@ -231,6 +232,11 @@ const handleEnterpriseCurrentChange = (row) => {
   if (row) selectEnterprise(row);
 };
 
+/**
+ * 将当前账号部门关联到选中的备案企业。
+ *
+ * 关联成功后重新获取用户/部门信息并复查备案状态，确保后续页面立即使用最新机构。
+ */
 const handleBindEnterprise = async (row) => {
   const target = row?.deptId ? row : selectedEnterprise.value;
   if (!target) {

@@ -244,6 +244,10 @@ const total = ref(0);
 
 const tableList = ref([]);
 
+/**
+ * 按当前筛选项和分页加载合格证列表。
+ * 空筛选值统一转为 undefined，状态值 0 单独保留，避免“有效状态”被误判为空。
+ */
 const getList = async () => {
     loading.value = true;
     try {
@@ -299,6 +303,7 @@ const handleReset = () => {
     handleQuery();
 };
 
+/** 使用当前筛选条件导出全部匹配记录，不携带前端分页参数。 */
 const handleExport = async () => {
     try {
         await message.exportConfirm();
@@ -344,6 +349,10 @@ const handleDelete = async (row: any) => {
     }
 };
 
+/**
+ * 收集作废原因并作废合格证。
+ * 作废为不可恢复操作，因此必须经过二次输入确认，成功后刷新当前列表。
+ */
 const handleInvalidate = async (row: any) => {
     try {
         const result = await message.prompt('请输入作废原因 (作废后无法恢复)', '作废确认', {

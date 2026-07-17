@@ -232,6 +232,7 @@ const mapRow = (item: any) => ({
   time: (item.verificationTime || item.createTime) ? dayjs(item.verificationTime || item.createTime).format('YYYY-MM-DD HH:mm:ss') : '--'
 })
 
+/** 并行加载合格证收证概览和服务趋势。 */
 const loadDashboardData = async () => {
   try {
     const [overviewData, trendData] = await Promise.all([
@@ -247,6 +248,7 @@ const loadDashboardData = async () => {
   }
 }
 
+/** 加载合格证收证分页并标准化来源、产品和主体字段。 */
 const loadTable = async () => {
   loading.value = true
   try {
@@ -318,6 +320,7 @@ const handleReset = () => {
   resetTableFilters()
 }
 
+/** 用户确认后按当前时间、地区和机构范围导出收证记录。 */
 const handleExport = () => {
   try {
     ElMessageBox.confirm('确定要导出所有合格证收证查验数据吗？', '提示', {

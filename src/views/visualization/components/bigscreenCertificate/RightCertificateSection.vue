@@ -256,6 +256,11 @@ const formatIssueRankList = (list: CertificateIssueTopRespVO[] = []) =>
     value: Number(item.count || 0)
   }))
 
+/**
+ * 加载合格证类型分布、开具主体排行和存证主体排行。
+ *
+ * 三个请求互相独立并分别回退为空数组，保证单个接口异常时其他面板仍可展示。
+ */
 const loadDashboardData = () => {
   const params = getBigScreenQueryParams()
 

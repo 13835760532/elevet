@@ -26,6 +26,12 @@ export interface BigScreenDataConfig {
 const today = dayjs().format('YYYY-MM-DD')
 const defaultStart = dayjs().startOf('year').format('YYYY-MM-DD')
 
+/**
+ * 生成当前账号可用的大屏默认配置。
+ *
+ * 默认统计本年度数据，每 5 分钟刷新一次；数据范围会根据当前账号是否具有辖区
+ * 查看权限自动选择，避免普通机构首次进入时请求到无权访问的辖区数据。
+ */
 export const getDefaultBigScreenConfig = (): BigScreenDataConfig => ({
   timeRange: [defaultStart, today],
   dataScope: resolveBigScreenDataScope(undefined, canViewBigScreenJurisdictionScope()),
@@ -44,6 +50,7 @@ const normalizeAreaValue = (value: unknown) => {
   return String(value)
 }
 
+/** 判断当前登录账号是否具有超级管理员角色。 */
 export const isBigScreenSuperAdmin = () => {
   const { wsCache } = useCache()
   const userInfo = wsCache.get(CACHE_KEY.USER)
@@ -51,6 +58,11 @@ export const isBigScreenSuperAdmin = () => {
   return Array.isArray(roles) && roles.includes('super_admin')
 }
 
+/**
+ * 获取当前账号所属机构类型。
+ *
+ * 优先读取独立的机构缓存，兼容旧版本将机构字段放在用户信息中的缓存结构。
+ */
 export const getBigScreenUserDeptType = () => {
   const { wsCache } = useCache()
   const userDept = wsCache.get(CACHE_KEY.USER_DEPT) || {}
@@ -58,9 +70,16 @@ export const getBigScreenUserDeptType = () => {
   return userDept.deptType ?? userInfo?.user?.deptType ?? userInfo.deptType
 }
 
+/** 判断当前账号是否允许查看“本辖区”维度的数据。 */
 export const canViewBigScreenJurisdictionScope = () =>
   isBigScreenSuperAdmin() || Number(getBigScreenUserDeptType()) === 1
 
+/**
+ * 获取当前账号所属机构的行政区划参数。
+ *
+ * 超级管理员不附加地区约束；其他账号返回机构缓存中的行政级别和行政区编码，
+ * 供地图初始范围及统计接口的权限回退使用。
+ */
 export const getBigScreenUserDeptAreaParams = () => {
   if (isBigScreenSuperAdmin()) {
     return {
@@ -77,6 +96,12 @@ export const getBigScreenUserDeptAreaParams = () => {
   }
 }
 
+/**
+ * 读取并校验浏览器中保存的大屏配置。
+ *
+ * 读取时会合并最新默认值，并兼容旧版本的字段类型。缓存损坏或解析失败时不会
+ * 阻断页面渲染，而是回退到当前账号的默认配置。
+ */
 export const getBigScreenConfig = (): BigScreenDataConfig => {
   if (typeof window === 'undefined') return getDefaultBigScreenConfig()
   try {
@@ -104,11 +129,17 @@ export const getBigScreenConfig = (): BigScreenDataConfig => {
   }
 }
 
+/** 将完整的大屏配置持久化到当前浏览器。 */
 export const saveBigScreenConfig = (config: BigScreenDataConfig) => {
   if (typeof window === 'undefined') return
   window.localStorage.setItem(BIG_SCREEN_CONFIG_STORAGE_KEY, JSON.stringify(config))
 }
 
+/**
+ * 将级联地区名称格式化为面向用户的简洁文本。
+ *
+ * 会移除“市辖区”等无业务含义的中间节点，并合并直辖市树中可能出现的重复名称。
+ */
 export const formatBigScreenRegionLabel = (label?: string) => {
   const value = String(label || '').trim()
   if (!value) return '全部地区'
@@ -122,6 +153,7 @@ export const formatBigScreenRegionLabel = (label?: string) => {
     .join('')
 }
 
+/** 生成大屏头部展示的“地区｜时间｜数据范围”摘要。 */
 export const formatBigScreenDataSummary = (config = getBigScreenConfig()) => {
   const [startDate, endDate] = config.timeRange || []
   const regionLabel = formatBigScreenRegionLabel(config.regionLabel)
@@ -130,6 +162,11 @@ export const formatBigScreenDataSummary = (config = getBigScreenConfig()) => {
   return `${regionLabel}｜${timeLabel}｜${scopeLabel}`
 }
 
+/**
+ * 将页面配置转换为大屏统计接口的公共查询参数。
+ *
+ * 此方法只处理时间和机构数据范围；具体地区字段由需要地区过滤的业务接口按需追加。
+ */
 export const getBigScreenQueryParams = () => {
   const config = getBigScreenConfig()
   return {
@@ -140,6 +177,12 @@ export const getBigScreenQueryParams = () => {
   }
 }
 
+/**
+ * 生成区域风险排行接口参数。
+ *
+ * 页面已选择地区时使用页面配置；未选择时回落到当前账号所属机构地区，确保普通
+ * 账号不会查询到管辖范围之外的数据。
+ */
 export const getBigScreenRiskAreaQueryParams = () => {
   const config = getBigScreenConfig()
   const userDeptAreaParams = getBigScreenUserDeptAreaParams()
@@ -152,6 +195,12 @@ export const getBigScreenRiskAreaQueryParams = () => {
   }
 }
 
+/**
+ * 广播大屏刷新事件。
+ *
+ * @param reason 刷新来源：保存配置、定时器或菜单切换。事件中附带最新配置和时间戳，
+ * 各面板可独立订阅而不互相引用。
+ */
 export const dispatchBigScreenRefresh = (reason: 'save' | 'timer' | 'menu' = 'save') => {
   if (typeof window === 'undefined') return
   // 各面板彼此独立，通过同一浏览器事件刷新，避免组件之间形成直接引用。
@@ -166,6 +215,11 @@ export const dispatchBigScreenRefresh = (reason: 'save' | 'timer' | 'menu' = 'sa
   )
 }
 
+/**
+ * 订阅大屏刷新事件。
+ *
+ * @returns 取消订阅函数，组件卸载时必须调用，防止重复请求和事件监听泄漏。
+ */
 export const subscribeBigScreenRefresh = (callback: () => void) => {
   if (typeof window === 'undefined') return () => undefined
   const handler = () => callback()
@@ -173,6 +227,12 @@ export const subscribeBigScreenRefresh = (callback: () => void) => {
   return () => window.removeEventListener(BIG_SCREEN_REFRESH_EVENT, handler)
 }
 
+/**
+ * 获取地图当前应采用的行政级别。
+ *
+ * 机构缓存优先于页面选择，兼容 `areaLevel` 与历史字段 `areaType`；无有效值时返回
+ * `undefined`，由调用方按全国范围处理。
+ */
 export const getCachedAreaLevel = () => {
   const { wsCache } = useCache()
   const userDept = wsCache.get(CACHE_KEY.USER_DEPT) || {}
@@ -185,6 +245,7 @@ export const getCachedAreaLevel = () => {
   return undefined
 }
 
+/** 判断地区名称是否属于四个直辖市之一。 */
 export const isMunicipality = (name?: string) => {
   if (!name) return false
   const n = String(name).trim()
