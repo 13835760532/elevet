@@ -551,7 +551,7 @@ const loadTaskList = async (id) => {
 
         allTasks.forEach(t => {
             const totalCount = t.sampleCount || 0;
-            const completedCount = t.completedCount || 0;
+            const completedCount = t.sampleCompletedCount || t.completedCount || 0;
             taskMap.set(t.id, {
                 id: t.id,
                 name: t.taskName || t.assignDeptName || getDeptLabel(t.assignDeptId) || '未命名任务',
