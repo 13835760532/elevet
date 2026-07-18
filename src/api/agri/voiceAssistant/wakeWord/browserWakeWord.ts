@@ -9,8 +9,10 @@ import type {
 const DEFAULT_WAKE_WORDS = ['你好小壹', '你好小一', '你好小艺', '小壹小壹', '小一小一', '小艺小艺']
 const WAKE_WORD_COOLDOWN_MS = 1500
 
+/** 去除识别结果中的空白，避免“你 好 小 壹”等分词差异导致唤醒词漏检。 */
 const normalizeSpeechText = (text: string) => text.replace(/\s+/g, '').trim()
 
+/** 使用归一化后的包含匹配支持同音备用词，不要求语音识别结果与词库逐字完全相等。 */
 const includesWakeWord = (text: string, keywords: string[]) => {
   const normalized = normalizeSpeechText(text)
   return keywords.some((keyword) => normalized.includes(normalizeSpeechText(keyword)))
@@ -33,6 +35,11 @@ export class BrowserWakeWordEngine implements WakeWordEngine {
     return BrowserSpeechRecognizer.isSupported()
   }
 
+  /**
+   * 启动本地唤醒词监听。
+   * 同一个 engine 已存在 recognizer 时不重复占用麦克风；命中后使用冷却时间抑制同一段识别文本
+   * 连续触发，具体的“暂停唤醒并转听写”交由页面 onDetected 回调编排。
+   */
   async start() {
     if (!BrowserWakeWordEngine.isSupported()) {
       throw new Error('当前浏览器不支持本地语音唤起')
@@ -94,6 +101,7 @@ export class BrowserWakeWordEngine implements WakeWordEngine {
     await this.recognizer.start()
   }
 
+  /** 标记为用户主动停止并销毁识别器，防止 BrowserSpeechRecognizer 的自动恢复造成幽灵监听。 */
   stop() {
     this.stopped = true
     this.recognizer?.stop()

@@ -16,6 +16,7 @@ const { start, done } = useNProgress()
 const { loadStart, loadDone } = usePageLoading()
 const { wsCache } = useCache()
 // 多个导航可能同时触发路由初始化。共享 Promise 用于合并请求，ready 标记用于快速返回。
+// 该状态只描述当前浏览器会话中的路由注册情况，不写入缓存；账号切换或退出后必须显式重置。
 let dynamicRoutesReady = false
 let dynamicRoutesPromise: Promise<void> | null = null
 const dynamicRouteReadyMark = '404Page'
@@ -95,6 +96,12 @@ const refreshBigScreenUserInBackground = (userStore: ReturnType<typeof useUserSt
   })
 }
 
+/**
+ * 拆分重定向地址中的路径和查询参数。
+ *
+ * 登录拦截会把原始 `to.fullPath` 放入 redirect；完成动态路由注册后需要还原该地址。
+ * 这里不使用 Router 解析，避免尚未注册目标动态路由时解析失败，同时保留所有查询参数。
+ */
 const parseURL = (
   url: string | null | undefined
 ): { basePath: string; paramsObject: { [key: string]: string } } => {
@@ -140,7 +147,13 @@ const whiteList = [
   '/oauthLogin/gitee'
 ]
 
-// 路由加载前
+/**
+ * 全局导航守卫的会话恢复顺序：
+ * 1. 无令牌时仅放行白名单，其余地址带 redirect 回登录页；
+ * 2. 有令牌但用户状态未初始化时，先拉取用户、角色、权限和部门，再注册动态路由；
+ * 3. 已有用户状态但动态路由尚未注册时，补注册后 replace 当前地址，避免首次进入命中 404；
+ * 4. 大屏允许用同账号缓存先完成首屏渲染，后台刷新仍以接口结果为准。
+ */
 router.beforeEach(async (to, from, next) => {
   start()
   loadStart()
@@ -176,8 +189,9 @@ router.beforeEach(async (to, from, next) => {
           await userStore.setUserInfoAction()
           // 菜单由后端按角色过滤，用户信息完成后才能生成本次会话的动态路由。
           await addDynamicRoutes()
+          // 优先消费登录页携带的 redirect；没有时使用当前目标地址。
+          // decode + parseURL 用于恢复业务页面原有的 query，避免登录后筛选条件丢失。
           const redirectPath = from.query.redirect || to.path
-          // 修复跳转时不带参数的问题
           const redirect = decodeURIComponent(redirectPath as string)
           const { paramsObject: query } = parseURL(redirect)
           const nextData = to.path === redirect ? { ...to, replace: true } : { path: redirect, query }
@@ -210,6 +224,7 @@ router.beforeEach(async (to, from, next) => {
   }
 })
 
+/** 无论导航来自菜单、浏览器历史还是重定向，均在此处收尾全局加载状态并同步页面标题。 */
 router.afterEach((to) => {
   useTitle(to?.meta?.title as string)
   done() // 结束Progress

@@ -31,6 +31,12 @@ export const usePermissionStore = defineStore('permission', {
     }
   },
   actions: {
+    /**
+     * 把当前账号缓存中的后端菜单转换为前端可注册路由。
+     *
+     * 用户信息请求已负责刷新 ROLE_ROUTERS，本方法不重复请求接口；末尾追加的 404Page 是
+     * 权限守卫判断“整组动态路由已注册”的完成标记，同时拦截没有权限或配置错误的地址。
+     */
     async generateRoutes(): Promise<unknown> {
       return new Promise<void>(async (resolve) => {
         // 登录阶段已经把后端过滤后的菜单写入缓存；此处只负责转换为前端路由结构。
@@ -58,6 +64,7 @@ export const usePermissionStore = defineStore('permission', {
         resolve()
       })
     },
+    /** 为 cutMenu 布局保存当前顶级菜单对应的子路由集合，不写入持久化缓存。 */
     setMenuTabRouters(routers: AppRouteRecordRaw[]): void {
       this.menuTabRouters = routers
     }

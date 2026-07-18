@@ -7,8 +7,8 @@ import qs from 'qs'
 // Vite 在构建期生成页面模块表，后端只需下发 component 路径即可匹配真实组件。
 const modules = import.meta.glob('../views/**/*.{vue,tsx}')
 /**
- * 注册一个异步组件
- * @param componentPath 例:/bpm/oa/leave/detail
+ * 根据后端下发的 component 路径匹配 Vite 构建期收集的页面模块，并返回异步组件。
+ * @param componentPath 例：`/bpm/oa/leave/detail`。无法匹配时返回 undefined，由调用方保留菜单并记录配置错误。
  */
 export const registerComponent = (componentPath: string) => {
   for (const item in modules) {
@@ -22,6 +22,10 @@ export const registerComponent = (componentPath: string) => {
 /* Layout */
 export const Layout = () => import('@/layout/Layout.vue')
 
+/**
+ * 为多级后端菜单提供不渲染实际页面的父路由组件。
+ * 该占位层使深层子菜单仍可被 Vue Router 识别，同时不会额外引入 Layout 嵌套。
+ */
 export const getParentLayout = () => {
   return () =>
     new Promise((resolve) => {
@@ -31,7 +35,10 @@ export const getParentLayout = () => {
     })
 }
 
-// 按照路由中meta下的rank等级升序来排序路由
+/**
+ * 按 meta.rank 升序排列菜单。
+ * rank 为 0 仅允许首页使用；其他页面误设为 0 只告警不改写，保留后端配置排查依据。
+ */
 export const ascending = (arr: any[]) => {
   arr.forEach((v) => {
     if (v?.meta?.rank === null) v.meta.rank = undefined
@@ -46,6 +53,10 @@ export const ascending = (arr: any[]) => {
   })
 }
 
+/**
+ * 将 Vue Router 的响应式 Route 对象转换为可缓存、可传递的精简快照。
+ * matched 中仅保留页面恢复需要的 meta/name/path，避免把组件实例和循环引用写入标签页缓存。
+ */
 export const getRawRoute = (route: RouteLocationNormalized): RouteLocationNormalized => {
   if (!route) return route
   const { matched, ...opt } = route
@@ -180,6 +191,10 @@ export const generateRoute = (routes: AppCustomRouteRecordRaw[]): AppRouteRecord
   }
   return res
 }
+/**
+ * 递归计算目录菜单默认跳转到的第一个叶子节点。
+ * 后端目录本身不一定配置页面组件，必须生成可访问的子页面地址作为 redirect。
+ */
 export const getRedirect = (parentPath: string, children: AppCustomRouteRecordRaw[]) => {
   if (!children || children.length == 0) {
     return parentPath
@@ -197,6 +212,10 @@ const generateRoutePath = (parentPath: string, path: string) => {
   }
   return parentPath + path
 }
+/**
+ * 拼接父子路由路径，同时保留外链原样返回并压缩重复斜杠。
+ * 空子路径代表目录默认页，直接返回父路径以避免生成无效的尾随分隔符。
+ */
 export const pathResolve = (parentPath: string, path: string) => {
   if (isUrl(path)) return path
   if (!path) return parentPath // 修复 path 为空时返回 parentPath，避免拼接出错 https://t.zsxq.com/QVr6b
@@ -204,7 +223,10 @@ export const pathResolve = (parentPath: string, path: string) => {
   return `${parentPath}${childPath}`.replace(/\/+/g, '/')
 }
 
-// 标签页缓存只支持两级结构；把更深的后端菜单提升到同一个路由模块下。
+/**
+ * 标签页缓存只支持两级路由，因此将更深的后端菜单扁平提升到同一个路由模块下。
+ * 输入会深拷贝，避免权限 store 的原始动态路由在标签页转换后被破坏。
+ */
 export const flatMultiLevelRoutes = (routes: AppRouteRecordRaw[]) => {
   const modules: AppRouteRecordRaw[] = cloneDeep(routes)
   for (let index = 0; index < modules.length; index++) {

@@ -24,6 +24,11 @@ export const isSuperAdmin = () => {
   return Array.isArray(roles) && roles.includes('super_admin')
 }
 
+/**
+ * 从缓存提取当前用户的部门与监管区域信息。
+ * 独立 USER_DEPT 缓存优先级最高，随后兼容用户对象和历史平铺字段，使统计页在缓存结构升级后
+ * 仍能得到同一套部门、类型和区划口径。
+ */
 export const getCurrentUserDeptInfo = () => {
   const { wsCache } = useCache()
   const userDept = wsCache.get(CACHE_KEY.USER_DEPT) || {}
@@ -42,6 +47,10 @@ export const getCurrentUserDeptInfo = () => {
 
 export const isCurrentUserRegulatoryDept = () => Number(getCurrentUserDeptInfo().deptType) === 1
 
+/**
+ * 生成当前账号默认的数据权限区划。
+ * 超级管理员返回空范围以查询全量；普通账号仅使用后端部门缓存中的 areaType/areaLevel 与 areaCode。
+ */
 export const getUserDeptAreaParams = () => {
   if (isSuperAdmin()) {
     return {
@@ -58,6 +67,10 @@ export const getUserDeptAreaParams = () => {
   }
 }
 
+/**
+ * 将地区级联组件的不同字段形态标准化为统计接口参数。
+ * areaCode 始终优先取最细一级，areaType 与该层级一一对应，保证地图与列表筛选范围一致。
+ */
 export const getSelectedAreaParams = (area: any) => ({
   provinceName: area?.province || '',
   cityName: area?.city || '',
@@ -69,6 +82,10 @@ export const getSelectedAreaParams = (area: any) => ({
   )
 })
 
+/**
+ * 合并用户手工选择与账号数据范围。
+ * 页面显式选择优先；未选择时自动回落到部门辖区，空字符串统一转为 undefined 防止接口误判为有效条件。
+ */
 export const getEffectiveAreaParams = (areaParams?: {
   provinceName?: string
   cityName?: string
@@ -85,6 +102,10 @@ export const getEffectiveAreaParams = (areaParams?: {
   }
 }
 
+/**
+ * 根据快捷范围或自定义日期生成统计接口时间参数。
+ * 自定义范围优先级最高；日期跨度不超过 31 天按日聚合，超过 31 天按月聚合，必须与后端聚合口径一致。
+ */
 export const buildRangeParams = (rangeType: string, dateRange: string[]): StatisticsQueryParams => {
   let startDate = ''
   let endDate = ''

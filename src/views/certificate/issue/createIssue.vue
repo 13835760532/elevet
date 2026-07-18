@@ -1438,7 +1438,11 @@ const isEmptyValue = (value) => {
     return String(value).trim() === '';
 };
 
-/** 校验第一步产品与主体的必填信息，并提示第一个缺失字段。 */
+/**
+ * 校验第一步产品、批次和承诺主体的最小建档集。
+ * 采用顺序校验并只提示首个缺失字段，避免同时弹出多条提示；第二步及接口层仍保留各自的
+ * 校验职责，防止通过浏览器调试跳步时生成字段不完整的合格证。
+ */
 const validateStep1Required = () => {
     const requiredFields = [
         { key: 'productNo', label: '产品编号' },
@@ -1500,8 +1504,9 @@ watch([() => formData.p1, () => formData.p2, () => formData.p3], () => {
 
 /**
  * 保存当前证书草稿。
+ * 草稿同时保存主体草稿、产品草稿、承诺依据、检测记录和上游证书关联，确保重新进入时可恢复两个步骤。
  * @param isSilent 是否静默保存；路由离开时使用静默模式，避免额外成功提示
- * @returns 保存成功返回 true，失败时继续抛出异常供离开页面逻辑记录
+ * @returns 保存成功返回 true；失败时继续抛出异常供路由离开逻辑记录，调用方不得假设草稿已落库
  */
 const handleSaveDraft = async (isSilent = false) => {
     const draftData = {
@@ -1551,8 +1556,10 @@ const handleSaveDraft = async (isSilent = false) => {
 
 /**
  * 校验第二步并生成合格证。
- * 未关联产品档案时先创建产品；随后组装承诺依据、上游证书和检测记录等关联字段，
- * 创建成功后重新查询详情，供第三步预览及打印使用。
+ * 未关联产品档案时先创建产品，产品创建失败会中断流程，避免证书引用无效产品；随后组装承诺依据、
+ * 上游证书、第三方报告和平台检测记录等关联字段。创建成功后必须二次查询详情，原因是证书编号、二维码、
+ * createTime 等由服务端生成，第三步预览和热敏打印不能使用前端草稿值替代。
+ * 创建接口失败会标记 submissionFailed，路由离开钩子据此不会把失败数据误保存为可用草稿。
  */
 const handleGenerate = async () => {
     submissionFailed.value = false;

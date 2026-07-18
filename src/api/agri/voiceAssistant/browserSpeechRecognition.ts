@@ -25,6 +25,7 @@ declare global {
   }
 }
 
+/** 统一获取标准或 WebKit 前缀的语音识别构造器，服务端渲染环境直接判定不支持。 */
 const getSpeechRecognitionConstructor = (): SpeechRecognitionConstructor | null => {
   if (typeof window === 'undefined') return null
   return window.SpeechRecognition || window.webkitSpeechRecognition || null
@@ -46,10 +47,15 @@ const mapErrorMessage = (error?: BrowserSpeechErrorCode | string) => {
   }
 }
 
+/** 只有“未检测到语音”和主动中止可自动恢复，授权、设备和网络错误必须交给用户处理。 */
 const shouldAutoRecover = (error?: BrowserSpeechErrorCode | string) => {
   return error === 'no-speech' || error === 'aborted'
 }
 
+/**
+ * 在启动识别前显式请求一次麦克风授权，再立即关闭临时轨道。
+ * 浏览器 SpeechRecognition 的权限错误不统一，此步骤可将权限与设备问题提前转为明确提示。
+ */
 const ensureMicrophoneAccess = async () => {
   if (!navigator.mediaDevices?.getUserMedia) {
     throw new Error('当前浏览器不支持麦克风采集')
@@ -82,6 +88,11 @@ export class BrowserSpeechRecognizer {
     return Boolean(getSpeechRecognitionConstructor())
   }
 
+  /**
+   * 启动连续中文听写。
+   * recognition 意外结束时会短暂延迟重建实例；stop() 会关闭 shouldRestart，因此用户主动停止
+   * 不会被 onend 的自动恢复逻辑重新唤起。
+   */
   async start() {
     const Recognition = getSpeechRecognitionConstructor()
     if (!Recognition) {
@@ -146,6 +157,7 @@ export class BrowserSpeechRecognizer {
     recognition.start()
   }
 
+  /** 清除待重启定时器并停止当前识别实例，最终 stopped 状态由浏览器 onend 回调确认。 */
   stop() {
     this.stopped = true
     this.shouldRestart = false

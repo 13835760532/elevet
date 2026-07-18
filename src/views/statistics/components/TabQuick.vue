@@ -38,7 +38,7 @@
       <div class="result-filters">
         <!-- 第一行：常规选项 -->
         <div class="filter-row-top">
-          <el-input v-model="filters.keyword" placeholder="任务名称/任务编号" class="filter-item input-item" />
+          <el-input v-model="filters.taskKeyword" placeholder="任务名称/任务编号" class="filter-item input-item" clearable />
           <el-select v-model="filters.type" placeholder="全部类型" class="filter-item">
             <el-option label="自主检测" value="1" />
             <el-option label="任务检测" value="2" />
@@ -205,7 +205,7 @@ const pageSize = ref(10)
 const { options: productCategoryOptions, getLabel: getCategoryLabel } = useDict('agri_product_category', 'str')
 
 const filters = reactive({
-  keyword: '',
+  taskKeyword: '',
   type: '',
   sample: '',
   category: '',
@@ -348,6 +348,7 @@ const getResultLabel = (value: any) => {
 const mapRecordRow = (item: any) => ({
   taskNo: item.taskCode || item.task?.taskCode || item.recordCode || '--',
   taskName: item.taskName || item.task?.taskName || item.planName || '--',
+  recordCode: item.taskCode || item.task?.taskCode || item.recordCode || '--',
   keyword: item.recordCode || '--',
   planName: item.planName || '--',
   type: item.taskId ? '任务检测' : '自主检测',
@@ -412,7 +413,7 @@ const buildTableQuery = () => {
     pageNo: pageNo.value,
     pageSize: pageSize.value,
     ...areaQueryParams,
-    keyword: filters.keyword || undefined,
+    taskKeyword: filters.taskKeyword || undefined,
     sampleName: filters.sample || undefined,
     productCategory: filters.category || undefined,
     detectionArea: filters.area || undefined,
@@ -455,7 +456,7 @@ const buildExportParams = () => {
 
   return {
     ...areaQueryParams,
-    keyword: filters.keyword || undefined,
+    taskKeyword: filters.taskKeyword || undefined,
     sampleName: filters.sample || undefined,
     productCategory: filters.category || undefined,
     detectionArea: filters.area || undefined,
@@ -500,7 +501,7 @@ const handleSearch = () => {
 }
 
 const resetResultFilters = () => {
-  filters.keyword = ''
+  filters.taskKeyword = ''
   filters.type = ''
   filters.sample = ''
   filters.category = ''
@@ -590,7 +591,7 @@ watch(
 
 watch(
   () => ({
-    keyword: filters.keyword,
+    taskKeyword: filters.taskKeyword,
     type: filters.type,
     sample: filters.sample,
     category: filters.category,

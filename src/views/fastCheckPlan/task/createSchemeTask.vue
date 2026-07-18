@@ -274,7 +274,11 @@ const isExceedLimit = computed(() => {
     return Number(taskForm.quantity) > Number(schemeInfo.sampleCount)
 })
 
-/** 过滤当前机构结果中已失效的选择，并同步全选和半选状态。 */
+/**
+ * 过滤当前机构结果中已失效的选择，并同步全选和半选状态。
+ * 行政区划、机构类型或关键词变更后，接口返回集合可能缩小；仅保留仍在返回集合中的 ID，
+ * 防止用户看不到的历史选项被错误下发任务，同时让复选框状态反映当前可见列表。
+ */
 const reconcileSelectionState = () => {
     const currentIds = new Set(orgOptions.value.map((item) => item.id))
     selectedOrgs.value = selectedOrgs.value.filter((id) => currentIds.has(id))
@@ -283,7 +287,11 @@ const reconcileSelectionState = () => {
     isIndeterminate.value = checkedCount > 0 && checkedCount < orgOptions.value.length
 }
 
-/** 按机构类型、关键字和行政区划加载当前账号可下发的部门。 */
+/**
+ * 按机构类型、关键字和行政区划加载当前账号可下发的部门。
+ * pageSize 设为 1000 是因为页面的“全选”语义覆盖当前筛选的全部机构，而不是单个分页；接口返回后
+ * 会转换为任务行最小需要的联系人、信用代码和地址字段，不把后端原对象直接暴露给表单编辑。
+ */
 const loadOrgOptions = async () => {
     orgLoading.value = true
     try {
@@ -353,7 +361,9 @@ const buildDefaultDetectionArea = () => {
 
 /**
  * 将任务总量拆分到已选部门。
- * 平均模式按商和余数分配，手动模式生成数量为 0 的行供后续编辑。
+ * 平均模式按商和余数分配，余数从列表前部依次加 1，保证总和严格等于输入总量；
+ * 手动模式生成数量为 0 的行供后续编辑，避免预填总量导致实际下发数量被误认为已确认。
+ * 每一行还会快照当前区域、执行时间和方案的检测品种/项目，后续修改筛选条件不会反向覆盖已编辑行。
  */
 const buildTaskRowsBySelectedOrgs = () => {
     const orgIds = selectedOrgs.value || []
@@ -482,7 +492,9 @@ const handleCancel = () => {
 
 /**
  * 校验拆分数量并提交子任务列表。
- * 将页面中的执行时间文本、区域和数量转换成后端任务拆分结构。
+ * 将页面中的执行时间文本、区域和数量转换成后端任务拆分结构；只有存在承担部门且数量大于 0 的行
+ * 才会进入 subTaskSplits。提交前校验总量不超过方案额度，提交后由服务端作为最终并发和重复下发校验点。
+ * 成功延迟返回用于让用户看到结果提示，失败时保留任务拆分表，方便修改后再次下发。
  */
 const handleSubmit = async () => {
     if (selectedOrgs.value.length === 0 && taskList.value.length === 0) {

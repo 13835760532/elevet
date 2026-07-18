@@ -19,7 +19,10 @@ export const defaultProps = {
 
 const getConfig = (config: Partial<TreeHelperConfig>) => Object.assign({}, DEFAULT_CONFIG, config)
 
-// tree from list
+/**
+ * 将扁平列表原地挂接为树结构。
+ * 输入节点会被补充 children 字段；父节点缺失的节点视为根节点，适合后端返回不完整部门树时仍可展示。
+ */
 export const listToTree = <T = any>(list: any[], config: Partial<TreeHelperConfig> = {}): T[] => {
   const conf = getConfig(config) as TreeHelperConfig
   const nodeMap = new Map()
@@ -37,6 +40,7 @@ export const listToTree = <T = any>(list: any[], config: Partial<TreeHelperConfi
   return result
 }
 
+/** 按深度优先顺序扁平化树；保留原节点引用和 children 字段，调用方如需修改请先深拷贝。 */
 export const treeToList = <T = any>(tree: any, config: Partial<TreeHelperConfig> = {}): T => {
   config = getConfig(config)
   const { children } = config
@@ -79,6 +83,10 @@ export const findNodeAll = <T = any>(
   return result
 }
 
+/**
+ * 深度优先查找首个满足条件的节点并返回从根到该节点的完整路径。
+ * visitedSet 用于模拟递归回溯，避免在大树中反复复制路径数组。
+ */
 export const findPath = <T = any>(
   tree: any,
   func: Fn,
@@ -128,6 +136,10 @@ export const findPathAll = (tree: any, func: Fn, config: Partial<TreeHelperConfi
   return result
 }
 
+/**
+ * 过滤树但保留命中节点的所有祖先路径。
+ * 每个节点均浅拷贝后再处理 children，避免搜索结果折叠或删除影响原始树数据。
+ */
 export const filter = <T = any>(
   tree: T[],
   func: (n: T) => boolean,
