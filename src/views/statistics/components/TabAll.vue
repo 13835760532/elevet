@@ -728,7 +728,7 @@ const queryParams = computed(() => ({
   ...getEffectiveAreaParams(),
   deptId: canViewAreaRange.value ? undefined : currentDeptId.value || undefined,
   deptName: canViewAreaRange.value ? undefined : currentDeptName.value || undefined,
-  queryDeptScope: 1,
+  queryDeptScope: canViewAreaRange.value ? 1 : 0
 }))
 
 const toBarData = (list: any[], getName: (item: any) => string, statType: '检测量' | '阳性率') => {

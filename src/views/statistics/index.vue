@@ -99,9 +99,31 @@ const quickSelfDetection = ref<boolean | undefined>(undefined)
 const dropdownActiveCommands = ref<Record<string, string>>((() => {
   try {
     const saved = localStorage.getItem('statistics_dropdown_commands')
-    return saved ? JSON.parse(saved) : {}
+    const commands = saved ? JSON.parse(saved) : {}
+    if (isCurrentUserRegulatoryDept()) {
+      if (!commands.task) commands.task = 'all'
+      if (!commands.quick) commands.quick = 'all'
+      if (!commands.issue) commands.issue = 'area'
+      if (!commands.verify) commands.verify = 'area'
+      if (!commands.filing) commands.filing = 'area'
+    } else {
+      if (!commands.task) commands.task = 'issued'
+      if (!commands.quick) commands.quick = 'self'
+    }
+    return commands
   } catch {
-    return {}
+    const commands: Record<string, string> = {}
+    if (isCurrentUserRegulatoryDept()) {
+      commands.task = 'all'
+      commands.quick = 'all'
+      commands.issue = 'area'
+      commands.verify = 'area'
+      commands.filing = 'area'
+    } else {
+      commands.task = 'issued'
+      commands.quick = 'self'
+    }
+    return commands
   }
 })())
 
@@ -117,17 +139,29 @@ interface StatisticsTab {
   dropdownOptions?: TabDropdownOption[]
 }
 
-const quickDropdownOptions: TabDropdownOption[] = [
-  { label: '本机构自主检测', value: 'self' },
-  { label: '本机构任务检测', value: 'task' },
-  { label: '辖区内快速检测', value: 'all' }
-]
+const isRegulatoryDept = computed(() => isCurrentUserRegulatoryDept())
 
-const taskDropdownOptions: TabDropdownOption[] = [
-  { label: '本机构下发任务', value: 'issued' },
-  { label: '本机构执行任务', value: 'executed' },
-  { label: '辖区内全部任务', value: 'all' }
-]
+const quickDropdownOptions = computed<TabDropdownOption[]>(() => {
+  const options = [
+    { label: '本机构自主检测', value: 'self' },
+    { label: '本机构任务检测', value: 'task' }
+  ]
+  if (isRegulatoryDept.value) {
+    options.push({ label: '辖区内快速检测', value: 'all' })
+  }
+  return options
+})
+
+const taskDropdownOptions = computed<TabDropdownOption[]>(() => {
+  const options = [
+    { label: '本机构下发任务', value: 'issued' },
+    { label: '本机构执行任务', value: 'executed' }
+  ]
+  if (isRegulatoryDept.value) {
+    options.push({ label: '辖区内全部任务', value: 'all' })
+  }
+  return options
+})
 
 const issueDropdownOptions: TabDropdownOption[] = [
   { label: '本机构合格证开具', value: 'own' },
@@ -144,21 +178,19 @@ const filingDropdownOptions: TabDropdownOption[] = [
   { label: '辖区内建档备案', value: 'area' }
 ]
 
-const isRegulatoryDept = computed(() => isCurrentUserRegulatoryDept())
-
 const tabs = computed<StatisticsTab[]>(() => [
   { label: '全部', value: 'all', icon: 'ep:user' },
   {
     label: '检测任务',
     value: 'task',
     icon: 'ep:message',
-    dropdownOptions: isRegulatoryDept.value ? taskDropdownOptions : undefined
+    dropdownOptions: taskDropdownOptions.value
   },
   {
     label: '快速检测',
     value: 'quick',
     icon: 'ep:home-filled',
-    dropdownOptions: isRegulatoryDept.value ? quickDropdownOptions : undefined
+    dropdownOptions: quickDropdownOptions.value
   },
   {
     label: '合格证开具',
@@ -212,7 +244,7 @@ const handleTabChange = (tabValue: string) => {
   if (scopedTabValues.includes(tabValue as ScopedTabValue)) {
     const cmd = dropdownActiveCommands.value[tabValue]
     if (cmd) {
-      tabDeptScopes.value[tabValue as ScopedTabValue] = getQueryDeptScopeByCommand(cmd)
+      tabDeptScopes.value[tabValue as ScopedTabValue] = isRegulatoryDept.value ? getQueryDeptScopeByCommand(cmd) : 0
     } else {
       tabDeptScopes.value[tabValue as ScopedTabValue] = 0
     }
@@ -228,12 +260,12 @@ const getQueryDeptScopeByCommand = (command: unknown) => {
 const setQuickScopeByCommand = (command: unknown) => {
   const quickCommand = command as QuickCommand
   if (quickCommand === 'self') {
-    quickDeptScope.value = 2
+    quickDeptScope.value = isRegulatoryDept.value ? 2 : 0
     quickSelfDetection.value = true
     return
   }
   if (quickCommand === 'task') {
-    quickDeptScope.value = 2
+    quickDeptScope.value = isRegulatoryDept.value ? 2 : 0
     quickSelfDetection.value = false
     return
   }
@@ -247,7 +279,7 @@ const setQuickScopeByCommand = (command: unknown) => {
 }
 
 const setTaskScopeByCommand = (command: unknown) => {
-  taskDeptScope.value = getTaskQueryDeptScope(command)
+  taskDeptScope.value = isRegulatoryDept.value ? getTaskQueryDeptScope(command) : 0
 }
 
 const handleDropdownCommand = (tabValue: string, command: unknown) => {
@@ -269,7 +301,7 @@ const handleDropdownCommand = (tabValue: string, command: unknown) => {
     setQuickScopeByCommand(command)
   }
   if (scopedTabValues.includes(tabValue as ScopedTabValue)) {
-    tabDeptScopes.value[tabValue as ScopedTabValue] = getQueryDeptScopeByCommand(command)
+    tabDeptScopes.value[tabValue as ScopedTabValue] = isRegulatoryDept.value ? getQueryDeptScopeByCommand(command) : 0
   }
 }
 
