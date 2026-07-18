@@ -120,8 +120,8 @@
           <el-radio-group v-model="mapType" class="map-radio" size="small">
             <el-radio-button label="检测量分布" />
             <el-radio-button label="阳性率分布" />
-            <el-radio-button label="任务监督分布" />
-            <el-radio-button label="检测执行分布" />
+            <!-- <el-radio-button label="任务监督分布" />
+            <el-radio-button label="检测执行分布" /> -->
             <el-radio-button label="合格证分布" />
           </el-radio-group>
         </div>
@@ -727,7 +727,8 @@ const queryParams = computed(() => ({
   ...buildRangeParams(dateRangeType.value, dateRange.value),
   ...getEffectiveAreaParams(),
   deptId: canViewAreaRange.value ? undefined : currentDeptId.value || undefined,
-  deptName: canViewAreaRange.value ? undefined : currentDeptName.value || undefined
+  deptName: canViewAreaRange.value ? undefined : currentDeptName.value || undefined,
+  queryDeptScope: 1,
 }))
 
 const toBarData = (list: any[], getName: (item: any) => string, statType: '检测量' | '阳性率') => {
@@ -1072,8 +1073,8 @@ const applyFallbackData = (
   const ppRisk = productPesticideList?.length ? productPesticideList : DEFAULT_PRODUCT_PESTICIDE
   testItemRiskData.value = toBarData(ppRisk, (item) => item.combineName || '--', testItemRiskType.value as any)
 
-  const cRisk = categoryRiskList?.length ? categoryRiskList : DEFAULT_CATEGORY_RISK
-  categoryRiskData.value = toBarData(cRisk, (item) => item.category || '--', categoryRiskType.value as any)
+  const cRisk = productPesticideList?.length ? productPesticideList : DEFAULT_CATEGORY_RISK
+  categoryRiskData.value = toBarData(cRisk, (item) => item.combineName || '--', categoryRiskType.value as any)
 
   const rRisk = regionRiskList?.length ? regionRiskList : DEFAULT_REGION_RISK
   const sortedRegionRiskList = [...rRisk].sort((a, b) => (b.detectionCount || 0) - (a.detectionCount || 0))

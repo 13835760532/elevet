@@ -23,7 +23,7 @@
         <section class="welcome-card">
           <div class="hero-copy">
             <div class="assistant-kicker">农产品风险问答</div>
-            <h1>把检测数据，问成一句清楚答案</h1>
+            <h1>智能问答：快速检测统计分析</h1>
             <p>
               支持地区排名、检测项目、月度趋势、阳性率对比等问题。直接输入自然语言，小壹会整理数据、结论和后续追问方向。
             </p>
