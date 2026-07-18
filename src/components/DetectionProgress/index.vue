@@ -177,10 +177,13 @@ const handleReset = () => {
 
 // 单条录入
 const handleSingleInput = () => {
-    //  emit('single-input');
+    const currentRoute = router.currentRoute.value;
     router.push({
         path: '/rapidDetection/create',
-        query: { id: router.currentRoute.value.query.id }
+        query: { id: currentRoute.query.id },
+        state: {
+            activeMenu: currentRoute.meta.activeMenu || currentRoute.path
+        }
     });
 };
 

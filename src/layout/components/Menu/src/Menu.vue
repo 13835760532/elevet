@@ -52,6 +52,11 @@ export default defineComponent({
 
     const activeMenu = computed(() => {
       const { meta, path } = unref(currentRoute)
+      // 跨菜单进入业务表单时，优先保持来源菜单高亮；刷新页面后历史状态仍然有效。
+      const historyActiveMenu = window.history.state?.activeMenu
+      if (historyActiveMenu) {
+        return historyActiveMenu as string
+      }
       // if set path, the sidebar will highlight the path you set
       if (meta.activeMenu) {
         return meta.activeMenu as string
