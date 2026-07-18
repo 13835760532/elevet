@@ -59,24 +59,24 @@
             </div>
 
             <div class="warning-records-list">
-              <div v-if="monthlyReportData && monthlyReportData.hasData" class="warning-record-item">
+              <div class="warning-record-item">
                 <div class="warning-record-header">
                   <span class="record-badge">月度汇总</span>
                   <span class="record-product">{{ `${reportForm.year}年${reportForm.month}月` }}</span>
-                  <button class="record-view-btn" type="button" @click="handleViewMonthlyWarningDetail">查看</button>
+                  <button v-if="monthlyReportData && monthlyReportData.hasData" class="record-view-btn" type="button" @click="handleViewMonthlyWarningDetail">查看</button>
                 </div>
                 <div class="warning-record-detail">
                   <div class="detail-row">
                     <span style="width: 100px;">检出阳性批次：</span>
-                    <strong>{{ monthlyReportData.positiveCount ?? 0 }}次</strong>
+                    <strong>{{ monthlyReportData?.positiveCount ?? 0 }}次</strong>
                   </div>
                   <div class="detail-row">
                     <span style="width: 100px;">高风险产品：</span>
-                    <span>{{ monthlyReportData.highRiskProducts?.length ? monthlyReportData.highRiskProducts.join('，') : '暂无数据' }}</span>
+                    <span>{{ monthlyReportData?.highRiskProducts?.length ? monthlyReportData.highRiskProducts.join('，') : '暂无数据' }}</span>
                   </div>
                   <div class="detail-row">
                     <span style="width: 100px;">高风险药物：</span>
-                    <span>{{ monthlyReportData.highRiskItems?.length ? monthlyReportData.highRiskItems.join('，') : '暂无数据' }}</span>
+                    <span>{{ monthlyReportData?.highRiskItems?.length ? monthlyReportData.highRiskItems.join('，') : '暂无数据' }}</span>
                   </div>
                   <div class="detail-row">
                     <span style="width: 100px;">检测时间：</span>
@@ -84,7 +84,6 @@
                   </div>
                 </div>
               </div>
-              <el-empty v-else description="当月暂无高风险预警" :image-size="80" />
             </div>
           </article>
           <article class="report-card">
@@ -94,24 +93,24 @@
             </div>
 
             <div class="warning-records-list">
-              <div v-if="dailyReportData && dailyReportData.hasData" class="warning-record-item">
+              <div class="warning-record-item">
                 <div class="warning-record-header">
                   <span class="record-badge">日报汇总</span>
                   <span class="record-product">{{ `${reportForm.year}年${reportForm.month}月${reportForm.day}日` }}</span>
-                  <button class="record-view-btn" type="button" @click="handleViewDailyWarningDetail">查看</button>
+                  <button v-if="dailyReportData && dailyReportData.hasData" class="record-view-btn" type="button" @click="handleViewDailyWarningDetail">查看</button>
                 </div>
                 <div class="warning-record-detail">
                   <div class="detail-row">
                     <span style="width: 100px;">检出阳性批次：</span>
-                    <strong>{{ dailyReportData.positiveCount ?? 0 }}次</strong>
+                    <strong>{{ dailyReportData?.positiveCount ?? 0 }}次</strong>
                   </div>
                   <div class="detail-row">
                     <span style="width: 100px;">高风险产品：</span>
-                    <span>{{ dailyReportData.highRiskProducts?.length ? dailyReportData.highRiskProducts.join('，') : '暂无数据' }}</span>
+                    <span>{{ dailyReportData?.highRiskProducts?.length ? dailyReportData.highRiskProducts.join('，') : '暂无数据' }}</span>
                   </div>
                   <div class="detail-row">
                     <span style="width: 100px;">高风险药物：</span>
-                    <span>{{ dailyReportData.highRiskItems?.length ? dailyReportData.highRiskItems.join('，') : '暂无数据' }}</span>
+                    <span>{{ dailyReportData?.highRiskItems?.length ? dailyReportData.highRiskItems.join('，') : '暂无数据' }}</span>
                   </div>
                   <div class="detail-row">
                     <span style="width: 100px;">检测时间：</span>
@@ -119,7 +118,6 @@
                   </div>
                 </div>
               </div>
-              <el-empty v-else description="当天暂无高风险预警" :image-size="80" />
             </div>
           </article>
 
