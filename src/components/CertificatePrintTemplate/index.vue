@@ -85,6 +85,7 @@ import { computed } from 'vue';
 import { Picture } from '@element-plus/icons-vue';
 import { Qrcode } from '@/components/Qrcode';
 import { getAgriUnitLabel } from '@/utils/agriUnit';
+import { formatDate } from '@/utils/formatTime';
 
 interface BasisOption {
     indexLabel?: string;
@@ -102,6 +103,7 @@ interface CertificatePrintData {
     productionArea?: string;
     subjectName?: string;
     contactPhone?: string;
+    createTime?: string | number;
     issueDate?: string;
     productImageUrl?: string;
 }
@@ -131,7 +133,15 @@ const normalizedCommitmentLines = computed(() => {
 
 const resolvedQrText = computed(() => props.qrText || props.certificate?.qrCode || props.certificate?.certificateCode || '');
 
-const issueDateText = computed(() => props.issueDateText || props.certificate?.issueDate || '--');
+/** 打印联未显式传值时统一使用合格证创建时间，并保留到秒。 */
+const issueDateText = computed(() => {
+    if (props.issueDateText) return props.issueDateText;
+    const value = props.certificate?.createTime;
+    if (!value) return '--';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return String(value);
+    return formatDate(date, 'YYYY-MM-DD HH:mm:ss');
+});
 
 const quantityText = computed(() => {
     const quantity = props.certificate?.quantity ?? '--';

@@ -61,7 +61,7 @@
                 </div>
                 <div class="info-line">
                     <span>开具时间</span>
-                    <strong>{{ certificate?.issueDate || '--' }}</strong>
+                    <strong>{{ certificateTimeText }}</strong>
                 </div>
             </div>
 
@@ -86,6 +86,7 @@ import { computed } from 'vue';
 import { Picture } from '@element-plus/icons-vue';
 import { Qrcode } from '@/components/Qrcode';
 import { getAgriUnitLabel } from '@/utils/agriUnit';
+import { formatDate } from '@/utils/formatTime';
 
 defineOptions({
     name: 'CertificatePreview'
@@ -105,6 +106,7 @@ interface CertificatePreviewData {
     productionArea?: string;
     subjectName?: string;
     contactPhone?: string;
+    createTime?: string | number;
     issueDate?: string;
     commitmentBasis?: string | number | Array<string | number>;
     productImageUrl?: string;
@@ -122,6 +124,15 @@ const props = withDefaults(defineProps<{
     basisOptions: () => [],
     note: '*电子合格证由链安食检数智服务平台承载展示',
     qrText: ''
+});
+
+/** 合格证时间统一取创建时间，并保留到秒。 */
+const certificateTimeText = computed(() => {
+    const value = props.certificate?.createTime;
+    if (!value) return '--';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return String(value);
+    return formatDate(date, 'YYYY-MM-DD HH:mm:ss');
 });
 
 const parseBasisData = (val: CertificatePreviewData['commitmentBasis']) => {

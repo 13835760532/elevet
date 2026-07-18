@@ -893,7 +893,7 @@ const generatedCertificatePreview = computed(() => {
             productionArea: detail.productionArea || '',
             subjectName: detail.subjectName || '',
             contactPhone: detail.contactPhone || '',
-            issueDate: formatPrintDate(detail.issueDate || detail.createTime),
+            createTime: detail.createTime || '',
             commitmentBasis: detail.commitmentBasis ? (typeof detail.commitmentBasis === 'string' ? JSON.parse(detail.commitmentBasis) : detail.commitmentBasis) : [],
             productImageUrl: detail.productImageUrl || ''
         };
@@ -907,7 +907,7 @@ const generatedCertificatePreview = computed(() => {
         productionArea: formData.origin,
         subjectName: formData.entity,
         contactPhone: formData.contactPhone,
-        issueDate: formatPrintDate(certStore.certificate.issueDate || formData.createDate),
+        createTime: certStore.certificate.createTime || '',
         commitmentBasis: formData.basis,
         productImageUrl: formData.productImageUrl
     };

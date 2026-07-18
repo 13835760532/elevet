@@ -91,7 +91,7 @@
                 :basis-options="selectedCommitmentBasisOptions"
                 :commitment-lines="primaryCommitmentLines"
                 :qr-text="certificate?.certificateCode || ''"
-                :issue-date-text="formatPrintDate(certificate?.issueDate)"
+                :issue-date-text="formatPrintDate(certificate?.createTime)"
                 :print-time-text="printTimeText"
             />
 
@@ -103,7 +103,7 @@
                 :basis-options="selectedUpstreamBasisOptions"
                 :commitment-lines="upstreamCommitmentLines"
                 :qr-text="upstreamCertificate?.certificateCode || ''"
-                :issue-date-text="formatPrintDate(upstreamCertificate?.issueDate)"
+                :issue-date-text="formatPrintDate(upstreamCertificate?.createTime)"
                 :print-time-text="printTimeText"
             />
         </div>
@@ -257,8 +257,8 @@ const refreshPrintTime = () => {
 
 const formatPrintDate = (value: unknown) => {
     if (!value) return '--';
-    const result = formatDate(new Date(value as string | number | Date), 'YYYY-MM-DD');
-    return result === 'Invalid Date' ? String(value).slice(0, 10) || '--' : result;
+    const result = formatDate(new Date(value as string | number | Date), 'YYYY-MM-DD HH:mm:ss');
+    return result === 'Invalid Date' ? String(value) || '--' : result;
 };
 
 const setUpstreamCertificate = (data: any | null) => {
