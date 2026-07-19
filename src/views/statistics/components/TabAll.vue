@@ -728,7 +728,8 @@ const queryParams = computed(() => ({
   ...getEffectiveAreaParams(),
   deptId: canViewAreaRange.value ? undefined : currentDeptId.value || undefined,
   deptName: canViewAreaRange.value ? undefined : currentDeptName.value || undefined,
-  queryDeptScope: canViewAreaRange.value ? 1 : 0
+  // 监管机构按辖区查询（1）；其他机构默认按本机构权限口径查询（3）。
+  queryDeptScope: canViewAreaRange.value ? 1 : 3
 }))
 
 const toBarData = (list: any[], getName: (item: any) => string, statType: '检测量' | '阳性率') => {

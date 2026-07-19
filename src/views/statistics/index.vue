@@ -88,12 +88,13 @@ type ScopedTabValue = (typeof scopedTabValues)[number]
 type QuickCommand = 'self' | 'task' | 'all'
 
 const tabDeptScopes = ref<Record<ScopedTabValue, number>>({
-  issue: 0,
-  verify: 0,
-  filing: 0
+  issue: 3,
+  verify: 3,
+  filing: 3
 })
-const taskDeptScope = ref(0)
-const quickDeptScope = ref(0)
+// 本机构统计的统一默认权限口径。监管机构切换到辖区选项时会在对应处理方法中改为 1。
+const taskDeptScope = ref(3)
+const quickDeptScope = ref(3)
 const quickSelfDetection = ref<boolean | undefined>(undefined)
 
 const dropdownActiveCommands = ref<Record<string, string>>((() => {
@@ -229,7 +230,7 @@ const handleTabChange = (tabValue: string) => {
     if (cmd) {
       setTaskScopeByCommand(cmd)
     } else {
-      taskDeptScope.value = 0
+      taskDeptScope.value = 3
     }
   }
   if (tabValue === 'quick') {
@@ -237,16 +238,16 @@ const handleTabChange = (tabValue: string) => {
     if (cmd) {
       setQuickScopeByCommand(cmd)
     } else {
-      quickDeptScope.value = 0
+      quickDeptScope.value = 3
       quickSelfDetection.value = undefined
     }
   }
   if (scopedTabValues.includes(tabValue as ScopedTabValue)) {
     const cmd = dropdownActiveCommands.value[tabValue]
     if (cmd) {
-      tabDeptScopes.value[tabValue as ScopedTabValue] = isRegulatoryDept.value ? getQueryDeptScopeByCommand(cmd) : 0
+      tabDeptScopes.value[tabValue as ScopedTabValue] = isRegulatoryDept.value ? getQueryDeptScopeByCommand(cmd) : 3
     } else {
-      tabDeptScopes.value[tabValue as ScopedTabValue] = 0
+      tabDeptScopes.value[tabValue as ScopedTabValue] = 3
     }
   }
 }
@@ -260,12 +261,12 @@ const getQueryDeptScopeByCommand = (command: unknown) => {
 const setQuickScopeByCommand = (command: unknown) => {
   const quickCommand = command as QuickCommand
   if (quickCommand === 'self') {
-    quickDeptScope.value = isRegulatoryDept.value ? 2 : 0
+    quickDeptScope.value = 3
     quickSelfDetection.value = true
     return
   }
   if (quickCommand === 'task') {
-    quickDeptScope.value = isRegulatoryDept.value ? 2 : 0
+    quickDeptScope.value = 3
     quickSelfDetection.value = false
     return
   }
@@ -274,12 +275,13 @@ const setQuickScopeByCommand = (command: unknown) => {
     quickSelfDetection.value = undefined
     return
   }
-  quickDeptScope.value = 0
+  quickDeptScope.value = 3
   quickSelfDetection.value = undefined
 }
 
 const setTaskScopeByCommand = (command: unknown) => {
-  taskDeptScope.value = isRegulatoryDept.value ? getTaskQueryDeptScope(command) : 0
+  // 非监管机构只允许查询本机构数据，任务类型不再改变数据权限口径。
+  taskDeptScope.value = isRegulatoryDept.value ? getTaskQueryDeptScope(command) : 3
 }
 
 const handleDropdownCommand = (tabValue: string, command: unknown) => {
@@ -301,7 +303,7 @@ const handleDropdownCommand = (tabValue: string, command: unknown) => {
     setQuickScopeByCommand(command)
   }
   if (scopedTabValues.includes(tabValue as ScopedTabValue)) {
-    tabDeptScopes.value[tabValue as ScopedTabValue] = isRegulatoryDept.value ? getQueryDeptScopeByCommand(command) : 0
+    tabDeptScopes.value[tabValue as ScopedTabValue] = isRegulatoryDept.value ? getQueryDeptScopeByCommand(command) : 3
   }
 }
 

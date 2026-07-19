@@ -561,12 +561,7 @@ const mapProductRow = (item: any) => ({
     item.productionArea || formatAreaText(item.provinceCode, item.cityCode, item.districtCode),
   subjectName: item.subjectInfo?.name || item.subjectName || '--',
   filingDate: formatDateText(item.archiveDate || item.createTime),
-  createOrg:
-    item.deptName ||
-    item.createDeptName ||
-    item.subjectInfo?.deptName ||
-    item.subjectInfo?.dept?.name ||
-    '--'
+  deptName: item.deptName || '--'
 })
 
 /** 并行加载建档概览、地区分布、主体类型和产品趋势等图表数据。 */
@@ -625,6 +620,7 @@ const loadProductTable = async () => {
     )
     const normalized = normalizePagedResult<any>(data)
     tableDataProduct.value = normalized.list.map(mapProductRow)
+    console.log(tableDataProduct.value)
     productTotal.value = normalized.total
   } catch (error) {
     console.error('[StatisticsFiling] load product table failed:', error)
