@@ -346,9 +346,9 @@ const getResultLabel = (value: any) => {
 }
 
 const mapRecordRow = (item: any) => ({
-  taskNo: item.taskCode || item.task?.taskCode || item.recordCode || '--',
+  taskNo: item.taskCode || item.recordCode || '--',
   taskName: item.taskName || item.task?.taskName || item.planName || '--',
-  recordCode: item.taskCode || item.task?.taskCode || item.recordCode || '--',
+  recordCode: item.taskCode || item.recordCode || '--',
   keyword: item.recordCode || '--',
   planName: item.planName || '--',
   type: item.taskId ? '任务检测' : '自主检测',
