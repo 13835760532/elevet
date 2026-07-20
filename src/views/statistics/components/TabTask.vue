@@ -16,7 +16,8 @@
           <div class="card-bg-icon">¥</div>
           <div class="card-info">
             <div class="card-title">已发任务量</div>
-            <div class="card-value">{{ formatNumber((overview as any).taskCount || total) }} <span class="unit">个</span>
+            <div class="card-value">{{ formatNumber((overview as any).taskIssuedTaskCount || total) }} <span
+                class="unit">个</span>
             </div>
           </div>
         </div>
