@@ -57,6 +57,7 @@ const rightActiveTab = ref('样品阳性率')
 const volumeTrend = ref<TaskVolumeTrendRespVO>({})
 const riskTrend = ref<TaskRiskTrendRespVO>({})
 
+/**\n * formatToChineseMonth：将页面使用的数据在不同结构或展示口径之间转换。该方法不直接驱动页面跳转，返回值供调用方继续组装或渲染。\n */
 const formatToChineseMonth = (ym?: any) => {
   if (ym === undefined || ym === null || ym === '') return '';
   const key = String(ym).trim();
@@ -73,6 +74,7 @@ const formatToChineseMonth = (ym?: any) => {
   return key;
 };
 
+/**\n * leftTooltipFormatter：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const leftTooltipFormatter = (params: any) => {
   if (!params || params.length === 0) return '';
   const rawMonth = params[0].axisValue;
@@ -92,6 +94,7 @@ const leftTooltipFormatter = (params: any) => {
   return html;
 };
 
+/**\n * rightTooltipFormatter：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const rightTooltipFormatter = (params: any) => {
   if (!params || params.length === 0) return '';
   const rawMonth = params[0].axisValue;
@@ -170,10 +173,14 @@ const lineBase = {
   }
 }
 
+/**\n * getAxisData：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。\n */
 const getAxisData = (axis?: string[]) => (axis?.length ? axis : [])
+/**\n * normalizeSeries：将页面使用的数据在不同结构或展示口径之间转换。该方法不直接驱动页面跳转，返回值供调用方继续组装或渲染。\n */
 const normalizeSeries = (list: number[] | undefined, length: number) =>
   Array.from({ length }, (_, index) => Number(list?.[index] || 0))
+/**\n * sumSeries：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const sumSeries = (list?: number[]) => (list || []).reduce((total, item) => total + Number(item || 0), 0)
+/**\n * estimatePositiveCount：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const estimatePositiveCount = (rates?: number[], totals?: number[], fallbackTotal = 0) => {
   if (rates?.length && totals?.length) {
     return Math.round(
@@ -183,6 +190,7 @@ const estimatePositiveCount = (rates?: number[], totals?: number[], fallbackTota
   return Math.round((fallbackTotal * sumSeries(rates)) / Math.max(rates?.length || 0, 1) / 100)
 }
 
+/**\n * formatMonthLabel：将页面使用的数据在不同结构或展示口径之间转换。该方法不直接驱动页面跳转，返回值供调用方继续组装或渲染。\n */
 const formatMonthLabel = (month?: string) => {
   if (!month) return '--'
   const value = String(month).trim()
@@ -359,6 +367,7 @@ const monthLabels = computed(() => {
   return result
 })
 
+/**\n * mapTrendData：将页面使用的数据在不同结构或展示口径之间转换。该方法不直接驱动页面跳转，返回值供调用方继续组装或渲染。\n */
 const mapTrendData = (xaxis: string[], seriesData: number[]) => {
   const dataMap = new Map()
   if (Array.isArray(xaxis)) {
@@ -450,6 +459,7 @@ const currentRightTrendOption = computed(() => {
   return createTrendOption(rightTrendXAxis.value, currentRightTrendData.value, rightAxisMax.value, color, rightActiveTab.value, rightTooltipFormatter, '{value}%')
 })
 
+/**\n * loadVolumeTrend：加载当前页面所需的数据或初始化状态。请求条件由当前路由、筛选项或已有上下文决定，结果用于更新页面响应式状态。\n */
 const loadVolumeTrend = async () => {
   try {
     const data = await getTaskVolumeTrend(getBigScreenQueryParams())
@@ -460,6 +470,7 @@ const loadVolumeTrend = async () => {
   }
 }
 
+/**\n * loadRiskTrend：加载当前页面所需的数据或初始化状态。请求条件由当前路由、筛选项或已有上下文决定，结果用于更新页面响应式状态。\n */
 const loadRiskTrend = async () => {
   try {
     const data = await getTaskRiskTrend(getBigScreenQueryParams())

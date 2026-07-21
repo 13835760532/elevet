@@ -163,6 +163,7 @@ const activeNewsIndex = ref(0)
 const activeNewsItem = computed<NewsItem>(() => newsList.value[activeNewsIndex.value])
 
 // 将图文向下移动
+/**\n * moveDownNews：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const moveDownNews = (index: number) => {
   const temp = newsList.value[index]
   newsList.value[index] = newsList.value[index + 1]
@@ -171,6 +172,7 @@ const moveDownNews = (index: number) => {
 }
 
 // 将图文向上移动
+/**\n * moveUpNews：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const moveUpNews = (index: number) => {
   const temp = newsList.value[index]
   newsList.value[index] = newsList.value[index - 1]
@@ -179,6 +181,7 @@ const moveUpNews = (index: number) => {
 }
 
 // 删除指定 index 的图文
+/**\n * removeNews：执行会产生数据或文件副作用的页面操作。调用前使用当前页面状态组装参数，成功后的页面反馈和状态更新由该方法负责。\n */
 const removeNews = async (index: number) => {
   try {
     await message.confirm('确定删除该图文吗?')
@@ -192,6 +195,7 @@ const removeNews = async (index: number) => {
 }
 
 // 添加一个图文
+/**\n * plusNews：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const plusNews = () => {
   newsList.value.push(createEmptyNewsItem())
   activeNewsIndex.value = newsList.value.length - 1

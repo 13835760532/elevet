@@ -172,11 +172,13 @@ import { computed, ref, watch } from 'vue';
 import { useMessage } from '@/hooks/web/useMessage';
 import { Document } from '@element-plus/icons-vue';
 
+/**\n * isPdf：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。\n */
 const isPdf = (url) => {
   if (!url) return false;
   return url.toLowerCase().endsWith('.pdf');
 };
 
+/**\n * handlePreviewPdf：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handlePreviewPdf = (url) => {
   if (!url) return;
   window.open(url, '_blank');
@@ -223,6 +225,7 @@ const pagedRows = computed(() => {
   return filteredRows.value.slice(start, start + pageSize);
 });
 
+/**\n * isChecked：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。\n */
 const isChecked = (id) => pickedIdList.value.includes(Number(id));
 const isPageAllChecked = computed(() => pagedRows.value.length > 0 && pagedRows.value.every((row) => isChecked(row.linkId)));
 const isPageIndeterminate = computed(() => {
@@ -246,6 +249,7 @@ const parseQualityResult = (result) => {
 };
 
 // 判定结果文字
+/**\n * getQualityText：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。\n */
 const getQualityText = (val) => {
   if (val === 1) return '阴性';
   if (val === 0) return '阳性';
@@ -359,11 +363,13 @@ const getDetectionItemNames = (row) => {
   return '-';
 };
 
+/**\n * formatDateTime：将页面使用的数据在不同结构或展示口径之间转换。该方法不直接驱动页面跳转，返回值供调用方继续组装或渲染。\n */
 const formatDateTime = (value) => {
   if (!value && value !== 0) return '-';
   if (Number(value) === 0) return '-';
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return String(value);
+  /**\n   * pad：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n   */
   const pad = (num) => String(num).padStart(2, '0');
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
 };
@@ -413,6 +419,7 @@ const handleSearch = async () => {
   }
 };
 
+/**\n * toggleOne：将页面使用的数据在不同结构或展示口径之间转换。该方法不直接驱动页面跳转，返回值供调用方继续组装或渲染。\n */
 const toggleOne = (row, checked) => {
   const id = Number(row.linkId);
   if (checked && !pickedIdList.value.includes(id)) {
@@ -463,6 +470,7 @@ const handleLink = () => {
   }
 };
 
+/**\n * handleTabChange：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleTabChange = (name) => {
   activeTab.value = String(name);
 };

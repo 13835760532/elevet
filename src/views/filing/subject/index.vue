@@ -168,6 +168,7 @@ const total = ref(0);
 const tableList = ref([]);
 
 const selectedAreaNames = ref([]);
+/**\n * handleAreaSelect：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleAreaSelect = (area) => {
     selectedAreaNames.value = [area.province, area.city, area.district].filter(Boolean);
 };
@@ -209,11 +210,13 @@ const getList = async () => {
     }
 }
 
+/**\n * handleQuery：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleQuery = () => {
     pageParams.pageNo = 1;
     getList();
 };
 
+/**\n * handleReset：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleReset = () => {
     queryParams.type = undefined;
     queryParams.socialCreditCodeOrIdCard = '';
@@ -223,6 +226,7 @@ const handleReset = () => {
     handleQuery();
 };
 
+/**\n * handleExport：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleExport = async () => {
     try {
         await message.exportConfirm();
@@ -261,8 +265,11 @@ const handleExport = async () => {
     }
 };
 
+/**\n * handleBatchFiling：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleBatchFiling = () => { router.push('/filing/subjectBatch'); };
+/**\n * handleSingleFiling：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleSingleFiling = () => { router.push('/filing/subjectCreate'); };
+/**\n * handleEdit：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleEdit = (row) => { router.push('/filing/subjectCreate?id=' + row.id); };
 
 /**
@@ -279,6 +286,7 @@ const handleDelete = async (row) => {
     } catch (error) { }
 };
 
+/**\n * handleView：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleView = (row) => { router.push('/filing/subjectDetail?id=' + row.id); };
 
 /**

@@ -136,6 +136,7 @@ type CategoryDistributionResponse =
     data?: FastCategoryDistributionRespVO[] | { list?: FastCategoryDistributionRespVO[] }
   }
 
+/**\n * normalizeCategoryDistribution：将页面使用的数据在不同结构或展示口径之间转换。该方法不直接驱动页面跳转，返回值供调用方继续组装或渲染。\n */
 const normalizeCategoryDistribution = (data: CategoryDistributionResponse | null | undefined) => {
   if (Array.isArray(data)) return data
   if (!data || typeof data !== 'object') return []
@@ -152,6 +153,7 @@ const normalizeCategoryDistribution = (data: CategoryDistributionResponse | null
   )
 }
 
+/**\n * getCategoryName：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。\n */
 const getCategoryName = (item: FastCategoryDistributionRespVO) =>
   item.category ||
   item.categoryName ||
@@ -163,6 +165,7 @@ const getCategoryName = (item: FastCategoryDistributionRespVO) =>
   item.name ||
   '--'
 
+/**\n * toNumber：将页面使用的数据在不同结构或展示口径之间转换。该方法不直接驱动页面跳转，返回值供调用方继续组装或渲染。\n */
 const toNumber = (value: unknown) => {
   if (value === undefined || value === null || value === '') return 0
   const normalized = typeof value === 'string' ? value.replace(/,/g, '') : value
@@ -170,6 +173,7 @@ const toNumber = (value: unknown) => {
   return Number.isFinite(numericValue) ? numericValue : 0
 }
 
+/**\n * getCategoryValue：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。\n */
 const getCategoryValue = (item: FastCategoryDistributionRespVO) => {
   const value =
     item.sampleCount ??

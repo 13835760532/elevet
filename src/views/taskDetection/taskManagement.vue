@@ -153,10 +153,12 @@ const formRules = {
     requirements: [{ required: true, message: '请输入方案要求', trigger: 'blur' }]
 };
 
+/**\n * handleCancel：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleCancel = () => {
     router.back();
 };
 
+/**\n * handleSubmit：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleSubmit = () => {
     formRef.value.validate((valid) => {
         if (valid) {

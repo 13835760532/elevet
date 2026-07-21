@@ -174,6 +174,7 @@ const resetQuery = () => {
 
 /** 添加/修改操作 */
 const formRef = ref<InstanceType<typeof UserForm> | null>(null)
+/**\n * openForm：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const openForm = (id: number) => {
   formRef.value?.open(id)
 }
@@ -207,10 +208,12 @@ interface Emits {
   // (e: 'cancel'): void
 }
 const emit = defineEmits<Emits>()
+/**\n * emitChange：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const emitChange = () => {
   emit('change', {multipleSelection: multipleSelection.value, total: total.value, queryParams})
 }
 
+/**\n * handleSelectionChange：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleSelectionChange = (val: any[]) => {
   multipleSelection.value = val
   if (isDialog.value) {

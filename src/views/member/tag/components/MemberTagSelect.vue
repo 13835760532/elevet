@@ -51,12 +51,14 @@ const tagIds = computed({
 
 const tags = ref<TagApi.TagVO[]>([])
 
+/**\n * getList：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。\n */
 const getList = async () => {
   tags.value = await TagApi.getSimpleTagList()
 }
 
 /** 添加用户标签表单弹框 */
 const formRef = ref()
+/**\n * openForm：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const openForm = (type: string, id?: number) => {
   formRef.value.open(type, id)
 }

@@ -228,6 +228,7 @@ import { useDict } from '@/hooks/web/useDict';
 
 const productCategoryDict = useDict('agri_product_category', 'str');
 const productCategoryOptions = productCategoryDict.options;
+/**\n * getCategoryLabel：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。\n */
 const getCategoryLabel = (val: string) => productCategoryDict.getLabel(val);
 import * as DetectionRecordApi from '@/api/agri/detectionRecord';
 import * as SelfDetectionReportRuleApi from '@/api/agri/selfDetectionReportRule';
@@ -253,6 +254,7 @@ const queryParams = reactive({
 });
 
 const areaIds = ref([]);
+/**\n * handleAreaSelect：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleAreaSelect = (area: any) => {
     // 抽检地区全量拼接，并使用短横线分隔
     queryParams.area = [area.province, area.city, area.district].filter(Boolean).join('-');
@@ -267,10 +269,12 @@ const total = ref(0);
 const tableList = ref([]);
 const multipleSelection = ref<any[]>([]);
 
+/**\n * handleSelectionChange：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleSelectionChange = (val: any[]) => {
     multipleSelection.value = val;
 };
 
+/**\n * formatDetectionTime：将页面使用的数据在不同结构或展示口径之间转换。该方法不直接驱动页面跳转，返回值供调用方继续组装或渲染。\n */
 const formatDetectionTime = (value: any) => {
     if (!value) return '-';
     if (typeof value === 'string') return value;
@@ -354,17 +358,20 @@ const getDetectionItems = (aiRecognitionResult: string) => {
 
 
 
+/**\n * handleQuery：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleQuery = () => {
     pageParams.pageNo = 1;
     getList();
 };
 
+/**\n * handleReset：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleReset = () => {
     Object.keys(queryParams).forEach(key => (queryParams[key] = ''));
     areaIds.value = [];
     handleQuery();
 };
 
+/**\n * handleExport：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleExport = async () => {
     try {
         await message.confirm('是否确认导出所有检测记录数据项?');
@@ -447,6 +454,7 @@ const handleSingleInput = () => {
     router.push('/rapidDetection/create');
 };
 
+/**\n * handleBatchPublic：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleBatchPublic = () => {
     if (multipleSelection.value.length === 0) {
         message.warning('请先勾选需要操作的检测记录');
@@ -491,6 +499,7 @@ const handleDelete = async (row) => {
     }
 };
 
+/**\n * handleDetect：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleDetect = (row) => {
     router.push({
         path: '/rapidDetection/create',
@@ -498,6 +507,7 @@ const handleDetect = (row) => {
     });
 };
 
+/**\n * handleView：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleView = (row) => {
     router.push('/rapidDetection/taskResult?id=' + row.id);
 };

@@ -128,7 +128,9 @@ const fastOverview = ref<DashboardFastOverviewRespVO>({});
 const categoryDistribution = ref<TaskCategoryDistributionRespVO[]>([]);
 const categoryColors = ['#3f6dff', '#ffb22c', '#3ba4ff', '#d8efff', '#39e3e7', '#8ad64c', '#7d60ff', '#ff8a34'];
 
+/**\n * formatCount：将页面使用的数据在不同结构或展示口径之间转换。该方法不直接驱动页面跳转，返回值供调用方继续组装或渲染。\n */
 const formatCount = (value?: number) => Number(value || 0);
+/**\n * formatRate：将页面使用的数据在不同结构或展示口径之间转换。该方法不直接驱动页面跳转，返回值供调用方继续组装或渲染。\n */
 const formatRate = (value?: number) => Number(value || 0).toFixed(0);
 
 const summaryData = computed(() => [

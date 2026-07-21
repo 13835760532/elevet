@@ -121,6 +121,7 @@ const exampleData = ref([
     }
 ]);
 
+/**\n * handleDownloadTemplate：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleDownloadTemplate = () => {
     const link = document.createElement('a');
     link.href = '/template/批量上传产品导入模板.xlsx';
@@ -131,6 +132,7 @@ const handleDownloadTemplate = () => {
     document.body.removeChild(link);
 };
 
+/**\n * handleUpload：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleUpload = async (options) => {
     const { file } = options;
     uploadLoading.value = true;

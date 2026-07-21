@@ -80,6 +80,7 @@ const menuList = computed<Menu[]>({
 })
 
 // 添加横向一级菜单
+/**\n * addMenu：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const addMenu = () => {
   const index = menuList.value.length
   const menu = {
@@ -96,6 +97,7 @@ const addMenu = () => {
 }
 
 // 添加横向二级菜单；parent 表示要操作的父菜单
+/**\n * addSubMenu：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const addSubMenu = (i: number, parent: any) => {
   const subMenuKeyLength = parent.children.length // 获取二级菜单key长度
   const addButton = {
@@ -110,10 +112,12 @@ const addSubMenu = (i: number, parent: any) => {
   subMenuClicked(parent.children[subMenuKeyLength], i, subMenuKeyLength)
 }
 
+/**\n * menuClicked：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const menuClicked = (parent: Menu, x: number) => {
   emit('menu-clicked', parent, x)
 }
 
+/**\n * subMenuClicked：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const subMenuClicked = (child: Menu, x: number, y: number) => {
   emit('submenu-clicked', child, x, y)
 }

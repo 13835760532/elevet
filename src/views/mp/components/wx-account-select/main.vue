@@ -25,6 +25,7 @@ const emit = defineEmits<{
   (e: 'change', id: number, name: string)
 }>()
 
+/**\n * handleQuery：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleQuery = async () => {
   accountList.value = await MpAccountApi.getSimpleAccountList()
   if (accountList.value.length == 0) {
@@ -43,6 +44,7 @@ const handleQuery = async () => {
   }
 }
 
+/**\n * onChanged：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const onChanged = (id?: number) => {
   const found = accountList.value.find((v) => v.id === id)
   if (account.id) {

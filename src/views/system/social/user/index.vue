@@ -168,6 +168,7 @@ const resetQuery = () => {
   handleQuery()
 }
 
+/**\n * imagePreview：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const imagePreview = (imgUrl: string) => {
   createImageViewer({
     urlList: [imgUrl]
@@ -176,6 +177,7 @@ const imagePreview = (imgUrl: string) => {
 
 /** 详情操作 */
 const detailRef = ref()
+/**\n * openDetail：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const openDetail = (id: number) => {
   detailRef.value.open(id)
 }

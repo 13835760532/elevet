@@ -225,6 +225,7 @@ const resultFilters = ref({
   org: '',
   result: ''
 })
+/**\n * handleResultAreaSelect：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleResultAreaSelect = (area: any) => {
   if (!canViewAreaRange.value) return
   const selectedArea = getSelectedAreaParams(area)
@@ -232,6 +233,7 @@ const handleResultAreaSelect = (area: any) => {
   resultFilters.value.areaType = selectedArea.areaType
   resultFilters.value.areaCode = selectedArea.areaCode
 }
+/**\n * handleResultAreaChange：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleResultAreaChange = (value: any) => {
   if (!canViewAreaRange.value) return
   if (value === undefined || value === null || value === '' || (Array.isArray(value) && value.length === 0)) {
@@ -414,6 +416,7 @@ const searchResultPage = useDebounceFn(() => {
   loadResultPage()
 }, 300)
 
+/**\n * resetResultFilters：同步或重置当前页面状态，保证筛选项、组件显示和后续请求参数保持一致。\n */
 const resetResultFilters = () => {
   resultFilters.value.keyword = ''
   resultFilters.value.sample = ''
@@ -472,6 +475,7 @@ const loadTrend = async () => {
   }
 }
 
+/**\n * handleSearch：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleSearch = () => {
   pageNo.value = 1
   resultPageNo.value = 1
@@ -484,6 +488,7 @@ const handleSearch = () => {
   }
 }
 
+/**\n * handleReset：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleReset = () => {
   dateRangeType.value = '当年'
   dateRange.value = []

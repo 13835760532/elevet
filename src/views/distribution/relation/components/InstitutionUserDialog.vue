@@ -88,6 +88,7 @@ const queryParams = reactive({
   districtCode: undefined
 })
 
+/**\n * getList：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。\n */
 const getList = async () => {
   loading.value = true
   try {
@@ -113,11 +114,13 @@ const getList = async () => {
   }
 }
 
+/**\n * handleQuery：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleQuery = () => {
   queryParams.pageNo = 1
   getList()
 }
 
+/**\n * resetQuery：同步或重置当前页面状态，保证筛选项、组件显示和后续请求参数保持一致。\n */
 const resetQuery = () => {
   // 重置表单但保留传入的编码过滤条件
   const { provinceCode, cityCode, districtCode } = queryParams
@@ -134,12 +137,14 @@ const resetQuery = () => {
   getList()
 }
 
+/**\n * handleSelectionChange：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleSelectionChange = (val: any[]) => {
   selectedRows.value = val
 }
 
 const emit = defineEmits(['confirm'])
 
+/**\n * handleConfirm：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleConfirm = async () => {
   if (selectedRows.value.length === 0) {
     message.warning('请选择一个机构')
@@ -170,6 +175,7 @@ const handleConfirm = async () => {
   }
 }
 
+/**\n * open：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const open = (name: string, params: any = {}) => {
   levelName.value = name || '层级'
   relationId.value = params.relationId

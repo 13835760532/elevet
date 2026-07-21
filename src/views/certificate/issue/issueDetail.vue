@@ -163,9 +163,11 @@ const route = useRoute();
 const message = useMessage();
 
 // 互斥选择逻辑
+/**\n * handleSelect1：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleSelect1 = (val) => {
     if (val) isSelected2.value = false;
 };
+/**\n * handleSelect2：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleSelect2 = (val) => {
     if (val && !canPrintUpstream.value) {
         isSelected2.value = false;
@@ -251,16 +253,19 @@ const bluetoothPrinter = new BluetoothPrinter({
     }
 });
 
+/**\n * refreshPrintTime：同步或重置当前页面状态，保证筛选项、组件显示和后续请求参数保持一致。\n */
 const refreshPrintTime = () => {
     printTimeText.value = formatDate(new Date());
 };
 
+/**\n * formatPrintDate：将页面使用的数据在不同结构或展示口径之间转换。该方法不直接驱动页面跳转，返回值供调用方继续组装或渲染。\n */
 const formatPrintDate = (value: unknown) => {
     if (!value) return '--';
     const result = formatDate(new Date(value as string | number | Date), 'YYYY-MM-DD HH:mm:ss');
     return result === 'Invalid Date' ? String(value) || '--' : result;
 };
 
+/**\n * setUpstreamCertificate：同步或重置当前页面状态，保证筛选项、组件显示和后续请求参数保持一致。\n */
 const setUpstreamCertificate = (data: any | null) => {
     upstreamCertificate.value = data || null;
     upstreamCommitmentBasis.value = data ? parseCertificateBasis(data.commitmentBasis) : [];
@@ -308,6 +313,7 @@ const loadUpstreamDetail = async (code: string) => {
     }
 };
 
+/**\n * connectBluetoothPrinter：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const connectBluetoothPrinter = async () => {
     bluetoothConnecting.value = true;
     try {
@@ -335,6 +341,7 @@ const startBluetoothKeepAlive = () => {
     }, 12000);
 };
 
+/**\n * pauseBluetoothKeepAlive：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const pauseBluetoothKeepAlive = () => {
     if (!keepAliveTimer.value) return;
     clearInterval(keepAliveTimer.value);
@@ -357,6 +364,7 @@ const startAutoReconnect = () => {
     }, 6000);
 };
 
+/**\n * stopBluetoothTimers：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const stopBluetoothTimers = () => {
     pauseBluetoothKeepAlive();
     if (autoReconnectTimer.value) {
@@ -383,6 +391,7 @@ onUnmounted(() => {
     stopBluetoothTimers();
 });
 
+/**\n * captureAreaToImg：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const captureAreaToImg = async () => {
     refreshPrintTime();
     await nextTick();

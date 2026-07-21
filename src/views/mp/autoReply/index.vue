@@ -132,6 +132,7 @@ const handleQuery = () => {
   getList()
 }
 
+/**\n * onTabChange：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const onTabChange = (tabName: TabPaneName) => {
   msgType.value = tabName as MsgType
   handleQuery()
@@ -191,6 +192,7 @@ const onDelete = async (id: number) => {
   message.success('删除成功')
 }
 
+/**\n * onSubmit：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const onSubmit = async () => {
   await formRef.value?.validate()
 
@@ -221,6 +223,7 @@ const onSubmit = async () => {
 }
 
 // 表单重置
+/**\n * reset：同步或重置当前页面状态，保证筛选项、组件显示和后续请求参数保持一致。\n */
 const reset = () => {
   replyForm.value = {
     id: undefined,
@@ -234,6 +237,7 @@ const reset = () => {
 }
 
 // 取消按钮
+/**\n * cancel：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。\n */
 const cancel = () => {
   showDialog.value = false
   reset()

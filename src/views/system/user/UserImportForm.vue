@@ -84,6 +84,7 @@ const submitForm = async () => {
 
 /** 文件上传成功 */
 const emits = defineEmits(['success'])
+/**\n * submitFormSuccess：执行会产生数据或文件副作用的页面操作。调用前使用当前页面状态组装参数，成功后的页面反馈和状态更新由该方法负责。\n */
 const submitFormSuccess = (response: any) => {
   if (response.code !== 0) {
     message.error(response.msg)

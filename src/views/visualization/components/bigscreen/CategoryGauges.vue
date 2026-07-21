@@ -64,6 +64,7 @@ const valueColors = ['#188bf5', '#4efafe', '#81c340', '#e5b12f', '#fea931', '#7d
 const outerColors = ['#142246', '#0f3f40', '#314523', '#44351d', '#3f2a1d', '#241d45']
 const rateValueColors = ['#188bf5', '#4efafe', '#81c340', '#e5b12f', '#ef7330']
 
+/**\n * normalizeRateValue：将页面使用的数据在不同结构或展示口径之间转换。该方法不直接驱动页面跳转，返回值供调用方继续组装或渲染。\n */
 const normalizeRateValue = (item: CategoryRiskRespVO) => {
   const statValue = Number(item.statValue)
   const positiveRate = Number(item.positiveRate)
@@ -79,6 +80,7 @@ const normalizeRateValue = (item: CategoryRiskRespVO) => {
   return rawValue > 0 && rawValue <= 1 ? rawValue * 100 : rawValue
 }
 
+/**\n * getStatValue：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。\n */
 const getStatValue = (item: CategoryRiskRespVO) => {
   if (props.mode === '阳性率') {
     return normalizeRateValue(item)

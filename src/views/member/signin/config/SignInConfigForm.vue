@@ -51,6 +51,7 @@ const formLoading = ref(false) // 表单的加载中：1）修改时的数据加
 const formType = ref('') // 表单的类型：create - 新增；update - 修改
 const formData = ref<SignInConfigApi.SignInConfigVO>({} as SignInConfigApi.SignInConfigVO)
 // 奖励校验规则
+/**\n * awardValidator：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const awardValidator = (rule: any, _value: any, callback: any) => {
   if (!formData.value.point && !formData.value.experience) {
     callback(new Error('奖励积分与奖励经验至少配置一个'))
@@ -95,6 +96,7 @@ defineExpose({ open }) // 提供 open 方法，用于打开弹窗
 
 /** 提交表单 */
 const emit = defineEmits(['success']) // 定义 success 事件，用于操作成功后的回调
+/**\n * submitForm：执行会产生数据或文件副作用的页面操作。调用前使用当前页面状态组装参数，成功后的页面反馈和状态更新由该方法负责。\n */
 const submitForm = async () => {
   // 校验表单
   if (!formRef) return

@@ -187,6 +187,7 @@ const monthLabels = computed(() => {
   })
 })
 
+/**\n * formatToChineseMonth：将页面使用的数据在不同结构或展示口径之间转换。该方法不直接驱动页面跳转，返回值供调用方继续组装或渲染。\n */
 const formatToChineseMonth = (ym?: string) => {
   if (!ym) return '';
   const parts = ym.split('-');
@@ -200,6 +201,7 @@ const formatToChineseMonth = (ym?: string) => {
 
 const formattedXAxis = computed(() => monthLabels.value.map(item => formatToChineseMonth(item)))
 
+/**\n * getMonthIndex：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。\n */
 const getMonthIndex = (month?: string) => {
   if (!month) return -1
   const value = String(month).trim()
@@ -260,6 +262,7 @@ const yAxisMax = computed(() => {
   return Math.max(25, Math.ceil(maxValue / 5) * 5)
 })
 
+/**\n * getMarkerLabel：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。\n */
 const getMarkerLabel = (index: number) => {
   const item = currentTrendDataByMonth.value[index]
   if (trendTab.value === '阳性率') {
@@ -269,6 +272,7 @@ const getMarkerLabel = (index: number) => {
   return `${item.statValue || 0}项次`
 }
 
+/**\n * createLineTrendOption：执行会产生数据或文件副作用的页面操作。调用前使用当前页面状态组装参数，成功后的页面反馈和状态更新由该方法负责。\n */
 const createLineTrendOption = (data: number[], max: number, formatter?: string) => ({
   animation: false,
   grid: { left: 86, right: 100, top: 54, bottom: 58 },
@@ -420,6 +424,7 @@ const currentLineTrendOption = computed(() =>
     : createLineTrendOption(lineValues.value, yAxisMax.value)
 )
 
+/**\n * loadTrendData：加载当前页面所需的数据或初始化状态。请求条件由当前路由、筛选项或已有上下文决定，结果用于更新页面响应式状态。\n */
 const loadTrendData = async () => {
   try {
     const data = await getDashboardTrend({
@@ -433,6 +438,7 @@ const loadTrendData = async () => {
   }
 }
 
+/**\n * loadOverviewData：加载当前页面所需的数据或初始化状态。请求条件由当前路由、筛选项或已有上下文决定，结果用于更新页面响应式状态。\n */
 const loadOverviewData = async () => {
   try {
     const data = await getDashboardOverview(getBigScreenQueryParams())

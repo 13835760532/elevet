@@ -145,10 +145,12 @@ const total = ref(0);
 const tableList = ref([]);
 
 const selectedAreaNames = ref([]);
+/**\n * handleAreaSelect：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleAreaSelect = (area) => {
     selectedAreaNames.value = [area.province, area.city, area.district].filter(Boolean);
 };
 
+/**\n * getList：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。\n */
 const getList = async () => {
     loading.value = true;
     try {
@@ -185,11 +187,13 @@ const getList = async () => {
     }
 }
 
+/**\n * handleQuery：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleQuery = () => {
     pageParams.pageNo = 1;
     getList();
 };
 
+/**\n * handleReset：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleReset = () => {
     queryParams.productCode = '';
     queryParams.subjectName = '';
@@ -201,6 +205,7 @@ const handleReset = () => {
     handleQuery();
 };
 
+/**\n * handleExport：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleExport = async () => {
     try {
         await message.exportConfirm();
@@ -239,10 +244,14 @@ const handleExport = async () => {
     }
 };
 
+/**\n * handleBatchFiling：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleBatchFiling = () => { router.push('/filing/productBatch'); };
+/**\n * handleSingleFiling：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleSingleFiling = () => { router.push('/filing/productCreate'); };
+/**\n * handleEdit：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleEdit = (row) => { router.push('/filing/productCreate?id=' + row.id); };
 
+/**\n * handleDelete：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleDelete = async (row) => {
     try {
         await ElMessageBox.confirm('是否确认删除产品名称为"' + row.productName + '"的数据项?', '警告', {
@@ -254,6 +263,7 @@ const handleDelete = async (row) => {
     } catch (error) { }
 };
 
+/**\n * handleView：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleView = (row) => { router.push('/filing/productDetail?id=' + row.id); };
 
 // 表格高度动态计算

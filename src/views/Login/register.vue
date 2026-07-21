@@ -109,6 +109,7 @@ const registerForm = ref({
   captchaVerification: ''
 })
 
+/**\n * equalToPassword：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const equalToPassword = (rule, value, callback) => {
   if (registerForm.value.password !== value) {
     callback(new Error("两次输入的密码不一致"))
@@ -145,6 +146,7 @@ const registerRules = {
   ]
 }
 
+/**\n * handleSendCode：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleSendCode = () => {
   if (!registerForm.value.mobile) {
     ElMessage.warning('请先输入手机号')
@@ -167,6 +169,7 @@ const handleSendCode = () => {
   }).catch(() => { })
 }
 
+/**\n * handleNextStep：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleNextStep = async () => {
   if (!proxy.$refs.registerRef) return;
 
@@ -183,6 +186,7 @@ const handleNextStep = async () => {
   }
 }
 
+/**\n * handleRegisterPre：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 function handleRegisterPre() {
   proxy.$refs.registerRef.validate(valid => {
     if (valid) {
@@ -195,6 +199,7 @@ function handleRegisterPre() {
   })
 }
 
+/**\n * handleRegister：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 function handleRegister(params) {
   loading.value = true
   const registerData = { ...registerForm.value }

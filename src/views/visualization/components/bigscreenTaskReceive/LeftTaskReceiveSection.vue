@@ -86,7 +86,9 @@ const categoryColors = [
   '#ff8a34'
 ]
 
+/**\n * formatCount：将页面使用的数据在不同结构或展示口径之间转换。该方法不直接驱动页面跳转，返回值供调用方继续组装或渲染。\n */
 const formatCount = (value?: number) => Number(value || 0)
+/**\n * formatRate：将页面使用的数据在不同结构或展示口径之间转换。该方法不直接驱动页面跳转，返回值供调用方继续组装或渲染。\n */
 const formatRate = (value?: number) => Number(value || 0).toFixed(2)
 
 const summaryData = computed(() => [
@@ -100,6 +102,7 @@ const coverData = computed(() => [
   { label: '生产经营主体', value: formatCount(overview.value.enterpriseCount), icon: iconFactory }
 ])
 
+/**\n * loadOverviewData：加载当前页面所需的数据或初始化状态。请求条件由当前路由、筛选项或已有上下文决定，结果用于更新页面响应式状态。\n */
 const loadOverviewData = async () => {
   try {
     const data = await getTaskOverview(getBigScreenQueryParams())
@@ -201,6 +204,7 @@ const categoryPieOption = computed(() => ({
   ]
 }))
 
+/**\n * loadCategoryDistribution：加载当前页面所需的数据或初始化状态。请求条件由当前路由、筛选项或已有上下文决定，结果用于更新页面响应式状态。\n */
 const loadCategoryDistribution = async () => {
   try {
     const data = await getTaskCategoryDistribution(getBigScreenQueryParams())

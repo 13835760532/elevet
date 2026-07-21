@@ -297,6 +297,7 @@ const printQrText = computed(() =>
     activePrintCertData.value?.qrCode || activePrintCertData.value?.certificateCode || ''
 );
 
+/**\n * formatTimelineTime：将页面使用的数据在不同结构或展示口径之间转换。该方法不直接驱动页面跳转，返回值供调用方继续组装或渲染。\n */
 const formatTimelineTime = (value: any) => {
     const [date = '--', hour = ''] = String(value || '').split(' ');
     return `${date}${hour ? `  ${hour}` : ''}`;
@@ -358,11 +359,13 @@ const traceRecords = computed(() => {
     return records;
 });
 
+/**\n * handleViewCert：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleViewCert = (data: any) => {
     activeCertData.value = data;
     showCertVisible.value = true;
 };
 
+/**\n * handleViewReport：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleViewReport = (data: any) => {
     if (!data) {
         ElMessage.warning('暂无检测报告');
@@ -372,10 +375,12 @@ const handleViewReport = (data: any) => {
     showReportVisible.value = true;
 };
 
+/**\n * handleViewTraceReport：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleViewTraceReport = () => {
     handleViewReport(traceData.value?.detectionReport);
 };
 
+/**\n * connectBluetoothPrinter：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const connectBluetoothPrinter = async () => {
     if (!bluetoothPrinter.isSupported()) {
         ElMessage.error(bluetoothPrinter.getUnsupportedReason());
@@ -392,11 +397,13 @@ const connectBluetoothPrinter = async () => {
     }
 };
 
+/**\n * captureAreaToImg：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const captureAreaToImg = async () => {
     if (!activePrintCertData.value) return null;
     return captureCertificatePrintArea(printAreaRef.value);
 };
 
+/**\n * handleOpenPrintPreview：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleOpenPrintPreview = async (data: any) => {
     if (!data) {
         ElMessage.warning('暂无可打印的合格证信息');
@@ -429,6 +436,7 @@ const handleOpenPrintPreview = async (data: any) => {
     }
 };
 
+/**\n * handlePrint：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handlePrint = async (prepared?: string | null) => {
     const dataUrl = typeof prepared === 'string' ? prepared : await captureAreaToImg();
     if (!dataUrl) {
@@ -458,6 +466,7 @@ const handlePrint = async (prepared?: string | null) => {
     }
 };
 
+/**\n * handleSearch：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleSearch = async () => {
     const code = searchCode.value?.trim();
     if (!code) { ElMessage.warning('请输入编号'); return; }

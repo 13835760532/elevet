@@ -204,6 +204,7 @@ const activeTab = ref('task');
 const message = useMessage();
 const deptOptions = ref([]);
 const productCategoryDict = useDict('agri_product_category', 'str');
+/**\n * getCategoryLabel：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。\n */
 const getCategoryLabel = (value) => productCategoryDict.getLabel(value);
 const categoryOptions = ref((productCategoryDict.options.value || []).map((item) => ({
     label: item.label,
@@ -342,6 +343,7 @@ const formatDetectionItems = (value) => {
     return typeof value === 'string' ? value : '-';
 };
 
+/**\n * loadDeptOptions：加载当前页面所需的数据或初始化状态。请求条件由当前路由、筛选项或已有上下文决定，结果用于更新页面响应式状态。\n */
 const loadDeptOptions = async () => {
     try {
         const data = await DeptApi.searchDeptList({ deptType: 2 });
@@ -362,15 +364,18 @@ onMounted(() => {
     getList();
 });
 
+/**\n * handleBack：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleBack = () => {
     router.back();
 };
 
+/**\n * handleQuery：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleQuery = () => {
     pageParams.pageNum = 1;
     getList();
 };
 
+/**\n * handleReset：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleReset = () => {
     Object.keys(queryParams).forEach(key => (queryParams[key] = ''));
     handleQuery();
@@ -394,10 +399,12 @@ const handleExport = async () => {
     }
 };
 
+/**\n * handleBatchImport：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleBatchImport = () => {
     router.push('/rapidDetection/batchImportData');
 };
 
+/**\n * handleSingleInput：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleSingleInput = () => {
     router.push({
         path: '/rapidDetection/taskDetectionCreate',
@@ -405,6 +412,7 @@ const handleSingleInput = () => {
     });
 };
 
+/**\n * handleTest：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleTest = (row) => {
     router.push({
         path: '/rapidDetection/taskDetectionCreate',
@@ -412,6 +420,7 @@ const handleTest = (row) => {
     });
 };
 
+/**\n * handleDelete：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleDelete = async (row) => {
     try {
         await DetectionRecordApi.deleteDetectionRecord(row.id);
@@ -419,10 +428,12 @@ const handleDelete = async (row) => {
     } catch (e) { }
 };
 
+/**\n * handleView：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleView = (row) => {
     router.push('/rapidDetection/taskResult?id=' + row.id);
 };
 
+/**\n * handleRetest：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleRetest = (row) => {
     router.push({
         path: '/rapidDetection/taskDetectionCreate',

@@ -123,9 +123,11 @@ const issueRank = ref<RankItem[]>([])
 const distributionData = ref<CertificateTypeDistributionRespVO[]>([])
 const storeRank = ref<RankItem[]>([])
 
+/**\n * toTenRankRows：将页面使用的数据在不同结构或展示口径之间转换。该方法不直接驱动页面跳转，返回值供调用方继续组装或渲染。\n */
 const toTenRankRows = (list: RankItem[]) =>
   Array.from({ length: RANK_ROW_COUNT }, (_, index) => list[index] || { name: '--', value: '--' })
 
+/**\n * normalizeDistribution：将页面使用的数据在不同结构或展示口径之间转换。该方法不直接驱动页面跳转，返回值供调用方继续组装或渲染。\n */
 const normalizeDistribution = (list: CertificateTypeDistributionRespVO[] = []) => {
   const distributionMap = new Map(list.map((item) => [item.certificateType, item]))
   return [1, 2, 3]
@@ -244,12 +246,14 @@ const analysisOption = computed(() => ({
   ]
 }))
 
+/**\n * formatRankList：将页面使用的数据在不同结构或展示口径之间转换。该方法不直接驱动页面跳转，返回值供调用方继续组装或渲染。\n */
 const formatRankList = (list: CertificateVerificationTopRespVO[] = []) =>
   list.map((item) => ({
     name: item.subjectName || '--',
     value: Number(item.count || 0)
   }))
 
+/**\n * formatIssueRankList：将页面使用的数据在不同结构或展示口径之间转换。该方法不直接驱动页面跳转，返回值供调用方继续组装或渲染。\n */
 const formatIssueRankList = (list: CertificateIssueTopRespVO[] = []) =>
   list.map((item) => ({
     name: item.subjectName || '--',

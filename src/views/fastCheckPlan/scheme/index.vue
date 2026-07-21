@@ -200,8 +200,10 @@ const { options: productCategoryOptions, getLabel: getProductCategoryLabel } = u
 
 const produceCategoryTree = ref([])
 
+/**\n * getCategoryLabelFromTree：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。\n */
 const getCategoryLabelFromTree = (val) => {
   if (!val) return '--'
+  /**\n   * findLabel：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。\n   */
   const findLabel = (nodes) => {
     for (const node of nodes) {
       if (String(node.code) === String(val) || String(node.name) === String(val) || String(node.id) === String(val)) {
@@ -274,12 +276,14 @@ const getList = async () => {
 }
 
 // 查询功能
+/**\n * handleQuery：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleQuery = () => {
   pageParams.pageNo = 1
   getList()
 };
 
 // 重置功能
+/**\n * handleReset：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleReset = () => {
   queryParams.keyword = ''
   queryParams.targetCategory = ''
@@ -292,11 +296,13 @@ const handleReset = () => {
 // 移除 watch，改用组件上的 @size-change 和 @current-change 事件
 
 // 创建方案
+/**\n * handleAdd：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleAdd = () => {
   router.push('/fastCheckPlan/schemeCreate');
 };
 
 // 编辑方案
+/**\n * handleEdit：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleEdit = (row) => {
   router.push({
     path: '/fastCheckPlan/schemeCreate',
@@ -305,6 +311,7 @@ const handleEdit = (row) => {
 };
 
 // 删除方案（带二次确认）
+/**\n * handleDelete：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleDelete = async (row) => {
   try {
     await ElMessageBox.confirm(
@@ -330,6 +337,7 @@ const handleDelete = async (row) => {
 };
 
 // 查看方案详情
+/**\n * handleView：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleView = (row) => {
   router.push({
     path: '/fastCheckPlan/schemeTask',

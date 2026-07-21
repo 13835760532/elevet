@@ -286,6 +286,7 @@ const produceCategoryTree = ref([])
 /** 在行业分类树中递归查找名称，找不到时依次回退字典标签和原值。 */
 const getCategoryLabelFromTree = (val) => {
     if (!val) return '--'
+    /**\n     * findLabel：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。\n     */
     const findLabel = (nodes) => {
         for (const node of nodes) {
             if (String(node.code) === String(val) || String(node.name) === String(val) || String(node.id) === String(val)) {
@@ -378,6 +379,7 @@ const loadDeptList = async () => {
 };
 
 // 自动生成方案编号逻辑
+/**\n * generatePlanCode：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const generatePlanCode = () => {
     if (isEdit.value) return;
     const category = (formData.targetCategory || 'GENERAL').toUpperCase();
@@ -408,11 +410,13 @@ const formRules = {
 
 
 // 取消操作
+/**\n * handleCancel：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleCancel = () => {
     router.back();
 };
 
 // 方案预览
+/**\n * handlePreview：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handlePreview = () => {
     formRef.value.validate((valid) => {
         if (valid) {
@@ -474,6 +478,7 @@ const handleSubmit = async () => {
 };
 
 // 从预览弹窗提交
+/**\n * handleSubmitFromPreview：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleSubmitFromPreview = () => {
     previewVisible.value = false;
     handleSubmit();
@@ -512,6 +517,7 @@ const loadPlanDetail = async (id) => {
     }
 }
 
+/**\n * findDeptName：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。\n */
 const findDeptName = (id, list) => {
     for (const node of list) {
         if (node.id === id) return node.name;
@@ -524,6 +530,7 @@ const findDeptName = (id, list) => {
 }
 
 // 标签显示辅助方法
+/**\n * getDeptLabel：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。\n */
 const getDeptLabel = (value) => {
     if (!value) return '--';
     const found = findDeptName(value, deptTreeOptions.value);
@@ -548,6 +555,7 @@ const handleDeptChange = (val) => {
 
 
 
+/**\n * getPeriodLabel：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。\n */
 const getPeriodLabel = () => {
     const typeMap = { 1: '年度', 2: '月度', 3: '周度' };
     const parts = [];
@@ -558,6 +566,7 @@ const getPeriodLabel = () => {
     return parts.join(' ') || '--';
 };
 
+/**\n * getExecutionTime：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。\n */
 const getExecutionTime = () => {
     if (formData.planStartDate && formData.planEndDate) {
         return `${formData.planStartDate} 至 ${formData.planEndDate}`;

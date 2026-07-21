@@ -136,6 +136,7 @@ const getTenantByWebsite = async () => {
   }
 }
 
+/**\n * handleRegister：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleRegister = () => {
   if (loginType.value === 'checking') {
     ElMessageBox.alert('请联系壹拾智检机构客服服务010-62133855', '注册提示', {

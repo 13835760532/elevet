@@ -179,6 +179,7 @@ defineExpose({ open }) // 提供 open 方法，用于打开弹窗
 
 /** 提交表单 */
 const emit = defineEmits(['success']) // 定义 success 事件，用于操作成功后的回调
+/**\n * submitForm：执行会产生数据或文件副作用的页面操作。调用前使用当前页面状态组装参数，成功后的页面反馈和状态更新由该方法负责。\n */
 const submitForm = async () => {
   // 校验表单
   if (!formRef) return
@@ -221,6 +222,7 @@ const submitForm = async () => {
 
 /** 获取下拉框[上级菜单]的数据  */
 const menuTree = ref<Tree[]>([]) // 树形结构
+/**\n * getTree：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。\n */
 const getTree = async () => {
   menuTree.value = []
   const res = await MenuApi.getSimpleMenusList()

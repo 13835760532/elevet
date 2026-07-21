@@ -34,6 +34,7 @@ const groupId = computed({
 
 const groupOptions = ref<GroupApi.GroupVO[]>([])
 
+/**\n * getList：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。\n */
 const getList = async () => {
   groupOptions.value = await GroupApi.getSimpleGroupList()
 }

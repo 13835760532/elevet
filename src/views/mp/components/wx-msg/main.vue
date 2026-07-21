@@ -90,6 +90,7 @@ onMounted(async () => {
 })
 
 // 执行发送
+/**\n * sendMsg：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const sendMsg = async () => {
   if (!unref(reply)) {
     return
@@ -114,11 +115,13 @@ const sendMsg = async () => {
   replySelectRef.value?.clear()
 }
 
+/**\n * loadMore：加载当前页面所需的数据或初始化状态。请求条件由当前路由、筛选项或已有上下文决定，结果用于更新页面响应式状态。\n */
 const loadMore = () => {
   queryParams.pageNo++
   getPage(queryParams, null)
 }
 
+/**\n * getPage：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。\n */
 const getPage = async (page: any, params: any = null) => {
   loading.value = true
   const dataTemp = await getMessagePage(
@@ -158,6 +161,7 @@ const getPage = async (page: any, params: any = null) => {
   }
 }
 
+/**\n * refreshChange：同步或重置当前页面状态，保证筛选项、组件显示和后续请求参数保持一致。\n */
 const refreshChange = () => {
   getPage(queryParams)
 }

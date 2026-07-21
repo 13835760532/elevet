@@ -264,6 +264,7 @@ const basisList = computed(() => {
     return [];
 });
 
+/**\n * getUploadInput：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。\n */
 const getUploadInput = () => {
     const uploadEl = uploadRef.value?.$el || uploadRef.value;
     return uploadEl?.querySelector?.('input[type="file"]');
@@ -276,6 +277,7 @@ const resetUploadSelection = () => {
     if (inputEl) inputEl.value = '';
 };
 
+/**\n * triggerUpload：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const triggerUpload = () => {
     resetUploadSelection();
     const inputEl = getUploadInput();
@@ -352,6 +354,7 @@ const onFileChange = async (uploadFile) => {
     }
 };
 
+/**\n * handleCancel：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleCancel = () => {
     router.back();
 };

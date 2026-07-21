@@ -214,6 +214,7 @@ const productCategoryOptions = getDictOptions(DICT_TYPE.AGRI_PRODUCT_CATEGORY);
 
 
 // 格式化表格中无内容的值为 -
+/**\n * tableColumnFormatter：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const tableColumnFormatter = (row: any, column: any, cellValue: any) => {
     return cellValue !== null && cellValue !== undefined && cellValue !== '' ? cellValue : '-'
 }
@@ -273,6 +274,7 @@ const getList = async () => {
         loading.value = false;
     }
 };
+/**\n * handleAreaSelect：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleAreaSelect = (area: any) => {
     queryParams.province = area.province;
     queryParams.city = area.city;
@@ -285,11 +287,13 @@ onMounted(() => {
     getList();
 });
 
+/**\n * handleQuery：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleQuery = () => {
     pageParams.pageNum = 1;
     getList();
 };
 
+/**\n * handleReset：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleReset = () => {
     Object.keys(queryParams).forEach(key => {
         if (Array.isArray(queryParams[key])) {
@@ -327,18 +331,22 @@ const handleExport = async () => {
     }
 };
 
+/**\n * handleAdd：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleAdd = () => {
     router.push('/certificate/issue/create');
 };
 
+/**\n * handleEdit：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleEdit = (row: any) => {
     router.push({ path: '/certificate/issue/create', query: { id: row.id } });
 };
 
+/**\n * handleView：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleView = (row: any) => {
     router.push(`/certificate/issue/detail/${row.id}`);
 };
 
+/**\n * handleDelete：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleDelete = async (row: any) => {
     try {
         await message.delConfirm();
@@ -374,6 +382,7 @@ const handleInvalidate = async (row: any) => {
     }
 };
 
+/**\n * handleCurrentChange：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleCurrentChange = (val: number) => {
     pageParams.pageNum = val;
     getList();

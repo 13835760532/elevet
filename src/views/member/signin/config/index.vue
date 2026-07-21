@@ -82,6 +82,7 @@ const getList = async () => {
 
 /** 添加/修改操作 */
 const formRef = ref()
+/**\n * openForm：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const openForm = (type: string, id?: number) => {
   formRef.value.open(type, id)
 }

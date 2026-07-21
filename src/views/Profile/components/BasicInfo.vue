@@ -93,6 +93,7 @@ watch(
   }
 )
 
+/**\n * submit：执行会产生数据或文件副作用的页面操作。调用前使用当前页面状态组装参数，成功后的页面反馈和状态更新由该方法负责。\n */
 const submit = () => {
   const elForm = unref(formRef)?.getElFormRef()
   if (!elForm) return
@@ -109,6 +110,7 @@ const submit = () => {
   })
 }
 
+/**\n * init：加载当前页面所需的数据或初始化状态。请求条件由当前路由、筛选项或已有上下文决定，结果用于更新页面响应式状态。\n */
 const init = async () => {
   const res = await getUserProfile()
   unref(formRef)?.setValues(res)

@@ -33,6 +33,7 @@ const password = reactive({
 })
 
 // 表单校验
+/**\n * equalToPassword：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const equalToPassword = (_rule, value, callback) => {
   if (password.newPassword !== value) {
     callback(new Error(t('profile.password.diffPwd')))
@@ -56,6 +57,7 @@ const rules = reactive<FormRules>({
   ]
 })
 
+/**\n * submit：执行会产生数据或文件副作用的页面操作。调用前使用当前页面状态组装参数，成功后的页面反馈和状态更新由该方法负责。\n */
 const submit = (formEl: FormInstance | undefined) => {
   if (!formEl) return
   formEl.validate(async (valid) => {
@@ -66,6 +68,7 @@ const submit = (formEl: FormInstance | undefined) => {
   })
 }
 
+/**\n * reset：同步或重置当前页面状态，保证筛选项、组件显示和后续请求参数保持一致。\n */
 const reset = (formEl: FormInstance | undefined) => {
   if (!formEl) return
   formEl.resetFields()

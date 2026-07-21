@@ -269,8 +269,10 @@ const { getLabel: getProductCategoryLabel, options: productCategoryOptions } = u
 
 const produceCategoryTree = ref([]);
 
+/**\n * getCategoryLabelFromTree：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。\n */
 const getCategoryLabelFromTree = (val) => {
     if (!val) return '--';
+    /**\n     * findLabel：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。\n     */
     const findLabel = (nodes) => {
         for (const node of nodes) {
             if (String(node.code) === String(val) || String(node.name) === String(val) || String(node.id) === String(val)) {
@@ -349,6 +351,7 @@ const queryParams = reactive({
     dateRange: []
 });
 
+/**\n * handleDeptTypeChange：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleDeptTypeChange = () => {
     applyFilters();
 };
@@ -389,6 +392,7 @@ const categoryOptions = ref([]);
 const showImageViewer = ref(false);
 const previewImageUrl = ref('');
 
+/**\n * handlePreviewFile：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handlePreviewFile = (file) => {
     if (!file.url) return;
     const url = file.url.toLowerCase();
@@ -418,6 +422,7 @@ const statusClass = computed(() => {
 
 // 部门列表映射（从后端获取）
 const deptMap = ref({});
+/**\n * getDeptLabel：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。\n */
 const getDeptLabel = (value) => {
     return deptMap.value[value] || '--';
 };
@@ -627,12 +632,14 @@ onMounted(async () => {
 
 
 
+/**\n * handleTaskSizeChange：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleTaskSizeChange = (val) => {
     pageParams.pageSize = val;
     pageParams.pageNum = 1;
     // loadTaskList(route.query.id); 重新加载
 };
 
+/**\n * handleTaskPageChange：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleTaskPageChange = (val) => {
     pageParams.pageNum = val;
     // loadTaskList(route.query.id); 重新加载
@@ -681,22 +688,27 @@ const loadDetectionResults = async (params = {}) => {
     }
 };
 
+/**\n * handleProgressQuery：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleProgressQuery = (params) => {
     loadDetectionResults(params);
 };
 
+/**\n * handleProgressReset：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleProgressReset = () => {
     loadDetectionResults();
 };
 
+/**\n * handleSingleInput：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleSingleInput = () => {
     router.push('/rapidDetection/create');
 };
 
+/**\n * handleBatchImport：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleBatchImport = () => {
     router.push('/rapidDetection/batchImportData');
 };
 
+/**\n * handleViewDetail：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleViewDetail = (row) => {
     router.push({
         path: '/fastCheckPlan/resultDetail',
@@ -704,6 +716,7 @@ const handleViewDetail = (row) => {
     });
 };
 
+/**\n * getTaskStatusClass：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。\n */
 const getTaskStatusClass = (status) => {
     const statusMap = {
         '待接收': 'status-not-started',
@@ -715,10 +728,12 @@ const getTaskStatusClass = (status) => {
     return statusMap[status] || '';
 };
 
+/**\n * handleQuery：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleQuery = () => {
     applyFilters();
 };
 
+/**\n * handleReset：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleReset = () => {
     queryParams.task = '';
     queryParams.deptType = undefined;
@@ -801,6 +816,7 @@ const handleExport = async () => {
     }
 };
 
+/**\n * handleCreateTask：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleCreateTask = () => {
     router.push({
         path: '/fastCheckPlan/createSchemeTask',
@@ -808,6 +824,7 @@ const handleCreateTask = () => {
     });
 };
 
+/**\n * handleEditTask：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleEditTask = (row) => {
     router.push({
         path: '/taskDetection/taskManagement',
@@ -815,6 +832,7 @@ const handleEditTask = (row) => {
     });
 };
 
+/**\n * handleDeleteTask：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleDeleteTask = (row) => {
     ElMessageBox.confirm(
         `确定要删除任务"${row.taskName}"吗？删除后将无法恢复。`,
@@ -831,6 +849,7 @@ const handleDeleteTask = (row) => {
     });
 };
 
+/**\n * handleViewTask：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleViewTask = (row) => {
     router.push({
         path: '/fastCheckPlan/taskAllocate',
@@ -838,6 +857,7 @@ const handleViewTask = (row) => {
     });
 };
 
+/**\n * handleCreateSubTask：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleCreateSubTask = (row) => {
     router.push({
         path: '/fastCheckPlan/createSchemeTask',

@@ -260,6 +260,7 @@ const verifyRules = {
 };
 
 const passwordInputRef = ref(null);
+/**\n * handleVerifyClick：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleVerifyClick = () => {
     verifyForm.password = '';
     verifyVisible.value = true;
@@ -268,6 +269,7 @@ const handleVerifyClick = () => {
     });
 };
 
+/**\n * resetSensitiveInfo：同步或重置当前页面状态，保证筛选项、组件显示和后续请求参数保持一致。\n */
 const resetSensitiveInfo = () => {
     sensitiveInfo.value = {
         contactPhone: '',
@@ -277,11 +279,13 @@ const resetSensitiveInfo = () => {
     isRevealed.value = false;
 };
 
+/**\n * handleHideSensitive：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleHideSensitive = () => {
     resetSensitiveInfo();
     ElMessage.success('敏感信息已隐藏');
 };
 
+/**\n * submitVerify：执行会产生数据或文件副作用的页面操作。调用前使用当前页面状态组装参数，成功后的页面反馈和状态更新由该方法负责。\n */
 const submitVerify = async () => {
     if (!verifyFormRef.value) return;
     await verifyFormRef.value.validate(async (valid) => {
@@ -307,6 +311,7 @@ const submitVerify = async () => {
     });
 };
 
+/**\n * parseUrls：将页面使用的数据在不同结构或展示口径之间转换。该方法不直接驱动页面跳转，返回值供调用方继续组装或渲染。\n */
 const parseUrls = (urlsStr) => {
     if (!urlsStr) return [];
     try {
@@ -317,6 +322,7 @@ const parseUrls = (urlsStr) => {
     }
 };
 
+/**\n * loadDetail：加载当前页面所需的数据或初始化状态。请求条件由当前路由、筛选项或已有上下文决定，结果用于更新页面响应式状态。\n */
 const loadDetail = async () => {
     const id = route.query.id;
     if (!id) return;
@@ -338,6 +344,7 @@ watch(() => route.query.id, (newId) => {
     }
 }, { immediate: true });
 
+/**\n * handleBack：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleBack = () => {
     router.back();
 };

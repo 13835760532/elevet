@@ -260,17 +260,20 @@ const exportLoading = ref(false);
 const { wsCache } = useCache();
 const { getLabel: getProductCategoryLabel } = useDict('agri_product_category', 'str');
 
+/**\n * normalizeAreaValue：将页面使用的数据在不同结构或展示口径之间转换。该方法不直接驱动页面跳转，返回值供调用方继续组装或渲染。\n */
 const normalizeAreaValue = (value: unknown) => {
     if (value === undefined || value === null || value === '') return '';
     return String(value);
 };
 
+/**\n * isSuperAdmin：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。\n */
 const isSuperAdmin = () => {
     const userInfo = wsCache.get(CACHE_KEY.USER);
     const roles = userInfo?.roles || [];
     return Array.isArray(roles) && roles.includes('super_admin');
 };
 
+/**\n * getUserDeptAreaParams：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。\n */
 const getUserDeptAreaParams = () => {
     if (isSuperAdmin()) {
         return {
@@ -286,6 +289,7 @@ const getUserDeptAreaParams = () => {
     };
 };
 
+/**\n * getUserDeptAreaName：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。\n */
 const getUserDeptAreaName = () => {
     const userDept = wsCache.get(CACHE_KEY.USER_DEPT) || {};
     return (
@@ -321,6 +325,7 @@ const findNodePathById = (id: any, tree: any[]): any[] | undefined => {
     return undefined;
 };
 
+/**\n * limitTreeByRootArea：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const limitTreeByRootArea = (tree: any[], rootAreaCode: any) => {
     if (!rootAreaCode) return tree || [];
     const rootNode = findNodeById(rootAreaCode, tree || []);
@@ -343,6 +348,7 @@ const treeProps = {
     label: 'name'
 };
 
+/**\n * getRegionTree：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。\n */
 const getRegionTree = async () => {
     try {
         const data = await AreaApi.getAreaTree();
@@ -378,6 +384,7 @@ const queryParams = reactive({
 });
 
 const areaIds = ref([]);
+/**\n * handleAreaSelect：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleAreaSelect = (area: any) => {
     queryParams.province = area.province;
     queryParams.city = area.city;
@@ -385,6 +392,7 @@ const handleAreaSelect = (area: any) => {
     queryParams.productionArea = [area.province, area.city, area.district].filter(Boolean).join('');
 };
 
+/**\n * handleAreaChange：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleAreaChange = (value: any) => {
     if (value === undefined || value === null || value === '' || (Array.isArray(value) && value.length === 0)) {
         queryParams.province = '';
@@ -420,6 +428,7 @@ const statsData = reactive({
 
 const selectedArea = ref<any>(null);
 
+/**\n * getEffectiveAreaParams：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。\n */
 const getEffectiveAreaParams = () => {
     if (selectedArea.value) {
         return {
@@ -435,6 +444,7 @@ const getEffectiveAreaParams = () => {
     };
 };
 
+/**\n * buildPageParams：将页面使用的数据在不同结构或展示口径之间转换。该方法不直接驱动页面跳转，返回值供调用方继续组装或渲染。\n */
 const buildPageParams = () => {
     const areaParams = getEffectiveAreaParams();
     const params: any = {
@@ -465,6 +475,7 @@ const buildPageParams = () => {
     return params;
 };
 
+/**\n * loadStats：加载当前页面所需的数据或初始化状态。请求条件由当前路由、筛选项或已有上下文决定，结果用于更新页面响应式状态。\n */
 const loadStats = async () => {
     try {
         const params = getEffectiveAreaParams();
@@ -479,6 +490,7 @@ const loadStats = async () => {
     }
 };
 
+/**\n * loadData：加载当前页面所需的数据或初始化状态。请求条件由当前路由、筛选项或已有上下文决定，结果用于更新页面响应式状态。\n */
 const loadData = async () => {
     loading.value = true;
     try {
@@ -503,6 +515,7 @@ onMounted(() => {
 });
 
 // 页签切换处理
+/**\n * handleTabChange：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleTabChange = (tab: string) => {
     activeTab.value = tab;
     queryParams.certificateType = undefined;
@@ -513,12 +526,14 @@ const handleTabChange = (tab: string) => {
     loadData();
 };
 
+/**\n * handleSearch：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleSearch = () => {
     pageNum.value = 1;
     loadData();
     ElMessage.success('查询成功');
 };
 
+/**\n * handleReset：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleReset = () => {
     queryParams.dateRange = [];
     queryParams.certificateCode = '';
@@ -537,6 +552,7 @@ const handleReset = () => {
     handleSearch();
 };
 
+/**\n * handleNodeClick：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleNodeClick = (data: any, node: any) => {
     if (!data.id) {
         selectedArea.value = null;
@@ -557,6 +573,7 @@ const handleNodeClick = (data: any, node: any) => {
     loadData();
 };
 
+/**\n * handleExport：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleExport = async () => {
     try {
         await ElMessageBox.confirm('是否确认导出当前筛选条件下的合格证数据？', '提示', {
@@ -586,15 +603,18 @@ const handleExport = async () => {
     }
 };
 
+/**\n * handleCurrentChange：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleCurrentChange = (val) => {
     pageNum.value = val;
     loadData();
 };
 
+/**\n * handleEdit：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleEdit = (row: any) => {
     ElMessage.info(`编辑: ${row.certificateCode}`);
 };
 
+/**\n * handleDetail：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleDetail = (row: any) => {
     if (activeTab.value === 'produce') {
         // 开具合格证详情
@@ -608,6 +628,7 @@ const handleDetail = (row: any) => {
     }
 };
 
+/**\n * handleDelete：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleDelete = async (row: any) => {
     try {
         await ElMessageBox.confirm(

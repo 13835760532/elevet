@@ -169,10 +169,12 @@ const queryParams = reactive({
   accountId: props.accountId
 })
 
+/**\n * selectMaterialFun：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const selectMaterialFun = (item) => {
   emit('select-material', item)
 }
 
+/**\n * getPage：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。\n */
 const getPage = async () => {
   loading.value = true
   try {
@@ -191,6 +193,7 @@ const getPage = async () => {
   }
 }
 
+/**\n * getMaterialPageFun：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。\n */
 const getMaterialPageFun = async () => {
   const data = await MpMaterialApi.getMaterialPage({
     ...queryParams,
@@ -200,6 +203,7 @@ const getMaterialPageFun = async () => {
   total.value = data.total
 }
 
+/**\n * getFreePublishPageFun：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。\n */
 const getFreePublishPageFun = async () => {
   const data = await MpFreePublishApi.getFreePublishPage(queryParams)
   data.list.forEach((item: any) => {
@@ -212,6 +216,7 @@ const getFreePublishPageFun = async () => {
   total.value = data.total
 }
 
+/**\n * getDraftPageFun：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。\n */
 const getDraftPageFun = async () => {
   const data = await MpDraftApi.getDraftPage(queryParams)
   data.list.forEach((draft: any) => {

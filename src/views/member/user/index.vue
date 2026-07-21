@@ -262,12 +262,14 @@ const resetQuery = () => {
 
 /** 打开会员详情 */
 const { push } = useRouter()
+/**\n * openDetail：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const openDetail = (id: number) => {
   push({ name: 'MemberUserDetail', params: { id } })
 }
 
 /** 添加/修改操作 */
 const formRef = ref()
+/**\n * openForm：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const openForm = (type: string, id?: number) => {
   formRef.value.open(type, id)
 }
@@ -279,6 +281,7 @@ const handleSelectionChange = (rows: UserApi.UserVO[]) => {
 
 /** 发送优惠券 */
 const couponSendFormRef = ref()
+/**\n * openCoupon：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const openCoupon = () => {
   if (selectedIds.value.length === 0) {
     message.warning('请选择要发送优惠券的用户')

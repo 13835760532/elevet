@@ -240,12 +240,14 @@ const hasSelectedSubjectType = computed(() => formData.type !== undefined && for
 const isPersonalSubjectType = computed(() => Number(formData.type) === PERSONAL_SUBJECT_TYPE);
 const isNonPersonalSubjectType = computed(() => hasSelectedSubjectType.value && !isPersonalSubjectType.value);
 
+/**\n * clearPersonalCertificateFields：同步或重置当前页面状态，保证筛选项、组件显示和后续请求参数保持一致。\n */
 const clearPersonalCertificateFields = () => {
     formData.idCard = '';
     formData.idCardFrontUrl = '';
     formData.idCardBackUrl = '';
 };
 
+/**\n * clearNonPersonalCertificateFields：同步或重置当前页面状态，保证筛选项、组件显示和后续请求参数保持一致。\n */
 const clearNonPersonalCertificateFields = () => {
     formData.businessLicenseUrl = '';
     formData.socialCreditCode = '';
@@ -280,12 +282,14 @@ const formRules = {
     idCard: [{ required: true, message: '请填写身份证代码', trigger: 'blur' }]
 };
 
+/**\n * handleAreaSelect：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleAreaSelect = (val) => {
     formData.provinceCode = val.provinceCode;
     formData.cityCode = val.cityCode;
     formData.districtCode = val.districtCode;
 };
 
+/**\n * loadDetail：加载当前页面所需的数据或初始化状态。请求条件由当前路由、筛选项或已有上下文决定，结果用于更新页面响应式状态。\n */
 const loadDetail = async () => {
     if (!id) return;
     try {
@@ -304,6 +308,7 @@ onMounted(() => {
     loadDetail();
 });
 
+/**\n * handleSubmit：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleSubmit = async () => {
     if (!formRef.value) return;
     await formRef.value.validate(async (valid) => {
@@ -362,10 +367,12 @@ const handleSubmit = async () => {
     });
 };
 
+/**\n * handleCancel：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleCancel = () => {
     router.back();
 };
 
+/**\n * handleCopyPrevious：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleCopyPrevious = async () => {
     const cachedPayload = getLastSubmittedSubject();
     if (!cachedPayload) {

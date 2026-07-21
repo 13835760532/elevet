@@ -156,18 +156,21 @@ const resetQuery = () => {
 
 /** 添加/修改操作 */
 const formRef = ref()
+/**\n * openForm：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const openForm = (type: string, id?: number) => {
   formRef.value.open(type, id)
 }
 
 /** 数据权限操作 */
 const dataPermissionFormRef = ref()
+/**\n * openDataPermissionForm：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const openDataPermissionForm = async (row: RoleApi.RoleVO) => {
   dataPermissionFormRef.value.open(row)
 }
 
 /** 菜单权限操作 */
 const assignMenuFormRef = ref()
+/**\n * openAssignMenuForm：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const openAssignMenuForm = async (row: RoleApi.RoleVO) => {
   assignMenuFormRef.value.open(row)
 }
@@ -187,10 +190,12 @@ const handleDelete = async (id: number) => {
 
 /** 批量删除按钮操作 */
 const checkedIds = ref<number[]>([])
+/**\n * handleRowCheckboxChange：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleRowCheckboxChange = (rows: RoleApi.RoleVO[]) => {
   checkedIds.value = rows.map((row) => row.id)
 }
 
+/**\n * handleDeleteBatch：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleDeleteBatch = async () => {
   try {
     // 删除的二次确认

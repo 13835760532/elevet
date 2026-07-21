@@ -27,6 +27,7 @@ defineProps({
 const userStore = useUserStore()
 
 const cropperRef = ref()
+/**\n * handelUpload：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const handelUpload = async ({ data }) => {
   const { httpRequest } = useUpload()
   const avatar = (

@@ -134,6 +134,7 @@ const userList = ref<UserApi.UserVO[]>([]) // 用户列表
 const refreshTable = ref(true) // 重新渲染表格状态
 const areaMap = ref<Record<string, string>>({}) // 地区字典
 
+/**\n * formatArea：将页面使用的数据在不同结构或展示口径之间转换。该方法不直接驱动页面跳转，返回值供调用方继续组装或渲染。\n */
 const formatArea = (row: any) => {
   const parts = []
   if (row.provinceCode && areaMap.value[String(row.provinceCode)]) parts.push(areaMap.value[String(row.provinceCode)])
@@ -142,6 +143,7 @@ const formatArea = (row: any) => {
   return parts.length > 0 ? parts.join('-') : ''
 }
 
+/**\n * buildAreaMap：将页面使用的数据在不同结构或展示口径之间转换。该方法不直接驱动页面跳转，返回值供调用方继续组装或渲染。\n */
 const buildAreaMap = (nodes: any[]) => {
   if (!nodes || !nodes.length) return
   for (const node of nodes) {
@@ -189,6 +191,7 @@ const resetQuery = () => {
 
 /** 添加/修改操作 */
 const formRef = ref()
+/**\n * openForm：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const openForm = (type: string, id?: number) => {
   if (type === 'create') {
     router.push('/system/dept/create')

@@ -99,6 +99,7 @@ const scopeData = reactive(JSON.parse(JSON.stringify(mockHebeiData)))
 
 const callbackFn = ref<Function>()
 
+/**\n * open：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const open = (cb?: Function) => {
   if (cb) {
     callbackFn.value = cb
@@ -108,6 +109,7 @@ const open = (cb?: Function) => {
   dialogVisible.value = true
 }
 
+/**\n * handleConfirm：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleConfirm = () => {
   // TODO: 这里应根据用户的实际勾选逻辑计算出 areaCode。这里提供一个模拟的计算逻辑
   let selectedCode = ''

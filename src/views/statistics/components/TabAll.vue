@@ -387,6 +387,7 @@ import dayjs from 'dayjs'
 
 const REGION_SUFFIX_RE = /(省|市|壮族自治区|回族自治区|维吾尔自治区|自治区|特别行政区)$/g
 
+/**\n * stripRegionSuffix：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const stripRegionSuffix = (name: string) => String(name || '').replace(REGION_SUFFIX_RE, '')
 
 const STATISTICS_CHINA_MAP_NAME = 'statisticsChina'
@@ -426,6 +427,7 @@ chinaMapFeatures.forEach((feature) => {
 
 echarts.registerMap(STATISTICS_CHINA_MAP_NAME, chinaLiteGeo as any)
 
+/**\n * getFeatureAreaCode：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。\n */
 const getFeatureAreaCode = (feature: any) => String(
   feature?.id || feature?.properties?.adcode || feature?.properties?.code || ''
 ).trim()
@@ -461,6 +463,7 @@ const resolveAreaNameParams = async (areaCode: string): Promise<StatisticsAreaNa
   }
 }
 
+/**\n * getProvinceFeatureCode：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。\n */
 const getProvinceFeatureCode = (areaCode?: string | number) => {
   const value = String(areaCode || '').trim()
   return /^\d{2}/.test(value) ? `${value.slice(0, 2)}0000` : ''
@@ -520,6 +523,7 @@ const resolveGeoAspectScale = (geoJson: any) => {
   let minLatitude = Number.POSITIVE_INFINITY
   let maxLatitude = Number.NEGATIVE_INFINITY
 
+  /**\n   * visitCoordinates：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n   */
   const visitCoordinates = (coordinates: any) => {
     if (!Array.isArray(coordinates)) return
     if (typeof coordinates[0] === 'number' && typeof coordinates[1] === 'number') {
@@ -540,6 +544,7 @@ const resolveGeoAspectScale = (geoJson: any) => {
   return Math.max(0.68, Math.min(0.95, Math.cos(centerLatitude * Math.PI / 180)))
 }
 
+/**\n * resolveMapName：将页面使用的数据在不同结构或展示口径之间转换。该方法不直接驱动页面跳转，返回值供调用方继续组装或渲染。\n */
 const resolveMapName = (name: string) => {
   const rawName = String(name || '').trim()
   if (!rawName) return '--'
@@ -547,6 +552,7 @@ const resolveMapName = (name: string) => {
   return chinaMapNameLookup.get(rawName) || chinaMapNameLookup.get(shortName) || rawName
 }
 
+/**\n * getProvinceDisplayName：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。\n */
 const getProvinceDisplayName = (item: any) => {
   const areaName = String(item.areaName || '').trim()
   const provinceName = String(item.provinceName || '').trim()
@@ -554,12 +560,14 @@ const getProvinceDisplayName = (item: any) => {
   return stripRegionSuffix(rawName)
 }
 
+/**\n * getProvinceMapName：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。\n */
 const getProvinceMapName = (item: any) => {
   const areaName = String(item.areaName || '').trim()
   const provinceName = String(item.provinceName || '').trim()
   return resolveMapName(provinceName || areaName.split(/[/-]/)[0] || item.cityName || '--')
 }
 
+/**\n * mergeProvinceRows：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const mergeProvinceRows = (rows: any[]) => {
   const merged = new Map<string, any>()
   rows.forEach((row) => {
@@ -732,6 +740,7 @@ const queryParams = computed(() => ({
   queryDeptScope: canViewAreaRange.value ? 1 : 3
 }))
 
+/**\n * toBarData：将页面使用的数据在不同结构或展示口径之间转换。该方法不直接驱动页面跳转，返回值供调用方继续组装或渲染。\n */
 const toBarData = (list: any[], getName: (item: any) => string, statType: '检测量' | '阳性率') => {
   const rows = list.map((item) => {
     let val = getStatValue(item, statType)
@@ -771,6 +780,7 @@ const toBarData = (list: any[], getName: (item: any) => string, statType: '检�
   }))
 }
 
+/**\n * getAxisLabels：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。\n */
 const getAxisLabels = (data: any[], statType: '检测量' | '阳性率') => {
   if (statType === '阳性率') {
     return ['0', '20%', '40%', '60%', '80%', '100%']
@@ -1182,6 +1192,7 @@ const loadNotices = async (isLoadMore = false) => {
   noticeLoading.value = true
   try {
     const res = await getNoticePage({ pageNo: noticePageNo.value, pageSize: 50, type: 2 })
+    /**\n     * list：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n     */
     const list = (res?.list || []).map((item: any) => ({
       id: item.id,
       time: item.createTime ? dayjs(item.createTime).format('YYYY-MM-DD HH:mm') : '',
@@ -1212,6 +1223,7 @@ const loadNotices = async (isLoadMore = false) => {
 }
 
 // 下拉滚动加载
+/**\n * handleNoticeScroll：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleNoticeScroll = (e: Event) => {
   const target = e.target as HTMLElement
   const scrollBuffer = 10
@@ -1249,6 +1261,7 @@ const handleViewNoticeDetail = async (item: any) => {
   }
 }
 
+/**\n * loadData：加载当前页面所需的数据或初始化状态。请求条件由当前路由、筛选项或已有上下文决定，结果用于更新页面响应式状态。\n */
 const loadData = () => {
   loadOverview()
   loadMapData()
@@ -1256,6 +1269,7 @@ const loadData = () => {
   loadNotices()
 }
 
+/**\n * handleReset：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleReset = () => {
   dateRangeType.value = '近一周'
   dateRange.value = []

@@ -74,6 +74,7 @@ const formRules = {
     productionScale: [{ required: true, message: '请输入生产经营主体', trigger: 'blur' }]
 };
 
+/**\n * resetForm：同步或重置当前页面状态，保证筛选项、组件显示和后续请求参数保持一致。\n */
 const resetForm = () => {
     Object.assign(formData, {
         type: undefined,
@@ -97,6 +98,7 @@ const resetForm = () => {
     if (formRef.value) formRef.value.resetFields();
 };
 
+/**\n * loadDetail：加载当前页面所需的数据或初始化状态。请求条件由当前路由、筛选项或已有上下文决定，结果用于更新页面响应式状态。\n */
 const loadDetail = async () => {
     if (!props.id) {
         resetForm();
@@ -122,10 +124,12 @@ watch(() => props.modelValue, (val) => {
     }
 });
 
+/**\n * handleClose：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleClose = () => {
     emit('update:modelValue', false);
 };
 
+/**\n * handleSubmit：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleSubmit = async () => {
     if (!formRef.value) return;
     await formRef.value.validate(async (valid) => {

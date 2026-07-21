@@ -98,6 +98,7 @@ const uploadData: UploadData = reactive({
 const uploadFormRef = ref<FormInstance | null>(null)
 const uploadVideoRef = ref<UploadInstance | null>(null)
 
+/**\n * submitVideo：执行会产生数据或文件副作用的页面操作。调用前使用当前页面状态组装参数，成功后的页面反馈和状态更新由该方法负责。\n */
 const submitVideo = () => {
   uploadFormRef.value?.validate((valid) => {
     if (!valid) {

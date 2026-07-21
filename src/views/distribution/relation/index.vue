@@ -134,6 +134,7 @@ const pageParams = reactive({
   pageSize: 10
 })
 
+/**\n * getList：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。\n */
 const getList = async () => {
   loading.value = true
   try {
@@ -151,11 +152,13 @@ const getList = async () => {
   }
 }
 
+/**\n * handleQuery：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleQuery = () => {
   pageParams.pageNo = 1
   getList()
 }
 
+/**\n * handleReset：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleReset = () => {
   queryParams.name = ''
   queryParams.relationType = ''
@@ -163,14 +166,17 @@ const handleReset = () => {
   handleQuery()
 }
 
+/**\n * handleAdd：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleAdd = () => {
   router.push('/user/distribution/relation-create')
 }
 
+/**\n * handleEdit：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleEdit = (row: any) => {
   router.push(`/user/distribution/relation-create?id=${row.id}`)
 }
 
+/**\n * handleStatusChange：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleStatusChange = async (row: any) => {
   const text = row.status === 1 ? '禁用' : '启用'
   const newStatus = row.status === 1 ? 0 : 1
@@ -182,6 +188,7 @@ const handleStatusChange = async (row: any) => {
   } catch { }
 }
 
+/**\n * handleManageAccount：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleManageAccount = (row: any) => {
   // router.push(`/distribution/relation-account?id=${row.id}`)
   message.info('管理账户功能开发中...')

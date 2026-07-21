@@ -386,31 +386,38 @@ const productCategoryOption = computed(() => ({
   ]
 }))
 
+/**\n * isEmptyValue：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。\n */
 const isEmptyValue = (value: any) => value === undefined || value === null || value === ''
 
+/**\n * formatDateText：将页面使用的数据在不同结构或展示口径之间转换。该方法不直接驱动页面跳转，返回值供调用方继续组装或渲染。\n */
 const formatDateText = (value: any) => {
   if (!value) return '--'
   const date = dayjs(value)
   return date.isValid() ? date.format('YYYY-MM-DD') : String(value).slice(0, 10)
 }
 
+/**\n * formatAreaText：将页面使用的数据在不同结构或展示口径之间转换。该方法不直接驱动页面跳转，返回值供调用方继续组装或渲染。\n */
 const formatAreaText = (...items: any[]) => items.filter(Boolean).join('/') || '--'
 
+/**\n * getFilingTypeText：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。\n */
 const getFilingTypeText = (value: any) => {
   const label = getFilingTypeLabel(value)
   return label === '--' ? value || '--' : label
 }
 
+/**\n * getSubjectCategoryText：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。\n */
 const getSubjectCategoryText = (value: any) => {
   const label = getCategoryLabel(value)
   return label === '--' ? value || '--' : label
 }
 
+/**\n * getProductCategoryText：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。\n */
 const getProductCategoryText = (value: any) => {
   const label = getProductCategoryLabel(value)
   return label === '--' ? value || '--' : label
 }
 
+/**\n * buildDateTimeRange：将页面使用的数据在不同结构或展示口径之间转换。该方法不直接驱动页面跳转，返回值供调用方继续组装或渲染。\n */
 const buildDateTimeRange = () => {
   const { startDate, endDate } = dashboardQueryParams.value
   if (!startDate || !endDate) return undefined
@@ -420,6 +427,7 @@ const buildDateTimeRange = () => {
   ]
 }
 
+/**\n * isEmptyCascaderValue：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。\n */
 const isEmptyCascaderValue = (value: any) =>
   value === undefined ||
   value === null ||
@@ -428,6 +436,7 @@ const isEmptyCascaderValue = (value: any) =>
 
 const normalizeArray = <T,>(value: T[] | undefined | null) => (Array.isArray(value) ? value : [])
 
+/**\n * getLastAreaName：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。\n */
 const getLastAreaName = (areaNames: string[]) => {
   const effectiveAreaNames = areaNames.filter(Boolean)
   return effectiveAreaNames[effectiveAreaNames.length - 1] || ''
@@ -496,6 +505,7 @@ const buildProductQuery = (pageNo: number, pageSize: number) => {
   }
 }
 
+/**\n * handleAreaSelect：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleAreaSelect = (area: any) => {
   if (!canViewAreaRange.value) return
   Object.assign(areaParams, {
@@ -504,6 +514,7 @@ const handleAreaSelect = (area: any) => {
   })
 }
 
+/**\n * handleAreaChange：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleAreaChange = (value: any) => {
   if (!canViewAreaRange.value) return
   if (
@@ -520,10 +531,12 @@ const handleAreaChange = (value: any) => {
   }
 }
 
+/**\n * handleSubjectAreaSelect：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleSubjectAreaSelect = (area: any) => {
   subjectAreaNames.value = [area?.province, area?.city, area?.district].filter(Boolean)
 }
 
+/**\n * handleSubjectAreaChange：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleSubjectAreaChange = (value: any) => {
   if (isEmptyCascaderValue(value)) {
     subjectAreaNames.value = []
@@ -531,10 +544,12 @@ const handleSubjectAreaChange = (value: any) => {
   }
 }
 
+/**\n * handleProductAreaSelect：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleProductAreaSelect = (area: any) => {
   productAreaNames.value = [area?.province, area?.city, area?.district].filter(Boolean)
 }
 
+/**\n * handleProductAreaChange：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleProductAreaChange = (value: any) => {
   if (isEmptyCascaderValue(value)) {
     productAreaNames.value = []
@@ -542,6 +557,7 @@ const handleProductAreaChange = (value: any) => {
   }
 }
 
+/**\n * mapSubjectRow：将页面使用的数据在不同结构或展示口径之间转换。该方法不直接驱动页面跳转，返回值供调用方继续组装或渲染。\n */
 const mapSubjectRow = (item: any) => ({
   code: item.socialCreditCode || item.idCard || '--',
   name: item.name || '--',
@@ -553,6 +569,7 @@ const mapSubjectRow = (item: any) => ({
   createOrg: item.deptName || item.createDeptName || item.dept?.name || '--'
 })
 
+/**\n * mapProductRow：将页面使用的数据在不同结构或展示口径之间转换。该方法不直接驱动页面跳转，返回值供调用方继续组装或渲染。\n */
 const mapProductRow = (item: any) => ({
   code: item.productCode || '--',
   name: item.productName || '--',
@@ -631,22 +648,26 @@ const loadProductTable = async () => {
   }
 }
 
+/**\n * loadTables：加载当前页面所需的数据或初始化状态。请求条件由当前路由、筛选项或已有上下文决定，结果用于更新页面响应式状态。\n */
 const loadTables = () => {
   loadSubjectTable()
   loadProductTable()
 }
 
+/**\n * loadData：加载当前页面所需的数据或初始化状态。请求条件由当前路由、筛选项或已有上下文决定，结果用于更新页面响应式状态。\n */
 const loadData = () => {
   loadDashboardData()
   loadTables()
 }
 
+/**\n * handleRangeSearch：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleRangeSearch = () => {
   subjectPageNo.value = 1
   productPageNo.value = 1
   loadData()
 }
 
+/**\n * handleRangeReset：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleRangeReset = () => {
   dateRangeType.value = '近一周'
   dateRange.value = []
@@ -659,6 +680,7 @@ const handleRangeReset = () => {
   handleRangeSearch()
 }
 
+/**\n * handleSubjectSearch：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleSubjectSearch = () => {
   subjectPageNo.value = 1
   loadSubjectTable()
@@ -668,6 +690,7 @@ const searchSubjectTable = useDebounceFn(() => {
   handleSubjectSearch()
 }, 300)
 
+/**\n * handleSubjectReset：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleSubjectReset = () => {
   filtersSubject.name = ''
   filtersSubject.filingType = undefined
@@ -677,6 +700,7 @@ const handleSubjectReset = () => {
   handleSubjectSearch()
 }
 
+/**\n * handleProductSearch：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleProductSearch = () => {
   productPageNo.value = 1
   loadProductTable()
@@ -686,6 +710,7 @@ const searchProductTable = useDebounceFn(() => {
   handleProductSearch()
 }, 300)
 
+/**\n * handleProductReset：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleProductReset = () => {
   filtersProduct.productCode = ''
   filtersProduct.productName = ''

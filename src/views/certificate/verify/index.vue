@@ -173,6 +173,7 @@ const tableData = ref([]);
 const loading = ref(false);
 const exportLoading = ref(false);
 
+/**\n * handleAreaSelect：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleAreaSelect = (area: any) => {
     queryParams.province = area.province;
     queryParams.city = area.city;
@@ -210,6 +211,7 @@ onMounted(() => {
     loadData();
 });
 
+/**\n * handleSearch：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleSearch = () => {
     pageNum.value = 1;
     loadData();
@@ -249,20 +251,24 @@ const handleExport = async () => {
     }
 };
 
+/**\n * handleVerify：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleVerify = () => {
     router.push('/certificate/verify/other');
 };
 
+/**\n * handleEdit：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleEdit = (row: any) => {
     // 编辑其他平台合格证 不现实 tab 切换
     router.push({ path: '/certificate/verify/other', query: { id: row.id } });
 };
 
+/**\n * handleView：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleView = (row: any) => {
     const path = '/certificate/verify/detail';
     router.push({ path, query: { id: row.id } });
 };
 
+/**\n * handleDelete：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleDelete = async (row: any) => {
     try {
         await message.delConfirm(`确定要删除合格证编号为 "${row.certificateCode}" 的查验记录吗？`);
@@ -272,11 +278,13 @@ const handleDelete = async (row: any) => {
     } catch (error) { }
 };
 
+/**\n * handleSizeChange：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleSizeChange = (val: number) => {
     pageSize.value = val;
     loadData();
 };
 
+/**\n * handleCurrentChange：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleCurrentChange = (val: number) => {
     pageNum.value = val;
     loadData();

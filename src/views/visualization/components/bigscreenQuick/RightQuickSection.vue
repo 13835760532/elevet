@@ -96,6 +96,7 @@ const itemNames = computed(() =>
 const itemValues = computed(() =>
   pesticideTop10.value.map((item) => Number(item.positiveRate || 0))
 );
+/**\n * hasPositiveValue：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。\n */
 const hasPositiveValue = (list: number[]) => list.some((value) => Number(value || 0) > 0);
 const topChartEmpty = computed(() => categoryNames.value.length === 0);
 const productChartEmpty = computed(() => productNames.value.length === 0);
@@ -120,8 +121,10 @@ const horizontalItemMax = computed(() => {
   return maxValue <= 0 ? 100 : Math.ceil(maxValue * 1.1);
 });
 
+/**\n * formatTopValue：将页面使用的数据在不同结构或展示口径之间转换。该方法不直接驱动页面跳转，返回值供调用方继续组装或渲染。\n */
 const formatTopValue = (value: number) =>
   topTab.value === '阳性率' ? Number(value).toFixed(2) : `${Number(value)}`;
+/**\n * formatBarValue：将页面使用的数据在不同结构或展示口径之间转换。该方法不直接驱动页面跳转，返回值供调用方继续组装或渲染。\n */
 const formatBarValue = (value: number) => Number(value).toFixed(2);
 
 const middleBarOption = computed(() => ({

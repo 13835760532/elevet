@@ -148,6 +148,7 @@ const basisOptions = [
 
 const certificateQrText = computed(() => formData.qrCode || formData.certificateCode || '');
 
+/**\n * normalizeVerificationData：将页面使用的数据在不同结构或展示口径之间转换。该方法不直接驱动页面跳转，返回值供调用方继续组装或渲染。\n */
 const normalizeVerificationData = (data) => {
     const cert = data?.certificate || {};
     const source = data?.certificateSource || data?.source || 1;
@@ -206,6 +207,7 @@ onMounted(async () => {
     }
 });
 
+/**\n * handleBack：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleBack = () => {
     router.back();
 };

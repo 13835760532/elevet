@@ -178,6 +178,7 @@ const currentRecord = ref(null);
 const detectionItems = ref([]);
 
 // 远程搜索检测记录
+/**\n * searchPlatformRecords：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const searchPlatformRecords = async (query) => {
     if (query !== '') {
         searchLoading.value = true;
@@ -199,6 +200,7 @@ const searchPlatformRecords = async (query) => {
 };
 
 // 关联详细信息
+/**\n * handleLinkRecord：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleLinkRecord = async () => {
     if (!formData.platformRecordId) {
         message.warning('请先搜索并选择一个检测记录');
@@ -237,16 +239,20 @@ onMounted(() => {
     }
 });
 
+/**\n * handleAdd：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleAdd = () => formData.quantity++;
+/**\n * handleSub：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleSub = () => { if (formData.quantity > 0) formData.quantity-- };
 
 // 返回上一步
+/**\n * handleBack：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleBack = () => {
     certStore.setStep(1);
     router.push('/certificate/issue/create');
 };
 
 // 生成合格证
+/**\n * handleGenerate：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleGenerate = () => {
     if (formData.quantity <= 0) {
         message.warning('请输入有效的产品数量');

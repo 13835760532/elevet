@@ -51,11 +51,13 @@ const reply = computed<Reply>({
 
 const showDialog = ref(false)
 
+/**\n * selectMaterial：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const selectMaterial = (item: any) => {
   showDialog.value = false
   reply.value.articles = item.content.newsItem
 }
 
+/**\n * onDelete：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const onDelete = () => {
   reply.value.articles = []
 }

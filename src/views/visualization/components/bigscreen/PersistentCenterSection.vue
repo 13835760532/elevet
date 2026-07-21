@@ -399,6 +399,7 @@ const monthLabels = computed(() => {
   })
 })
 
+/**\n * formatToChineseMonth：将页面使用的数据在不同结构或展示口径之间转换。该方法不直接驱动页面跳转，返回值供调用方继续组装或渲染。\n */
 const formatToChineseMonth = (ym?: string) => {
   if (!ym) return '';
   const parts = ym.split('-');
@@ -412,6 +413,7 @@ const formatToChineseMonth = (ym?: string) => {
 
 const formattedXAxis = computed(() => monthLabels.value.map(item => formatToChineseMonth(item)))
 
+/**\n * getMonthIndex：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。\n */
 const getMonthIndex = (month?: string) => {
   if (!month) return -1
   const value = String(month).trim()
@@ -450,6 +452,7 @@ const dashboardTrendDataByMonth = computed(() => {
   })
 })
 
+/**\n * mapTrendData：将页面使用的数据在不同结构或展示口径之间转换。该方法不直接驱动页面跳转，返回值供调用方继续组装或渲染。\n */
 const mapTrendData = (xaxis: string[], seriesData: number[], targetLabels: string[]) => {
   const dataMap = new Map()
   if (Array.isArray(xaxis)) {
@@ -494,6 +497,7 @@ const dashboardYAxisMax = computed(() => {
   return Math.max(25, Math.ceil(maxValue / 5) * 5)
 })
 
+/**\n * getDashboardMarkerLabel：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。\n */
 const getDashboardMarkerLabel = (index: number) => {
   const item = dashboardTrendDataByMonth.value[index]
   if (trendTab.value === '阳性率') {
@@ -721,6 +725,7 @@ const dashboardTrendOption = computed(() =>
     )
 )
 
+/**\n * normalizeSeries：将页面使用的数据在不同结构或展示口径之间转换。该方法不直接驱动页面跳转，返回值供调用方继续组装或渲染。\n */
 const normalizeSeries = (series?: number[], length = 0) =>
   Array.from({ length }, (_, index) => Number(series?.[index] || 0))
 

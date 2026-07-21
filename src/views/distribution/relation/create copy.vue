@@ -169,6 +169,7 @@ const formRules = {
 const institutionDialogRef = ref()
 const adminScopeDialogRef = ref()
 
+/**\n * handleManageInstitution：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleManageInstitution = (row: any) => {
   const params = {
     relationId: id,
@@ -177,6 +178,7 @@ const handleManageInstitution = (row: any) => {
   institutionDialogRef.value?.open(row.levelName || row.levelGrade || '层级', params)
 }
 
+/**\n * handleSetScope：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleSetScope = (row: any) => {
   adminScopeDialogRef.value?.open((code: string) => {
     row.areaCode = code
@@ -184,6 +186,7 @@ const handleSetScope = (row: any) => {
   })
 }
 
+/**\n * generateLevels：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const generateLevels = () => {
   if (formData.maxLevel > 7) {
     formData.maxLevel = 7
@@ -201,6 +204,7 @@ const generateLevels = () => {
   formData.levels = newLevels
 }
 
+/**\n * addSameLevel：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const addSameLevel = (index: number) => {
   if (formData.levels.length >= 7) {
     message.warning('最多只能输入7个层级')
@@ -216,6 +220,7 @@ const addSameLevel = (index: number) => {
   reorderLevels()
 }
 
+/**\n * addSubLevel：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const addSubLevel = (index: number) => {
   if (formData.levels.length >= 7) {
     message.warning('最多只能输入7个层级')
@@ -231,6 +236,7 @@ const addSubLevel = (index: number) => {
   reorderLevels()
 }
 
+/**\n * removeLevel：执行会产生数据或文件副作用的页面操作。调用前使用当前页面状态组装参数，成功后的页面反馈和状态更新由该方法负责。\n */
 const removeLevel = (index: number) => {
   if (formData.levels.length <= 1) {
     message.warning('至少保留一个层级')
@@ -240,6 +246,7 @@ const removeLevel = (index: number) => {
   reorderLevels()
 }
 
+/**\n * reorderLevels：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const reorderLevels = () => {
   formData.levels.forEach((item, idx) => {
     item.levelSort = idx + 1
@@ -247,6 +254,7 @@ const reorderLevels = () => {
   formData.maxLevel = formData.levels.length
 }
 
+/**\n * handleSubmit：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleSubmit = async () => {
   if (!formRef.value) return
   await formRef.value.validate(async (valid: boolean) => {
@@ -292,10 +300,12 @@ const handleSubmit = async () => {
   })
 }
 
+/**\n * handleCancel：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleCancel = () => {
   router.back()
 }
 
+/**\n * loadDetail：加载当前页面所需的数据或初始化状态。请求条件由当前路由、筛选项或已有上下文决定，结果用于更新页面响应式状态。\n */
 const loadDetail = async () => {
   if (!id) return
   try {

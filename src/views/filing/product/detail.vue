@@ -162,6 +162,7 @@ const loading = ref(false);
 const imgPreviewViewerVisible = ref(false);
 const previewUrlList = ref([]);
 
+/**\n * parseUrls：将页面使用的数据在不同结构或展示口径之间转换。该方法不直接驱动页面跳转，返回值供调用方继续组装或渲染。\n */
 const parseUrls = (urlsStr) => {
     if (!urlsStr) return [];
     try {
@@ -172,6 +173,7 @@ const parseUrls = (urlsStr) => {
     }
 };
 
+/**\n * handlePreview：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handlePreview = (urls) => {
     if (!urls) return;
     const urlArray = Array.isArray(urls) ? urls : [urls];
@@ -181,6 +183,7 @@ const handlePreview = (urls) => {
     imgPreviewViewerVisible.value = true;
 };
 
+/**\n * loadDetail：加载当前页面所需的数据或初始化状态。请求条件由当前路由、筛选项或已有上下文决定，结果用于更新页面响应式状态。\n */
 const loadDetail = async () => {
     const id = route.query.id;
     loading.value = true;
@@ -211,6 +214,7 @@ onMounted(() => {
     loadDetail();
 });
 
+/**\n * handleBack：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleBack = () => {
     router.back();
 };

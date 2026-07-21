@@ -125,6 +125,7 @@ const handleSync = async () => {
 
 /** 发送消息操作 */
 const sendFormRef = ref()
+/**\n * handleSend：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleSend = (row: MsgTemplateVO) => {
   sendFormRef.value.open(row)
 }

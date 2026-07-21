@@ -50,6 +50,7 @@ const pesticideTab = ref<'检测量' | '阳性率'>('检测量')
 const produceRiskList = ref<ProduceRiskTopRespVO[]>([])
 const pesticideRiskList = ref<PesticideRiskTopRespVO[]>([])
 
+/**\n * getProduceRiskSortValue：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。\n */
 const getProduceRiskSortValue = (item: ProduceRiskTopRespVO) => {
   if (riskTab.value === '阳性率') {
     return Number(item.statValue ?? item.positiveRate ?? 0)
@@ -103,6 +104,7 @@ const pesticideValues = computed(() =>
   })
 )
 
+/**\n * hasPositiveValue：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。\n */
 const hasPositiveValue = (list: number[]) => list.some((value) => Number(value || 0) > 0)
 const produceRiskEmpty = computed(
   () => displayProduceRiskList.value.length === 0
@@ -111,6 +113,7 @@ const pesticideRiskEmpty = computed(
   () => displayPesticideRiskList.value.length === 0
 )
 
+/**\n * getNiceAxisMax：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。\n */
 const getNiceAxisMax = (value: number) => {
   if (value <= 0) return 10
 
@@ -129,12 +132,15 @@ const pesticideMax = computed(() => {
   return getNiceAxisMax(maxValue)
 })
 
+/**\n * formatRiskValue：将页面使用的数据在不同结构或展示口径之间转换。该方法不直接驱动页面跳转，返回值供调用方继续组装或渲染。\n */
 const formatRiskValue = (value: number, mode: '检测量' | '阳性率') =>
   mode === '阳性率' ? `${Number(value).toFixed(0)}%` : `${Number(value)}`
 
+/**\n * formatRankValue：将页面使用的数据在不同结构或展示口径之间转换。该方法不直接驱动页面跳转，返回值供调用方继续组装或渲染。\n */
 const formatRankValue = (value: number, mode: '检测量' | '阳性率') =>
   mode === '阳性率' ? `${Number(value).toFixed(0)}%` : `${Number(value)}`
 
+/**\n * formatPesticideLabel：将页面使用的数据在不同结构或展示口径之间转换。该方法不直接驱动页面跳转，返回值供调用方继续组装或渲染。\n */
 const formatPesticideLabel = (value: string) => {
   const label = `${value || '--'}`
   if (label.length <= 3) return label

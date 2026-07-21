@@ -150,6 +150,7 @@ const router = useRouter()
 const { options: taskStatusOptions } = useDict('agri_task_status', 'int')
 
 // 格式化表格中无内容的值为 -
+/**\n * tableColumnFormatter：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const tableColumnFormatter = (row, column, cellValue) => {
   return cellValue !== null && cellValue !== undefined && cellValue !== '' ? cellValue : '-'
 }
@@ -202,11 +203,13 @@ const getList = async () => {
   }
 }
 
+/**\n * handleQuery：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleQuery = () => {
   queryParams.pageNo = 1
   getList()
 }
 
+/**\n * handleReset：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleReset = () => {
   queryParams.pageNo = 1
   queryParams.taskName = undefined
@@ -218,6 +221,7 @@ const handleReset = () => {
   getList()
 }
 
+/**\n * handleDateChange：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleDateChange = (val) => {
   if (val) {
     queryParams.startDate = val[0]
@@ -228,6 +232,7 @@ const handleDateChange = (val) => {
   }
 }
 
+/**\n * handleExport：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleExport = async () => {
   try {
     await ElMessageBox.confirm('是否确认导出所有检测任务数据项?', '提示', {
@@ -251,6 +256,7 @@ const handleExport = async () => {
   }
 }
 
+/**\n * handleReceive：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleReceive = async (row) => {
   try {
     await ElMessageBox.confirm(`任务：${row.taskName}，是否确定接收？`, '提示', {
@@ -266,6 +272,7 @@ const handleReceive = async (row) => {
   }
 }
 
+/**\n * handleUrge：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleUrge = async (row) => {
   try {
     await DetectionTaskApi.urgeDetectionTask(row.id)
@@ -276,6 +283,7 @@ const handleUrge = async (row) => {
   }
 }
 
+/**\n * handleView：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleView = (row) => {
   router.push({
     path: '/fastCheckPlan/taskAllocate',
@@ -283,16 +291,19 @@ const handleView = (row) => {
   })
 }
 
+/**\n * handleSizeChange：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleSizeChange = (val) => {
   queryParams.pageSize = val
   handleQuery()
 }
 
+/**\n * handleCurrentChange：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleCurrentChange = (val) => {
   queryParams.pageNo = val
   getList()
 }
 
+/**\n * handleCreateTask：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 function handleCreateTask(row) {
   DetectionTaskApi.getDetectionTask(row.id).then((res) => {
     console.log(res)

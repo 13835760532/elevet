@@ -84,6 +84,7 @@ const formRules = reactive({
 const formRef = ref() // 表单 Ref
 const userOption = ref<UserApi.UserVO[]>([])
 
+/**\n * open：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const open = async (id: number) => {
   dialogVisible.value = true
   resetForm()

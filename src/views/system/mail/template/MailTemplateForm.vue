@@ -86,6 +86,7 @@ const formRules = reactive({
 const formRef = ref() // 表单 Ref
 const accountList = ref<MailAccountApi.MailAccountVO[]>([]) // 邮箱账号列表
 
+/**\n * open：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const open = async (type: string, id?: number) => {
   dialogVisible.value = true
   dialogTitle.value = t('action.' + type)
@@ -107,6 +108,7 @@ defineExpose({ open }) // 提供 open 方法，用于打开弹窗
 
 /** 提交表单 */
 const emit = defineEmits(['success']) // 定义 success 事件，用于操作成功后的回调
+/**\n * submitForm：执行会产生数据或文件副作用的页面操作。调用前使用当前页面状态组装参数，成功后的页面反馈和状态更新由该方法负责。\n */
 const submitForm = async () => {
   // 校验表单
   if (!formRef) return

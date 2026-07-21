@@ -191,11 +191,13 @@ const trendOption = computed(() => ({
   ]
 }))
 
+/**\n * handleAreaSelect：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleAreaSelect = (area: any) => {
   if (!canViewAreaRange.value) return
   Object.assign(areaParams, getSelectedAreaParams(area))
 }
 
+/**\n * handleAreaChange：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleAreaChange = (value: any) => {
   if (!canViewAreaRange.value) return
   if (value === undefined || value === null || value === '' || (Array.isArray(value) && value.length === 0)) {
@@ -206,22 +208,26 @@ const handleAreaChange = (value: any) => {
   }
 }
 
+/**\n * handleOriginAreaSelect：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleOriginAreaSelect = (area: any) => {
   filters.origin = area?.district || area?.city || area?.province || ''
 }
 
+/**\n * handleOriginAreaChange：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleOriginAreaChange = (value: any) => {
   if (value === undefined || value === null || value === '' || (Array.isArray(value) && value.length === 0)) {
     filters.origin = ''
   }
 }
 
+/**\n * getSourceLabel：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。\n */
 const getSourceLabel = (value?: number) => {
   if (value === 1) return '本平台'
   if (value === 2) return '其他'
   return '--'
 }
 
+/**\n * mapRow：将页面使用的数据在不同结构或展示口径之间转换。该方法不直接驱动页面跳转，返回值供调用方继续组装或渲染。\n */
 const mapRow = (item: any) => ({
   certNo: item.certificateCode || '--',
   source: getSourceLabel(item.certificateSource),
@@ -289,16 +295,19 @@ const searchTable = useDebounceFn(() => {
   loadTable()
 }, 300)
 
+/**\n * loadData：加载当前页面所需的数据或初始化状态。请求条件由当前路由、筛选项或已有上下文决定，结果用于更新页面响应式状态。\n */
 const loadData = () => {
   loadDashboardData()
   loadTable()
 }
 
+/**\n * handleSearch：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleSearch = () => {
   pageNo.value = 1
   loadData()
 }
 
+/**\n * resetTableFilters：同步或重置当前页面状态，保证筛选项、组件显示和后续请求参数保持一致。\n */
 const resetTableFilters = () => {
   filters.certNo = ''
   filters.source = undefined
@@ -309,6 +318,7 @@ const resetTableFilters = () => {
   handleSearch()
 }
 
+/**\n * handleReset：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleReset = () => {
   dateRangeType.value = '近一周'
   dateRange.value = []

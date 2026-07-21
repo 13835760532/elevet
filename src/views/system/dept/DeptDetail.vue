@@ -81,6 +81,7 @@ const initAreaMap = async () => {
   if (Object.keys(areaMap.value).length > 0) return
   try {
     const tree = await AreaApi.getAreaTree()
+    /**\n     * buildMap：将页面使用的数据在不同结构或展示口径之间转换。该方法不直接驱动页面跳转，返回值供调用方继续组装或渲染。\n     */
     const buildMap = (nodes: any[]) => {
       if (!nodes) return
       for (const node of nodes) {

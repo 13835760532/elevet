@@ -186,8 +186,10 @@ const { getLabel: getProductCategoryLabel } = useDict(DICT_TYPE.AGRI_PRODUCT_CAT
 
 const produceCategoryTree = ref([])
 
+/**\n * getCategoryLabelFromTree：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。\n */
 const getCategoryLabelFromTree = (val) => {
     if (!val) return '--'
+    /**\n     * findLabel：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。\n     */
     const findLabel = (nodes) => {
         for (const node of nodes) {
             if (String(node.code) === String(val) || String(node.name) === String(val) || String(node.id) === String(val)) {
@@ -327,21 +329,25 @@ const loadOrgOptions = async () => {
     }
 }
 
+/**\n * applyOrgFilter：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const applyOrgFilter = () => {
     loadOrgOptions()
 }
 
+/**\n * handleCheckAllChange：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleCheckAllChange = (val) => {
     selectedOrgs.value = val ? orgOptions.value.map((org) => org.id) : []
     isIndeterminate.value = false
 }
 
+/**\n * handleCheckedOrgsChange：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleCheckedOrgsChange = (value) => {
     const checkedCount = value.length
     checkAll.value = checkedCount === orgOptions.value.length
     isIndeterminate.value = checkedCount > 0 && checkedCount < orgOptions.value.length
 }
 
+/**\n * buildDefaultExecutionTime：将页面使用的数据在不同结构或展示口径之间转换。该方法不直接驱动页面跳转，返回值供调用方继续组装或渲染。\n */
 const buildDefaultExecutionTime = () => {
     if (!taskForm.startDate || !taskForm.endDate) return '待设置'
     try {
@@ -359,6 +365,7 @@ const buildDefaultExecutionTime = () => {
     }
 }
 
+/**\n * buildDefaultDetectionArea：将页面使用的数据在不同结构或展示口径之间转换。该方法不直接驱动页面跳转，返回值供调用方继续组装或渲染。\n */
 const buildDefaultDetectionArea = () => {
     return [taskForm.province, taskForm.city, taskForm.district].filter(Boolean).join('')
 }
@@ -506,6 +513,7 @@ watch(
 //     }
 // )
 
+/**\n * handleCancel：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleCancel = () => {
     router.back()
 }

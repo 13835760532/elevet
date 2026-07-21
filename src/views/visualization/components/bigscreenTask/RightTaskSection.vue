@@ -53,6 +53,7 @@ import { getBigScreenQueryParams, subscribeBigScreenRefresh } from '../bigscreen
 
 const analysisList = ref<TaskAnalysisRespVO[]>([]);
 
+/**\n * formatRate：将页面使用的数据在不同结构或展示口径之间转换。该方法不直接驱动页面跳转，返回值供调用方继续组装或渲染。\n */
 const formatRate = (value?: number) => `${Number(value || 0).toFixed(2)}%`;
 
 const tableData = computed(() =>

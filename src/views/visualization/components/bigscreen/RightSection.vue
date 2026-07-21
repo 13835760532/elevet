@@ -130,6 +130,7 @@ const rankBadgeImages = [rankNo1, rankNo2, rankNo3]
 const displayNoticeList = computed(() => noticeList.value)
 const noticeEmpty = computed(() => displayNoticeList.value.length === 0)
 
+/**\n * formatRankAreaName：将页面使用的数据在不同结构或展示口径之间转换。该方法不直接驱动页面跳转，返回值供调用方继续组装或渲染。\n */
 const formatRankAreaName = (item: RiskAreaTopRespVO) =>
   item.areaName || item.cityName || item.districtName || item.provinceName || '--'
 
@@ -161,6 +162,7 @@ const rankTableEmpty = computed(
   () => rankList.value.length === 0
 )
 
+/**\n * formatRateText：将页面使用的数据在不同结构或展示口径之间转换。该方法不直接驱动页面跳转，返回值供调用方继续组装或渲染。\n */
 const formatRateText = (item: any) => {
   if (item.isEmpty) return ''
   const rate = Number(item.positiveRate || 0)
@@ -189,11 +191,13 @@ const projectMax = computed(() => {
   if (maxValue <= 0) return 100
   return Math.max(3, Math.ceil(maxValue / 3) * 3)
 })
+/**\n * formatProjectValue：将页面使用的数据在不同结构或展示口径之间转换。该方法不直接驱动页面跳转，返回值供调用方继续组装或渲染。\n */
 const formatProjectValue = (value: number) =>
   projectRiskTab.value === '阳性率' ? Number(value).toFixed(1) : `${Number(value)}`
 
 const formatProjectUnit = computed(() => (projectRiskTab.value === '阳性率' ? '%' : ''))
 
+/**\n * truncateProjectLabel：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const truncateProjectLabel = (label: string, maxLength = 7) => {
   const chars = Array.from(label || '--')
   return chars.length > maxLength ? `${chars.slice(0, maxLength).join('')}...` : label

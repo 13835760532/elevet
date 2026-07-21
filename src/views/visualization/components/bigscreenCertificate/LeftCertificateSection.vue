@@ -93,6 +93,7 @@ const categoryColorMap: Record<string, string> = {
   其他: '#74608c'
 }
 
+/**\n * hexToRgba：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const hexToRgba = (hex: string, alpha: number) => {
   const value = hex.replace('#', '')
   if (value.length !== 6) return hex
@@ -102,6 +103,7 @@ const hexToRgba = (hex: string, alpha: number) => {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`
 }
 
+/**\n * getCategoryColor：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。\n */
 const getCategoryColor = (name: string, index: number) =>
   categoryColorMap[name] || fallbackCategoryColors[index % fallbackCategoryColors.length]
 
@@ -118,6 +120,7 @@ const overviewData = computed(() => [
   { label: '合格证溯源', value: Number(overview.value.traceCount || 0), unit: '次', type: 'orange' }
 ])
 
+/**\n * getMetricSizeClass：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。\n */
 const getMetricSizeClass = (value: number) => {
   const length = String(Math.trunc(Math.abs(Number(value) || 0))).length
   if (length >= 9) return 'value-size-xxl'

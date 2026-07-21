@@ -256,6 +256,7 @@ const getRadialGlowTexture = () => {
 
   // 简易伪随机数生成器（固定种子，保证每次一致）
   let seed = 42
+  /**\n   * rand：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n   */
   const rand = () => {
     seed = (seed * 16807 + 0) % 2147483647
     return (seed - 1) / 2147483646
@@ -333,6 +334,7 @@ const decodeFeature = (feature: GeoFeature) => {
   const scale = 1024
   const { type, coordinates, encodeOffsets } = geometry
 
+  /**\n   * decodePart：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n   */
   const decodePart = (coordinate: string, encodeOffset: number[]) => {
     const result: number[][] = []
     let prevX = encodeOffset[0]
@@ -467,14 +469,17 @@ const normalizeRegionName = (name?: string | number | null) =>
     .trim()
     .replace(/省|市|壮族自治区|回族自治区|维吾尔自治区|自治区|特别行政区/g, '')
 
+/**\n * formatRegionLabel：将页面使用的数据在不同结构或展示口径之间转换。该方法不直接驱动页面跳转，返回值供调用方继续组装或渲染。\n */
 const formatRegionLabel = (name: string) => normalizeRegionName(name)
 
+/**\n * getFeatureCandidates：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。\n */
 const getFeatureCandidates = (featureProps: any) => {
   const name = String(featureProps?.name || '').trim()
   const shortName = normalizeRegionName(name)
   return Array.from(new Set([name, shortName].filter(Boolean)))
 }
 
+/**\n * getAreaCandidates：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。\n */
 const getAreaCandidates = (item: MapDataItem) =>
   [item.areaName, item.provinceName, item.cityName, item.districtName]
     .filter(Boolean)
@@ -512,6 +517,7 @@ const getItemValue = (item?: MapDataItem) => {
   return Number((item as CertificateMapItemVO | undefined)?.count || 0)
 }
 
+/**\n * formatRate：将页面使用的数据在不同结构或展示口径之间转换。该方法不直接驱动页面跳转，返回值供调用方继续组装或渲染。\n */
 const formatRate = (value?: number) => `${Number(value || 0).toFixed(0)}%`
 
 /** 按大屏模式组装地图浮层明细，保证指标名称与当前业务口径一致。 */
@@ -585,6 +591,7 @@ const loadCurrentMapData = async () => {
       const verificationList = (certData as DashboardCertificateMapRespVO)?.verificationList || []
       const mergedMap = new Map<string, any>()
 
+      /**\n       * mergeItem：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n       */
       const mergeItem = (item: any, type: 'issue' | 'verification') => {
         const key = `${item.provinceName || ''}-${item.cityName || ''}-${item.districtName || ''}`
         if (mergedMap.has(key)) {
@@ -726,6 +733,7 @@ const createRegionMaterial = (value: number) => {
   })
 }
 
+/**\n * createTerrainOverlayMaterial：执行会产生数据或文件副作用的页面操作。调用前使用当前页面状态组装参数，成功后的页面反馈和状态更新由该方法负责。\n */
 const createTerrainOverlayMaterial = () =>
   new THREE.MeshBasicMaterial({
     color: 0x72c6ff,
@@ -736,6 +744,7 @@ const createTerrainOverlayMaterial = () =>
     side: THREE.DoubleSide
   })
 
+/**\n * createGlowMaterial：执行会产生数据或文件副作用的页面操作。调用前使用当前页面状态组装参数，成功后的页面反馈和状态更新由该方法负责。\n */
 const createGlowMaterial = (opacity = 0.2, color = 0x37ffc2) =>
   new THREE.MeshBasicMaterial({
     color,
@@ -789,6 +798,7 @@ const createCenteredGlowGeometry = (sourceGeometry: THREE.BufferGeometry) => {
   return geo
 }
 
+/**\n * createDepthMaterial：执行会产生数据或文件副作用的页面操作。调用前使用当前页面状态组装参数，成功后的页面反馈和状态更新由该方法负责。\n */
 const createDepthMaterial = () =>
   new THREE.MeshBasicMaterial({
     color: 0x031a3d,
@@ -798,6 +808,7 @@ const createDepthMaterial = () =>
     side: THREE.DoubleSide
   })
 
+/**\n * createLineMaterial：执行会产生数据或文件副作用的页面操作。调用前使用当前页面状态组装参数，成功后的页面反馈和状态更新由该方法负责。\n */
 const createLineMaterial = (variant: 'inner' | 'rim' | 'halo' | 'haloSoft' | 'active' = 'inner') => {
   const config = {
     inner: { color: 0x1b8dbf, opacity: 0.5 },
@@ -814,6 +825,7 @@ const createLineMaterial = (variant: 'inner' | 'rim' | 'halo' | 'haloSoft' | 'ac
   })
 }
 
+/**\n * setLineState：同步或重置当前页面状态，保证筛选项、组件显示和后续请求参数保持一致。\n */
 const setLineState = (line: THREE.Object3D, active: boolean) => {
   const material = (line as THREE.Line).material as THREE.LineBasicMaterial
   material.color.set(active ? 0xfffbac : 0x1b8dbf)
@@ -1145,6 +1157,7 @@ const getIntersectedRegion = (event: MouseEvent) => {
   return (hits[0]?.object?.userData?.region as RegionGroup | undefined) || null
 }
 
+/**\n * canDrillFurther：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。\n */
 const canDrillFurther = () =>
   (!isCertificateMode.value && !isTaskMapMode.value) || currentDrillLevel < 2
 
@@ -1206,6 +1219,7 @@ const showDefaultTooltip = () => {
   showRegionTooltip(defaultTooltipRegion)
 }
 
+/**\n * handlePointerMove：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handlePointerMove = (event: MouseEvent) => {
   const region = getIntersectedRegion(event)
   setHovered(region)
@@ -1216,6 +1230,7 @@ const handlePointerMove = (event: MouseEvent) => {
   showRegionTooltip(region, { x: event.offsetX, y: event.offsetY })
 }
 
+/**\n * handlePointerLeave：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handlePointerLeave = () => {
   setHovered(null)
   showDefaultTooltip()
@@ -1257,6 +1272,7 @@ const drillToFeature = async (feature?: GeoFeature) => {
   }
 }
 
+/**\n * handleClick：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleClick = () => {
   if (hovered) void drillToFeature(hovered.userData.feature)
 }

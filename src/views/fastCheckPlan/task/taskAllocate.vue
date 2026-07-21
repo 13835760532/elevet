@@ -279,10 +279,12 @@ const queryParams = reactive({
     dateRange: []
 })
 
+/**\n * resolveFirstValue：将页面使用的数据在不同结构或展示口径之间转换。该方法不直接驱动页面跳转，返回值供调用方继续组装或渲染。\n */
 const resolveFirstValue = (...values) => {
     return values.find(value => value !== undefined && value !== null && value !== '' && value !== '--')
 }
 
+/**\n * getDeptLabel：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。\n */
 const getDeptLabel = (value) => {
     if (!value) return '--'
     return deptMap.value[value] || '--'
@@ -296,6 +298,7 @@ const getTaskDeptLabel = (task = {}) => {
     ) || '--'
 }
 
+/**\n * getTaskCategoryLabel：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。\n */
 const getTaskCategoryLabel = (task = {}) => {
     const category = resolveFirstValue(
         task.targetCategory,
@@ -467,11 +470,13 @@ onMounted(async () => {
     }
 })
 
+/**\n * handleQuery：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 function handleQuery() {
     pageNum.value = 1;
     handleFilter();
 }
 
+/**\n * handleReset：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 function handleReset() {
     if (queryRef.value) {
         queryRef.value.resetFields();
@@ -483,6 +488,7 @@ function handleReset() {
     handleQuery();
 }
 
+/**\n * handleCreateTask：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 function handleCreateTask() {
     router.push({
         path: '/fastCheckPlan/task/createSchemeTask',
@@ -491,10 +497,12 @@ function handleCreateTask() {
     window.sessionStorage.setItem('planInfo', JSON.stringify(taskDetail.value))
 }
 
+/**\n * handleExport：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 function handleExport() {
     console.log('Export Data')
 }
 
+/**\n * handleView：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 function handleView(row) {
     if (row.id) {
         router.push({
@@ -504,6 +512,7 @@ function handleView(row) {
     }
 }
 
+/**\n * handlePageChange：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 function handlePageChange(page) {
     pageNum.value = page;
     handleFilter();
@@ -561,10 +570,12 @@ const historyData = ref({
     children: []
 })
 
+/**\n * handleProgressQuery：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 function handleProgressQuery(params) {
     loadDetectionResults(params || {});
 }
 
+/**\n * handleProgressReset：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 function handleProgressReset() {
     loadDetectionResults({});
 }

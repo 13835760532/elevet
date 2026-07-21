@@ -215,6 +215,7 @@ defineOptions({
 const route = useRoute();
 const searchCode = ref((route.query.code as string) || '');
 
+/**\n * formatResult：将页面使用的数据在不同结构或展示口径之间转换。该方法不直接驱动页面跳转，返回值供调用方继续组装或渲染。\n */
 const formatResult = (val: any) => {
   if (val === null || val === undefined || val === '') return '--';
   const num = Number(val);

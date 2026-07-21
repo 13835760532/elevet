@@ -213,6 +213,7 @@ const allRecommends = [
 ]
 const currentRecommends = ref<string[]>([])
 
+/**\n * refreshRecommends：同步或重置当前页面状态，保证筛选项、组件显示和后续请求参数保持一致。\n */
 const refreshRecommends = () => {
   // 随机取5个
   const shuffled = [...allRecommends].sort(() => 0.5 - Math.random())
@@ -277,6 +278,7 @@ const wakeWordButtonTitle = computed(() => {
 })
 
 // --- 工具函数 ---
+/**\n * scrollToBottom：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const scrollToBottom = async () => {
   await nextTick()
   if (chatMainRef.value) {
@@ -285,12 +287,15 @@ const scrollToBottom = async () => {
 }
 
 // 格式化换行
+/**\n * formatContent：将页面使用的数据在不同结构或展示口径之间转换。该方法不直接驱动页面跳转，返回值供调用方继续组装或渲染。\n */
 const formatContent = (text: string) => {
   return escapeHtml(text || '').replace(/\n/g, '<br/>')
 }
 
+/**\n * generateId：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const generateId = () => Math.random().toString(36).substring(2, 9)
 
+/**\n * escapeHtml：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const escapeHtml = (text: string) => {
   return text.replace(/[&<>"']/g, (char) => {
     const charMap: Record<string, string> = {
@@ -304,22 +309,27 @@ const escapeHtml = (text: string) => {
   })
 }
 
+/**\n * formatPercent：将页面使用的数据在不同结构或展示口径之间转换。该方法不直接驱动页面跳转，返回值供调用方继续组装或渲染。\n */
 const formatPercent = (value?: number) => {
   return value === undefined || value === null ? '--' : `${value}%`
 }
 
+/**\n * formatNumber：将页面使用的数据在不同结构或展示口径之间转换。该方法不直接驱动页面跳转，返回值供调用方继续组装或渲染。\n */
 const formatNumber = (value?: number) => {
   return value === undefined || value === null ? '--' : value
 }
 
+/**\n * joinNames：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const joinNames = (values?: string[]) => {
   return values?.length ? values.join('、') : '--'
 }
 
+/**\n * getHazardText：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。\n */
 const getHazardText = (item: { restrictionLabel?: string; restrictionType?: string }) => {
   return item.restrictionLabel || item.restrictionType || '--'
 }
 
+/**\n * getDetectionItemsText：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。\n */
 const getDetectionItemsText = (items?: RiskProductItemVO['detectionItems']) => {
   if (!items?.length) return '--'
   return items.map((item) => `${item.itemName || '--'}（${getHazardText(item)}）`).join('、')
@@ -342,6 +352,7 @@ const positiveItemColumns: TableColumn[] = [
   { prop: 'hazard', label: '危害等级', width: 100, align: 'center' }
 ]
 
+/**\n * renderRiskProducts：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const renderRiskProducts = (list?: RiskProductItemVO[]) => {
   return (list || []).map((item, index) => ({
     rank: item.rank || index + 1,
@@ -510,6 +521,7 @@ const typeWriter = async (targetMsg: Message, text: string, prop: 'content' | 'c
   }
 }
 
+/**\n * stopVoiceInput：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const stopVoiceInput = () => {
   voiceRecognizer.value?.stop()
   voiceRecognizer.value = null
@@ -585,6 +597,7 @@ const toggleVoiceInput = async () => {
   }
 }
 
+/**\n * updateWakeWordStatusText：执行会产生数据或文件副作用的页面操作。调用前使用当前页面状态组装参数，成功后的页面反馈和状态更新由该方法负责。\n */
 const updateWakeWordStatusText = (status: WakeWordStatus, message?: string) => {
   wakeWordStatus.value = status
   if (isRecording.value && status !== 'error') return
@@ -680,6 +693,7 @@ const startWakeWord = async () => {
   }
 }
 
+/**\n * toggleWakeWord：将页面使用的数据在不同结构或展示口径之间转换。该方法不直接驱动页面跳转，返回值供调用方继续组装或渲染。\n */
 const toggleWakeWord = async () => {
   if (isTyping.value) return
 

@@ -214,6 +214,7 @@ const tabs = computed<StatisticsTab[]>(() => [
 ])
 
 
+/**\n * handleTabChange：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleTabChange = (tabValue: string) => {
   currentTab.value = tabValue
   localStorage.setItem('statistics_current_tab', tabValue)
@@ -252,12 +253,14 @@ const handleTabChange = (tabValue: string) => {
   }
 }
 
+/**\n * getQueryDeptScopeByCommand：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。\n */
 const getQueryDeptScopeByCommand = (command: unknown) => {
   if (command === 'area') return 1
   if (command === 'own') return 2
   return 0
 }
 
+/**\n * setQuickScopeByCommand：同步或重置当前页面状态，保证筛选项、组件显示和后续请求参数保持一致。\n */
 const setQuickScopeByCommand = (command: unknown) => {
   const quickCommand = command as QuickCommand
   if (quickCommand === 'self') {
@@ -279,11 +282,13 @@ const setQuickScopeByCommand = (command: unknown) => {
   quickSelfDetection.value = undefined
 }
 
+/**\n * setTaskScopeByCommand：同步或重置当前页面状态，保证筛选项、组件显示和后续请求参数保持一致。\n */
 const setTaskScopeByCommand = (command: unknown) => {
   // 非监管机构只允许查询本机构数据，任务类型不再改变数据权限口径。
   taskDeptScope.value = isRegulatoryDept.value ? getTaskQueryDeptScope(command) : 3
 }
 
+/**\n * handleDropdownCommand：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleDropdownCommand = (tabValue: string, command: unknown) => {
   currentTab.value = tabValue
   localStorage.setItem('statistics_current_tab', tabValue)
@@ -307,6 +312,7 @@ const handleDropdownCommand = (tabValue: string, command: unknown) => {
   }
 }
 
+/**\n * initTab：加载当前页面所需的数据或初始化状态。请求条件由当前路由、筛选项或已有上下文决定，结果用于更新页面响应式状态。\n */
 const initTab = () => {
   const queryTab = route.query.tab
   const savedTab = localStorage.getItem('statistics_current_tab')

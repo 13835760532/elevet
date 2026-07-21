@@ -233,6 +233,7 @@ const subjectOptions = ref([]);
 const currentSubject = ref(null);
 
 // 农产品自动补全与类别回显逻辑
+/**\n * queryProduce：加载当前页面所需的数据或初始化状态。请求条件由当前路由、筛选项或已有上下文决定，结果用于更新页面响应式状态。\n */
 const queryProduce = async (queryString, cb) => {
     if (!queryString) {
         cb([]);
@@ -246,6 +247,7 @@ const queryProduce = async (queryString, cb) => {
     }
 };
 
+/**\n * matchCategoryFromFullCategory：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const matchCategoryFromFullCategory = (fullCategory) => {
     if (!fullCategory) return null;
     const firstLevel = fullCategory.split('/')[0];
@@ -255,6 +257,7 @@ const matchCategoryFromFullCategory = (fullCategory) => {
     return matchedOption ? matchedOption.value : null;
 };
 
+/**\n * handleProduceSelect：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleProduceSelect = (item) => {
     formData.productName = item.name;
     // 优先使用接口返回的 fullCategory，如果没有则尝试从字典匹配
@@ -268,6 +271,7 @@ const handleProduceSelect = (item) => {
     }
 };
 
+/**\n * handleProduceBlur：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleProduceBlur = async () => {
     if (!formData.productName || formData.category) return; // 已有类别则不覆盖
     try {
@@ -290,6 +294,7 @@ const handleProduceBlur = async () => {
     } catch (e) { }
 };
 
+/**\n * searchSubject：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const searchSubject = async (query) => {
     if (query !== '') {
         try {
@@ -303,10 +308,12 @@ const searchSubject = async (query) => {
     }
 };
 
+/**\n * handleSubjectChange：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleSubjectChange = async (val) => {
     currentSubject.value = subjectOptions.value.find(item => item.id === val) || null;
 };
 
+/**\n * handleSubjectCreateSuccess：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleSubjectCreateSuccess = async (newId) => {
     try {
         const data = await SubjectApi.getSubject(newId);
@@ -320,6 +327,7 @@ const handleSubjectCreateSuccess = async (newId) => {
 
 const loadingDetail = ref(false);
 
+/**\n * loadDetail：加载当前页面所需的数据或初始化状态。请求条件由当前路由、筛选项或已有上下文决定，结果用于更新页面响应式状态。\n */
 const loadDetail = async () => {
     const detailId = route.query.id;
     if (!detailId) {
@@ -382,6 +390,7 @@ watch(() => route.query.id, () => {
     loadDetail();
 });
 
+/**\n * handleSave：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleSave = async () => {
     if (!formRef.value) return;
     await formRef.value.validate(async (valid) => {
@@ -410,6 +419,7 @@ const handleSave = async () => {
     });
 };
 
+/**\n * handleCopyPrevious：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleCopyPrevious = async () => {
     const cachedPayload = getLastSubmittedProduct();
     if (!cachedPayload) {
@@ -463,6 +473,7 @@ const handleCopyPrevious = async () => {
     }
 };
 
+/**\n * handleCancel：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleCancel = () => {
     router.back();
 };

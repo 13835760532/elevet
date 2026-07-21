@@ -57,12 +57,15 @@ const rightTrendTab = ref('样品阳性率');
 const positiveRateTrend = ref<FastPositiveRateTrendRespVO>({});
 const selfSampleTrend = ref<FastSelfSampleTrendRespVO>({});
 
+/**\n * formatMonthLabel：将页面使用的数据在不同结构或展示口径之间转换。该方法不直接驱动页面跳转，返回值供调用方继续组装或渲染。\n */
 const formatMonthLabel = (value?: string) => {
   if (!value) return '';
   const matched = value.match(/(\d{1,2})$/);
   return matched ? `${matched[1]}月` : value;
 };
+/**\n * sumSeries：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const sumSeries = (list?: number[]) => (list || []).reduce((total, item) => total + Number(item || 0), 0);
+/**\n * calcMax：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const calcMax = (data: number[], emptyMax: number) => {
   const max = Math.max(...data, 0);
   if (!max) return emptyMax;
@@ -241,6 +244,7 @@ const monthLabels = computed(() => {
   return result
 })
 
+/**\n * mapTrendData：将页面使用的数据在不同结构或展示口径之间转换。该方法不直接驱动页面跳转，返回值供调用方继续组装或渲染。\n */
 const mapTrendData = (xaxis: string[], seriesData: number[]) => {
   const dataMap = new Map()
   if (Array.isArray(xaxis)) {
@@ -261,6 +265,7 @@ const mapTrendData = (xaxis: string[], seriesData: number[]) => {
   return monthLabels.value.map(mLabel => dataMap.get(mLabel) || 0)
 }
 
+/**\n * formatToChineseMonth：将页面使用的数据在不同结构或展示口径之间转换。该方法不直接驱动页面跳转，返回值供调用方继续组装或渲染。\n */
 const formatToChineseMonth = (ym?: string) => {
   if (!ym) return '';
   const parts = ym.split('-');
@@ -321,6 +326,7 @@ const leftTrendEmpty = computed(() =>
 );
 const rightTrendEmpty = computed(() => positiveRateXAxis.value.length === 0);
 
+/**\n * sampleTooltipFormatter：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const sampleTooltipFormatter = (params: any) => {
   if (!params || params.length === 0) return '';
   const dataIndex = params[0].dataIndex;
@@ -335,6 +341,7 @@ const sampleTooltipFormatter = (params: any) => {
     `<span style="display:inline-block;margin-right:4px;border-radius:10px;width:10px;height:10px;background-color:#ff7875;"></span>阳性数量/检测总量：${posVal}/${detVal}`;
 };
 
+/**\n * detectionTooltipFormatter：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const detectionTooltipFormatter = (params: any) => {
   if (!params || params.length === 0) return '';
   const dataIndex = params[0].dataIndex;
@@ -349,6 +356,7 @@ const detectionTooltipFormatter = (params: any) => {
     `<span style="display:inline-block;margin-right:4px;border-radius:10px;width:10px;height:10px;background-color:#ff7875;"></span>阳性数量/检测总量：${posVal}/${detVal}`;
 };
 
+/**\n * riskTooltipFormatter：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const riskTooltipFormatter = (params: any) => {
   if (!params || params.length === 0) return '';
   const dataIndex = params[0].dataIndex;

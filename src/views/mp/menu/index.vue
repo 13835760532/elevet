@@ -130,6 +130,7 @@ const handleQuery = () => {
 }
 
 // 将后端返回的 menuList，转换成前端的 menuList
+/**\n * menuListToFrontend：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const menuListToFrontend = (list: any[]) => {
   if (!list) return []
 
@@ -158,6 +159,7 @@ const menuListToFrontend = (list: any[]) => {
 }
 
 // 重置表单，清空表单数据
+/**\n * resetForm：同步或重置当前页面状态，保证筛选项、组件显示和后续请求参数保持一致。\n */
 const resetForm = () => {
   // 菜单操作
   activeIndex.value = MENU_NOT_SELECTED
@@ -172,6 +174,7 @@ const resetForm = () => {
 
 // ======================== 菜单操作 ========================
 // 一级菜单点击事件
+/**\n * menuClicked：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const menuClicked = (parent: Menu, x: number) => {
   // 右侧的表单相关
   showRightPanel.value = true // 右边菜单
@@ -186,6 +189,7 @@ const menuClicked = (parent: Menu, x: number) => {
 }
 
 // 二级菜单点击事件
+/**\n * subMenuClicked：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const subMenuClicked = (child: Menu, x: number, y: number) => {
   // 右侧的表单相关
   showRightPanel.value = true // 右边菜单
@@ -200,6 +204,7 @@ const subMenuClicked = (child: Menu, x: number, y: number) => {
 }
 
 // 删除当前菜单
+/**\n * onDeleteMenu：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const onDeleteMenu = async () => {
   try {
     await message.confirm('确定要删除吗?')
@@ -223,6 +228,7 @@ const onDeleteMenu = async () => {
 }
 
 // ======================== 菜单编辑 ========================
+/**\n * onSave：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const onSave = async () => {
   try {
     await message.confirm('确定要保存吗?')
@@ -235,6 +241,7 @@ const onSave = async () => {
   }
 }
 
+/**\n * onClear：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const onClear = async () => {
   try {
     await message.confirm('确定要删除吗?')
@@ -248,6 +255,7 @@ const onClear = async () => {
 }
 
 // 将前端的 menuList，转换成后端接收的 menuList
+/**\n * menuListToBackend：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const menuListToBackend = () => {
   const result: any[] = []
   menuList.value.forEach((item) => {
@@ -268,6 +276,7 @@ const menuListToBackend = () => {
 
 // 将前端的 menu，转换成后端接收的 menu
 // TODO: @芋艿，需要根据后台API删除不需要的字段
+/**\n * menuToBackend：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const menuToBackend = (menu: any) => {
   const result = {
     ...menu,

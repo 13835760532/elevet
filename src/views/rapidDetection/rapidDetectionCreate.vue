@@ -626,6 +626,7 @@ const remoteSearchProduct = async (query) => {
     }
 };
 
+/**\n * remoteSearchSubject：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const remoteSearchSubject = async (query) => {
     if (query) {
         subjectLoading.value = true;
@@ -715,6 +716,7 @@ const handleProductChange = async (val) => {
     }
 };
 
+/**\n * handleAreaSelect：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleAreaSelect = (area) => {
     formData.sample.productionArea = `${area.province}-${area.city}-${area.district}`;
     formData.detectionArea = formData.sample.productionArea;
@@ -735,6 +737,7 @@ const detectionAreaVal = computed({
     }
 });
 
+/**\n * handleDetectionAreaSelect：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleDetectionAreaSelect = (area) => {
     const parts = [area.province, area.city, area.district].filter(Boolean);
     formData.detectionArea = parts.join('-');
@@ -761,20 +764,25 @@ const getSubmitData = () => {
     return submitData;
 };
 
+/**\n * goToStep：控制当前页面的步骤流转或路由跳转，并保留调用方传入的必要上下文。\n */
 const goToStep = (step) => {
     if (step < currentStep.value) currentStep.value = step;
 };
 
+/**\n * handleCancel：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleCancel = () => { router.back(); };
 
+/**\n * handlePrev：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handlePrev = () => { if (currentStep.value > 1) currentStep.value--; };
 
+/**\n * handlePrint：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handlePrint = () => {
     if (reportRef.value) {
         reportRef.value.handleDownload();
     }
 };
 
+/**\n * handleResetForm：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleResetForm = () => { window.location.reload(); };
 
 /**
@@ -907,6 +915,7 @@ const handleNext = async () => {
     }
 };
 
+/**\n * handleFileChange：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleFileChange = (file) => {
     formState.rawFile = file.raw;
     formState.tempFileUrl = URL.createObjectURL(file.raw);
@@ -950,6 +959,7 @@ const handleAiDetect = async () => {
     }
 };
 
+/**\n * handleSave：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleSave = async () => {
     submitting.value = true;
     try {
@@ -1003,10 +1013,12 @@ const handleSubmit = async () => {
     }
 };
 
+/**\n * handleCreateSubject：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleCreateSubject = () => {
     subjectDrawerVisible.value = true;
 };
 
+/**\n * handleSubjectSuccess：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleSubjectSuccess = (id) => {
     ElMessage.success('主体建档成功');
     // 如果后续需要根据新主体创建任务或直接关联，可以在此扩展逻辑

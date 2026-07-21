@@ -35,6 +35,7 @@ const activeName = ref('basicInfo')
 const profileUserRef = ref()
 
 // 处理基本信息更新成功
+/**\n * handleBasicInfoSuccess：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleBasicInfoSuccess = async () => {
   await profileUserRef.value?.refresh()
 }

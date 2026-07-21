@@ -151,6 +151,7 @@ watch(menu, () => {
 })
 
 // ======================== 菜单编辑（素材选择） ========================
+/**\n * selectMaterial：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const selectMaterial = (item: any) => {
   const articleId = item.articleId
   const articles = item.content.newsItem
@@ -173,6 +174,7 @@ const selectMaterial = (item: any) => {
   })
 }
 
+/**\n * deleteMaterial：执行会产生数据或文件副作用的页面操作。调用前使用当前页面状态组装参数，成功后的页面反馈和状态更新由该方法负责。\n */
 const deleteMaterial = () => {
   delete menu.value['articleId']
   delete menu.value['replyArticles']

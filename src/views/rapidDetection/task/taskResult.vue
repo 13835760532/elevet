@@ -323,18 +323,22 @@ onMounted(() => {
     initData();
 });
 
+/**\n * handleBack：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleBack = () => {
     router.back();
 };
 
+/**\n * handleContinueTest：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleContinueTest = () => {
     router.push('/rapidDetection/taskDetectionCreate');
 };
 
+/**\n * handlePreviewReport：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handlePreviewReport = () => {
     reportDialogVisible.value = true;
 };
 
+/**\n * handleDownloadReport：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleDownloadReport = () => {
     if (reportComponentRef.value) {
         reportComponentRef.value.handleDownload();

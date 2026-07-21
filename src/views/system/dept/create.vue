@@ -181,15 +181,18 @@ const deptTree = ref<any[]>([])
 const isPersonalSubjectType = computed(() => Number(formData.subjectType) === PERSONAL_SUBJECT_TYPE)
 const isNonPersonalSubjectType = computed(() => formData.subjectType !== undefined && !isPersonalSubjectType.value)
 
+/**\n * clearPersonalCertificateFields：同步或重置当前页面状态，保证筛选项、组件显示和后续请求参数保持一致。\n */
 const clearPersonalCertificateFields = () => {
   formData.idCardFrontUrl = ''
   formData.idCardBackUrl = ''
 }
 
+/**\n * clearNonPersonalCertificateFields：同步或重置当前页面状态，保证筛选项、组件显示和后续请求参数保持一致。\n */
 const clearNonPersonalCertificateFields = () => {
   formData.businessLicenseUrl = ''
 }
 
+/**\n * handleSubjectTypeChange：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleSubjectTypeChange = (val: number | string) => {
   formData.creditCode = ''
   if (Number(val) === PERSONAL_SUBJECT_TYPE) {
@@ -246,6 +249,7 @@ const disableNodeAndChildren = (nodes: any[], targetId: number) => {
   return false
 }
 
+/**\n * markChildrenDisabled：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const markChildrenDisabled = (nodes: any[]) => {
   if (!nodes) return
   for (const node of nodes) {
@@ -286,6 +290,7 @@ onMounted(async () => {
   }
 })
 
+/**\n * handleSubmit：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleSubmit = async () => {
   if (!formRef.value) return
   const valid = await formRef.value.validate()
@@ -334,6 +339,7 @@ const handleSubmit = async () => {
   }
 }
 
+/**\n * handleCancel：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleCancel = () => {
   router.back()
 }

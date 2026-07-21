@@ -77,6 +77,7 @@ const forgotRules = {
     ]
 }
 
+/**\n * handleSendCode：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 function handleSendCode() {
     if (!forgotForm.value.phonenumber) {
         ElMessage.warning('请先输入手机号')
@@ -96,6 +97,7 @@ function handleSendCode() {
     }).catch(() => { })
 }
 
+/**\n * handleContinue：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 function handleContinue() {
     // 1 添加判断-发送验证码
     if (!isSmsSent.value) {
@@ -118,6 +120,7 @@ function handleContinue() {
     })
 }
 
+/**\n * goBack：控制当前页面的步骤流转或路由跳转，并保留调用方传入的必要上下文。\n */
 function goBack() {
     router.push('/login')
 }

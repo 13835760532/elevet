@@ -106,6 +106,7 @@ const onAccountChanged = (id: number) => {
 }
 
 // 关闭弹窗
+/**\n * onBeforeDialogClose：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const onBeforeDialogClose = async (onDone: () => {}) => {
   try {
     await message.confirm('修改内容可能还未保存，确定关闭吗?')
@@ -170,6 +171,7 @@ const onSubmitNewsItem = async () => {
 }
 
 // ======================== 草稿箱发布 ========================
+/**\n * onPublish：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const onPublish = async (item: Article) => {
   const mediaId = item.mediaId
   const content =

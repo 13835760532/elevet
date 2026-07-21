@@ -41,6 +41,7 @@ import { cachedBigScreenRequest } from '../bigscreen/requestCache'
 
 const trendData = ref<CertificateServiceTrendRespVO>({})
 
+/**\n * normalizeSeries：将页面使用的数据在不同结构或展示口径之间转换。该方法不直接驱动页面跳转，返回值供调用方继续组装或渲染。\n */
 const normalizeSeries = (series?: number[], length = 0) => {
   const result = Array.from({ length }, (_, index) => Number(series?.[index] || 0))
   return result
@@ -155,6 +156,7 @@ const trendHead = computed(() => {
   return `${axis[0]} - ${axis[axis.length - 1]}`
 })
 
+/**\n * loadTrendData：加载当前页面所需的数据或初始化状态。请求条件由当前路由、筛选项或已有上下文决定，结果用于更新页面响应式状态。\n */
 const loadTrendData = async () => {
   const params = getBigScreenQueryParams()
   try {

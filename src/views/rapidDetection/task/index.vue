@@ -156,6 +156,7 @@ DeptApi.getSimpleDeptList().then(depts => {
     deptMap.value = map;
 }).catch(e => { })
 
+/**\n * buildQueryParams：将页面使用的数据在不同结构或展示口径之间转换。该方法不直接驱动页面跳转，返回值供调用方继续组装或渲染。\n */
 const buildQueryParams = (params = {}, withPage = true) => {
     const query = {
         pageNo: params.pageNo || params.pageNum || 1,
@@ -187,6 +188,7 @@ const buildQueryParams = (params = {}, withPage = true) => {
 }
 
 // 真实的 API 请求
+/**\n * realFetchApi：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const realFetchApi = async (params) => {
     const query = buildQueryParams(params)
 
@@ -242,15 +244,18 @@ const {
     immediate: true
 })
 
+/**\n * handleQuery：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 function handleQuery() {
     fetchData()
 }
 
+/**\n * handleTabChange：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 function handleTabChange(tab) {
     activeTab.value = tab
     fetchData()
 }
 
+/**\n * handleExport：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleExport = async () => {
     try {
         await ElMessageBox.confirm('是否确认导出当前筛选条件下的检测任务数据？', '提示', {
@@ -277,6 +282,7 @@ const handleExport = async () => {
     }
 }
 
+/**\n * handleCheck：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 function handleCheck(row) {
     console.log('抽样检测', row)
     router.push({
@@ -287,6 +293,7 @@ function handleCheck(row) {
     })
 }
 
+/**\n * handleDetail：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 function handleDetail(row) {
     console.log('查看结果', row)
     router.push({

@@ -610,6 +610,7 @@ import * as SubjectApi from '@/api/agri/subject';
 import * as DetectionReportApi from '@/api/agri/detectionReport';
 import * as ProduceApi from '@/api/agri/produce/index';
 
+/**\n * isPdf：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。\n */
 const isPdf = (url) => {
     if (!url) return false;
     return url.toLowerCase().endsWith('.pdf');
@@ -619,6 +620,7 @@ const isPdf = (url) => {
 const pdfVisible = ref(false);
 const pdfUrl = ref('');
 
+/**\n * handlePreviewPdf：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handlePreviewPdf = (url) => {
     if (!url) return;
     pdfUrl.value = url;
@@ -729,6 +731,7 @@ const matchCategoryFromFullCategory = (item) => {
     return matchedOption ? matchedOption.value : fullCategory;
 };
 
+/**\n * handleProduceSelect：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleProduceSelect = (item) => {
     formData.productName = item.name;
     const category = matchCategoryFromFullCategory(item);
@@ -807,6 +810,7 @@ const formData = reactive({
 });
 
 const originAreaVal = ref(undefined);
+/**\n * handleOriginSelect：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleOriginSelect = (area) => {
     formData.origin = [area.province, area.city, area.district].filter(Boolean).join('-');
 };
@@ -954,6 +958,7 @@ const STEP1_FIELD_KEYS = [
     'upstreamCertificateImageUrl'
 ];
 
+/**\n * pickStep1Data：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const pickStep1Data = () => {
     const result = {};
     STEP1_FIELD_KEYS.forEach((key) => {
@@ -967,6 +972,7 @@ const showSubjectDrawer = ref(false);
 const linkedPlatformRecords = ref([]);
 const currentPlatformRecord = ref(null);
 
+/**\n * mapReportOption：将页面使用的数据在不同结构或展示口径之间转换。该方法不直接驱动页面跳转，返回值供调用方继续组装或渲染。\n */
 const mapReportOption = (item) => {
     const linkId = Number(item?.recordId || item?.id || 0);
     return {
@@ -977,12 +983,14 @@ const mapReportOption = (item) => {
     };
 };
 
+/**\n * unwrapApiData：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const unwrapApiData = (payload) => {
     if (Array.isArray(payload)) return payload;
     if (Array.isArray(payload?.data)) return payload.data;
     return payload?.data || payload || null;
 };
 
+/**\n * normalizeDetectionRecordIds：将页面使用的数据在不同结构或展示口径之间转换。该方法不直接驱动页面跳转，返回值供调用方继续组装或渲染。\n */
 const normalizeDetectionRecordIds = (value) => {
     if (Array.isArray(value)) {
         return value.map((id) => Number(id)).filter((id) => Number.isFinite(id) && id > 0);
@@ -1019,6 +1027,7 @@ const searchPlatformRecords = async (query) => {
     }
 };
 
+/**\n * handlePlatformActiveRecordChange：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handlePlatformActiveRecordChange = (record) => {
     currentPlatformRecord.value = record || null;
 };
@@ -1177,6 +1186,7 @@ watch(
     { immediate: true }
 );
 
+/**\n * handleClearEntity：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleClearEntity = () => {
     formData.subjectId = undefined;
     formData.entity = '';
@@ -1185,6 +1195,7 @@ const handleClearEntity = () => {
     selectedSubjectDetail.value = null;
 };
 
+/**\n * handleEntityChange：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleEntityChange = (val) => {
     const selected = entityOptions.value.find(item => item.id === val);
     if (selected) {
@@ -1302,6 +1313,7 @@ const loadDetails = async () => {
 };
 
 const entityOptions = ref([]);
+/**\n * searchEntity：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const searchEntity = async (query) => {
     if (query !== '') {
         try {
@@ -1411,6 +1423,7 @@ onMounted(async () => {
     }
 });
 
+/**\n * handleSubjectCreateSuccess：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleSubjectCreateSuccess = async (newId) => {
     try {
         const subject = await SubjectApi.getSubject(newId);
@@ -1425,13 +1438,17 @@ const handleSubjectCreateSuccess = async (newId) => {
     }
 };
 
+/**\n * handleAdd：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleAdd = () => formData.quantity++;
+/**\n * handleSub：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleSub = () => { if (formData.quantity > 0) formData.quantity-- };
 
+/**\n * goToStep：控制当前页面的步骤流转或路由跳转，并保留调用方传入的必要上下文。\n */
 const goToStep = (step) => {
     certStore.setStep(step);
 };
 
+/**\n * isEmptyValue：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。\n */
 const isEmptyValue = (value) => {
     if (value === null || value === undefined) return true;
     if (Array.isArray(value)) return value.length === 0;
@@ -1463,6 +1480,7 @@ const validateStep1Required = () => {
     return true;
 };
 
+/**\n * goNextToStep2：控制当前页面的步骤流转或路由跳转，并保留调用方传入的必要上下文。\n */
 const goNextToStep2 = () => {
     if (!validateStep1Required()) {
         return;
@@ -1473,6 +1491,7 @@ const goNextToStep2 = () => {
 
 // 提交数据
 const uploadImgsRef = ref(null);
+/**\n * handleTriggerUpload：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleTriggerUpload = () => {
     if (!uploadImgsRef.value) return;
     // 获取根元素的 DOM，向上查找 .el-upload__input
@@ -1650,11 +1669,13 @@ const handleGenerate = async () => {
     }
 };
 
+/**\n * handleCancel：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleCancel = () => {
     certStore.resetAll();
     router.push('/certificate/issue');
 };
 
+/**\n * handleDownload：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleDownload = async () => {
     const area = printAreaRef.value;
     if (!area) {
@@ -1678,6 +1699,7 @@ const handleDownload = async () => {
     }
 };
 
+/**\n * handleBack：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleBack = () => {
     certStore.resetAll();
     router.push('/certificate/issue');
@@ -1703,6 +1725,7 @@ const basisOptions = [
     { indexLabel: '(3)', label: '委托检测合格', value: 3 }
 ];
 
+/**\n * formatPrintDate：将页面使用的数据在不同结构或展示口径之间转换。该方法不直接驱动页面跳转，返回值供调用方继续组装或渲染。\n */
 const formatPrintDate = (value) => {
     if (!value) return '--';
     const result = formatDate(new Date(value), 'YYYY-MM-DD');
@@ -1722,6 +1745,7 @@ const bluetoothPrinter = new BluetoothPrinter({
     }
 });
 
+/**\n * connectBluetoothPrinter：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const connectBluetoothPrinter = async () => {
     bluetoothConnecting.value = true;
     try {
@@ -1749,6 +1773,7 @@ const startBluetoothKeepAlive = () => {
     }, 12000);
 };
 
+/**\n * pauseBluetoothKeepAlive：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const pauseBluetoothKeepAlive = () => {
     if (!keepAliveTimer.value) return;
     clearInterval(keepAliveTimer.value);
@@ -1771,6 +1796,7 @@ const startAutoReconnect = () => {
     }, 6000);
 };
 
+/**\n * stopBluetoothTimers：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const stopBluetoothTimers = () => {
     pauseBluetoothKeepAlive();
     if (autoReconnectTimer.value) {
@@ -1793,6 +1819,7 @@ onUnmounted(() => {
     stopBluetoothTimers();
 });
 
+/**\n * captureAreaToImg：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const captureAreaToImg = async () => {
     await nextTick();
     return captureCertificatePrintArea(printAreaRef.value);
