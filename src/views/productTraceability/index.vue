@@ -74,7 +74,7 @@
                             </tr>
                             <tr>
                                 <td class="label">开具日期</td>
-                                <td class="value">{{ traceData.certificate?.issueDate }}</td>
+                                <td class="value">{{ formatTimelineTime(traceData.certificate?.issueDate) }}</td>
                             </tr>
                         </table>
                     </div>
@@ -297,8 +297,33 @@ const printQrText = computed(() =>
     activePrintCertData.value?.qrCode || activePrintCertData.value?.certificateCode || ''
 );
 
-/**\n * formatTimelineTime：将页面使用的数据在不同结构或展示口径之间转换。该方法不直接驱动页面跳转，返回值供调用方继续组装或渲染。\n */
+/**
+ * formatTimelineTime：将页面使用的数据在不同结构或展示口径之间转换。该方法不直接驱动页面跳转，返回值供调用方继续组装或渲染。
+ */
 const formatTimelineTime = (value: any) => {
+    if (!value && value !== 0) return '--';
+    let timestamp: number | null = null;
+    if (typeof value === 'number') {
+        timestamp = value;
+    } else if (typeof value === 'string' && /^\d{10,13}$/.test(value.trim())) {
+        timestamp = Number(value.trim());
+    }
+
+    if (timestamp !== null) {
+        if (String(timestamp).length === 10) {
+            timestamp *= 1000;
+        }
+        const d = new Date(timestamp);
+        if (!isNaN(d.getTime())) {
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            const hours = String(d.getHours()).padStart(2, '0');
+            const minutes = String(d.getMinutes()).padStart(2, '0');
+            return `${year}-${month}-${day} ${hours}:${minutes}`;
+        }
+    }
+
     const [date = '--', hour = ''] = String(value || '').split(' ');
     return `${date}${hour ? `  ${hour}` : ''}`;
 };
@@ -309,7 +334,7 @@ const traceRecords = computed(() => {
 
     if (traceData.value.certificate) {
         records.push({
-            time: traceData.value.certificate.issueDate || '2025-10-01 20:46',
+            time: traceData.value.certificate.issueDate || '--',
             status: 'primary',
             type: 'certificate',
             typeLabel: '合格证',
@@ -325,25 +350,64 @@ const traceRecords = computed(() => {
         });
     }
 
-    if (traceData.value.detectionReport) {
+    // 兼容检测报告数组 detectionReports 以及单对象 detectionReport
+    const reportList = Array.isArray(traceData.value.detectionReports)
+        ? traceData.value.detectionReports
+        : (traceData.value.detectionReport ? [traceData.value.detectionReport] : []);
+
+    reportList.forEach((report: any) => {
+        let isQualified = true;
+        let resultText = '阴性/合格';
+
+        if (report.overallResult !== undefined && report.overallResult !== null) {
+            if (Number(report.overallResult) === 0) {
+                isQualified = true;
+                resultText = '阴性/合格';
+            } else if (Number(report.overallResult) === 1) {
+                isQualified = false;
+                resultText = '阳性/未通过';
+            } else if (Number(report.overallResult) === 2) {
+                isQualified = false;
+                resultText = '结果异常';
+            } else {
+                resultText = String(report.overallResult);
+            }
+        } else if (report.overallStatus) {
+            isQualified = report.overallStatus === '阴性' || report.overallStatus === '合格';
+            resultText = isQualified ? '阴性/合格' : '阳性/未通过';
+        }
+
+        const normalizedReport = {
+            ...report,
+            recordCode: report.reportCode || report.recordCode || (report.id ? `DET-${report.id}` : '--'),
+            detectionOrgName: report.detectionOrg || report.detectionOrgName || '所属工作站',
+            sample: report.sample || {
+                sampleCode: report.sampleCode,
+                sampleName: report.sampleName,
+                productionArea: report.sampleOrigin || report.productionArea,
+                sampleSource: report.sampleSource
+            },
+            results: report.detectionResults || report.results || []
+        };
+
         records.push({
-            time: traceData.value.detectionReport.detectionDate || '2025-09-28 14:30',
-            status: 'success',
+            time: report.detectionDate || report.reportDate || report.createTime || '--',
+            status: isQualified ? 'success' : 'primary',
             type: 'report',
             typeLabel: '检测结果',
-            code: traceData.value.detectionReport.recordCode || `DET-${traceData.value.detectionReport.id}`,
-            originData: traceData.value.detectionReport,
+            code: normalizedReport.recordCode,
+            originData: normalizedReport,
             details: [
-                { label: '检测机构', value: traceData.value.detectionReport.detectionOrgName || '所属工作站' },
-                { label: '检测项目', value: traceData.value.detectionReport.detectStandard || '--' },
-                { label: '结论判定', value: traceData.value.detectionReport.overallStatus === '阴性' ? '阴性/合格' : '阳性/未通过' }
+                { label: '检测机构', value: normalizedReport.detectionOrgName },
+                { label: '检测项目', value: report.detectStandard || report.detectionMethod || '--' },
+                { label: '结论判定', value: resultText }
             ]
         });
-    }
+    });
 
     if (traceData.value.upstreamCertificate) {
         records.push({
-            time: traceData.value.upstreamCertificate.issueDate || '2025-09-20 09:15',
+            time: traceData.value.upstreamCertificate.issueDate || '--',
             status: 'primary',
             type: 'certificate',
             typeLabel: '上游溯源',
@@ -367,17 +431,46 @@ const handleViewCert = (data: any) => {
 
 /**\n * handleViewReport：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
 const handleViewReport = (data: any) => {
-    if (!data) {
+    let targetReport = data;
+
+    // 若未传参或传入的是合格证数据，尝试从 traceData 中自动获取检测报告对象
+    if (!targetReport || (!targetReport.reportFileUrl && !targetReport.fileUrl && targetReport.overallResult === undefined && !targetReport.overallStatus)) {
+        const found = Array.isArray(traceData.value?.detectionReports) && traceData.value.detectionReports.length > 0
+            ? traceData.value.detectionReports[0]
+            : traceData.value?.detectionReport;
+        if (found) {
+            targetReport = found;
+        }
+    }
+
+    if (!targetReport) {
         ElMessage.warning('暂无检测报告');
         return;
     }
-    activeReportData.value = data;
-    showReportVisible.value = true;
+
+    const reportUrl = targetReport.reportFileUrl || targetReport.fileUrl || targetReport.url;
+    if (reportUrl) {
+        window.open(reportUrl, '_blank');
+        return;
+    }
+
+    if (targetReport.results || targetReport.detectionResults) {
+        activeReportData.value = targetReport;
+        showReportVisible.value = true;
+        return;
+    }
+
+    ElMessage.warning('暂无检测报告文件');
 };
 
-/**\n * handleViewTraceReport：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
+/**
+ * handleViewTraceReport：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。
+ */
 const handleViewTraceReport = () => {
-    handleViewReport(traceData.value?.detectionReport);
+    const report = Array.isArray(traceData.value?.detectionReports) && traceData.value.detectionReports.length > 0
+        ? traceData.value.detectionReports[0]
+        : traceData.value?.detectionReport;
+    handleViewReport(report);
 };
 
 /**\n * connectBluetoothPrinter：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
@@ -573,6 +666,7 @@ $bg-color: #f8fafc;
             font-size: 16px;
             background: $theme-color;
             border: none;
+            margin-left: 10px;
         }
     }
 }
@@ -803,7 +897,6 @@ $bg-color: #f8fafc;
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    gap: 14px;
     flex-wrap: wrap;
     flex: 0 0 auto;
 }
