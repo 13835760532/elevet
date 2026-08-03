@@ -205,7 +205,7 @@ const formData = reactive({
     productSpec: '',
     productUnit: DEFAULT_AGRI_MEASUREMENT_UNIT,
     productImageUrl: '',
-    archiveDate: formatDate(new Date(), 'YYYY-MM-DD'),
+    archiveDate: formatDate(new Date(), 'YYYY-MM-DD HH:mm:ss'),
     subjectId: undefined
 });
 
@@ -342,7 +342,7 @@ const loadDetail = async () => {
             productSpec: '',
             productUnit: DEFAULT_AGRI_MEASUREMENT_UNIT,
             productImageUrl: '',
-            archiveDate: formatDate(new Date(), 'YYYY-MM-DD'),
+            archiveDate: formatDate(new Date(), 'YYYY-MM-DD HH:mm:ss'),
             subjectId: undefined
         });
         currentSubject.value = null;
@@ -443,7 +443,7 @@ const handleCopyPrevious = async () => {
             productSpec: cachedPayload.productSpec || '',
             productUnit: cachedPayload.productUnit || DEFAULT_AGRI_MEASUREMENT_UNIT,
             productImageUrl: cachedPayload.productImageUrl || '',
-            archiveDate: cachedPayload.archiveDate || formatDate(new Date(), 'YYYY-MM-DD'),
+            archiveDate: cachedPayload.archiveDate || formatDate(new Date(), 'YYYY-MM-DD HH:mm:ss'),
             subjectId: cachedPayload.subjectId || undefined
         });
 
