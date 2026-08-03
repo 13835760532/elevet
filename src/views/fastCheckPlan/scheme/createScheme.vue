@@ -95,9 +95,9 @@
                     <!-- 第五行：分类与项目 -->
                     <el-col :span="12">
                         <el-form-item label="农产品行业分类" prop="targetCategory">
-                            <el-tree-select v-model="formData.targetCategory" :data="produceCategoryTree"
-                                :props="{ label: 'name', value: 'code', children: 'children' }" node-key="code"
-                                placeholder="请选择农产品类别" class="full-width" clearable filterable check-strictly />
+                            <el-select v-model="formData.targetCategory" placeholder="请选择农产品类别" class="full-width" clearable filterable>
+                                <el-option v-for="item in produceCategoryTree" :key="item.id" :label="item.name" :value="item.id" />
+                            </el-select>
                         </el-form-item>
                     </el-col>
                     <!-- <el-col :span="12">
@@ -282,14 +282,18 @@ const { options: planTypeOptions, getLabel: getPlanTypeLabel } = useDict(DICT_TY
 const { options: productCategoryOptions, getLabel: getProductCategoryLabel } = useDict(DICT_TYPE.AGRI_PRODUCT_CATEGORY, 'str')
 
 const produceCategoryTree = ref([])
+const rawCategoryList = ref([])
 
-/** 在行业分类树中递归查找名称，找不到时依次回退字典标签和原值。 */
+/** 在行业分类树中查找名称，找不到时依次回退字典标签和原值。 */
 const getCategoryLabelFromTree = (val) => {
     if (!val) return '--'
-    /**\n     * findLabel：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。\n     */
+    const found = rawCategoryList.value.find(
+        (node) => String(node.id) === String(val) || String(node.code) === String(val) || String(node.name) === String(val)
+    )
+    if (found) return found.name
     const findLabel = (nodes) => {
         for (const node of nodes) {
-            if (String(node.code) === String(val) || String(node.name) === String(val) || String(node.id) === String(val)) {
+            if (String(node.id) === String(val) || String(node.code) === String(val) || String(node.name) === String(val)) {
                 return node.name
             }
             if (node.children?.length) {
@@ -303,7 +307,7 @@ const getCategoryLabelFromTree = (val) => {
     return foundName || getProductCategoryLabel(val) || val
 }
 
-/** 加载农产品行业分类树 */
+/** 加载农产品行业分类树（仅筛选一级分类） */
 const loadProduceCategoryTree = async () => {
     try {
         const res = await ProduceCategoryApi.getProduceCategoryPage({
@@ -312,7 +316,23 @@ const loadProduceCategoryTree = async () => {
             type: 1 // 1-分类
         })
         const list = res?.list || []
-        produceCategoryTree.value = res?.list || []
+        rawCategoryList.value = list
+        
+        // 解析树结构
+        const treeList = handleTree(list)
+        // 若存在总顶级根节点（如“农产品分类”），则提取其直属子节点作为“一级分类”
+        let firstLevelNodes = []
+        if (treeList.length === 1 && treeList[0].children && treeList[0].children.length > 0) {
+            firstLevelNodes = treeList[0].children
+        } else {
+            firstLevelNodes = treeList
+        }
+        
+        // 保留一级分类节点，清空深层子节点
+        produceCategoryTree.value = firstLevelNodes.map((item) => ({
+            ...item,
+            children: undefined
+        }))
     } catch (error) {
         console.error('加载农产品分类失败:', error)
     }
@@ -382,7 +402,8 @@ const loadDeptList = async () => {
 /**\n * generatePlanCode：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
 const generatePlanCode = () => {
     if (isEdit.value) return;
-    const category = (formData.targetCategory || 'GENERAL').toUpperCase();
+    // 强制转换为合规字符串防止纯数字类型的 id 调用 .toUpperCase() 触发崩溃锁结
+    const category = String(formData.targetCategory || 'GENERAL').toUpperCase();
     const now = new Date();
     const yearMonth = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}`;
     const random = Math.floor(100000 + Math.random() * 900000);

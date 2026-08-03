@@ -57,7 +57,11 @@
           <span v-if="projectRiskTab === '阳性率'">阳性项次/总项次</span>
           <span v-else>检测总量</span>
         </div>
-        <div v-if="!projectRiskEmpty" class="project-risk-axis-labels">
+        <div
+          v-if="!projectRiskEmpty"
+          class="project-risk-axis-labels"
+          :style="{ '--project-risk-count': projectLabels.length || 1 }"
+        >
           <div v-for="(label, index) in projectLabels" :key="`${label}-${index}`" class="project-risk-axis-label">
             <span class="project-risk-axis-text">{{ truncateProjectLabel(label) }}</span>
             <span class="project-risk-label-tooltip">{{ label }}</span>
@@ -668,7 +672,7 @@ onUnmounted(() => {
   bottom: 34px;
   z-index: 2;
   display: grid;
-  grid-template-rows: repeat(10, minmax(0, 1fr));
+  grid-template-rows: repeat(var(--project-risk-count, 10), minmax(0, 1fr));
   width: 118px;
   pointer-events: none;
 }
