@@ -10,6 +10,7 @@ export interface StatisticsQueryParams {
   areaCode?: string | number
   dateType?: number
   timeUnit?: 'DAY' | 'MONTH'
+  timeGranularity?: string | number
 }
 
 const normalizeAreaValue = (value: unknown) => {
@@ -91,6 +92,7 @@ export const getEffectiveAreaParams = (areaParams?: {
   cityName?: string
   areaType?: string | number
   areaCode?: string | number
+  timeGranularity?: string | number
 }) => {
   const userDeptAreaParams = getUserDeptAreaParams()
   // 页面显式选择优先，缺失时使用当前机构范围；空字符串转为 undefined 以免污染查询串。
@@ -139,6 +141,7 @@ export const buildRangeParams = (rangeType: string, dateRange: string[]): Statis
     startDate,
     endDate,
     dateType: isDaily ? 1 : 2, // 1按天 2按月
+    timeGranularity: isDaily? 2:1,
     timeUnit: isDaily ? 'DAY' : 'MONTH'
   }
 }
