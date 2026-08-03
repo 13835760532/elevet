@@ -208,8 +208,8 @@
 
                     <!-- 检测结果 Tab -->
                     <template v-if="activeTab === 'result'">
-                        <DetectionProgress :tableData="progressList" :total="progressTotal" @query="handleProgressQuery"
-                            @reset="handleProgressReset" />
+                        <DetectionProgress :tableData="progressList" :createBtnFlag="false" :total="progressTotal"
+                            @query="handleProgressQuery" @reset="handleProgressReset" />
                     </template>
 
                     <!-- 进度监控 Tab -->

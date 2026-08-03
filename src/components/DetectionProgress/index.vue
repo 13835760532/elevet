@@ -36,11 +36,9 @@
         </div>
 
         <!-- 操作按钮与表格间隙 -->
-        <div class="operation-header">
-
+        <div class="operation-header" v-if="createBtnFlag">
             <div class="right-actions">
                 <el-button type="primary" class="btn-input" @click="handleSingleInput">单条录入</el-button>
-
             </div>
         </div>
 
@@ -115,7 +113,12 @@ const props = defineProps({
     categoryOptions: {
         type: Array,
         default: () => []
+    },
+    createBtnFlag: {
+        type: Boolean,
+        default: true
     }
+
 });
 
 const emit = defineEmits(['query', 'reset', 'single-input', 'batch-import', 'view-detail', 'page-change']);
