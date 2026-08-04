@@ -76,7 +76,7 @@
                     alt="产品图片"
                 />
             </div>
-            <div v-else class="no-image-text" style="color: #909399; font-size: 14px; text-align: left; padding: 4px 12px;">无</div>
+            <div v-else class="no-image-text" style="color: #909399; font-size: 14px; text-align: left; padding: 4px 12px;">-</div>
         </div>
     </div>
 </template>
@@ -156,9 +156,9 @@ const parseBasisData = (val: CertificatePreviewData['commitmentBasis']) => {
 
 const qrText = computed(() => props.qrText || props.certificate?.qrCode || props.certificate?.certificateCode || '');
 
+// 产品图片计算处理：严谨获取产品所绑定的具体实境物照属性，避免直接误将合格证件图片（certificateImageUrl）作为备用的商品展示
 const productImage = computed(() =>
     props.certificate?.productImageUrl ||
-    props.certificate?.certificateImageUrl ||
     props.certificate?.imageUrl ||
     ''
 );

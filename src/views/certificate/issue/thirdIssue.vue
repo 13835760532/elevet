@@ -76,7 +76,7 @@
                         <div class="image-placeholder" v-if="certStore.productInfo?.productImageUrl">
                             <img :src="certStore.productInfo.productImageUrl" class="cert-product-img" style="max-width: 100%; max-height: 220px; object-fit: contain;" />
                         </div>
-                        <div v-else class="no-image-text" style="color: #909399; font-size: 14px; text-align: left; padding: 4px 12px;">无</div>
+                        <div v-else class="no-image-text" style="color: #909399; font-size: 14px; text-align: left; padding: 4px 12px;">-</div>
                     </div>
                 </div>
             </div>

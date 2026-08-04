@@ -74,7 +74,7 @@
                     <img :src="certificate.productImageUrl" class="cert-product-img" alt="产品图片" />
                 </div>
                 <div v-else class="no-image-text"
-                    style="color: #909399; font-size: 14px; text-align: left; padding: 4px 12px;">无</div>
+                    style="color: #909399; font-size: 14px; text-align: left; padding: 4px 12px;">-</div>
             </div>
         </div>
     </div>
