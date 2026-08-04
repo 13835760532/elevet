@@ -198,6 +198,7 @@ const loadData = async () => {
             contactPhone: queryParams.phone || undefined,
             productionArea: queryParams.productionArea?.length ? queryParams.productionArea[queryParams.productionArea.length - 1] : undefined,
             createTime: queryParams.dateRange && queryParams.dateRange.length === 2 ? [queryParams.dateRange[0] + ' 00:00:00', queryParams.dateRange[1] + ' 23:59:59'] : undefined,
+            dataScope: 'AREA_REGULATE'
         };
         const data = await CertificateApi.getCertificateVerificationPage(params);
         tableData.value = data.list || [];

@@ -262,7 +262,8 @@ onMounted(async () => {
   getDeptTree()
   if (id) {
     try {
-      const data = await DeptApi.getDept(id)
+      // 通过统一管理后台的接口精准加载完备的机构及备案主体组合信息
+      const data = await OrganizationApi.getDeptWithFiling(id)
       formData.name = data.name || ''
       // formData.parentId = data.parentId === 0 ? undefined : data.parentId
       formData.industry = data.industry || ''
@@ -271,14 +272,16 @@ onMounted(async () => {
       formData.adminLevel = data.areaLevel
       formData.region = data.address || ''
       formData.contact = data.contactName || ''
-      formData.phone = data.contactPhone || ''
+      // 兼容拉取详情时回显部门电话或联系处电话
+      formData.phone = data.contactPhone || data.phone || ''
       formData.creditCode = data.socialCreditCode || ''
       formData.businessLicenseUrl = data.businessLicenseUrl || data.certImageUrls || ''
       formData.idCardFrontUrl = data.idCardFrontUrl || ''
       formData.idCardBackUrl = data.idCardBackUrl || ''
 
-      // 初始化行政区域选择
-      selectedRowId.value = data.areaCode
+      // 初始化行政区域选择：因详情不再出参 areaCode 字段，从区、市、省底至深自反检索可用行政节点码定位绑定并正确渲染
+      const targetAreaCode = data.areaCode || [data.districtCode, data.cityCode, data.provinceCode].find(val => val && String(val) !== '0' && String(val) !== '')
+      selectedRowId.value = targetAreaCode ? Number(targetAreaCode) : undefined
       areaInfo.value = {
         provinceCode: data.provinceCode,
         cityCode: data.cityCode,
@@ -319,6 +322,8 @@ const handleSubmit = async () => {
       address: formData.region,
       contactName: formData.contact,
       contactPhone: formData.phone,
+      // 补充传递部门联系方式字段以配合接口全面支持
+      phone: formData.phone,
       socialCreditCode: formData.creditCode,
       businessLicenseUrl: formData.businessLicenseUrl,
       idCardFrontUrl: formData.idCardFrontUrl,
@@ -327,7 +332,8 @@ const handleSubmit = async () => {
 
     if (id) {
       data.id = id
-      await DeptApi.updateDept(data)
+      // 在编辑和更新分支下，接入调用后台同步更新机构及备案主体接口
+      await OrganizationApi.updateDeptWithFiling(data)
       message.success('更新机构成功')
     } else {
       await OrganizationApi.createDeptWithFiling(data)

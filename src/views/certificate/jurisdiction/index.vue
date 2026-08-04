@@ -78,8 +78,8 @@
                                         placeholder="合格证编号" clearable class="custom-input w140" />
                                 </el-form-item>
                                 <el-form-item label="" prop="productName">
-                                    <el-input :prefix-icon="Search" v-model="queryParams.productName"
-                                        placeholder="产品名称" clearable class="custom-input w140" />
+                                    <el-input :prefix-icon="Search" v-model="queryParams.productName" placeholder="产品名称"
+                                        clearable class="custom-input w140" />
                                 </el-form-item>
                                 <el-form-item label="" prop="subjectName">
                                     <el-input :prefix-icon="Search" v-model="queryParams.subjectName"
@@ -102,8 +102,9 @@
                                 </el-form-item>
                                 <el-form-item label="" prop="productionArea">
                                     <div class="area-selectors">
-                                        <AreaCascader v-model="areaIds" @select="handleAreaSelect" @change="handleAreaChange" placeholder="产品产地"
-                                            checkStrictly :root-area-code="userDeptAreaCode" style="width: 200px;" />
+                                        <AreaCascader v-model="areaIds" @select="handleAreaSelect"
+                                            @change="handleAreaChange" placeholder="产品产地" checkStrictly
+                                            :root-area-code="userDeptAreaCode" style="width: 200px;" />
                                     </div>
                                 </el-form-item>
                                 <el-form-item v-if="activeTab === 'verify'" label="" prop="certificateSource">
@@ -169,12 +170,14 @@
                                     <span>{{ getProductCategoryLabel(scope.row.productCategory) || '-' }}</span>
                                 </template>
                             </el-table-column>
-                            <el-table-column prop="productionArea" label="产地" width="150" show-overflow-tooltip align="center">
+                            <el-table-column prop="productionArea" label="产地" width="150" show-overflow-tooltip
+                                align="center">
                                 <template #default="scope">
                                     <span>{{ scope.row.productionArea || '-' }}</span>
                                 </template>
                             </el-table-column>
-                            <el-table-column prop="subjectName" label="生产经营主体" min-width="160" show-overflow-tooltip align="center">
+                            <el-table-column prop="subjectName" label="生产经营主体" min-width="160" show-overflow-tooltip
+                                align="center">
                                 <template #default="scope">
                                     <span>{{ scope.row.subjectName || '-' }}</span>
                                 </template>
@@ -433,14 +436,16 @@ const getEffectiveAreaParams = () => {
     if (selectedArea.value) {
         return {
             areaCode: selectedArea.value.areaCode,
-            areaLevel: selectedArea.value.areaLevel
+            areaLevel: selectedArea.value.areaLevel,
+            dataScope: 'AREA_REGULATE'
         };
     }
 
     const userDeptAreaParams = getUserDeptAreaParams();
     return {
         areaCode: userDeptAreaParams.areaCode || undefined,
-        areaLevel: userDeptAreaParams.areaLevel || undefined
+        areaLevel: userDeptAreaParams.areaLevel || undefined,
+        dataScope: 'AREA_REGULATE'
     };
 };
 
@@ -458,7 +463,8 @@ const buildPageParams = () => {
         startDate: queryParams.dateRange?.[0] || undefined,
         endDate: queryParams.dateRange?.[1] || undefined,
         areaCode: areaParams.areaCode,
-        areaLevel: areaParams.areaLevel
+        areaLevel: areaParams.areaLevel,
+        dataScope: 'AREA_REGULATE'
     };
 
     params.certificateType = queryParams.certificateType || undefined;

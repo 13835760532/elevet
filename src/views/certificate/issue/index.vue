@@ -263,7 +263,8 @@ const getList = async () => {
             contactPhone: queryParams.contactPhone || undefined,
             status: (queryParams.status === 0 || queryParams.status) ? queryParams.status : undefined,
             startDate: queryParams.dateRange?.[0] ? queryParams.dateRange[0] : undefined,
-            endDate: queryParams.dateRange?.[1] ? queryParams.dateRange[1] : undefined
+            endDate: queryParams.dateRange?.[1] ? queryParams.dateRange[1] : undefined,
+            dataScope: 'AREA_REGULATE'
         };
         const data = await CertificateApi.getCertificatePage(params);
         tableList.value = data.list || [];

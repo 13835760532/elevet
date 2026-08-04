@@ -277,7 +277,8 @@ const buildCertificateQuery = (withPage = true) => {
     areaCode: queryParams.value.areaCode,
     queryDeptScope: queryParams.value.queryDeptScope,
     deptId: queryParams.value.deptId,
-    deptName: queryParams.value.deptName
+    deptName: queryParams.value.deptName,
+    dataScope: 'AREA_REGULATE'
   }
 }
 

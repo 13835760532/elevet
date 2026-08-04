@@ -66,6 +66,7 @@ import { ref } from 'vue'
 import { DICT_TYPE } from '@/utils/dict'
 import * as DeptApi from '@/api/system/dept'
 import * as AreaApi from '@/api/system/area'
+import * as OrganizationApi from '@/api/agri/organization/index'
 
 defineOptions({ name: 'SystemDeptDetail' })
 
@@ -104,7 +105,8 @@ const open = async (id: number) => {
   deptData.value = {}
   try {
     initAreaMap() // 并发初始化地区
-    deptData.value = await DeptApi.getDept(id)
+    // 从全新的机构详情整合查询接口异步索取字段信息
+    deptData.value = await OrganizationApi.getDeptWithFiling(id)
   } finally {
     loading.value = false
   }

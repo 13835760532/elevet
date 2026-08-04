@@ -276,7 +276,8 @@ const loadTable = async () => {
       areaCode: queryParams.value.areaCode,
       queryDeptScope: queryParams.value.queryDeptScope,
       deptId: queryParams.value.deptId,
-      deptName: queryParams.value.deptName
+      deptName: queryParams.value.deptName,
+      dataScope: 'AREA_REGULATE'
     })
     const normalized = normalizePagedResult<any>(data)
     tableData.value = normalized.list.map(mapRow)
