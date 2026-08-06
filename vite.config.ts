@@ -30,6 +30,12 @@ export default ({command, mode}: ConfigEnv): UserConfig => {
             host: "0.0.0.0",
             open: env.VITE_OPEN === 'true',
             proxy: {
+              // 桌面开发模式通过 Vite 转发接口；生产安装包由 Electron 的 app:// 协议代理。
+              '/admin-api': {
+                target: 'https://yishizhijian.jikeyun.net',
+                changeOrigin: true,
+                secure: true
+              },
               '/__geo_proxy': {
                 target: 'https://yishizhijian.jikeyun.net',
                 ws: false,

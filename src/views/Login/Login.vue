@@ -78,6 +78,7 @@ const policyAgreed = ref(false)
 const loading = ref(false)
 const captchaEnabled = ref(import.meta.env.VITE_APP_CAPTCHA_ENABLE === 'true')
 const tenantEnabled = import.meta.env.VITE_APP_TENANT_ENABLE === 'true'
+const isDesktopApp = import.meta.env.VITE_APP_DESKTOP === 'true'
 
 const { proxy } = getCurrentInstance()
 const router = useRouter()
@@ -224,8 +225,9 @@ const handleLogin = async (params) => {
       throw error
     }
 
+    // 桌面安装包只承载登录与 AI 助手，没有来源页时直接进入助手；Web 端仍保持原首页行为。
     if (!redirect.value) {
-      redirect.value = '/'
+      redirect.value = isDesktopApp ? '/ai-assistant' : '/'
     }
 
     // 判断是否为SSO登录

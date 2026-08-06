@@ -1,6 +1,33 @@
 import { Layout } from '@/utils/routerHelper'
 
 const { t } = useI18n()
+const isDesktopApp = import.meta.env.VITE_APP_DESKTOP === 'true'
+
+/**
+ * Web 端助手沿用管理后台布局，便于从菜单进入其他业务模块；桌面端定位为独立 AI 工具，
+ * 直接挂载聊天页，避免渲染顶部栏、侧边菜单和标签页。
+ */
+const aiAssistantRoute: AppRouteRecordRaw = isDesktopApp
+  ? {
+      path: '/ai-assistant',
+      component: () => import('@/views/ai/ChatAssistant.vue'),
+      name: 'AiAssistant',
+      meta: { title: '小壹助手', hidden: true, noTagsView: true }
+    }
+  : {
+      path: '/ai-assistant',
+      component: Layout,
+      name: 'AiAssistantRoot',
+      meta: { hidden: true },
+      children: [
+        {
+          path: '',
+          component: () => import('@/views/ai/ChatAssistant.vue'),
+          name: 'AiAssistant',
+          meta: { title: '小壹助手', activeMenu: '/ai-assistant' }
+        }
+      ]
+    }
 /**
  * redirect: noredirect        当设置 noredirect 的时候该路由在面包屑导航中不可被点击
  * name:'router-name'          设定路由的名字，一定要填写不然使用<keep-alive>时会出现各种问题
@@ -626,20 +653,7 @@ const remainingRouter: AppRouteRecordRaw[] = [
       }
     ]
   },
-  {
-    path: '/ai-assistant',
-    component: Layout,
-    name: 'AiAssistantRoot',
-    meta: { hidden: true },
-    children: [
-      {
-        path: '',
-        component: () => import('@/views/ai/ChatAssistant.vue'),
-        name: 'AiAssistant',
-        meta: { title: '小壹助手', activeMenu: '/ai-assistant' }
-      }
-    ]
-  },
+  aiAssistantRoute,
   {
     path: '/:pathMatch(.*)*',
     component: () => import('@/views/Error/404.vue'),

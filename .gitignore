@@ -3,6 +3,10 @@ node_modules
 dist
 dist-ssr
 /dist*
+/desktop-app/
+/release/
+# 仅用于内部 Windows 测试包的讯飞 AIKit 授权信息，绝不能提交到仓库。
+/electron/native/xfyun-awake/runtime/xfyun-awake.ini
 pnpm-debug
 auto-*.d.ts
 .idea

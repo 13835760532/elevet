@@ -1,0 +1,36 @@
+appId: net.jikeyun.yishizhijian.aiassistant
+productName: 壹拾智检 AI 助手
+directories:
+  app: desktop-app
+  output: release/desktop
+files:
+  - dist-desktop/**
+  - electron/**
+  - package.json
+asar: true
+# 本项目的 Electron 主进程仅使用内置 API，无需执行原生模块重编译。
+npmRebuild: false
+mac:
+  category: public.app-category.productivity
+  # 本地构建不自动使用开发机证书；正式发布时通过 CI 注入 Developer ID 证书并执行公证。
+  identity: null
+  target:
+    - dmg
+    - zip
+  extendInfo:
+    NSMicrophoneUsageDescription: 壹拾智检 AI 助手需要使用麦克风进行语音提问。
+win:
+  target:
+    - nsis
+  artifactName: ${productName}-${version}-setup.${ext}
+  extraResources:
+    - from: electron/native/xfyun-awake/runtime
+      to: xfyun-awake
+      filter:
+        - '**/*'
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+linux:
+  target:
+    - AppImage

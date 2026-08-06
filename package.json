@@ -14,6 +14,11 @@
     "build:test": "node --max_old_space_size=4096 ./node_modules/vite/bin/vite.js build --mode test",
     "build:stage": "node --max_old_space_size=4096 ./node_modules/vite/bin/vite.js build --mode stage",
     "build:prod": "node --max_old_space_size=4096 ./node_modules/vite/bin/vite.js build --mode prod",
+    "build:desktop": "node --max_old_space_size=4096 ./node_modules/vite/bin/vite.js build --mode desktop",
+    "desktop:prepare": "node electron/prepare.cjs",
+    "desktop:dev": "node electron/dev.cjs",
+    "desktop:build": "node --max_old_space_size=4096 ./node_modules/vite/bin/vite.js build --mode desktop && node electron/prepare.cjs && electron-builder --config electron-builder.yml",
+    "desktop:pack": "node --max_old_space_size=4096 ./node_modules/vite/bin/vite.js build --mode desktop && node electron/prepare.cjs && electron-builder --dir --config electron-builder.yml",
     "serve:dev": "vite preview --mode dev",
     "serve:prod": "vite preview --mode prod",
     "preview": "pnpm build:local && vite preview",
@@ -115,6 +120,8 @@
     "bpmn-js": "^17.9.2",
     "bpmn-js-properties-panel": "5.23.0",
     "consola": "^3.2.3",
+    "electron": "36.7.3",
+    "electron-builder": "26.0.12",
     "eslint": "^8.57.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-define-config": "^2.1.0",
@@ -168,6 +175,6 @@
     "pnpm": ">=8.6.0"
   },
   "version": "1.0.0",
-  "main": ".eslintrc.js",
+  "main": "electron/main.cjs",
   "keywords": []
 }

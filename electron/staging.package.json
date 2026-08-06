@@ -1,0 +1,9 @@
+{
+  "name": "yishizhijian-ai-desktop",
+  "productName": "壹拾智检 AI 助手",
+  "version": "1.0.0",
+  "description": "壹拾智检 AI 助手桌面应用",
+  "author": "壹拾智检",
+  "private": true,
+  "main": "electron/main.cjs"
+}

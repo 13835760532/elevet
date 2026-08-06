@@ -1,0 +1,7 @@
+[xfyun]
+app_id=
+api_key=
+api_secret=
+
+[wake]
+threshold=0 0:999

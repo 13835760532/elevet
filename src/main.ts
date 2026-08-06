@@ -45,7 +45,7 @@ import print from 'vue3-print-nb' // 打印插件
 import pageback from '@/components/PageBack/index.vue'
 
 const lightRoutePrefixes = ['/big-screen']
-const lightRoutes = ['/login', '/register', '/forgotPassword', '/reset-password', '/403', '/404', '/500']
+const lightRoutes = ['/login', '/register', '/forgotPassword', '/reset-password', '/403', '/404', '/500', '/ai-assistant']
 let formCreateReady: Promise<void> | null = null
 
 const getCurrentHashPath = () => {

@@ -1,5 +1,5 @@
 <template>
-  <div class="ai-chat-container">
+  <div class="ai-chat-container" :class="{ 'is-desktop-app': isDesktopApp }">
     <div class="ambient ambient-a"></div>
     <div class="ambient ambient-b"></div>
     <div class="surface-grain"></div>
@@ -157,14 +157,15 @@
           @click="toggleVoiceInput">
           <Icon :icon="isRecording ? 'ep:video-pause' : 'ep:microphone'" :size="20" />
         </div>
-        <!-- <div
+        <div
+          v-if="isDesktopApp"
           class="voice-btn wake-btn"
           :class="{ active: isWakeWordEnabled, disabled: isTyping || !wakeWordRuntimeAvailable }"
           :title="wakeWordButtonTitle"
           @click="toggleWakeWord"
         >
           <Icon :icon="isWakeWordEnabled ? 'ep:bell-filled' : 'ep:bell'" :size="20" />
-        </div> -->
+        </div>
         <div class="send-btn" :class="{ active: inputText.trim() && !isTyping }" @click="handleSend(inputText)">
           <Icon icon="ep:position" :size="20" />
         </div>
@@ -193,6 +194,11 @@ import {
 import { BrowserSpeechRecognizer } from '@/api/agri/voiceAssistant/browserSpeechRecognition'
 import { XfyunRtasrRecognizer } from '@/api/agri/voiceAssistant/xfyunRtasr'
 import { BrowserWakeWordEngine, DEFAULT_WAKE_WORDS } from '@/api/agri/voiceAssistant/wakeWord/browserWakeWord'
+import { SherpaOnnxWakeWordEngine } from '@/api/agri/voiceAssistant/wakeWord/sherpaOnnxWakeWord'
+import {
+  XfyunDesktopWakeWordEngine,
+  isXfyunDesktopWakeWordSupported
+} from '@/api/agri/voiceAssistant/wakeWord/xfyunDesktopWakeWord'
 import type { WakeWordEngine, WakeWordStatus } from '@/api/agri/voiceAssistant/wakeWord/types'
 import {
   shouldResumeWakeWordAfterDetection,
@@ -200,6 +206,16 @@ import {
 } from './wakeWordRecovery'
 
 defineOptions({ name: 'ChatAssistant' })
+
+/** 桌面安装包不使用后台布局，需要由助手页面独占应用窗口高度。 */
+const isDesktopApp = import.meta.env.VITE_APP_DESKTOP === 'true'
+const isXfyunDesktopWakeWordAvailable = isXfyunDesktopWakeWordSupported()
+
+// Sherpa-ONNX 的中文模型按拼音 token 匹配，@ 后的文字用于展示已识别的唤醒词。
+const DESKTOP_WAKE_WORDS = [
+  'n ǐ h ǎo x iǎo y ī @你好小壹',
+  'x iǎo y ī x iǎo y ī @小壹小壹'
+]
 
 // --- 推荐问题数据 ---
 const allRecommends = [
@@ -264,7 +280,8 @@ const wakeWordStatus = ref<WakeWordStatus>('idle')
 const wakeWordTranscript = ref('')
 const wakeWordSessionToken = ref(0)
 const chatMainRef = ref<HTMLElement | null>(null)
-const wakeWordRuntimeAvailable = BrowserSpeechRecognizer.isSupported()
+const wakeWordRuntimeAvailable =
+  isXfyunDesktopWakeWordAvailable || isDesktopApp || BrowserSpeechRecognizer.isSupported()
 
 const voiceButtonTitle = computed(() => {
   if (isTyping.value) return '小壹正在回答中'
@@ -273,7 +290,7 @@ const voiceButtonTitle = computed(() => {
 
 const wakeWordButtonTitle = computed(() => {
   if (isTyping.value) return '小壹正在回答中'
-  if (!wakeWordRuntimeAvailable) return '当前浏览器不支持本地唤起'
+  if (!wakeWordRuntimeAvailable) return '当前设备不支持本地唤醒'
   return isWakeWordEnabled.value ? '关闭唤醒模式' : '启用唤醒模式'
 })
 
@@ -618,67 +635,81 @@ const stopWakeWord = () => {
 }
 
 /**
- * 启动浏览器本地唤醒词监听。
+ * 启动本地唤醒词监听。
+ * Windows 桌面端使用讯飞 AIKit，macOS 桌面端使用随应用分发的 Sherpa-ONNX 模型；
  * 检测到唤醒词后暂停引擎、切换到云端听写，听写结束且会话未失效时再恢复监听。
  */
 const startWakeWord = async () => {
   if (isTyping.value || wakeWordEngine.value) return
 
-  if (!navigator.mediaDevices?.getUserMedia) {
+  if (!isXfyunDesktopWakeWordAvailable && !navigator.mediaDevices?.getUserMedia) {
     ElMessage.warning('当前浏览器不支持麦克风采集')
     return
   }
 
   const sessionToken = ++wakeWordSessionToken.value
-  const engine = new BrowserWakeWordEngine({
-    keywords: DEFAULT_WAKE_WORDS,
-    onStatusChange: (status, message) => {
-      if (status === 'listening') {
-        isWakeWordEnabled.value = true
-      }
-      if (status === 'error') {
-        isWakeWordEnabled.value = false
-        wakeWordEngine.value = null
-      }
-      if (status === 'stopped' && wakeWordEngine.value === engine) {
-        wakeWordEngine.value = null
-      }
-      updateWakeWordStatusText(status, message)
-    },
-    onTranscript: (text) => {
-      wakeWordTranscript.value = text
-    },
-    onDetected: async () => {
-      if (isTyping.value || isRecording.value) return
-      updateWakeWordStatusText('detected', '已检测到唤醒词，正在开始听写')
-      engine.stop()
-      if (wakeWordEngine.value === engine) {
-        wakeWordEngine.value = null
-      }
-      try {
-        await toggleVoiceInput()
-      } finally {
-        if (isWakeWordEnabled.value) {
-          window.setTimeout(() => {
-            if (shouldResumeWakeWordAfterDetection({
-              isWakeWordEnabled: isWakeWordEnabled.value,
-              hasWakeWordEngine: Boolean(wakeWordEngine.value),
-              hasVoiceRecognizer: Boolean(voiceRecognizer.value),
-              isTyping: isTyping.value,
-              isRecording: isRecording.value,
-              sessionToken,
-              currentSessionToken: wakeWordSessionToken.value
-            })) {
-              void startWakeWord()
-            }
-          }, 1500)
-        }
-      }
-    },
-    onError: (message) => {
-      ElMessage.error(message)
+  const engine: WakeWordEngine = isXfyunDesktopWakeWordAvailable
+    ? new XfyunDesktopWakeWordEngine({
+      keywords: [],
+      onStatusChange: handleWakeWordStatusChange,
+      onDetected: handleWakeWordDetected,
+      onError: (message) => ElMessage.error(message)
+    })
+    : isDesktopApp
+      ? new SherpaOnnxWakeWordEngine({
+        keywords: DESKTOP_WAKE_WORDS,
+        onStatusChange: handleWakeWordStatusChange,
+        onDetected: handleWakeWordDetected,
+        onError: (message) => ElMessage.error(message)
+      })
+      : new BrowserWakeWordEngine({
+        keywords: DEFAULT_WAKE_WORDS,
+        onStatusChange: handleWakeWordStatusChange,
+        onDetected: handleWakeWordDetected,
+        onError: (message) => ElMessage.error(message)
+      })
+
+  function handleWakeWordStatusChange(status: WakeWordStatus, message?: string) {
+    if (status === 'listening') {
+      isWakeWordEnabled.value = true
     }
-  })
+    if (status === 'error') {
+      isWakeWordEnabled.value = false
+      wakeWordEngine.value = null
+    }
+    if (status === 'stopped' && wakeWordEngine.value === engine) {
+      wakeWordEngine.value = null
+    }
+    updateWakeWordStatusText(status, message)
+  }
+
+  async function handleWakeWordDetected() {
+    if (isTyping.value || isRecording.value) return
+    updateWakeWordStatusText('detected', '已检测到唤醒词，正在开始听写')
+    engine.stop()
+    if (wakeWordEngine.value === engine) {
+      wakeWordEngine.value = null
+    }
+    try {
+      await toggleVoiceInput()
+    } finally {
+      if (isWakeWordEnabled.value) {
+        window.setTimeout(() => {
+          if (shouldResumeWakeWordAfterDetection({
+            isWakeWordEnabled: isWakeWordEnabled.value,
+            hasWakeWordEngine: Boolean(wakeWordEngine.value),
+            hasVoiceRecognizer: Boolean(voiceRecognizer.value),
+            isTyping: isTyping.value,
+            isRecording: isRecording.value,
+            sessionToken,
+            currentSessionToken: wakeWordSessionToken.value
+          })) {
+            void startWakeWord()
+          }
+        }, 1500)
+      }
+    }
+  }
 
   wakeWordEngine.value = engine
 
@@ -700,7 +731,7 @@ const toggleWakeWord = async () => {
   if (!wakeWordRuntimeAvailable) {
     isWakeWordEnabled.value = false
     voiceStatusText.value = ''
-    ElMessage.warning('当前浏览器不支持本地唤起，请先使用麦克风按钮进行语音输入')
+    ElMessage.warning('当前设备不支持本地唤醒，请先使用麦克风按钮进行语音输入')
     return
   }
 
@@ -824,6 +855,14 @@ onBeforeUnmount(() => {
   font-family: 'Geist', 'Satoshi', 'HarmonyOS Sans SC', 'PingFang SC', sans-serif;
   color: #172b3a;
   isolation: isolate;
+}
+
+// 管理后台会在页面外提供顶部区域，桌面应用没有该布局，不能继续预留 90px 高度。
+.ai-chat-container.is-desktop-app {
+  height: 100vh;
+  min-height: 0;
+  border: 0;
+  border-radius: 0;
 }
 
 .ambient {
@@ -1655,6 +1694,25 @@ onBeforeUnmount(() => {
         color: #f56c6c;
       }
     }
+  }
+}
+
+// 桌面端额外显示唤醒按钮，三个图标按固定位置排列，字符计数避开图标区域。
+.ai-chat-container.is-desktop-app .chat-footer .input-wrapper {
+  :deep(.el-textarea__inner) {
+    padding-right: 176px;
+  }
+
+  :deep(.el-input__count) {
+    right: 102px;
+  }
+
+  .voice-btn:not(.wake-btn) {
+    right: 104px;
+  }
+
+  .wake-btn {
+    right: 60px;
   }
 }
 
