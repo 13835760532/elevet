@@ -65,7 +65,7 @@
           </el-table-column>
           <el-table-column prop="areaLevel" label="机构行政级别" width="120" align="center">
             <template #default="scope">
-              {{ scope.row.areaLevel === 1 ? '省级' : scope.row.areaLevel === 2 ? '市级' : scope.row.areaLevel === 3 ? '区级'
+              {{ scope.row.areaLevel === 0 ? '全国' : scope.row.areaLevel === 1 ? '省级' : scope.row.areaLevel === 2 ? '市级' : scope.row.areaLevel === 3 ? '区级'
                 : ''
               }}
             </template>
@@ -134,8 +134,13 @@ const userList = ref<UserApi.UserVO[]>([]) // 用户列表
 const refreshTable = ref(true) // 重新渲染表格状态
 const areaMap = ref<Record<string, string>>({}) // 地区字典
 
-/**\n * formatArea：将页面使用的数据在不同结构或展示口径之间转换。该方法不直接驱动页面跳转，返回值供调用方继续组装或渲染。\n */
+/**
+ * formatArea：将页面使用的数据在不同结构或展示口径之间转换。该方法不直接驱动页面跳转，返回值供调用方继续组装或渲染。
+ */
 const formatArea = (row: any) => {
+  if (row.areaLevel === 0 || String(row.areaCode) === '0' || String(row.provinceCode) === '0') {
+    return '全国'
+  }
   const parts = []
   if (row.provinceCode && areaMap.value[String(row.provinceCode)]) parts.push(areaMap.value[String(row.provinceCode)])
   if (row.cityCode && areaMap.value[String(row.cityCode)]) parts.push(areaMap.value[String(row.cityCode)])

@@ -46,6 +46,10 @@ const props = defineProps({
   rootAreaCode: {
     type: [Number, String],
     default: ''
+  },
+  showNationwide: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -67,7 +71,11 @@ const cascaderProps = computed(() => ({
 const getAreaTree = async () => {
   try {
     const data = await AreaApi.getAreaTree()
-    originalAreaTree.value = formatAreaTree(data)
+    let tree = formatAreaTree(data)
+    if (props.showNationwide && !props.rootAreaCode) {
+      tree = [{ id: 0, name: '全国', level: 0, type: 0 }, ...tree]
+    }
+    originalAreaTree.value = tree
     areaTree.value = limitTreeByRootArea(originalAreaTree.value, props.rootAreaCode)
   } catch (error) {
     console.error('获取地区树失败', error)
@@ -90,7 +98,7 @@ const formatAreaTree = (tree: any[]) => {
 
 // 递归通过 ID 查找完整路径
 const findPathById = (id: any, tree: any[]): any[] | undefined => {
-  if (!id || !tree || tree.length === 0) return undefined
+  if (id === undefined || id === null || id === '' || !tree || tree.length === 0) return undefined
   for (const node of tree) {
     if (String(node.id) === String(id)) return [node.id]
     if (node.children && node.children.length > 0) {
@@ -102,7 +110,7 @@ const findPathById = (id: any, tree: any[]): any[] | undefined => {
 }
 
 const findNodeById = (id: any, tree: any[]): any | undefined => {
-  if (!id || !tree || tree.length === 0) return undefined
+  if (id === undefined || id === null || id === '' || !tree || tree.length === 0) return undefined
   for (const node of tree) {
     if (String(node.id) === String(id)) return node
     if (node.children && node.children.length > 0) {
@@ -114,7 +122,7 @@ const findNodeById = (id: any, tree: any[]): any | undefined => {
 }
 
 const findNodePathById = (id: any, tree: any[]): any[] | undefined => {
-  if (!id || !tree || tree.length === 0) return undefined
+  if (id === undefined || id === null || id === '' || !tree || tree.length === 0) return undefined
   for (const node of tree) {
     if (String(node.id) === String(id)) return [node]
     if (node.children && node.children.length > 0) {
@@ -153,6 +161,9 @@ const normalizeIncomingValue = (value: any) => {
   if (value === undefined || value === null || value === '') return value
 
   if (isChineseName(value)) {
+    if (value === '全国') {
+      return props.emitPath ? [0] : 0
+    }
     const namePath = value.includes('-') ? value.split('-') : [value]
     const resolved = resolveNamesToIds(namePath, areaTree.value)
     if (!resolved) return undefined
@@ -161,6 +172,9 @@ const normalizeIncomingValue = (value: any) => {
 
   if (Array.isArray(value) && value.length > 0) {
     if (isChineseName(value[0])) {
+      if (value[0] === '全国') {
+        return props.emitPath ? [0] : 0
+      }
       const resolved = resolveNamesToIds(value as string[], areaTree.value)
       if (!resolved) return undefined
       return props.emitPath ? resolved : resolved[resolved.length - 1]
@@ -242,6 +256,14 @@ watch(
   }
 )
 
+watch(
+  () => props.showNationwide,
+  async () => {
+    await getAreaTree()
+    syncCascaderValue(props.modelValue)
+  }
+)
+
 const handleChange = (val) => {
   emit('update:modelValue', val)
   emit('change', val)
@@ -253,26 +275,30 @@ const handleChange = (val) => {
       const node = checkedNodes[0]
       const pathLabels = node.pathLabels || []
       const pathValues = node.pathValues || []
-      const selectedValue = pathValues[pathValues.length - 1] || val
+      const selectedValue = pathValues[pathValues.length - 1] !== undefined ? pathValues[pathValues.length - 1] : val
       const fullPathNodes = findNodePathById(selectedValue, originalAreaTree.value) || []
       const fullPathLabels = fullPathNodes.length ? fullPathNodes.map((item) => item.name) : pathLabels
       const fullPathValues = fullPathNodes.length ? fullPathNodes.map((item) => item.id) : pathValues
       const selectedNode = fullPathNodes[fullPathNodes.length - 1] || {}
+
+      const isNation = String(selectedValue) === '0' || fullPathLabels[0] === '全国'
+      const selectedLevel = isNation ? 0 : (selectedNode.type ?? selectedNode.level ?? (fullPathValues.length || ''))
+
       emit('select', {
-        province: fullPathLabels[0] || '',
-        city: fullPathLabels[1] || '',
-        district: fullPathLabels[2] || '',
-        provinceCode: fullPathValues[0] || '',
-        cityCode: fullPathValues[1] || '',
-        districtCode: fullPathValues[2] || '',
-        selectedCode: selectedValue || '',
-        selectedLevel: selectedNode.type || selectedNode.level || fullPathValues.length || ''
+        province: isNation ? '全国' : (fullPathLabels[0] || ''),
+        city: isNation ? '' : (fullPathLabels[1] || ''),
+        district: isNation ? '' : (fullPathLabels[2] || ''),
+        provinceCode: isNation ? '' : (fullPathValues[0] || ''),
+        cityCode: isNation ? '' : (fullPathValues[1] || ''),
+        districtCode: isNation ? '' : (fullPathValues[2] || ''),
+        selectedCode: selectedValue !== undefined ? selectedValue : '',
+        selectedLevel
       })
     }
   }
 
   // 终极版收起逻辑：模拟点击空白 + 穷举底层关闭字段
-  if (!props.checkStrictly || (Array.isArray(val) && val.length > 0) || val) {
+  if (!props.checkStrictly || (Array.isArray(val) && val.length > 0) || val !== undefined) {
     setTimeout(() => {
       // 1. 模拟浏览器层面的点击空白行为
       document.body.click()

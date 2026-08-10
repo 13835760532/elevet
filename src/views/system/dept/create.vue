@@ -53,7 +53,9 @@
 
           <!-- 机构行政级别 -->
           <el-form-item label="机构行政级别" prop="adminLevel">
-            <el-select v-model="formData.adminLevel" placeholder="选择机构行政级别" class="full-width">
+            <el-select v-model="formData.adminLevel" placeholder="选择机构行政级别" class="full-width"
+              @change="handleAdminLevelChange">
+              <el-option label="全国" :value="0" />
               <el-option label="省级" :value="1" />
               <el-option label="市级" :value="2" />
               <el-option label="区县级" :value="3" />
@@ -62,7 +64,7 @@
 
           <!-- 机构行政层级范围 -->
           <el-form-item label="机构行政层级范围" prop="adminCoverage">
-            <AreaCascader v-model="selectedRowId" :check-strictly="true" :emit-path="false" placeholder="请选择机构行政层级范围"
+            <AreaCascader v-model="selectedRowId" :check-strictly="true" :emit-path="false" :show-nationwide="true" placeholder="请选择机构行政层级范围"
               class="full-width" @select="handleAreaSelect" />
           </el-form-item>
 
@@ -209,10 +211,38 @@ const handleSubjectTypeChange = (val: number | string) => {
 }
 
 /**
+ * 处理机构行政级别变更
+ */
+const handleAdminLevelChange = (val: number | undefined) => {
+  if (val === 0) {
+    selectedRowId.value = 0
+    areaInfo.value = {
+      province: '全国',
+      city: '',
+      district: '',
+      provinceCode: '',
+      cityCode: '',
+      districtCode: '',
+      selectedCode: 0,
+      selectedLevel: 0
+    }
+  } else if (selectedRowId.value === 0 || selectedRowId.value === '0') {
+    selectedRowId.value = undefined
+    areaInfo.value = {}
+  }
+}
+
+/**
  * 处理地区选择事件
  */
 const handleAreaSelect = (data: any) => {
   areaInfo.value = data
+  if (data.selectedLevel !== undefined && data.selectedLevel !== '') {
+    const level = Number(data.selectedLevel)
+    if ([0, 1, 2, 3].includes(level)) {
+      formData.adminLevel = level
+    }
+  }
 }
 
 /**
@@ -249,7 +279,9 @@ const disableNodeAndChildren = (nodes: any[], targetId: number) => {
   return false
 }
 
-/**\n * markChildrenDisabled：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
+/**
+ * markChildrenDisabled：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。
+ */
 const markChildrenDisabled = (nodes: any[]) => {
   if (!nodes) return
   for (const node of nodes) {
@@ -279,13 +311,29 @@ onMounted(async () => {
       formData.idCardFrontUrl = data.idCardFrontUrl || ''
       formData.idCardBackUrl = data.idCardBackUrl || ''
 
-      // 初始化行政区域选择：因详情不再出参 areaCode 字段，从区、市、省底至深自反检索可用行政节点码定位绑定并正确渲染
-      const targetAreaCode = data.areaCode || [data.districtCode, data.cityCode, data.provinceCode].find(val => val && String(val) !== '0' && String(val) !== '')
-      selectedRowId.value = targetAreaCode ? Number(targetAreaCode) : undefined
-      areaInfo.value = {
-        provinceCode: data.provinceCode,
-        cityCode: data.cityCode,
-        districtCode: data.districtCode
+      // 初始化行政区域选择
+      if (data.areaLevel === 0 || String(data.areaCode) === '0') {
+        formData.adminLevel = 0
+        selectedRowId.value = 0
+        areaInfo.value = {
+          province: '全国',
+          city: '',
+          district: '',
+          provinceCode: '',
+          cityCode: '',
+          districtCode: '',
+          selectedCode: 0,
+          selectedLevel: 0
+        }
+      } else {
+        // 因详情不再出参 areaCode 字段，从区、市、省底至深自反检索可用行政节点码定位绑定并正确渲染
+        const targetAreaCode = data.areaCode || [data.districtCode, data.cityCode, data.provinceCode].find(val => val && String(val) !== '0' && String(val) !== '')
+        selectedRowId.value = targetAreaCode ? Number(targetAreaCode) : undefined
+        areaInfo.value = {
+          provinceCode: data.provinceCode,
+          cityCode: data.cityCode,
+          districtCode: data.districtCode
+        }
       }
     } catch (error) {
       console.error('获取机构详情失败:', error)
@@ -293,7 +341,9 @@ onMounted(async () => {
   }
 })
 
-/**\n * handleSubmit：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
+/**
+ * handleSubmit：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。
+ */
 const handleSubmit = async () => {
   if (!formRef.value) return
   const valid = await formRef.value.validate()
@@ -301,10 +351,12 @@ const handleSubmit = async () => {
 
   try {
     // 校验行政区域选择
-    if (!selectedRowId.value) {
+    if (selectedRowId.value === undefined || selectedRowId.value === null || selectedRowId.value === '') {
       message.warning('请选择机构行政层级范围')
       return
     }
+
+    const isNation = selectedRowId.value === 0 || selectedRowId.value === '0' || formData.adminLevel === 0
 
     const data = {
       name: formData.name,
@@ -314,11 +366,11 @@ const handleSubmit = async () => {
       deptType: formData.deptType,
       subjectType: formData.subjectType,
       industry: formData.industry,
-      areaLevel: formData.adminLevel,
+      areaLevel: formData.adminLevel !== undefined ? Number(formData.adminLevel) : (isNation ? 0 : undefined),
       areaCode: String(selectedRowId.value),
-      provinceCode: String(areaInfo.value.provinceCode || ''),
-      cityCode: String(areaInfo.value.cityCode || ''),
-      districtCode: String(areaInfo.value.districtCode || ''),
+      provinceCode: isNation ? '' : String(areaInfo.value.provinceCode || ''),
+      cityCode: isNation ? '' : String(areaInfo.value.cityCode || ''),
+      districtCode: isNation ? '' : String(areaInfo.value.districtCode || ''),
       address: formData.region,
       contactName: formData.contact,
       contactPhone: formData.phone,

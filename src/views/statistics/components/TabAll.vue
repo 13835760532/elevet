@@ -722,6 +722,15 @@ const categoryRiskData = ref<any[]>([])
 const regionRiskData = ref<any[]>([])
 const pesticideRiskData = ref<any[]>([])
 const noticeData = ref<Array<{ id?: number; time: string; title: string }>>([])
+const props = withDefaults(
+  defineProps<{
+    queryDeptScope?: number
+  }>(),
+  {
+    queryDeptScope: 0
+  }
+)
+
 const noticeDialogVisible = ref(false)
 const noticeDetailLoading = ref(false)
 const currentNotice = ref<{ title: string; time: string; content: string } | null>(null)
@@ -731,13 +740,19 @@ const canViewAreaRange = computed(() => isCurrentUserRegulatoryDept())
 const currentDeptId = computed(() => currentUserDeptInfo.value.id)
 const currentDeptName = computed(() => currentUserDeptInfo.value.name || '')
 
+const effectiveQueryDeptScope = computed(() => {
+  if (props.queryDeptScope) return props.queryDeptScope
+  return canViewAreaRange.value ? 1 : 3
+})
+
+const isAreaScope = computed(() => effectiveQueryDeptScope.value === 1)
+
 const queryParams = computed(() => ({
   ...buildRangeParams(dateRangeType.value, dateRange.value),
   ...getEffectiveAreaParams(),
-  deptId: canViewAreaRange.value ? undefined : currentDeptId.value || undefined,
-  deptName: canViewAreaRange.value ? undefined : currentDeptName.value || undefined,
-  // 监管机构按辖区查询（1）；其他机构默认按本机构权限口径查询（3）。
-  queryDeptScope: canViewAreaRange.value ? 1 : 3
+  deptId: isAreaScope.value ? undefined : currentDeptId.value || undefined,
+  deptName: isAreaScope.value ? undefined : currentDeptName.value || undefined,
+  queryDeptScope: effectiveQueryDeptScope.value
 }))
 
 /**\n * toBarData：将页面使用的数据在不同结构或展示口径之间转换。该方法不直接驱动页面跳转，返回值供调用方继续组装或渲染。\n */
@@ -1279,6 +1294,9 @@ const handleReset = () => {
 watch([dateRangeType, dateRange], loadData)
 watch([mapType], loadMapData)
 watch([productRiskType, testItemRiskType, categoryRiskType, regionRiskType, pesticideRiskType, regionRiskLevel], loadRiskData)
+watch(() => props.queryDeptScope, () => {
+  loadData()
+})
 
 onMounted(() => {
   loadData()

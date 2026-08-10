@@ -54,7 +54,7 @@
 
     <!-- 动态内容 -->
     <div class="statistics-tab-body">
-      <TabAll v-if="currentTab === 'all'" />
+      <TabAll v-if="currentTab === 'all'" :query-dept-scope="tabDeptScopes.all" />
       <TabTask v-else-if="currentTab === 'task'" :query-dept-scope="taskDeptScope" />
       <TabQuick
         v-else-if="currentTab === 'quick'"
@@ -83,11 +83,12 @@ import { getTaskQueryDeptScope, resolveStatisticsTab } from './statisticsTabs'
 const route = useRoute()
 const router = useRouter()
 const currentTab = ref('all')
-const scopedTabValues = ['issue', 'verify', 'filing'] as const
+const scopedTabValues = ['all', 'issue', 'verify', 'filing'] as const
 type ScopedTabValue = (typeof scopedTabValues)[number]
 type QuickCommand = 'self' | 'task' | 'all'
 
 const tabDeptScopes = ref<Record<ScopedTabValue, number>>({
+  all: 1,
   issue: 3,
   verify: 3,
   filing: 3
@@ -102,12 +103,14 @@ const dropdownActiveCommands = ref<Record<string, string>>((() => {
     const saved = localStorage.getItem('statistics_dropdown_commands')
     const commands = saved ? JSON.parse(saved) : {}
     if (isCurrentUserRegulatoryDept()) {
+      if (!commands.all) commands.all = 'area'
       if (!commands.task) commands.task = 'all'
       if (!commands.quick) commands.quick = 'all'
       if (!commands.issue) commands.issue = 'area'
       if (!commands.verify) commands.verify = 'area'
       if (!commands.filing) commands.filing = 'area'
     } else {
+      if (!commands.all) commands.all = 'own'
       if (!commands.task) commands.task = 'issued'
       if (!commands.quick) commands.quick = 'self'
     }
@@ -115,12 +118,14 @@ const dropdownActiveCommands = ref<Record<string, string>>((() => {
   } catch {
     const commands: Record<string, string> = {}
     if (isCurrentUserRegulatoryDept()) {
+      commands.all = 'area'
       commands.task = 'all'
       commands.quick = 'all'
       commands.issue = 'area'
       commands.verify = 'area'
       commands.filing = 'area'
     } else {
+      commands.all = 'own'
       commands.task = 'issued'
       commands.quick = 'self'
     }
@@ -141,6 +146,11 @@ interface StatisticsTab {
 }
 
 const isRegulatoryDept = computed(() => isCurrentUserRegulatoryDept())
+
+const allDropdownOptions: TabDropdownOption[] = [
+  { label: '本机构', value: 'own' },
+  { label: '辖区内', value: 'area' }
+]
 
 const quickDropdownOptions = computed<TabDropdownOption[]>(() => {
   const options = [
@@ -180,7 +190,12 @@ const filingDropdownOptions: TabDropdownOption[] = [
 ]
 
 const tabs = computed<StatisticsTab[]>(() => [
-  { label: '全部', value: 'all', icon: 'ep:user' },
+  {
+    label: '全部',
+    value: 'all',
+    icon: 'ep:user',
+    dropdownOptions: isRegulatoryDept.value ? allDropdownOptions : undefined
+  },
   {
     label: '检测任务',
     value: 'task',

@@ -117,6 +117,9 @@ defineExpose({ open }) // 提供 open 方法，用于打开弹窗
 /** 格式化区域 */
 const formatArea = () => {
   const data = deptData.value
+  if (data.areaLevel === 0 || String(data.areaCode) === '0' || String(data.provinceCode) === '0') {
+    return '全国'
+  }
   const parts = []
   if (data.provinceCode && areaMap.value[String(data.provinceCode)]) parts.push(areaMap.value[String(data.provinceCode)])
   if (data.cityCode && areaMap.value[String(data.cityCode)]) parts.push(areaMap.value[String(data.cityCode)])
@@ -126,6 +129,7 @@ const formatArea = () => {
 
 /** 格式化行政级别 */
 const formatAreaLevel = (level: number) => {
+  if (level === 0) return '全国'
   if (level === 1) return '省级'
   if (level === 2) return '市级'
   if (level === 3) return '区县级'
