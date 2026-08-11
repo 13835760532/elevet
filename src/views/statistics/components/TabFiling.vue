@@ -281,6 +281,8 @@ const currentDeptName = computed(() => currentUserDeptInfo.value.name || '')
 
 const userDeptAreaCode = computed(() => getUserDeptAreaParams().areaCode)
 
+const hasNoPermission = computed(() => props.queryDeptScope === 1)
+
 const dashboardQueryParams = computed(() => ({
   ...buildRangeParams(dateRangeType.value, dateRange.value),
   ...getEffectiveAreaParams(canViewAreaRange.value ? areaParams : undefined),
@@ -288,6 +290,24 @@ const dashboardQueryParams = computed(() => ({
   deptId: canViewAreaRange.value ? undefined : currentDeptId.value || undefined,
   deptName: canViewAreaRange.value ? undefined : currentDeptName.value || undefined
 }))
+
+/** 辖区内建档备案无权限时重置所有数据为0并清空列表与图表。 */
+const resetAllDataToZero = () => {
+  overview.value = {
+    productArchiveCount: 0,
+    subjectArchiveCount: 0
+  } as any
+  productTrend.value = {}
+  productCategoryDistribution.value = []
+  subjectTypeDistribution.value = []
+  subjectAreaTop.value = []
+  tableDataSubject.value = []
+  subjectTotal.value = 0
+  tableDataProduct.value = []
+  productTotal.value = 0
+  subjectLoading.value = false
+  productLoading.value = false
+}
 
 const globalAreaNames = computed(() =>
   [areaParams.provinceName, areaParams.cityName, areaParams.districtName].filter(Boolean)
@@ -581,8 +601,16 @@ const mapProductRow = (item: any) => ({
   deptName: item.deptName || '--'
 })
 
-/** 并行加载建档概览、地区分布、主体类型和产品趋势等图表数据。 */
+/** 并行加载建档概览、地区分布、主体类型和产品趋势等图表数据，无权限时直接置空。 */
 const loadDashboardData = async () => {
+  if (hasNoPermission.value) {
+    overview.value = { productArchiveCount: 0, subjectArchiveCount: 0 } as any
+    productTrend.value = {}
+    productCategoryDistribution.value = []
+    subjectTypeDistribution.value = []
+    subjectAreaTop.value = []
+    return
+  }
   try {
     const [overviewData, productTrendData, productCategoryData, subjectTypeData, subjectAreaData] =
       await Promise.all([
@@ -609,8 +637,14 @@ const loadDashboardData = async () => {
   }
 }
 
-/** 加载主体建档分页并转换为表格展示结构。 */
+/** 加载主体建档分页并转换为表格展示结构，无权限时直接置空。 */
 const loadSubjectTable = async () => {
+  if (hasNoPermission.value) {
+    tableDataSubject.value = []
+    subjectTotal.value = 0
+    subjectLoading.value = false
+    return
+  }
   subjectLoading.value = true
   try {
     const data = await SubjectApi.getSubjectPage(
@@ -628,8 +662,14 @@ const loadSubjectTable = async () => {
   }
 }
 
-/** 加载产品建档分页并转换为表格展示结构。 */
+/** 加载产品建档分页并转换为表格展示结构，无权限时直接置空。 */
 const loadProductTable = async () => {
+  if (hasNoPermission.value) {
+    tableDataProduct.value = []
+    productTotal.value = 0
+    productLoading.value = false
+    return
+  }
   productLoading.value = true
   try {
     const data = await ProductApi.getProductPage(
@@ -648,26 +688,39 @@ const loadProductTable = async () => {
   }
 }
 
-/**\n * loadTables：加载当前页面所需的数据或初始化状态。请求条件由当前路由、筛选项或已有上下文决定，结果用于更新页面响应式状态。\n */
+/**
+ * loadTables：加载当前页面所需的数据或初始化状态。请求条件由当前路由、筛选项或已有上下文决定，结果用于更新页面响应式状态。
+ */
 const loadTables = () => {
   loadSubjectTable()
   loadProductTable()
 }
 
-/**\n * loadData：加载当前页面所需的数据或初始化状态。请求条件由当前路由、筛选项或已有上下文决定，结果用于更新页面响应式状态。\n */
+/**
+ * loadData：加载当前页面所需的数据或初始化状态。请求条件由当前路由、筛选项或已有上下文决定，结果用于更新页面响应式状态。
+ */
 const loadData = () => {
+  if (hasNoPermission.value) {
+    resetAllDataToZero()
+    ElMessage.warning('暂无权限')
+    return
+  }
   loadDashboardData()
   loadTables()
 }
 
-/**\n * handleRangeSearch：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
+/**
+ * handleRangeSearch：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。
+ */
 const handleRangeSearch = () => {
   subjectPageNo.value = 1
   productPageNo.value = 1
   loadData()
 }
 
-/**\n * handleRangeReset：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
+/**
+ * handleRangeReset：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。
+ */
 const handleRangeReset = () => {
   dateRangeType.value = '近一周'
   dateRange.value = []
@@ -680,9 +733,17 @@ const handleRangeReset = () => {
   handleRangeSearch()
 }
 
-/**\n * handleSubjectSearch：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
+/**
+ * handleSubjectSearch：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。
+ */
 const handleSubjectSearch = () => {
   subjectPageNo.value = 1
+  if (hasNoPermission.value) {
+    tableDataSubject.value = []
+    subjectTotal.value = 0
+    ElMessage.warning('暂无权限')
+    return
+  }
   loadSubjectTable()
 }
 
@@ -690,7 +751,9 @@ const searchSubjectTable = useDebounceFn(() => {
   handleSubjectSearch()
 }, 300)
 
-/**\n * handleSubjectReset：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
+/**
+ * handleSubjectReset：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。
+ */
 const handleSubjectReset = () => {
   filtersSubject.name = ''
   filtersSubject.filingType = undefined
@@ -700,9 +763,17 @@ const handleSubjectReset = () => {
   handleSubjectSearch()
 }
 
-/**\n * handleProductSearch：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
+/**
+ * handleProductSearch：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。
+ */
 const handleProductSearch = () => {
   productPageNo.value = 1
+  if (hasNoPermission.value) {
+    tableDataProduct.value = []
+    productTotal.value = 0
+    ElMessage.warning('暂无权限')
+    return
+  }
   loadProductTable()
 }
 
@@ -710,7 +781,9 @@ const searchProductTable = useDebounceFn(() => {
   handleProductSearch()
 }, 300)
 
-/**\n * handleProductReset：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
+/**
+ * handleProductReset：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。
+ */
 const handleProductReset = () => {
   filtersProduct.productCode = ''
   filtersProduct.productName = ''
@@ -722,6 +795,10 @@ const handleProductReset = () => {
 
 /** 按当前主体筛选条件导出最多 1000 条建档数据。 */
 const handleSubjectExport = async () => {
+  if (hasNoPermission.value) {
+    ElMessage.warning('暂无权限')
+    return
+  }
   try {
     await ElMessageBox.confirm('确定要导出主体建档数据吗？', '导出确认', {
       confirmButtonText: '确定',
@@ -744,6 +821,10 @@ const handleSubjectExport = async () => {
 
 /** 按当前产品筛选条件导出最多 1000 条建档数据。 */
 const handleProductExport = async () => {
+  if (hasNoPermission.value) {
+    ElMessage.warning('暂无权限')
+    return
+  }
   try {
     await ElMessageBox.confirm('确定要导出产品建档数据吗？', '导出确认', {
       confirmButtonText: '确定',

@@ -270,7 +270,10 @@ const currentQueryParams = computed(() => ({
   deptId: canViewAreaRange.value ? undefined : currentDeptId.value || undefined
 }))
 
+const hasNoPermission = computed(() => props.queryDeptScope === 1)
+
 const filteredTableData = computed(() => {
+  if (hasNoPermission.value) return []
   const keywordValue = keyword.value.trim()
   const source = tableData.value.map((item) => ({
     taskNo: item.taskCode || item.taskNo || (item.taskId ? String(item.taskId) : '--'),
@@ -286,8 +289,31 @@ const filteredTableData = computed(() => {
   )
 })
 
-/** 加载检测任务整体概览，接口失败时保留空指标。 */
+/** 辖区内全部任务无权限时重置所有数据为0并清空列表与图表。 */
+const resetAllDataToZero = () => {
+  overview.value = {
+    taskIssuedTaskCount: 0,
+    taskIssuedCount: 0,
+    taskCompletedCount: 0,
+    taskCompletionRate: 0,
+    detectionOrgCount: 0,
+    enterpriseCount: 0
+  } as any
+  trendOption.value = null
+  tableData.value = []
+  total.value = 0
+  resultTableData.value = []
+  resultTotal.value = 0
+  loading.value = false
+  resultLoading.value = false
+}
+
+/** 加载检测任务整体概览，无权限时置空指标且不发起请求。 */
 const loadOverview = async () => {
+  if (hasNoPermission.value) {
+    resetAllDataToZero()
+    return
+  }
   try {
     overview.value = (await getTaskOverview(currentQueryParams.value)) || {}
   } catch (error) {
@@ -296,8 +322,14 @@ const loadOverview = async () => {
   }
 }
 
-/** 按当前时间和机构数据范围加载检测任务分页。 */
+/** 按当前时间和机构数据范围加载检测任务分页，无权限时直接置空。 */
 const loadTaskPage = async () => {
+  if (hasNoPermission.value) {
+    tableData.value = []
+    total.value = 0
+    loading.value = false
+    return
+  }
   loading.value = true
   try {
     const data = await getTaskAnalysisPage({
@@ -379,8 +411,14 @@ const buildResultExportQuery = () => {
   }
 }
 
-/** 加载检测结果分页并转换任务、样品、地区和状态展示字段。 */
+/** 加载检测结果分页并转换任务、样品、地区和状态展示字段，无权限时直接置空。 */
 const loadResultPage = async () => {
+  if (hasNoPermission.value) {
+    resultTableData.value = []
+    resultTotal.value = 0
+    resultLoading.value = false
+    return
+  }
   resultLoading.value = true
   try {
     const data = await DetectionRecordApi.getDetectionRecordPage(buildResultTableQuery())
@@ -412,11 +450,18 @@ const loadResultPage = async () => {
 
 const searchResultPage = useDebounceFn(() => {
   if (activeTab.value !== 'result') return
+  if (hasNoPermission.value) {
+    resetAllDataToZero()
+    ElMessage.warning('暂无权限')
+    return
+  }
   resultPageNo.value = 1
   loadResultPage()
 }, 300)
 
-/**\n * resetResultFilters：同步或重置当前页面状态，保证筛选项、组件显示和后续请求参数保持一致。\n */
+/**
+ * resetResultFilters：同步或重置当前页面状态，保证筛选项、组件显示和后续请求参数保持一致。
+ */
 const resetResultFilters = () => {
   resultFilters.value.keyword = ''
   resultFilters.value.sample = ''
@@ -429,8 +474,12 @@ const resetResultFilters = () => {
   searchResultPage()
 }
 
-/** 加载任务样品量与检测量趋势，并生成折线图配置。 */
+/** 加载任务样品量与检测量趋势，并生成折线图配置，无权限时清空图表。 */
 const loadTrend = async () => {
+  if (hasNoPermission.value) {
+    trendOption.value = null
+    return
+  }
   try {
     const data = await getTaskVolumeTrend(currentQueryParams.value)
     if (data && data.xaxis) {
@@ -475,10 +524,17 @@ const loadTrend = async () => {
   }
 }
 
-/**\n * handleSearch：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
+/**
+ * handleSearch：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。
+ */
 const handleSearch = () => {
   pageNo.value = 1
   resultPageNo.value = 1
+  if (hasNoPermission.value) {
+    resetAllDataToZero()
+    ElMessage.warning('暂无权限')
+    return
+  }
   loadOverview()
   loadTrend()
   if (activeTab.value === 'task') {
@@ -488,7 +544,9 @@ const handleSearch = () => {
   }
 }
 
-/**\n * handleReset：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */
+/**
+ * handleReset：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。
+ */
 const handleReset = () => {
   dateRangeType.value = '当年'
   dateRange.value = []
@@ -498,6 +556,10 @@ const handleReset = () => {
 
 /** 根据当前“检测任务/检测结果”子页签调用对应导出接口。 */
 const handleExport = async () => {
+  if (hasNoPermission.value) {
+    ElMessage.warning('暂无权限')
+    return
+  }
   if (activeTab.value === 'task') {
     try {
       await ElMessageBox.confirm('确定要导出检测任务数据吗？', '导出确认', {
@@ -593,6 +655,10 @@ watch(
 )
 
 watch(activeTab, (val) => {
+  if (hasNoPermission.value) {
+    resetAllDataToZero()
+    return
+  }
   loadTrend()
   if (val === 'task') {
     loadTaskPage()
