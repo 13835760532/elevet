@@ -37,9 +37,9 @@
 
         <!-- 操作按钮与表格间隙 -->
         <div class="operation-header" v-if="createBtnFlag">
-            <div class="right-actions">
+            <!-- <div class="right-actions">
                 <el-button type="primary" class="btn-input" @click="handleSingleInput">单条录入</el-button>
-            </div>
+            </div> -->
         </div>
 
         <!-- 检测结果表格 - 玻璃拟态风格 -->

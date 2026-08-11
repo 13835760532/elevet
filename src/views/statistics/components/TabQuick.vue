@@ -234,7 +234,7 @@ const effectiveSelfDetection = computed(() => {
 const dashboardQueryParams = computed(() => ({
   ...buildRangeParams(dateRangeType.value, dateRange.value),
   ...getEffectiveAreaParams(canViewAreaRange.value ? areaParams : undefined),
-  queryDeptScope: props.queryDeptScope,
+  queryDeptScope: props.dataScope === 'ALL' ? undefined : props.queryDeptScope,
   dataScope: props.dataScope,
   selfDetection: props.selfDetection,
   detectionOrgName: canViewAreaRange.value ? undefined : currentDeptName.value || undefined
@@ -431,7 +431,7 @@ const buildTableQuery = () => {
     detectionArea: filters.area || undefined,
     detectionOrgName: detectionOrgName || undefined,
     overallResult: filters.result !== '' ? filters.result : undefined,
-    queryDeptScope: props.queryDeptScope,
+    queryDeptScope: props.dataScope === 'ALL' ? undefined : props.queryDeptScope,
     dataScope: props.dataScope,
     selfDetection: effectiveSelfDetection.value,
     detectionDate
@@ -476,7 +476,7 @@ const buildExportParams = () => {
     detectionArea: filters.area || undefined,
     detectionOrgName: detectionOrgName || undefined,
     overallResult: filters.result !== '' ? filters.result : undefined,
-    queryDeptScope: props.queryDeptScope,
+    queryDeptScope: props.dataScope === 'ALL' ? undefined : props.queryDeptScope,
     dataScope: props.dataScope,
     selfDetection: effectiveSelfDetection.value,
     detectionDate

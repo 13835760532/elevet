@@ -99,7 +99,7 @@ import TabIssue from './components/TabIssue.vue'
 import TabVerify from './components/TabVerify.vue'
 import TabFiling from './components/TabFiling.vue'
 import {
-  isCurrentUserRegulator,
+  isSuperAdmin,
   isCurrentUserRegulatoryDept
 } from './components/statisticsData'
 import {
@@ -175,12 +175,12 @@ interface StatisticsTab {
 }
 
 const isRegulatoryDept = computed(() => isCurrentUserRegulatoryDept())
-const isRegulatorRole = computed(() => isCurrentUserRegulator())
-const hasScopedDropdown = computed(() => isRegulatoryDept.value || isRegulatorRole.value)
+const isSuperAdminRole = computed(() => isSuperAdmin())
+const hasScopedDropdown = computed(() => isRegulatoryDept.value || isSuperAdminRole.value)
 
 /** 只允许具备对应权限的账号把缓存中的下拉命令转换为扩大后的数据范围。 */
 const getAuthorizedDataScope = (command: unknown) => {
-  if (command === 'operation' && !isRegulatorRole.value) {
+  if (command === 'operation' && !isSuperAdminRole.value) {
     return getStatisticsDataScope('own')
   }
   if ((command === 'area' || command === 'all') && !isRegulatoryDept.value) {
@@ -198,9 +198,9 @@ const tabDataScopes = computed(() => ({
   filing: getAuthorizedDataScope(dropdownActiveCommands.value.filing)
 }))
 
-/** regulator 角色的每个统计下拉都追加运营管理统计口径。 */
+/** 仅 super_admin 角色的统计下拉追加运营管理统计口径。 */
 const appendOperationOption = (options: TabDropdownOption[]) => {
-  if (isRegulatorRole.value) {
+  if (isSuperAdminRole.value) {
     options.push({ label: '运营管理统计', value: 'operation' })
   }
   return options
@@ -336,7 +336,7 @@ const handleTabChange = (tabValue: string) => {
 /**\n * getQueryDeptScopeByCommand：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。\n */
 const getQueryDeptScopeByCommand = (command: unknown) => {
   if (command === 'operation') {
-    return isRegulatorRole.value ? getGeneralQueryDeptScope(command) : 3
+    return isSuperAdminRole.value ? getGeneralQueryDeptScope(command) : 3
   }
   if (command === 'area') {
     return isRegulatoryDept.value ? getGeneralQueryDeptScope(command) : 3
@@ -363,7 +363,7 @@ const setQuickScopeByCommand = (command: unknown) => {
     return
   }
   if (quickCommand === 'operation') {
-    quickDeptScope.value = isRegulatorRole.value ? 2 : 3
+    quickDeptScope.value = isSuperAdminRole.value ? 2 : 3
     quickSelfDetection.value = undefined
     return
   }
@@ -374,7 +374,7 @@ const setQuickScopeByCommand = (command: unknown) => {
 /**\n * setTaskScopeByCommand：同步或重置当前页面状态，保证筛选项、组件显示和后续请求参数保持一致。\n */
 const setTaskScopeByCommand = (command: unknown) => {
   if (command === 'operation') {
-    taskDeptScope.value = isRegulatorRole.value ? 2 : 3
+    taskDeptScope.value = isSuperAdminRole.value ? 2 : 3
     return
   }
   // 非监管机构只允许查询本机构数据，任务类型不再改变数据权限口径。

@@ -755,7 +755,7 @@ const queryParams = computed(() => ({
   ...getEffectiveAreaParams(),
   deptId: isAreaScope.value ? undefined : currentDeptId.value || undefined,
   deptName: isAreaScope.value ? undefined : currentDeptName.value || undefined,
-  queryDeptScope: effectiveQueryDeptScope.value,
+  queryDeptScope: props.dataScope === 'ALL' ? undefined : effectiveQueryDeptScope.value,
   dataScope: props.dataScope
 }))
 

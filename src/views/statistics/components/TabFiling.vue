@@ -289,7 +289,7 @@ const hasNoPermission = computed(() => props.queryDeptScope === 1)
 const dashboardQueryParams = computed(() => ({
   ...buildRangeParams(dateRangeType.value, dateRange.value),
   ...getEffectiveAreaParams(canViewAreaRange.value ? areaParams : undefined),
-  queryDeptScope: props.queryDeptScope,
+  queryDeptScope: props.dataScope === 'ALL' ? undefined : props.queryDeptScope,
   dataScope: props.dataScope,
   deptId: canViewAreaRange.value ? undefined : currentDeptId.value || undefined,
   deptName: canViewAreaRange.value ? undefined : currentDeptName.value || undefined
@@ -498,7 +498,7 @@ const buildSubjectQuery = (pageNo: number, pageSize: number) => {
     pageSize,
     deptId: canViewAreaRange.value ? undefined : currentDeptId.value || undefined,
     deptName: canViewAreaRange.value ? undefined : currentDeptName.value || undefined,
-    queryDeptScope: props.queryDeptScope,
+    queryDeptScope: props.dataScope === 'ALL' ? undefined : props.queryDeptScope,
     dataScope: props.dataScope,
     name: filtersSubject.name || undefined,
     type: isEmptyValue(filtersSubject.filingType) ? undefined : filtersSubject.filingType,
@@ -519,7 +519,7 @@ const buildProductQuery = (pageNo: number, pageSize: number) => {
     pageSize,
     deptId: canViewAreaRange.value ? undefined : currentDeptId.value || undefined,
     deptName: canViewAreaRange.value ? undefined : currentDeptName.value || undefined,
-    queryDeptScope: props.queryDeptScope,
+    queryDeptScope: props.dataScope === 'ALL' ? undefined : props.queryDeptScope,
     dataScope: props.dataScope,
     productCode: filtersProduct.productCode || undefined,
     productName: filtersProduct.productName || undefined,

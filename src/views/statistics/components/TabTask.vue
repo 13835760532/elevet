@@ -269,7 +269,7 @@ const userDeptAreaCode = computed(() => getUserDeptAreaParams().areaCode)
 const currentQueryParams = computed(() => ({
   ...buildRangeParams(dateRangeType.value, dateRange.value),
   ...getEffectiveAreaParams(),
-  queryDeptScope: props.queryDeptScope,
+  queryDeptScope: props.dataScope === 'ALL' ? undefined : props.queryDeptScope,
   dataScope: props.dataScope,
   deptId: canViewAreaRange.value ? undefined : currentDeptId.value || undefined
 }))

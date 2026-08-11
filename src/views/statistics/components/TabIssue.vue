@@ -169,7 +169,7 @@ const currentDeptName = computed(() => currentUserDeptInfo.value.name || '')
 const queryParams = computed(() => ({
   ...buildRangeParams(dateRangeType.value, dateRange.value),
   ...getEffectiveAreaParams(canViewAreaRange.value ? areaParams : undefined),
-  queryDeptScope: props.queryDeptScope,
+  queryDeptScope: props.dataScope === 'ALL' ? undefined : props.queryDeptScope,
   dataScope: props.dataScope,
   deptId: canViewAreaRange.value ? undefined : currentDeptId.value || undefined,
   deptName: canViewAreaRange.value ? undefined : currentDeptName.value || undefined

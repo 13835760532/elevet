@@ -25,17 +25,6 @@ export const isSuperAdmin = () => {
   return Array.isArray(roles) && roles.includes('super_admin')
 }
 
-/** 判断当前登录信息是否包含指定角色，用于统计页按角色开放额外的数据范围。 */
-export const hasCurrentUserRole = (role: string) => {
-  const { wsCache } = useCache()
-  const userInfo = wsCache.get(CACHE_KEY.USER)
-  const roles = userInfo?.roles || []
-  return Array.isArray(roles) && roles.includes(role)
-}
-
-/** regulator 角色可使用运营管理统计口径。 */
-export const isCurrentUserRegulator = () => hasCurrentUserRole('regulator')
-
 /**
  * 从缓存提取当前用户的部门与监管区域信息。
  * 独立 USER_DEPT 缓存优先级最高，随后兼容用户对象和历史平铺字段，使统计页在缓存结构升级后
