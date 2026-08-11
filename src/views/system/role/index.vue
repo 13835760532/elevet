@@ -54,7 +54,7 @@
   <!-- 列表 -->
   <ContentWrap>
     <el-table v-loading="loading" :data="list" @selection-change="handleRowCheckboxChange">
-      <el-table-column type="selection" width="55" />
+      <el-table-column :selectable="(row) => row.code !== 'super_admin'" type="selection" width="55" />
 
       <el-table-column align="center" label="角色名称" prop="name" />
       <el-table-column label="角色类型" align="center" prop="type">
@@ -84,7 +84,13 @@
             type="primary" @click="openDataPermissionForm(scope.row)">
             数据权限
           </el-button>
-          <el-button v-hasPermi="['system:role:delete']" link type="danger" @click="handleDelete(scope.row.id)">
+          <el-button
+            v-if="scope.row.code !== 'super_admin'"
+            v-hasPermi="['system:role:delete']"
+            link
+            type="danger"
+            @click="handleDelete(scope.row.id)"
+          >
             删除
           </el-button>
         </template>
