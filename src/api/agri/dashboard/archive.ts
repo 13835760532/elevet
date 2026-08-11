@@ -6,6 +6,7 @@ export interface ArchiveDashboardQueryParams {
   provinceName?: string
   cityName?: string
   queryDeptScope?: number
+  dataScope?: string
   areaType?: string | number
   areaCode?: string | number
 }

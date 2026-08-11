@@ -126,6 +126,7 @@ import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useDebounceFn } from '@vueuse/core'
 import StatisticsRangeFilter from './StatisticsRangeFilter.vue'
+import type { StatisticsDataScope } from '../statisticsTabs'
 import AreaCascader from '@/components/AreaCascader/index.vue'
 import { Echart } from '@/components/Echart'
 import {
@@ -162,10 +163,12 @@ const props = withDefaults(
   defineProps<{
     queryDeptScope?: number
     selfDetection?: boolean
+    dataScope?: StatisticsDataScope
   }>(),
   {
     queryDeptScope: 0,
-    selfDetection: undefined
+    selfDetection: undefined,
+    dataScope: 'SELF_ORG'
   }
 )
 
@@ -232,6 +235,7 @@ const dashboardQueryParams = computed(() => ({
   ...buildRangeParams(dateRangeType.value, dateRange.value),
   ...getEffectiveAreaParams(canViewAreaRange.value ? areaParams : undefined),
   queryDeptScope: props.queryDeptScope,
+  dataScope: props.dataScope,
   selfDetection: props.selfDetection,
   detectionOrgName: canViewAreaRange.value ? undefined : currentDeptName.value || undefined
 }))
@@ -428,6 +432,7 @@ const buildTableQuery = () => {
     detectionOrgName: detectionOrgName || undefined,
     overallResult: filters.result !== '' ? filters.result : undefined,
     queryDeptScope: props.queryDeptScope,
+    dataScope: props.dataScope,
     selfDetection: effectiveSelfDetection.value,
     detectionDate
   }
@@ -472,6 +477,7 @@ const buildExportParams = () => {
     detectionOrgName: detectionOrgName || undefined,
     overallResult: filters.result !== '' ? filters.result : undefined,
     queryDeptScope: props.queryDeptScope,
+    dataScope: props.dataScope,
     selfDetection: effectiveSelfDetection.value,
     detectionDate
   }
@@ -571,7 +577,7 @@ watch(areaParams, () => {
 })
 
 watch(
-  () => [props.queryDeptScope, props.selfDetection],
+  () => [props.queryDeptScope, props.selfDetection, props.dataScope],
   () => {
     pageNo.value = 1
     loadData()

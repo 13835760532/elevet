@@ -54,16 +54,37 @@
 
     <!-- 动态内容 -->
     <div class="statistics-tab-body">
-      <TabAll v-if="currentTab === 'all'" :query-dept-scope="tabDeptScopes.all" />
-      <TabTask v-else-if="currentTab === 'task'" :query-dept-scope="taskDeptScope" />
+      <TabAll
+        v-if="currentTab === 'all'"
+        :query-dept-scope="tabDeptScopes.all"
+        :data-scope="tabDataScopes.all"
+      />
+      <TabTask
+        v-else-if="currentTab === 'task'"
+        :query-dept-scope="taskDeptScope"
+        :data-scope="tabDataScopes.task"
+      />
       <TabQuick
         v-else-if="currentTab === 'quick'"
         :query-dept-scope="quickDeptScope"
         :self-detection="quickSelfDetection"
+        :data-scope="tabDataScopes.quick"
       />
-      <TabIssue v-else-if="currentTab === 'issue'" :query-dept-scope="tabDeptScopes.issue" />
-      <TabVerify v-else-if="currentTab === 'verify'" :query-dept-scope="tabDeptScopes.verify" />
-      <TabFiling v-else-if="currentTab === 'filing'" :query-dept-scope="tabDeptScopes.filing" />
+      <TabIssue
+        v-else-if="currentTab === 'issue'"
+        :query-dept-scope="tabDeptScopes.issue"
+        :data-scope="tabDataScopes.issue"
+      />
+      <TabVerify
+        v-else-if="currentTab === 'verify'"
+        :query-dept-scope="tabDeptScopes.verify"
+        :data-scope="tabDataScopes.verify"
+      />
+      <TabFiling
+        v-else-if="currentTab === 'filing'"
+        :query-dept-scope="tabDeptScopes.filing"
+        :data-scope="tabDataScopes.filing"
+      />
     </div>
   </div>
 </template>
@@ -77,15 +98,23 @@ import TabQuick from './components/TabQuick.vue'
 import TabIssue from './components/TabIssue.vue'
 import TabVerify from './components/TabVerify.vue'
 import TabFiling from './components/TabFiling.vue'
-import { isCurrentUserRegulatoryDept } from './components/statisticsData'
-import { getTaskQueryDeptScope, resolveStatisticsTab } from './statisticsTabs'
+import {
+  isCurrentUserRegulator,
+  isCurrentUserRegulatoryDept
+} from './components/statisticsData'
+import {
+  getGeneralQueryDeptScope,
+  getTaskQueryDeptScope,
+  getStatisticsDataScope,
+  resolveStatisticsTab
+} from './statisticsTabs'
 
 const route = useRoute()
 const router = useRouter()
 const currentTab = ref('all')
 const scopedTabValues = ['all', 'issue', 'verify', 'filing'] as const
 type ScopedTabValue = (typeof scopedTabValues)[number]
-type QuickCommand = 'self' | 'task' | 'all'
+type QuickCommand = 'self' | 'task' | 'all' | 'operation'
 
 const tabDeptScopes = ref<Record<ScopedTabValue, number>>({
   all: 1,
@@ -146,11 +175,44 @@ interface StatisticsTab {
 }
 
 const isRegulatoryDept = computed(() => isCurrentUserRegulatoryDept())
+const isRegulatorRole = computed(() => isCurrentUserRegulator())
+const hasScopedDropdown = computed(() => isRegulatoryDept.value || isRegulatorRole.value)
 
-const allDropdownOptions: TabDropdownOption[] = [
-  { label: '本机构', value: 'own' },
-  { label: '辖区内', value: 'area' }
-]
+/** 只允许具备对应权限的账号把缓存中的下拉命令转换为扩大后的数据范围。 */
+const getAuthorizedDataScope = (command: unknown) => {
+  if (command === 'operation' && !isRegulatorRole.value) {
+    return getStatisticsDataScope('own')
+  }
+  if ((command === 'area' || command === 'all') && !isRegulatoryDept.value) {
+    return getStatisticsDataScope('own')
+  }
+  return getStatisticsDataScope(command)
+}
+
+const tabDataScopes = computed(() => ({
+  all: getAuthorizedDataScope(dropdownActiveCommands.value.all),
+  task: getAuthorizedDataScope(dropdownActiveCommands.value.task),
+  quick: getAuthorizedDataScope(dropdownActiveCommands.value.quick),
+  issue: getAuthorizedDataScope(dropdownActiveCommands.value.issue),
+  verify: getAuthorizedDataScope(dropdownActiveCommands.value.verify),
+  filing: getAuthorizedDataScope(dropdownActiveCommands.value.filing)
+}))
+
+/** regulator 角色的每个统计下拉都追加运营管理统计口径。 */
+const appendOperationOption = (options: TabDropdownOption[]) => {
+  if (isRegulatorRole.value) {
+    options.push({ label: '运营管理统计', value: 'operation' })
+  }
+  return options
+}
+
+const allDropdownOptions = computed<TabDropdownOption[]>(() => {
+  const options = [{ label: '本机构', value: 'own' }]
+  if (isRegulatoryDept.value) {
+    options.push({ label: '辖区内', value: 'area' })
+  }
+  return appendOperationOption(options)
+})
 
 const quickDropdownOptions = computed<TabDropdownOption[]>(() => {
   const options = [
@@ -160,7 +222,7 @@ const quickDropdownOptions = computed<TabDropdownOption[]>(() => {
   if (isRegulatoryDept.value) {
     options.push({ label: '辖区内快速检测', value: 'all' })
   }
-  return options
+  return appendOperationOption(options)
 })
 
 const taskDropdownOptions = computed<TabDropdownOption[]>(() => {
@@ -171,30 +233,33 @@ const taskDropdownOptions = computed<TabDropdownOption[]>(() => {
   if (isRegulatoryDept.value) {
     options.push({ label: '辖区内全部任务', value: 'all' })
   }
-  return options
+  return appendOperationOption(options)
 })
 
-const issueDropdownOptions: TabDropdownOption[] = [
-  { label: '本机构合格证开具', value: 'own' },
-  { label: '辖区内合格证开具', value: 'area' }
-]
+const buildScopedDropdownOptions = (ownLabel: string, areaLabel: string) => {
+  const options = [{ label: ownLabel, value: 'own' }]
+  if (isRegulatoryDept.value) {
+    options.push({ label: areaLabel, value: 'area' })
+  }
+  return appendOperationOption(options)
+}
 
-const verifyDropdownOptions: TabDropdownOption[] = [
-  { label: '本机构合格证收取', value: 'own' },
-  { label: '辖区内合格证收取', value: 'area' }
-]
-
-const filingDropdownOptions: TabDropdownOption[] = [
-  { label: '本机构建档备案', value: 'own' },
-  { label: '辖区内建档备案', value: 'area' }
-]
+const issueDropdownOptions = computed(() =>
+  buildScopedDropdownOptions('本机构合格证开具', '辖区内合格证开具')
+)
+const verifyDropdownOptions = computed(() =>
+  buildScopedDropdownOptions('本机构合格证收取', '辖区内合格证收取')
+)
+const filingDropdownOptions = computed(() =>
+  buildScopedDropdownOptions('本机构建档备案', '辖区内建档备案')
+)
 
 const tabs = computed<StatisticsTab[]>(() => [
   {
     label: '全部',
     value: 'all',
     icon: 'ep:user',
-    dropdownOptions: isRegulatoryDept.value ? allDropdownOptions : undefined
+    dropdownOptions: hasScopedDropdown.value ? allDropdownOptions.value : undefined
   },
   {
     label: '检测任务',
@@ -212,19 +277,19 @@ const tabs = computed<StatisticsTab[]>(() => [
     label: '合格证开具',
     value: 'issue',
     icon: 'ep:document',
-    dropdownOptions: isRegulatoryDept.value ? issueDropdownOptions : undefined
+    dropdownOptions: hasScopedDropdown.value ? issueDropdownOptions.value : undefined
   },
   {
     label: '合格证收证',
     value: 'verify',
     icon: 'ep:document-checked',
-    dropdownOptions: isRegulatoryDept.value ? verifyDropdownOptions : undefined
+    dropdownOptions: hasScopedDropdown.value ? verifyDropdownOptions.value : undefined
   },
   {
     label: '建档备案',
     value: 'filing',
     icon: 'ep:folder',
-    dropdownOptions: isRegulatoryDept.value ? filingDropdownOptions : undefined
+    dropdownOptions: hasScopedDropdown.value ? filingDropdownOptions.value : undefined
   }
 ])
 
@@ -261,7 +326,7 @@ const handleTabChange = (tabValue: string) => {
   if (scopedTabValues.includes(tabValue as ScopedTabValue)) {
     const cmd = dropdownActiveCommands.value[tabValue]
     if (cmd) {
-      tabDeptScopes.value[tabValue as ScopedTabValue] = isRegulatoryDept.value ? getQueryDeptScopeByCommand(cmd) : 3
+      tabDeptScopes.value[tabValue as ScopedTabValue] = getQueryDeptScopeByCommand(cmd)
     } else {
       tabDeptScopes.value[tabValue as ScopedTabValue] = 3
     }
@@ -270,9 +335,13 @@ const handleTabChange = (tabValue: string) => {
 
 /**\n * getQueryDeptScopeByCommand：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。\n */
 const getQueryDeptScopeByCommand = (command: unknown) => {
-  if (command === 'area') return 1
-  if (command === 'own') return 2
-  return 0
+  if (command === 'operation') {
+    return isRegulatorRole.value ? getGeneralQueryDeptScope(command) : 3
+  }
+  if (command === 'area') {
+    return isRegulatoryDept.value ? getGeneralQueryDeptScope(command) : 3
+  }
+  return getGeneralQueryDeptScope('own')
 }
 
 /**\n * setQuickScopeByCommand：同步或重置当前页面状态，保证筛选项、组件显示和后续请求参数保持一致。\n */
@@ -289,7 +358,12 @@ const setQuickScopeByCommand = (command: unknown) => {
     return
   }
   if (quickCommand === 'all') {
-    quickDeptScope.value = 1
+    quickDeptScope.value = isRegulatoryDept.value ? 1 : 3
+    quickSelfDetection.value = undefined
+    return
+  }
+  if (quickCommand === 'operation') {
+    quickDeptScope.value = isRegulatorRole.value ? 2 : 3
     quickSelfDetection.value = undefined
     return
   }
@@ -299,6 +373,10 @@ const setQuickScopeByCommand = (command: unknown) => {
 
 /**\n * setTaskScopeByCommand：同步或重置当前页面状态，保证筛选项、组件显示和后续请求参数保持一致。\n */
 const setTaskScopeByCommand = (command: unknown) => {
+  if (command === 'operation') {
+    taskDeptScope.value = isRegulatorRole.value ? 2 : 3
+    return
+  }
   // 非监管机构只允许查询本机构数据，任务类型不再改变数据权限口径。
   taskDeptScope.value = isRegulatoryDept.value ? getTaskQueryDeptScope(command) : 3
 }
@@ -323,7 +401,7 @@ const handleDropdownCommand = (tabValue: string, command: unknown) => {
     setQuickScopeByCommand(command)
   }
   if (scopedTabValues.includes(tabValue as ScopedTabValue)) {
-    tabDeptScopes.value[tabValue as ScopedTabValue] = isRegulatoryDept.value ? getQueryDeptScopeByCommand(command) : 3
+    tabDeptScopes.value[tabValue as ScopedTabValue] = getQueryDeptScopeByCommand(command)
   }
 }
 

@@ -148,8 +148,8 @@
                                     </div>
                                     <div class="grid-item">
                                         <div class="field-label">信用代码</div>
-                                        <div class="field-value">{{ formState.selectedSubject.socialCreditCode || '--'
-                                        }}</div>
+                                        <div class="field-value">{{ formState.selectedSubject.socialCreditCode || formState.selectedSubject.idCard || '--'
+                                            }}</div>
                                     </div>
                                     <div class="grid-item">
                                         <div class="field-label">主体类型</div>
@@ -161,7 +161,7 @@
                                     <div class="grid-item">
                                         <div class="field-label">建档类型</div>
                                         <div class="field-value">{{ getFilingTypeLabel(formState.selectedSubject.type)
-                                        }}</div>
+                                            }}</div>
                                     </div>
                                     <div class="grid-item">
                                         <div class="field-label">联系人</div>
@@ -335,7 +335,7 @@
                             <span class="label">样品来源：</span>
                             <span class="value">{{ Array.isArray(formData.sample.sampleSource) ?
                                 formData.sample.sampleSource.join(', ') : (formData.sample.sampleSource || '--')
-                            }}</span>
+                                }}</span>
                         </div>
                         <div class="info-item">
                             <span class="label">样品状态：</span>

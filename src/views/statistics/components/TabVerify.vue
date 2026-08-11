@@ -92,6 +92,7 @@ import { computed, onMounted, reactive, ref, watch } from 'vue'
 import dayjs from 'dayjs'
 import { useDebounceFn } from '@vueuse/core'
 import StatisticsRangeFilter from './StatisticsRangeFilter.vue'
+import type { StatisticsDataScope } from '../statisticsTabs'
 import { buildCertificateTrendQueryParams } from './certificateTrend'
 import AreaCascader from '@/components/AreaCascader/index.vue'
 import { Echart } from '@/components/Echart'
@@ -125,9 +126,11 @@ import download from '@/utils/download'
 const props = withDefaults(
   defineProps<{
     queryDeptScope?: number
+    dataScope?: StatisticsDataScope
   }>(),
   {
-    queryDeptScope: 0
+    queryDeptScope: 0,
+    dataScope: 'SELF_ORG'
   }
 )
 
@@ -168,6 +171,7 @@ const queryParams = computed(() => ({
   ...buildRangeParams(dateRangeType.value, dateRange.value),
   ...getEffectiveAreaParams(canViewAreaRange.value ? areaParams : undefined),
   queryDeptScope: props.queryDeptScope,
+  dataScope: props.dataScope,
   deptId: canViewAreaRange.value ? undefined : currentDeptId.value || undefined,
   deptName: canViewAreaRange.value ? undefined : currentDeptName.value || undefined
 }))
@@ -277,7 +281,7 @@ const loadTable = async () => {
       queryDeptScope: queryParams.value.queryDeptScope,
       deptId: queryParams.value.deptId,
       deptName: queryParams.value.deptName,
-      dataScope: 'AREA_REGULATE'
+      dataScope: queryParams.value.dataScope
     })
     const normalized = normalizePagedResult<any>(data)
     tableData.value = normalized.list.map(mapRow)
@@ -357,7 +361,8 @@ const handleExport = () => {
           areaCode: queryParams.value.areaCode,
           queryDeptScope: queryParams.value.queryDeptScope,
           deptId: queryParams.value.deptId,
-          deptName: queryParams.value.deptName
+          deptName: queryParams.value.deptName,
+          dataScope: queryParams.value.dataScope
         })
         download.excel(data, '合格证收证记录.xls')
       } catch (err) {
@@ -382,7 +387,7 @@ watch(areaParams, () => {
 })
 
 watch(
-  () => props.queryDeptScope,
+  () => [props.queryDeptScope, props.dataScope],
   () => {
     pageNo.value = 1
     loadData()

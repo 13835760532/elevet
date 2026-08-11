@@ -172,6 +172,7 @@ import dayjs from 'dayjs'
 import { useDebounceFn } from '@vueuse/core'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import StatisticsRangeFilter from './StatisticsRangeFilter.vue'
+import type { StatisticsDataScope } from '../statisticsTabs'
 import AreaCascader from '@/components/AreaCascader/index.vue'
 import { Echart } from '@/components/Echart'
 import {
@@ -212,9 +213,11 @@ import download from '@/utils/download'
 const props = withDefaults(
   defineProps<{
     queryDeptScope?: number
+    dataScope?: StatisticsDataScope
   }>(),
   {
-    queryDeptScope: 0
+    queryDeptScope: 0,
+    dataScope: 'SELF_ORG'
   }
 )
 
@@ -287,6 +290,7 @@ const dashboardQueryParams = computed(() => ({
   ...buildRangeParams(dateRangeType.value, dateRange.value),
   ...getEffectiveAreaParams(canViewAreaRange.value ? areaParams : undefined),
   queryDeptScope: props.queryDeptScope,
+  dataScope: props.dataScope,
   deptId: canViewAreaRange.value ? undefined : currentDeptId.value || undefined,
   deptName: canViewAreaRange.value ? undefined : currentDeptName.value || undefined
 }))
@@ -495,6 +499,7 @@ const buildSubjectQuery = (pageNo: number, pageSize: number) => {
     deptId: canViewAreaRange.value ? undefined : currentDeptId.value || undefined,
     deptName: canViewAreaRange.value ? undefined : currentDeptName.value || undefined,
     queryDeptScope: props.queryDeptScope,
+    dataScope: props.dataScope,
     name: filtersSubject.name || undefined,
     type: isEmptyValue(filtersSubject.filingType) ? undefined : filtersSubject.filingType,
     category: isEmptyValue(filtersSubject.subjectType) ? undefined : filtersSubject.subjectType,
@@ -515,6 +520,7 @@ const buildProductQuery = (pageNo: number, pageSize: number) => {
     deptId: canViewAreaRange.value ? undefined : currentDeptId.value || undefined,
     deptName: canViewAreaRange.value ? undefined : currentDeptName.value || undefined,
     queryDeptScope: props.queryDeptScope,
+    dataScope: props.dataScope,
     productCode: filtersProduct.productCode || undefined,
     productName: filtersProduct.productName || undefined,
     subjectName: filtersProduct.subjectName || undefined,
@@ -858,7 +864,7 @@ watch(areaParams, () => {
 })
 
 watch(
-  () => props.queryDeptScope,
+  () => [props.queryDeptScope, props.dataScope],
   () => {
     subjectPageNo.value = 1
     productPageNo.value = 1

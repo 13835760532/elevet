@@ -200,7 +200,7 @@
                                     </div>
                                     <div class="grid-item">
                                         <div class="field-label">信用代码</div>
-                                        <div class="field-value">{{ selectedSubjectDetail.socialCreditCode || '--' }}
+                                        <div class="field-value">{{ selectedSubjectDetail.socialCreditCode || selectedSubjectDetail.idCard || '--' }}
                                         </div>
                                     </div>
                                     <div class="grid-item">
@@ -317,7 +317,7 @@
                                                     <div class="linked-info-value">{{
                                                         upstreamCertificateDetail.productName
                                                         || upstreamCertificateDetail.productDraft?.productName || '--'
-                                                        }}
+                                                    }}
                                                     </div>
                                                 </div>
                                                 <div class="linked-info-row">
@@ -332,7 +332,7 @@
                                                     <div class="linked-info-value">{{
                                                         upstreamCertificateDetail.productionArea ||
                                                         upstreamCertificateDetail.productDraft?.productionArea || '--'
-                                                        }}
+                                                    }}
                                                     </div>
                                                 </div>
                                                 <div class="linked-info-row">

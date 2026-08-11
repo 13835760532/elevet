@@ -353,6 +353,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import echarts from '@/plugins/echarts'
 import chinaLiteGeo from '@/assets/data/map/geo/china-lite.json'
 import StatisticsRangeFilter from './StatisticsRangeFilter.vue'
+import type { StatisticsDataScope } from '../statisticsTabs'
 import { Echart } from '@/components/Echart'
 import {
   getCategoryRisk,
@@ -725,9 +726,11 @@ const noticeData = ref<Array<{ id?: number; time: string; title: string }>>([])
 const props = withDefaults(
   defineProps<{
     queryDeptScope?: number
+    dataScope?: StatisticsDataScope
   }>(),
   {
-    queryDeptScope: 0
+    queryDeptScope: 0,
+    dataScope: 'SELF_ORG'
   }
 )
 
@@ -752,7 +755,8 @@ const queryParams = computed(() => ({
   ...getEffectiveAreaParams(),
   deptId: isAreaScope.value ? undefined : currentDeptId.value || undefined,
   deptName: isAreaScope.value ? undefined : currentDeptName.value || undefined,
-  queryDeptScope: effectiveQueryDeptScope.value
+  queryDeptScope: effectiveQueryDeptScope.value,
+  dataScope: props.dataScope
 }))
 
 /**\n * toBarData：将页面使用的数据在不同结构或展示口径之间转换。该方法不直接驱动页面跳转，返回值供调用方继续组装或渲染。\n */
@@ -962,7 +966,8 @@ const loadMapData = async () => {
       endDate: params.endDate,
       areaLevel: finalAreaLevel,
       provinceName: finalProvinceName,
-      cityName: finalCityName
+      cityName: finalCityName,
+      dataScope: params.dataScope
     }
     const data = isTaskMap
       ? await getTaskMap(mapParams)
@@ -1294,7 +1299,7 @@ const handleReset = () => {
 watch([dateRangeType, dateRange], loadData)
 watch([mapType], loadMapData)
 watch([productRiskType, testItemRiskType, categoryRiskType, regionRiskType, pesticideRiskType, regionRiskLevel], loadRiskData)
-watch(() => props.queryDeptScope, () => {
+watch(() => [props.queryDeptScope, props.dataScope], () => {
   loadData()
 })
 

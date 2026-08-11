@@ -168,6 +168,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import dayjs from 'dayjs'
 import { useDebounceFn } from '@vueuse/core'
 import StatisticsRangeFilter from './StatisticsRangeFilter.vue'
+import type { StatisticsDataScope } from '../statisticsTabs'
 import Echart from '@/components/Echart/src/Echart.vue'
 import AreaCascader from '@/components/AreaCascader/index.vue'
 import { useDict } from '@/hooks/web/useDict'
@@ -203,9 +204,11 @@ import download from '@/utils/download'
 const props = withDefaults(
   defineProps<{
     queryDeptScope?: number
+    dataScope?: StatisticsDataScope
   }>(),
   {
-    queryDeptScope: 0
+    queryDeptScope: 0,
+    dataScope: 'SELF_ORG'
   }
 )
 
@@ -267,6 +270,7 @@ const currentQueryParams = computed(() => ({
   ...buildRangeParams(dateRangeType.value, dateRange.value),
   ...getEffectiveAreaParams(),
   queryDeptScope: props.queryDeptScope,
+  dataScope: props.dataScope,
   deptId: canViewAreaRange.value ? undefined : currentDeptId.value || undefined
 }))
 
@@ -617,7 +621,7 @@ watch([dateRangeType, dateRange], () => {
 })
 
 watch(
-  () => props.queryDeptScope,
+  () => [props.queryDeptScope, props.dataScope],
   () => {
     handleSearch()
   }

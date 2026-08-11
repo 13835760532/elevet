@@ -8,6 +8,7 @@ export interface CertificateDashboardQueryParams {
   areaType?: string | number
   areaCode?: string | number
   queryDeptScope?: number
+  dataScope?: string
 }
 
 export const CERTIFICATE_TREND_GRANULARITY = {
