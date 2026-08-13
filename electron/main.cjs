@@ -14,6 +14,9 @@ let xfyunWakeProcess = null
 let xfyunWakeSender = null
 let isStoppingXfyunWakeProcess = false
 
+// Sherpa 的 Emscripten 运行时在启动时同步实例化大于 8 MB 的内置 WASM。
+app.commandLine.appendSwitch('enable-features', 'WebAssemblyUnlimitedSyncCompilation')
+
 const mimeTypes = {
   '.css': 'text/css; charset=utf-8',
   '.gif': 'image/gif',
@@ -214,6 +217,7 @@ const serveRendererFile = async (url) => {
     return new Response(content, {
       headers: {
         'content-type': mimeTypes[extname(filePath).toLowerCase()] || 'application/octet-stream',
+        'cache-control': 'no-store',
         // Sherpa-ONNX 的桌面唤醒运行时使用 SharedArrayBuffer 和 Worker，需要跨源隔离。
         'cross-origin-opener-policy': 'same-origin',
         'cross-origin-embedder-policy': 'require-corp',
@@ -242,19 +246,28 @@ const registerAppProtocol = () => {
 const configurePermissions = () => {
   const isAllowedOrigin = (requestingUrl) => {
     try {
-      const origin = new URL(requestingUrl).origin
-      return origin === appOrigin || origin === 'http://127.0.0.1:48081'
+      const url = new URL(requestingUrl)
+      // Chromium serializes custom-scheme origins as `null`, so compare the
+      // protocol/host directly for the packaged renderer.
+      return (
+        (url.protocol === 'app:' && url.host === 'app') || url.origin === 'http://127.0.0.1:48081'
+      )
     } catch {
       return false
     }
   }
 
-  session.defaultSession.setPermissionCheckHandler((_webContents, permission, requestingOrigin) => {
-    return permission === 'media' && isAllowedOrigin(requestingOrigin)
+  session.defaultSession.setPermissionCheckHandler((webContents, permission, requestingOrigin) => {
+    return (
+      permission === 'media' &&
+      (isAllowedOrigin(requestingOrigin) || isAllowedOrigin(webContents?.getURL?.()))
+    )
   })
-  session.defaultSession.setPermissionRequestHandler((_webContents, permission, callback, details) => {
-    callback(permission === 'media' && isAllowedOrigin(details.requestingUrl))
-  })
+  session.defaultSession.setPermissionRequestHandler(
+    (_webContents, permission, callback, details) => {
+      callback(permission === 'media' && isAllowedOrigin(details.requestingUrl))
+    }
+  )
 }
 
 const createMainWindow = async () => {
@@ -293,6 +306,10 @@ const createMainWindow = async () => {
 app.whenReady().then(async () => {
   if (!isDevelopment) registerAppProtocol()
   configurePermissions()
+  ipcMain.on('xfyun-wake:is-available', (event) => {
+    event.returnValue = process.platform === 'win32' &&
+      existsSync(join(getXfyunWakeRuntimePath(), 'xfyun-awake.exe'))
+  })
   ipcMain.handle('xfyun-wake:start', (event) => startXfyunWakeProcess(event.sender))
   ipcMain.handle('xfyun-wake:stop', () => stopXfyunWakeProcess())
   await createMainWindow()

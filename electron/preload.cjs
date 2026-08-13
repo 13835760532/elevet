@@ -11,7 +11,7 @@ contextBridge.exposeInMainWorld('desktopApp', {
   },
   // 仅暴露有限的唤醒控制接口，不向页面公开 IPC、文件系统或讯飞配置。
   wakeWord: {
-    isSupported: () => process.platform === 'win32',
+    isSupported: () => process.platform === 'win32' && ipcRenderer.sendSync('xfyun-wake:is-available'),
     start: () => ipcRenderer.invoke('xfyun-wake:start'),
     stop: () => ipcRenderer.invoke('xfyun-wake:stop'),
     onEvent: (listener) => {

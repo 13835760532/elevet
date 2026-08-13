@@ -53,6 +53,14 @@ const normalizeXfyunErrorMessage = (message: string) => {
     return '科大讯飞白名单校验失败，请检查控制台 IP 白名单配置'
   }
 
+  if (
+    lowerMessage.includes('permission denied') ||
+    lowerMessage.includes('forbidden') ||
+    lowerMessage.includes('403')
+  ) {
+    return '科大讯飞实时转写权限被拒绝，请检查服务是否开通、APPID/API_KEY 是否正确及 IP 白名单配置'
+  }
+
   return message
 }
 
@@ -60,12 +68,6 @@ const createFrontendSignedUrl = () => {
   // 未配置后端签名地址时会在前端签名；生产环境应配置后端地址，避免 API_KEY 下发。
   const appId = getEnvValue('VITE_XFYUN_RTASR_APP_ID')
   const apiKey = getEnvValue('VITE_XFYUN_RTASR_API_KEY')
-
-  console.info('[讯飞实时转写] 使用前端签名', {
-    hasAppId: Boolean(appId),
-    appId,
-    hasApiKey: Boolean(apiKey)
-  })
 
   if (!appId || !apiKey) {
     throw new Error('请先配置 VITE_XFYUN_RTASR_APP_ID 和 VITE_XFYUN_RTASR_API_KEY')
@@ -79,15 +81,6 @@ const createFrontendSignedUrl = () => {
     ts,
     signa,
     lang: 'cn'
-  })
-
-  console.info('[讯飞实时转写] 前端签名详情', {
-    mode: import.meta.env.MODE,
-    appId,
-    ts,
-    md5: baseString,
-    signa,
-    queryString: params.toString()
   })
 
   return `wss://${RTASR_HOST}${RTASR_PATH}?${params.toString()}`
@@ -198,12 +191,20 @@ export class XfyunRtasrRecognizer {
     this.updateStatus('connecting', '正在连接语音识别服务')
 
     const url = await createSignedUrl()
+    if (this.stopped) return
+
     this.socket = new WebSocket(url)
     this.socket.binaryType = 'arraybuffer'
 
     this.socket.onopen = async () => {
+      if (this.stopped) {
+        this.socket?.close()
+        return
+      }
+
       try {
         await this.startAudio()
+        if (this.stopped) return
         this.startSender()
         this.updateStatus('recording', '正在听写')
       } catch (error) {
@@ -245,25 +246,32 @@ export class XfyunRtasrRecognizer {
   }
 
   stop() {
+    if (this.stopped && !this.socket) return
+
     this.stopped = true
     this.updateStatus('stopping', '正在结束听写')
     this.stopAudio()
     this.flushAudio()
     this.clearSender()
 
-    if (this.socket?.readyState === WebSocket.OPEN) {
-      this.socket.send(JSON.stringify({ end: true }))
+    const socket = this.socket
+    if (socket?.readyState === WebSocket.OPEN) {
+      socket.send(JSON.stringify({ end: true }))
     }
 
     window.setTimeout(() => {
-      this.socket?.close()
-      this.socket = null
+      socket?.close()
+      if (this.socket === socket) this.socket = null
       this.updateStatus('stopped')
     }, 300)
   }
 
   private async startAudio() {
     await sharedAudioBus.acquire()
+    if (this.stopped) {
+      if (!sharedAudioBus.listenerCount()) sharedAudioBus.release()
+      return
+    }
 
     this.audioListener = (chunk) => {
       const pcm = floatTo16BitPcm(chunk)

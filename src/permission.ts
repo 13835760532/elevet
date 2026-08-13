@@ -20,6 +20,8 @@ const { wsCache } = useCache()
 let dynamicRoutesReady = false
 let dynamicRoutesPromise: Promise<void> | null = null
 const dynamicRouteReadyMark = '404Page'
+const authenticatedLoginRedirect =
+  import.meta.env.VITE_APP_DESKTOP === 'true' ? '/ai-assistant' : '/'
 
 /** 判断目标地址是否属于允许优先使用缓存渲染的监管大屏路由。 */
 const isBigScreenRoute = (path: string) => path.startsWith('/big-screen')
@@ -88,11 +90,9 @@ const runAfterFirstPaint = (callback: () => void) => {
 const refreshBigScreenUserInBackground = (userStore: ReturnType<typeof useUserStoreWithOut>) => {
   // 缓存只负责快速恢复首屏，后台刷新仍是后续权限和用户信息的最终来源。
   runAfterFirstPaint(() => {
-    void userStore
-      .setUserInfoAction()
-      .catch((error) => {
-        console.error('后台刷新用户信息失败', error)
-      })
+    void userStore.setUserInfoAction().catch((error) => {
+      console.error('后台刷新用户信息失败', error)
+    })
   })
 }
 
@@ -159,7 +159,8 @@ router.beforeEach(async (to, from, next) => {
   loadStart()
   if (getAccessToken()) {
     if (to.path === '/login') {
-      next({ path: '/' })
+      // Electron 每次启动从 /login 进入；已有 token 时仍应回到桌面助手，而不是 Web 管理首页。
+      next({ path: authenticatedLoginRedirect, replace: true })
     } else {
       const dictStore = useDictStoreWithOut()
       const userStore = useUserStoreWithOut()
@@ -194,7 +195,8 @@ router.beforeEach(async (to, from, next) => {
           const redirectPath = from.query.redirect || to.path
           const redirect = decodeURIComponent(redirectPath as string)
           const { paramsObject: query } = parseURL(redirect)
-          const nextData = to.path === redirect ? { ...to, replace: true } : { path: redirect, query }
+          const nextData =
+            to.path === redirect ? { ...to, replace: true } : { path: redirect, query }
           next(nextData)
         } catch (error) {
           resetDynamicRouteState()

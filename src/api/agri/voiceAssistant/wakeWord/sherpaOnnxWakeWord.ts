@@ -32,15 +32,17 @@ declare global {
 const SHERPA_SCRIPT_URL = '/vendor/sherpa/sherpa-onnx-browser-kws.js'
 const SHERPA_WASM_FACTORY_URL = '/vendor/sherpa/sherpa-onnx-wasm-nodejs.js'
 const SHERPA_KWS_FACTORY_URL = '/vendor/sherpa/sherpa-onnx-kws.js'
+const SHERPA_RUNTIME_VERSION = '20260812-6'
 const AUDIO_SAMPLE_RATE = 16000
 const DETECT_COOLDOWN_MS = 1500
+const INITIALIZATION_TIMEOUT_MS = 30_000
 
 let sherpaScriptLoadingPromise: Promise<void> | null = null
 
 const appendScript = (src: string) =>
   new Promise<void>((resolve, reject) => {
     const script = document.createElement('script')
-    script.src = src
+    script.src = `${src}?v=${SHERPA_RUNTIME_VERSION}`
     script.async = true
     script.onload = () => resolve()
     script.onerror = () => reject(new Error(`加载脚本失败：${src}`))
@@ -86,6 +88,22 @@ const normalizeErrorMessage = (error: unknown) => {
   return '本地唤醒初始化失败'
 }
 
+const withTimeout = <T>(promise: Promise<T>, timeoutMs: number, message: string) => {
+  return new Promise<T>((resolve, reject) => {
+    const timer = window.setTimeout(() => reject(new Error(message)), timeoutMs)
+    promise.then(
+      (value) => {
+        window.clearTimeout(timer)
+        resolve(value)
+      },
+      (error) => {
+        window.clearTimeout(timer)
+        reject(error)
+      }
+    )
+  })
+}
+
 export { createKeywordLines, normalizeErrorMessage }
 
 export class SherpaOnnxWakeWordEngine implements WakeWordEngine {
@@ -114,7 +132,7 @@ export class SherpaOnnxWakeWordEngine implements WakeWordEngine {
         throw new Error('未找到 sherpa-onnx 浏览器唤醒模块')
       }
 
-      this.kws = await sherpa.createKws({
+      this.kws = await withTimeout(sherpa.createKws({
         featConfig: {
           sampleRate: AUDIO_SAMPLE_RATE,
           featureDim: 80
@@ -137,7 +155,7 @@ export class SherpaOnnxWakeWordEngine implements WakeWordEngine {
         keywordsScore: 1.0,
         keywordsThreshold: 0.35,
         keywords: createKeywordLines(this.options.keywords)
-      })
+      }), INITIALIZATION_TIMEOUT_MS, '本地唤醒模型加载超时，请重新启动应用后重试')
 
       this.stream = this.kws.createStream()
 
@@ -207,6 +225,7 @@ export class SherpaOnnxWakeWordEngine implements WakeWordEngine {
   }
 
   private handleError(error: unknown) {
+    console.error('Sherpa-ONNX 本地唤醒启动失败', error)
     const message = normalizeErrorMessage(error)
     this.updateStatus('error', message)
     this.options.onError?.(message)

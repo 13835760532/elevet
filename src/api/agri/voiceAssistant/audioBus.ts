@@ -3,6 +3,26 @@ const PROCESSOR_BUFFER_SIZE = 4096
 
 type AudioChunkListener = (chunk: Float32Array) => void
 
+const normalizeMicrophoneError = (error: unknown) => {
+  const errorName =
+    typeof error === 'object' && error !== null && 'name' in error ? String(error.name) : ''
+  const errorMessage = error instanceof Error ? error.message : ''
+
+  if (['NotAllowedError', 'PermissionDeniedError', 'SecurityError'].includes(errorName)) {
+    return '麦克风访问被拒绝，请在 macOS“系统设置 > 隐私与安全性 > 麦克风”中允许本应用后重启应用'
+  }
+
+  if (['NotFoundError', 'DevicesNotFoundError'].includes(errorName)) {
+    return '未检测到麦克风设备，请连接麦克风后重试'
+  }
+
+  if (errorName === 'OverconstrainedError') {
+    return '当前麦克风不支持语音输入，请更换麦克风后重试'
+  }
+
+  return errorMessage || '无法访问麦克风，请检查系统权限和设备状态'
+}
+
 const downsampleBuffer = (buffer: Float32Array, inputSampleRate: number, outputSampleRate: number) => {
   if (inputSampleRate === outputSampleRate) {
     return buffer
@@ -45,14 +65,18 @@ class SharedAudioBus {
     }
 
     this.startingPromise = (async () => {
-      this.stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          channelCount: 1,
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true
-        }
-      })
+      try {
+        this.stream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            channelCount: 1,
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true
+          }
+        })
+      } catch (error) {
+        throw new Error(normalizeMicrophoneError(error))
+      }
 
       this.audioContext = new AudioContext({ sampleRate: TARGET_SAMPLE_RATE })
       this.sourceNode = this.audioContext.createMediaStreamSource(this.stream)
@@ -110,5 +134,5 @@ class SharedAudioBus {
 }
 
 export const sharedAudioBus = new SharedAudioBus()
-export { downsampleBuffer, TARGET_SAMPLE_RATE }
+export { downsampleBuffer, normalizeMicrophoneError, TARGET_SAMPLE_RATE }
 export type { AudioChunkListener }

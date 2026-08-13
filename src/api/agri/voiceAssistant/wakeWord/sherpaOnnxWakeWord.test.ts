@@ -15,6 +15,10 @@ describe('createKeywordLines', () => {
 
     expect(result).toBe('n ǐ h ǎo @你好')
   })
+
+  it('preserves the short desktop wake word', () => {
+    expect(createKeywordLines(['x iǎo y ī @小一'])).toBe('x iǎo y ī @小一')
+  })
 })
 
 describe('normalizeErrorMessage', () => {

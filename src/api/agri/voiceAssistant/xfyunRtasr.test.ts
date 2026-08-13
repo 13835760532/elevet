@@ -14,6 +14,10 @@ describe('normalizeXfyunErrorMessage', () => {
     expect(normalizeXfyunErrorMessage('illegal client_ip')).toContain('白名单')
   })
 
+  it('maps rejected service permissions to a localized message', () => {
+    expect(normalizeXfyunErrorMessage('Permission denied (403)')).toContain('权限被拒绝')
+  })
+
   it('returns the original message for unknown errors', () => {
     expect(normalizeXfyunErrorMessage('random failure')).toBe('random failure')
   })

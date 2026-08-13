@@ -153,19 +153,25 @@
       <div class="input-wrapper">
         <el-input v-model="inputText" type="textarea" :rows="3" placeholder="可以问我任何问题，帮你解答" resize="none"
           maxlength="100" show-word-limit @keydown.enter.exact.prevent="handleSend(inputText)" />
-        <div class="voice-btn" :class="{ active: isRecording, disabled: isTyping }" :title="voiceButtonTitle"
+        <div
+          class="voice-btn"
+          :class="{ active: isRecording, disabled: isTyping || voiceTogglePending }"
+          :title="voiceButtonTitle"
           @click="toggleVoiceInput">
           <Icon :icon="isRecording ? 'ep:video-pause' : 'ep:microphone'" :size="20" />
         </div>
-        <div
+        <button
           v-if="isDesktopApp"
+          type="button"
           class="voice-btn wake-btn"
-          :class="{ active: isWakeWordEnabled, disabled: isTyping || !wakeWordRuntimeAvailable }"
+          :class="{ active: isWakeWordEnabled, pending: isWakeWordStarting }"
+          :disabled="isTyping || !wakeWordRuntimeAvailable || isWakeWordStarting"
+          :aria-label="wakeWordButtonTitle"
           :title="wakeWordButtonTitle"
           @click="toggleWakeWord"
         >
           <Icon :icon="isWakeWordEnabled ? 'ep:bell-filled' : 'ep:bell'" :size="20" />
-        </div>
+        </button>
         <div class="send-btn" :class="{ active: inputText.trim() && !isTyping }" @click="handleSend(inputText)">
           <Icon icon="ep:position" :size="20" />
         </div>
@@ -214,7 +220,11 @@ const isXfyunDesktopWakeWordAvailable = isXfyunDesktopWakeWordSupported()
 // Sherpa-ONNX 的中文模型按拼音 token 匹配，@ 后的文字用于展示已识别的唤醒词。
 const DESKTOP_WAKE_WORDS = [
   'n ǐ h ǎo x iǎo y ī @你好小壹',
-  'x iǎo y ī x iǎo y ī @小壹小壹'
+  'n ǐ h ǎo x iǎo y ī @你好小一',
+  'x iǎo y ī @小壹',
+  'x iǎo y ī @小一',
+  'x iǎo y ī x iǎo y ī @小壹小壹',
+  'x iǎo y ī x iǎo y ī @小一小一'
 ]
 
 // --- 推荐问题数据 ---
@@ -272,6 +282,7 @@ const messages = ref<Message[]>([])
 const inputText = ref('')
 const isTyping = ref(false)
 const isRecording = ref(false)
+const voiceTogglePending = ref(false)
 const isWakeWordEnabled = ref(false)
 const voiceStatusText = ref('')
 const voiceRecognizer = ref<XfyunRtasrRecognizer | null>(null)
@@ -282,6 +293,7 @@ const wakeWordSessionToken = ref(0)
 const chatMainRef = ref<HTMLElement | null>(null)
 const wakeWordRuntimeAvailable =
   isXfyunDesktopWakeWordAvailable || isDesktopApp || BrowserSpeechRecognizer.isSupported()
+const isWakeWordStarting = computed(() => wakeWordStatus.value === 'initializing')
 
 const voiceButtonTitle = computed(() => {
   if (isTyping.value) return '小壹正在回答中'
@@ -291,6 +303,7 @@ const voiceButtonTitle = computed(() => {
 const wakeWordButtonTitle = computed(() => {
   if (isTyping.value) return '小壹正在回答中'
   if (!wakeWordRuntimeAvailable) return '当前设备不支持本地唤醒'
+  if (isWakeWordStarting.value) return '正在启动本地唤醒'
   return isWakeWordEnabled.value ? '关闭唤醒模式' : '启用唤醒模式'
 })
 
@@ -550,20 +563,32 @@ const stopVoiceInput = () => {
   }
 }
 
+const VOICE_TOGGLE_DEBOUNCE_MS = 400
+
+const releaseVoiceToggle = () => {
+  window.setTimeout(() => {
+    voiceTogglePending.value = false
+  }, VOICE_TOGGLE_DEBOUNCE_MS)
+}
+
 /**
  * 开关实时语音听写。
  * 听写结束后仅在唤醒会话仍有效、当前无回答生成时恢复唤醒词监听，避免重复占用麦克风。
  */
 const toggleVoiceInput = async () => {
-  if (isTyping.value) return
+  if (isTyping.value || voiceTogglePending.value) return
+
+  voiceTogglePending.value = true
 
   if (isRecording.value) {
     stopVoiceInput()
+    releaseVoiceToggle()
     return
   }
 
   if (!navigator.mediaDevices?.getUserMedia) {
     ElMessage.warning('当前浏览器不支持麦克风采集')
+    releaseVoiceToggle()
     return
   }
 
@@ -611,6 +636,8 @@ const toggleVoiceInput = async () => {
     voiceStatusText.value = ''
     voiceRecognizer.value = null
     ElMessage.error(message)
+  } finally {
+    releaseVoiceToggle()
   }
 }
 
@@ -719,14 +746,13 @@ const startWakeWord = async () => {
     wakeWordEngine.value = null
     isWakeWordEnabled.value = false
     const message = error instanceof Error ? error.message : '唤醒模式启动失败'
-    voiceStatusText.value = ''
-    ElMessage.error(message)
+    voiceStatusText.value = message
   }
 }
 
 /**\n * toggleWakeWord：将页面使用的数据在不同结构或展示口径之间转换。该方法不直接驱动页面跳转，返回值供调用方继续组装或渲染。\n */
 const toggleWakeWord = async () => {
-  if (isTyping.value) return
+  if (isTyping.value || isWakeWordStarting.value) return
 
   if (!wakeWordRuntimeAvailable) {
     isWakeWordEnabled.value = false
@@ -1610,7 +1636,11 @@ onBeforeUnmount(() => {
     }
 
     .voice-btn {
+      padding: 0;
+      border: 0;
+      font: inherit;
       right: 60px;
+      appearance: none;
       cursor: pointer;
 
       &:hover {
@@ -1628,10 +1658,16 @@ onBeforeUnmount(() => {
         }
       }
 
-      &.disabled {
+      &.disabled,
+      &:disabled {
         color: rgba(11, 37, 53, 0.28);
         background: transparent;
         cursor: not-allowed;
+      }
+
+      &.pending {
+        color: #00b3ed;
+        background: rgba(0, 179, 237, 0.09);
       }
     }
 
@@ -1659,7 +1695,7 @@ onBeforeUnmount(() => {
     .voice-status {
       position: absolute;
       left: 16px;
-      bottom: -24px;
+      bottom: 8px;
       display: inline-flex;
       align-items: center;
       gap: 6px;
