@@ -206,9 +206,9 @@
                         </template>
                     </template>
 
-                    <!-- 检测结果 Tab -->
                     <template v-if="activeTab === 'result'">
                         <DetectionProgress :tableData="progressList" :createBtnFlag="false" :total="progressTotal"
+                            :categoryOptions="productCategoryOptions"
                             @query="handleProgressQuery" @reset="handleProgressReset" />
                     </template>
 
@@ -223,7 +223,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, watch } from 'vue'
+import { ref, reactive, onMounted, watch, computed } from 'vue'
 import { Lightning, List } from '@element-plus/icons-vue'
 import { useRouter, useRoute } from 'vue-router'
 import DetectionProgress from '@/components/DetectionProgress/index.vue'
@@ -265,7 +265,11 @@ const tableData = ref([])
 const queryRef = ref()
 
 const deptMap = ref({})
-const { getLabel: getProductCategoryLabel } = useDict(DICT_TYPE.AGRI_PRODUCT_CATEGORY, 'str');
+const { getLabel: getProductCategoryLabel, options: productCategoryOptionsRaw } = useDict(DICT_TYPE.AGRI_PRODUCT_CATEGORY, 'str');
+const productCategoryOptions = computed(() => {
+    const opts = productCategoryOptionsRaw.value.filter(item => item.label !== '全部');
+    return [{ label: '全部', value: '' }, ...opts];
+});
 const tabs = [
     { label: '子任务列表', key: 'subtask' },
     { label: '检测结果', key: 'result' },

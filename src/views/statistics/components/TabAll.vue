@@ -36,7 +36,7 @@
           <div class="card-bg-icon">🛡️</div>
           <div class="card-info">
             <div class="card-title">检测样品量</div>
-            <div class="card-value">{{ formatNumber(overview.sampleCount) }}</div>
+            <div class="card-value">{{ formatNumber((overview.sampleCount || 0) + (overview.selfDetectionSampleCount || 0)) }}</div>
           </div>
         </div>
 
@@ -45,7 +45,7 @@
           <div class="card-bg-icon">🧪</div>
           <div class="card-info">
             <div class="card-title">检测项目总量</div>
-            <div class="card-value">{{ formatNumber(overview.detectionItemCount) }}</div>
+            <div class="card-value">{{ formatNumber((overview.detectionItemCount || 0) + (overview.selfDetectionItemCount || 0)) }}</div>
           </div>
         </div>
 

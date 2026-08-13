@@ -24,8 +24,9 @@
                         <el-select v-model="queryParams.category" placeholder="产品分类" class="custom-select w140"
                             clearable>
                             <el-option label="全部" value="" />
-                            <el-option v-for="dict in productCategoryOptions" :key="dict.value + ''" :label="dict.label"
-                                :value="dict.value" />
+                            <template v-for="dict in productCategoryOptions" :key="dict.value + ''">
+                                <el-option v-if="dict.label !== '全部'" :label="dict.label" :value="dict.value" />
+                            </template>
                         </el-select>
                     </el-form-item>
                     <el-form-item label="">

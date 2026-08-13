@@ -63,7 +63,8 @@
                 <div class="warning-record-header">
                   <span class="record-badge">月度汇总</span>
                   <span class="record-product">{{ `${reportForm.year}年${reportForm.month}月` }}</span>
-                  <button v-if="monthlyReportData && monthlyReportData.hasData" class="record-view-btn" type="button" @click="handleViewMonthlyWarningDetail">查看</button>
+                  <button v-if="monthlyReportData && monthlyReportData.hasData" class="record-view-btn" type="button"
+                    @click="handleViewMonthlyWarningDetail">查看</button>
                 </div>
                 <div class="warning-record-detail">
                   <div class="detail-row">
@@ -72,11 +73,13 @@
                   </div>
                   <div class="detail-row">
                     <span style="width: 100px;">高风险产品：</span>
-                    <span>{{ monthlyReportData?.highRiskProducts?.length ? monthlyReportData.highRiskProducts.join('，') : '暂无数据' }}</span>
+                    <span>{{ monthlyReportData?.highRiskProducts?.length ? monthlyReportData.highRiskProducts.join('，')
+                      : '暂无数据' }}</span>
                   </div>
                   <div class="detail-row">
                     <span style="width: 100px;">高风险药物：</span>
-                    <span>{{ monthlyReportData?.highRiskItems?.length ? monthlyReportData.highRiskItems.join('，') : '暂无数据' }}</span>
+                    <span>{{ monthlyReportData?.highRiskItems?.length ? monthlyReportData.highRiskItems.join('，') :
+                      '暂无数据' }}</span>
                   </div>
                   <div class="detail-row">
                     <span style="width: 100px;">检测时间：</span>
@@ -97,7 +100,8 @@
                 <div class="warning-record-header">
                   <span class="record-badge">日报汇总</span>
                   <span class="record-product">{{ `${reportForm.year}年${reportForm.month}月${reportForm.day}日` }}</span>
-                  <button v-if="dailyReportData && dailyReportData.hasData" class="record-view-btn" type="button" @click="handleViewDailyWarningDetail">查看</button>
+                  <button v-if="dailyReportData && dailyReportData.hasData" class="record-view-btn" type="button"
+                    @click="handleViewDailyWarningDetail">查看</button>
                 </div>
                 <div class="warning-record-detail">
                   <div class="detail-row">
@@ -106,11 +110,13 @@
                   </div>
                   <div class="detail-row">
                     <span style="width: 100px;">高风险产品：</span>
-                    <span>{{ dailyReportData?.highRiskProducts?.length ? dailyReportData.highRiskProducts.join('，') : '暂无数据' }}</span>
+                    <span>{{ dailyReportData?.highRiskProducts?.length ? dailyReportData.highRiskProducts.join('，') :
+                      '暂无数据' }}</span>
                   </div>
                   <div class="detail-row">
                     <span style="width: 100px;">高风险药物：</span>
-                    <span>{{ dailyReportData?.highRiskItems?.length ? dailyReportData.highRiskItems.join('，') : '暂无数据' }}</span>
+                    <span>{{ dailyReportData?.highRiskItems?.length ? dailyReportData.highRiskItems.join('，') : '暂无数据'
+                      }}</span>
                   </div>
                   <div class="detail-row">
                     <span style="width: 100px;">检测时间：</span>
@@ -210,7 +216,7 @@
     <el-dialog v-model="noticeDialogVisible" title="公告详情" width="600px">
       <div v-loading="noticeDetailLoading" class="notice-detail-container" style="min-height: 100px;">
         <h3 style="font-size: 18px; font-weight: bold; margin-bottom: 8px; text-align: center;">{{ currentNotice?.title
-        }}
+          }}
         </h3>
         <div style="font-size: 13px; color: #999; text-align: center; margin-bottom: 20px;">
           发布时间：{{ currentNotice?.time || '--' }}
@@ -600,12 +606,13 @@ const getTaskList = async () => {
   try {
     const res = await getDetectionTaskPage(taskQueryParams)
     const rows = res?.list || []
+    console.log(res)
     taskData.value = rows.map((item: any) => ({
       id: item.id,
       no: item.taskCode || '--',
       name: item.taskName || '--',
       planName: item.planName || item.planInfo?.planName || '--',
-      org: item.planInfo?.issuerDeptName || item.issuerDeptName || '--',
+      org: item.issueDeptName || '--',
       area: item.detectionArea || '--',
       variety: item.detectionVarieties || '--',
       item: item.detectionItems || '--',

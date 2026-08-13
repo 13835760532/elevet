@@ -22,6 +22,8 @@ export interface DashboardOverviewRespVO {
   detectionItemCount?: number
   certificateIssueCount?: number
   certificateVerifyCount?: number
+  selfDetectionSampleCount?: number
+  selfDetectionItemCount?: number
 }
 
 export interface TrendQueryParams extends DashboardQueryParams {
