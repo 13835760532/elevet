@@ -265,7 +265,7 @@ const route = useRoute();
 
 
 const { getLabel: getPlanTypeLabel } = useDict(DICT_TYPE.AGRI_PLAN_TYPE);
-const { getLabel: getProductCategoryLabel, options: productCategoryOptions } = useDict(DICT_TYPE.AGRI_PRODUCT_CATEGORY);
+const { getLabel: getProductCategoryLabel, options: productCategoryOptions } = useDict(DICT_TYPE.AGRI_PRODUCT_CATEGORY, 'str');
 
 const produceCategoryTree = ref([]);
 
@@ -662,6 +662,7 @@ const loadDetectionResults = async (params = {}) => {
             pageSize: params.pageSize || 10,
             keyword: params.sample || undefined,
             productCategory: params.category || undefined,
+            detectionOrgName: params.org || undefined,
             overallResult: params.result === 'qualified' ? 0 : (params.result === 'unqualified' ? 1 : undefined),
             status: params.status === 'tested' ? 1 : (params.status === 'untested' ? 0 : undefined)
         };

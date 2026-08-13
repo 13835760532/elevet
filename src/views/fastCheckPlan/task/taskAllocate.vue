@@ -265,11 +265,7 @@ const tableData = ref([])
 const queryRef = ref()
 
 const deptMap = ref({})
-const { getLabel: getProductCategoryLabel, options: productCategoryOptionsRaw } = useDict(DICT_TYPE.AGRI_PRODUCT_CATEGORY, 'str');
-const productCategoryOptions = computed(() => {
-    const opts = productCategoryOptionsRaw.value.filter(item => item.label !== '全部');
-    return [{ label: '全部', value: '' }, ...opts];
-});
+const { getLabel: getProductCategoryLabel, options: productCategoryOptions } = useDict(DICT_TYPE.AGRI_PRODUCT_CATEGORY, 'str');
 const tabs = [
     { label: '子任务列表', key: 'subtask' },
     { label: '检测结果', key: 'result' },
@@ -542,6 +538,7 @@ const loadDetectionResults = async (params = {}) => {
             pageSize: params.pageSize || 10,
             keyword: params.sample || undefined,
             productCategory: params.category || undefined,
+            detectionOrgName: params.org || undefined,
             overallResult: params.result === 'qualified' ? 0 : (params.result === 'unqualified' ? 1 : undefined),
             status: params.status === 'tested' ? 1 : (params.status === 'untested' ? 0 : undefined)
         };

@@ -9,15 +9,14 @@
                         :options="taskOptions" />
                 </el-form-item>
                 <el-form-item label="" label-width="80px">
-                    <el-select-v2 v-model="query.org" placeholder="抽检机构" clearable class="custom-select w150"
-                        :options="orgOptions" />
+                    <el-input v-model="query.org" placeholder="请输入抽检机构" clearable class="custom-input w150" />
                 </el-form-item>
                 <el-form-item label="" label-width="80px">
                     <el-input v-model="query.sample" placeholder="请输入样品编号/名称" clearable class="custom-input w200" />
                 </el-form-item>
                 <el-form-item label="" label-width="80px">
                     <el-select-v2 v-model="query.category" placeholder="产品分类" clearable class="custom-select w120"
-                        :options="categoryOptions" />
+                        :options="computedCategoryOptions" />
                 </el-form-item>
                 <el-form-item label="" label-width="80px">
                     <el-select-v2 v-model="query.result" placeholder="检测结果" clearable class="custom-select w120"
@@ -85,7 +84,7 @@
 </template>
 
 <script setup>
-import { reactive } from 'vue';
+import { reactive, computed } from 'vue';
 import { useRouter } from 'vue-router';
 
 const props = defineProps({
@@ -119,6 +118,11 @@ const props = defineProps({
         default: true
     }
 
+});
+
+const computedCategoryOptions = computed(() => {
+    const opts = props.categoryOptions.filter(item => item.label && item.label.trim() !== '全部');
+    return [{ label: '全部', value: '' }, ...opts];
 });
 
 const emit = defineEmits(['query', 'reset', 'single-input', 'batch-import', 'view-detail', 'page-change']);
