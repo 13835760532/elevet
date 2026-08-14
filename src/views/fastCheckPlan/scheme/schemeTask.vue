@@ -58,7 +58,9 @@
                             </div>
                             <div class="info-item">
                                 <span class="info-label">方案状态</span>
-                                <span :class="['status-tag', statusClass]">{{ schemeInfo.status }}</span>
+                                <dict-tag :type="DICT_TYPE.AGRI_PLAN_STATUS" :value="schemeInfo.statusValue"
+                                    v-if="schemeInfo.statusValue !== null && schemeInfo.statusValue !== undefined" />
+                                <span v-else class="info-value">--</span>
                             </div>
                             <!-- <div class="info-item full-width">
                                 <span class="info-label">检测项目</span>
@@ -196,9 +198,8 @@
                             </el-table-column>
                             <el-table-column label="状态" prop="status" width="100" align="center">
                                 <template #default="scope">
-                                    <span :class="['status-tag', getTaskStatusClass(scope.row.status)]">
-                                        {{ scope.row.status }}
-                                    </span>
+                                    <dict-tag :type="DICT_TYPE.AGRI_DETECTION_TASK_STATUS"
+                                        :value="scope.row.statusValue" />
                                 </template>
                             </el-table-column>
                             <el-table-column label="操作" width="160" align="center" fixed="right">
@@ -265,6 +266,7 @@ const route = useRoute();
 
 
 const { getLabel: getPlanTypeLabel } = useDict(DICT_TYPE.AGRI_PLAN_TYPE);
+const { getLabel: getPlanStatusLabel } = useDict(DICT_TYPE.AGRI_PLAN_STATUS, 'int');
 const { getLabel: getProductCategoryLabel, options: productCategoryOptions } = useDict(DICT_TYPE.AGRI_PRODUCT_CATEGORY, 'str');
 
 const produceCategoryTree = ref([]);
@@ -456,7 +458,7 @@ const loadPlanData = async (id) => {
             // 保存分类编码值，在界面层响应式翻译
             schemeInfo.category = data.targetCategory || '--';
             schemeInfo.executionTime = `${data.planStartDate || ''} 至 ${data.planEndDate || ''}`;
-            schemeInfo.status = statusMap[data.status]?.text || '未知';
+            schemeInfo.status = getPlanStatusLabel(data.status) || statusMap[data.status]?.text || '未知';
             schemeInfo.statusValue = data.status;
             schemeInfo.sampleCount = data.sampleCount || 0;
             schemeInfo.detectionItems = data.detectionItems || '--';

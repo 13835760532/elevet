@@ -36,12 +36,13 @@
                         </el-select>
                     </el-form-item>
                     <el-form-item label="方案状态">
-                        <el-select v-model="queryParams.status" placeholder="请选择" class="custom-select">
-                            <el-option label="未开始" value="0" />
-                            <el-option label="进行中" value="1" />
-                            <el-option label="已延期" value="2" />
-                            <el-option label="已完成" value="3" />
-                            <el-option label="已结束" value="4" />
+                        <el-select v-model="queryParams.status" placeholder="请选择" class="custom-select" clearable>
+                            <el-option
+                                v-for="dict in planStatusOptions"
+                                :key="dict.value"
+                                :label="dict.label"
+                                :value="dict.value"
+                            />
                         </el-select>
                     </el-form-item>
                     <el-form-item label="方案时间">
@@ -82,9 +83,7 @@
                     <el-table-column label="任务方案完成率" prop="rate" width="120" align="center" />
                     <el-table-column label="状态" prop="status" width="100" align="center">
                         <template #default="scope">
-                            <span :class="['status-tag', statusMap[scope.row.status].class]">
-                                {{ statusMap[scope.row.status].text }}
-                            </span>
+                            <dict-tag :type="DICT_TYPE.AGRI_PLAN_STATUS" :value="scope.row.status" />
                         </template>
                     </el-table-column>
                     <el-table-column label="操作" width="180" align="center" fixed="right">
@@ -113,8 +112,12 @@
 import { reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { Plus } from '@element-plus/icons-vue';
+import { useDict, DICT_TYPE } from '@/hooks/web/useDict';
 
 const router = useRouter();
+
+// 方案状态字典
+const { options: planStatusOptions } = useDict(DICT_TYPE.AGRI_PLAN_STATUS, 'int');
 
 const steps = [
     { id: '01', title: '方案创建' },

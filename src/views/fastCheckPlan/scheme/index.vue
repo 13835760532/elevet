@@ -40,11 +40,12 @@
           </el-form-item>
           <el-form-item label="">
             <el-select v-model="queryParams.status" placeholder="全部状态" class="custom-select" clearable>
-              <el-option label="未开始" :value="0" />
-              <el-option label="进行中" :value="1" />
-              <el-option label="已延期" :value="2" />
-              <el-option label="已完成" :value="3" />
-              <el-option label="已结束" :value="4" />
+              <el-option
+                v-for="dict in planStatusOptions"
+                :key="dict.value"
+                :label="dict.label"
+                :value="dict.value"
+              />
             </el-select>
           </el-form-item>
           <el-form-item label="">
@@ -114,10 +115,7 @@
           </el-table-column>
           <el-table-column label="状态" prop="status" width="100" align="center">
             <template #default="scope">
-              <span v-if="statusMap[scope.row.status]" :class="['status-tag', statusMap[scope.row.status].class]">
-                {{ statusMap[scope.row.status].text }}
-              </span>
-              <span v-else>-</span>
+              <dict-tag :type="DICT_TYPE.AGRI_PLAN_STATUS" :value="scope.row.status" />
             </template>
           </el-table-column>
           <el-table-column label="操作" width="180" align="center" fixed="right">
@@ -196,6 +194,7 @@ const statusMap = {
 };
 
 // 使用字典
+const { options: planStatusOptions } = useDict(DICT_TYPE.AGRI_PLAN_STATUS, 'int')
 const { options: productCategoryOptions, getLabel: getProductCategoryLabel } = useDict(DICT_TYPE.AGRI_PRODUCT_CATEGORY, 'str')
 
 const produceCategoryTree = ref([])
