@@ -435,12 +435,20 @@ watch(
 
 <style lang="scss" scoped>
 .statistics-container {
-  min-height: calc(100vh - 120px);
-  background-color: #fff;
+  min-height: calc(100vh - 100px);
+  background-color: #f5f8fb;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
     sans-serif;
   color: #333;
   border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+}
+
+.statistics-tab-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 /* 顶部 Tabs */
@@ -538,6 +546,7 @@ watch(
   gap: 16px;
   padding: 16px;
   background: #f5f8fb;
+  flex: 1;
 }
 
 .statistics-tab-body :deep(.statistics-range-filter) {
