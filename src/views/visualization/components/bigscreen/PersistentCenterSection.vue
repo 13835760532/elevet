@@ -271,12 +271,18 @@ const sideStats = computed(() => {
     },
     {
       ...copy.sampleCount,
-      value: Number(dashboardOverview.value.sampleCount || 0),
+      value: Number(
+        (dashboardOverview.value.sampleCount || 0) +
+        (dashboardOverview.value.selfDetectionSampleCount || 0)
+      ),
       unit: '批次'
     },
     {
       ...copy.detectionItemCount,
-      value: Number(dashboardOverview.value.detectionItemCount || 0),
+      value: Number(
+        (dashboardOverview.value.detectionItemCount || 0) +
+        (dashboardOverview.value.selfDetectionItemCount || 0)
+      ),
       unit: '项次'
     },
     {
