@@ -653,6 +653,44 @@ const remainingRouter: AppRouteRecordRaw[] = [
       }
     ]
   },
+  {
+    path: '/help-center',
+    component: Layout,
+    name: 'HelpCenterRoot',
+    meta: { hidden: true },
+    children: [
+      {
+        path: '',
+        component: () => import('@/views/helpCenter/index.vue'),
+        name: 'HelpCenter',
+        meta: {
+          title: '帮助中心',
+          hidden: true,
+          canTo: true,
+          icon: 'ep:headset'
+        }
+      }
+    ]
+  },
+  {
+    path: '/tutorial',
+    component: Layout,
+    name: 'TutorialManagementRoot',
+    meta: { hidden: true },
+    children: [
+      {
+        path: '',
+        component: () => import('@/views/tutorial/index.vue'),
+        name: 'TutorialManagement',
+        meta: {
+          title: '教程管理',
+          hidden: true,
+          canTo: true,
+          icon: 'ep:reading'
+        }
+      }
+    ]
+  },
   aiAssistantRoute,
   {
     path: '/:pathMatch(.*)*',

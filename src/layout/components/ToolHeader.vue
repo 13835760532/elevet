@@ -1,5 +1,7 @@
 <script lang="tsx">
-import { defineComponent, computed } from 'vue'
+import { defineComponent, computed, ref } from 'vue'
+import { ElTooltip } from 'element-plus'
+import { useRoute, useRouter } from 'vue-router'
 import { Message } from '@/layout/components//Message'
 import { Collapse } from '@/layout/components/Collapse'
 import { UserInfo } from '@/layout/components/UserInfo'
@@ -12,6 +14,9 @@ import TenantVisit from '@/layout/components/TenantVisit/index.vue'
 import { useAppStore } from '@/store/modules/app'
 import { useDesign } from '@/hooks/web/useDesign'
 import { checkPermi } from '@/utils/permission'
+import { Icon } from '@/components/Icon'
+import HelpCenterAccessDialog from './HelpCenterAccessDialog.vue'
+import { isHelpCenterAccessGranted } from '@/utils/helpCenterAccess'
 
 const { getPrefixCls, variables } = useDesign()
 
@@ -51,6 +56,23 @@ const hasTenantVisitPermission = computed(
 export default defineComponent({
   name: 'ToolHeader',
   setup() {
+    const router = useRouter()
+    const route = useRoute()
+    const helpAccessVisible = ref(false)
+
+    const openHelpCenter = () => {
+      if (route.path === '/help-center') return
+      if (isHelpCenterAccessGranted()) {
+        router.push('/help-center')
+        return
+      }
+      helpAccessVisible.value = true
+    }
+
+    const handleHelpAccessSuccess = () => {
+      router.push('/help-center')
+    }
+
     return () => (
       <div
         id={`${variables.namespace}-tool-header`}
@@ -61,6 +83,16 @@ export default defineComponent({
         ]}
       >
         <div class="h-full flex items-center">
+          <ElTooltip content="帮助中心" placement="bottom">
+            <button
+              type="button"
+              class={[`${prefixCls}__help`, { 'is-active': route.path === '/help-center' }]}
+              aria-label="打开帮助中心"
+              onClick={openHelpCenter}
+            >
+              <Icon icon="ep:headset" size={20}></Icon>
+            </button>
+          </ElTooltip>
           {screenfull.value ? (
             <Screenfull class="custom-hover" color="var(--top-header-text-color)"></Screenfull>
           ) : undefined}
@@ -79,6 +111,11 @@ export default defineComponent({
           ) : undefined}
           <UserInfo></UserInfo>
         </div>
+        <HelpCenterAccessDialog
+          modelValue={helpAccessVisible.value}
+          onUpdate:modelValue={(value: boolean) => (helpAccessVisible.value = value)}
+          onSuccess={handleHelpAccessSuccess}
+        ></HelpCenterAccessDialog>
       </div>
     )
   }
@@ -90,5 +127,35 @@ $prefix-cls: #{$namespace}-tool-header;
 
 .#{$prefix-cls} {
   transition: left var(--transition-time-02);
+
+  &__help {
+    display: grid;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    margin-right: 4px;
+    color: var(--top-header-text-color);
+    font-size: 13px;
+    line-height: 1;
+    cursor: pointer;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    transition:
+      color 0.2s ease,
+      background-color 0.2s ease,
+      border-color 0.2s ease;
+
+    &:hover,
+    &:focus-visible,
+    &.is-active {
+      color: var(--el-color-primary);
+      background: var(--el-color-primary-light-9);
+      border-color: var(--el-color-primary-light-7);
+      outline: none;
+    }
+  }
 }
 </style>

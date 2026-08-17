@@ -71,8 +71,8 @@
             <div class="field-shell">
               <!-- 允许清空地区选择 -->
               <el-cascader v-model="configForm.regionPath" :options="areaOptions" :props="areaCascaderProps"
-                :show-all-levels="true" :teleported="false" separator="" filterable clearable size="large" class="custom-cascader"
-                popper-class="big-screen-area-popper">
+                :show-all-levels="true" :teleported="false" separator="" filterable clearable size="large"
+                class="custom-cascader" popper-class="big-screen-area-popper">
                 <template #default="{ data }">
                   <span>{{ data.name || data.originalName }}</span>
                 </template>
@@ -108,9 +108,10 @@
       </div>
     </div>
     <div class="header-center">
-      <h1 @click="handleGoHome">
-        <img src="@/assets/imgs/echarts/首页/title.png" height="72px" alt="" />
-      </h1>
+      <div class="title" @click="handleGoHome">
+        农产品质量安全监管数智平台
+        <!-- <img src="@/assets/imgs/echarts/首页/title.png" height="72px" alt="" /> -->
+      </div>
     </div>
     <div class="header-side right">
       <div class="nav-btn" v-for="item in rightMenus" :key="item.key" :class="{ active: activeMenu === item.key }"
@@ -1021,6 +1022,29 @@ onUnmounted(() => {
       max-width: 100%;
       height: 72px;
       object-fit: contain;
+    }
+  }
+
+  .title {
+    font-family: Tensentype MaiHeiJ, Tensentype MaiHeiJ, sans-serif;
+    font-weight: 500;
+    font-size: 35px;
+    letter-spacing: 5px;
+    text-align: center;
+    font-style: normal;
+    text-transform: none;
+    background: linear-gradient(89.99992185408412deg, #F1F5F5 0%, #B8E6E7 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.25s ease;
+    margin-top: -20px;
+
+    &:hover {
+      filter: brightness(1.1);
     }
   }
 }

@@ -79,14 +79,13 @@
 
           <el-table-column label="操作" align="center" fixed="right" width="180">
             <template #default="scope">
-              <el-button link type="primary" @click="openDetail(scope.row.id)" v-hasPermi="['system:dept:query']">
+              <el-button link type="primary" @click="openDetail(scope.row.id)" v-hasPermi="['system:dept:queryInfo']">
                 详情
               </el-button>
               <el-button link type="primary" @click="openForm('update', scope.row.id)"
                 v-hasPermi="['system:dept:update']">
                 编辑
               </el-button>
-              <span class="mx-5px text-gray-300">|</span>
               <el-button link type="danger" @click="handleDelete(scope.row.id)" v-hasPermi="['system:dept:delete']">
                 删除
               </el-button>

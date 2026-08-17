@@ -1,6 +1,6 @@
 <template>
   <Dialog v-model="dialogVisible" :title="dialogTitle">
-    <el-form ref="formRef" v-loading="formLoading" :model="formData" :rules="formRules" label-width="80px">
+    <el-form ref="formRef" v-loading="formLoading" :model="formData" :rules="formRules" label-width="110px">
       <el-row v-if="formData.id === undefined">
         <el-col :span="12">
           <el-form-item label="账号" prop="username">
@@ -10,6 +10,20 @@
         <el-col :span="12">
           <el-form-item label="密码" prop="password">
             <el-input v-model="formData.password" placeholder="请输入密码" show-password type="password" />
+          </el-form-item>
+        </el-col>
+      </el-row>
+      <el-row>
+        <el-col :span="12">
+          <el-form-item label="教程访问密码" prop="tutorialAccessPassword">
+            <el-input
+              v-model="formData.tutorialAccessPassword"
+              type="password"
+              show-password
+              maxlength="16"
+              autocomplete="new-password"
+              :placeholder="formData.id === undefined ? '留空则使用默认密码' : '留空则不修改密码'"
+            />
           </el-form-item>
         </el-col>
       </el-row>
@@ -95,6 +109,7 @@ const formData = ref({
   id: undefined,
   username: '',
   password: '',
+  tutorialAccessPassword: '',
   sex: undefined,
   postIds: [],
   remark: '',
@@ -105,6 +120,13 @@ const formRules = reactive<FormRules>({
   username: [{ required: true, message: '用户名称不能为空', trigger: 'blur' }],
   nickname: [{ required: true, message: '用户昵称不能为空', trigger: 'blur' }],
   password: [{ required: true, message: '用户密码不能为空', trigger: 'blur' }],
+  tutorialAccessPassword: [
+    {
+      pattern: /^$|^.{6,16}$/,
+      message: '教程访问密码长度为 6 到 16 个字符',
+      trigger: 'blur'
+    }
+  ],
   email: [
     {
       type: 'email',
@@ -134,7 +156,12 @@ const open = async (type: string, id?: number) => {
   if (id) {
     formLoading.value = true
     try {
-      formData.value = await UserApi.getUser(id)
+      const user = await UserApi.getUser(id)
+      formData.value = {
+        ...formData.value,
+        ...user,
+        tutorialAccessPassword: ''
+      }
     } finally {
       formLoading.value = false
     }
@@ -183,6 +210,7 @@ const resetForm = () => {
     id: undefined,
     username: '',
     password: '',
+    tutorialAccessPassword: '',
     sex: undefined,
     postIds: [],
     remark: '',

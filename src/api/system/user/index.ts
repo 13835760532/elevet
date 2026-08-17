@@ -13,6 +13,7 @@ export interface UserVO {
   loginIp: string
   status: number
   remark: string
+  tutorialAccessPassword?: string
   loginDate: Date
   createTime: Date
 }
