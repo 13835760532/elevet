@@ -109,8 +109,8 @@
     </div>
     <div class="header-center">
       <div class="title" @click="handleGoHome">
-        农产品质量安全监管数智平台
-        <!-- <img src="@/assets/imgs/echarts/首页/title.png" height="72px" alt="" /> -->
+        <!-- 食检数智服务平台标题图片 -->
+        <img :src="titleImg" alt="食检数智服务平台" />
       </div>
     </div>
     <div class="header-side right">
@@ -137,6 +137,7 @@ import { ElMessage } from 'element-plus'
 import { List, Aim, Checked, Bell, Back } from '@element-plus/icons-vue'
 import { getAreaTree } from '@/api/system/area'
 import botImg from '@/assets/imgs/echarts/bot.png'
+import titleImg from '@/assets/imgs/食检数智服务平台.svg'
 import taskBg from '@/assets/imgs/echarts/首页/jcrw_nor.png'
 import taskBgActive from '@/assets/imgs/echarts/首页/jcrw_pr.png'
 import inspectBg from '@/assets/imgs/echarts/首页/jiance_nor.png'
@@ -1026,25 +1027,30 @@ onUnmounted(() => {
   }
 
   .title {
-    font-family: Tensentype MaiHeiJ, Tensentype MaiHeiJ, sans-serif;
-    font-weight: 500;
-    font-size: 35px;
-    letter-spacing: 5px;
-    text-align: center;
-    font-style: normal;
-    text-transform: none;
-    background: linear-gradient(89.99992185408412deg, #F1F5F5 0%, #B8E6E7 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    color: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
     user-select: none;
     transition: all 0.25s ease;
     margin-top: -20px;
 
+    img {
+      display: block;
+      height: 44px;
+      width: auto;
+      max-width: 100%;
+      object-fit: contain;
+      filter: drop-shadow(0 0 8px rgba(67, 228, 255, 0.35));
+      transition: filter 0.25s ease;
+    }
+
     &:hover {
-      filter: brightness(1.1);
+      filter: brightness(1.12);
+
+      img {
+        filter: drop-shadow(0 0 14px rgba(67, 228, 255, 0.65));
+      }
     }
   }
 }
