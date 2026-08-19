@@ -36,7 +36,8 @@
           <el-form-item label="">
             <el-tree-select v-model="queryParams.targetCategory" :data="produceCategoryTree"
               :props="{ label: 'name', value: 'code', children: 'children' }" node-key="code"
-              placeholder="产品分类" class="custom-select" clearable filterable check-strictly />
+              placeholder="产品分类" class="custom-select w180" popper-class="product-category-tree-popper"
+              :fit-input-width="false" clearable filterable check-strictly />
           </el-form-item>
           <el-form-item label="">
             <el-select v-model="queryParams.status" placeholder="全部状态" class="custom-select" clearable>
@@ -680,6 +681,37 @@ onMounted(() => {
     .step-arrow {
       display: none;
     }
+  }
+}
+</style>
+
+<!-- 产品分类树形下拉弹出层全局样式 -->
+<style lang="scss">
+.product-category-tree-popper {
+  min-width: 260px !important;
+  max-width: 420px !important;
+
+  .el-select-dropdown__wrap {
+    max-height: 360px;
+  }
+
+  .el-tree {
+    min-width: 100%;
+    display: inline-block;
+    padding: 6px 8px;
+  }
+
+  .el-tree-node__content {
+    height: 32px;
+    line-height: 32px;
+    padding-right: 12px;
+  }
+
+  .el-tree-node__label {
+    white-space: nowrap;
+    overflow: visible;
+    text-overflow: clip;
+    font-size: 14px;
   }
 }
 </style>

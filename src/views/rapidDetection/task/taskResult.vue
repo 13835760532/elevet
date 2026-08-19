@@ -56,6 +56,10 @@
                     <span class="label">样品来源</span>
                     <span class="value">{{ sampleInfo.source }}</span>
                 </div>
+                <div class="info-row full-row">
+                    <span class="label">备注</span>
+                    <span class="value">{{ sampleInfo.remarks || '--' }}</span>
+                </div>
                 <div class="info-row photo-row">
                     <span class="label">检测照片</span>
                     <div class="photo-preview-group">
@@ -197,7 +201,8 @@ const sampleInfo = ref({
     tester: '--',
     testDate: '--',
     photo: '',
-    specification: ''
+    specification: '',
+    remarks: '--'
 });
 
 const resultList = ref([]);
@@ -286,7 +291,8 @@ const initData = async () => {
             tester: res.detector || '--',
             testDate: res.createTime ? formatDate(res.createTime, 'YYYY-MM-DD') : '--',
             photo: res.testPaperImageUrl || '',
-            specification: (res.specification || '') + getAgriUnitLabel(res.unit)
+            specification: (res.specification || '') + getAgriUnitLabel(res.unit),
+            remarks: res.remarks || '--'
         };
 
         // 解析 AI 结果 JSON
@@ -453,6 +459,11 @@ const handleDownloadReport = () => {
             color: #333;
             flex: 1;
             align-self: center;
+            word-break: break-all;
+        }
+
+        &.full-row {
+            grid-column: span 2;
         }
 
         &.photo-row {
