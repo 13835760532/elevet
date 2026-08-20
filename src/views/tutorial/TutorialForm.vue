@@ -1,5 +1,8 @@
 <template>
-  <Dialog v-model="dialogVisible" :title="dialogTitle" width="860">
+  <Dialog v-model="dialogVisible" :title="dialogTitle" width="860" class="tutorial-dialog">
+    <template #title>
+      <span class="tutorial-dialog-title">{{ dialogTitle }}</span>
+    </template>
     <el-form
       ref="formRef"
       v-loading="formLoading"
@@ -35,21 +38,31 @@
         </el-radio-group>
       </el-form-item>
 
+      <el-form-item label="文件上传">
+        <UploadFile
+          v-model="formData.url"
+          :disabled="formType === 'detail'"
+          :file-size="uploadFileSize"
+          :file-type="uploadFileTypes"
+          :limit="1"
+          directory="tutorial"
+          replace-on-exceed
+        />
+      </el-form-item>
+
       <el-form-item :label="formData.type === 'VIDEO' ? '视频地址' : '文档地址'" prop="url">
         <el-input
           v-model="formData.url"
           maxlength="512"
-          clearable
-          :placeholder="formData.type === 'VIDEO' ? '请输入视频播放地址' : '请输入手册文档地址（选填）'"
+          readonly
+          :placeholder="
+            formData.type === 'VIDEO' ? '上传后自动生成视频地址' : '上传后自动生成文档地址'
+          "
         />
       </el-form-item>
 
       <el-form-item v-if="formData.type === 'MANUAL'" label="手册正文" prop="content">
-        <Editor
-          v-if="formType !== 'detail'"
-          v-model="formData.content"
-          height="260px"
-        />
+        <Editor v-if="formType !== 'detail'" v-model="formData.content" height="260px" />
         <div
           v-else-if="formData.content"
           v-dompurify-html="formData.content"
@@ -102,6 +115,12 @@ const formLoading = ref(false)
 const formType = ref<FormType>('create')
 const formData = ref<TutorialApi.TutorialSaveReqVO>(createDefaultForm())
 const formRef = ref()
+const uploadFileSize = computed(() => (formData.value.type === 'VIDEO' ? 500 : 100))
+const uploadFileTypes = computed(() =>
+  formData.value.type === 'VIDEO'
+    ? ['mp4', 'mov', 'webm', 'avi', 'mkv']
+    : ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'zip', 'rar']
+)
 
 const formRules = reactive({
   title: [{ required: true, message: '教程标题不能为空', trigger: 'blur' }],
@@ -182,6 +201,18 @@ const submitForm = async () => {
 </script>
 
 <style scoped lang="scss">
+:global(.tutorial-dialog .el-dialog__header) {
+  padding: 0 !important;
+}
+
+.tutorial-dialog-title {
+  display: flex;
+  align-items: center;
+  height: 54px;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1;
+}
 
 .tutorial-content {
   width: 100%;

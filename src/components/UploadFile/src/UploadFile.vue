@@ -68,6 +68,7 @@
 </template>
 <script lang="ts" setup>
 import { propTypes } from '@/utils/propTypes'
+import { genFileId } from 'element-plus'
 import type { UploadInstance, UploadProps, UploadRawFile, UploadUserFile } from 'element-plus'
 import { isString } from '@/utils/is'
 import { useUpload } from '@/components/UploadFile/src/useUpload'
@@ -87,6 +88,7 @@ const props = defineProps({
   drag: propTypes.bool.def(false), // 拖拽上传
   isShowTip: propTypes.bool.def(true), // 是否显示提示
   disabled: propTypes.bool.def(false), // 是否禁用上传组件 ==> 非必传（默认为 false）
+  replaceOnExceed: propTypes.bool.def(false), // 单文件场景下，重新选择文件时覆盖已有文件
   directory: propTypes.string.def(undefined) // 上传目录 ==> 非必传（默认为 undefined）
 })
 
@@ -100,7 +102,8 @@ const { uploadUrl, httpRequest } = useUpload(props.directory)
 
 // 文件上传之前判断
 const beforeUpload: UploadProps['beforeUpload'] = (file: UploadRawFile) => {
-  if (fileList.value.length >= props.limit) {
+  // Element Plus 会先将当前文件加入 fileList，超出限制才需要拦截
+  if (fileList.value.length > props.limit) {
     message.error(`上传文件数量不能超过${props.limit}个!`)
     return false
   }
@@ -145,7 +148,20 @@ const handleFileSuccess: UploadProps['onSuccess'] = (res: any): void => {
   }
 }
 // 文件数超出提示
-const handleExceed: UploadProps['onExceed'] = (): void => {
+const handleExceed: UploadProps['onExceed'] = (files): void => {
+  if (props.replaceOnExceed && props.limit === 1 && files.length > 0) {
+    uploadRef.value?.abort()
+    uploadRef.value?.clearFiles()
+    fileList.value = []
+    uploadList.value = []
+    uploadNumber.value = 0
+
+    const file = files[0] as UploadRawFile
+    file.uid = genFileId()
+    uploadRef.value?.handleStart(file)
+    nextTick(() => uploadRef.value?.submit())
+    return
+  }
   message.error(`上传文件数量不能超过${props.limit}个!`)
 }
 // 上传错误提示
@@ -153,6 +169,7 @@ const excelUploadError: UploadProps['onError'] = (): void => {
   message.error('导入数据失败，请您重新上传！')
   // 上传失败时减少计数器，避免后续上传被阻塞
   uploadNumber.value = Math.max(0, uploadNumber.value - 1)
+  syncFileList(props.modelValue)
 }
 // 删除上传文件
 const handleRemove = (file: UploadFile) => {
@@ -166,27 +183,24 @@ const handlePreview: UploadProps['onPreview'] = (uploadFile) => {
   console.log(uploadFile)
 }
 
+const syncFileList = (val: string | string[]) => {
+  if (!val) {
+    fileList.value = []
+    return
+  }
+
+  const urls = isString(val) ? val.split(',') : val
+  fileList.value = urls.map((url) => ({
+    name: url.substring(url.lastIndexOf('/') + 1),
+    url
+  }))
+}
+
 // 监听模型绑定值变动
 watch(
   () => props.modelValue,
   (val: string | string[]) => {
-    if (!val) {
-      fileList.value = [] // fix：处理掉缓存，表单重置后上传组件的内容并没有重置
-      return
-    }
-
-    fileList.value = [] // 保障数据为空
-    // 情况1：字符串
-    if (isString(val)) {
-      fileList.value.push(
-        ...val.split(',').map((url) => ({ name: url.substring(url.lastIndexOf('/') + 1), url }))
-      )
-      return
-    }
-    // 情况2：数组
-    fileList.value.push(
-      ...(val as string[]).map((url) => ({ name: url.substring(url.lastIndexOf('/') + 1), url }))
-    )
+    syncFileList(val)
   },
   { immediate: true, deep: true }
 )

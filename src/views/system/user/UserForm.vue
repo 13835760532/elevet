@@ -1,19 +1,12 @@
 <template>
   <Dialog v-model="dialogVisible" :title="dialogTitle">
     <el-form ref="formRef" v-loading="formLoading" :model="formData" :rules="formRules" label-width="110px">
-      <el-row v-if="formData.id === undefined">
-        <el-col :span="12">
+      <el-row>
+        <el-col v-if="formData.id === undefined" :span="12">
           <el-form-item label="账号" prop="username">
             <el-input v-model="formData.username" placeholder="请输入账号" />
           </el-form-item>
         </el-col>
-        <el-col :span="12">
-          <el-form-item label="密码" prop="password">
-            <el-input v-model="formData.password" placeholder="请输入密码" show-password type="password" />
-          </el-form-item>
-        </el-col>
-      </el-row>
-      <el-row>
         <el-col :span="12">
           <el-form-item label="教程访问密码" prop="tutorialAccessPassword">
             <el-input
@@ -108,7 +101,6 @@ const formData = ref({
   email: '',
   id: undefined,
   username: '',
-  password: '',
   tutorialAccessPassword: '',
   sex: undefined,
   postIds: [],
@@ -119,7 +111,6 @@ const formData = ref({
 const formRules = reactive<FormRules>({
   username: [{ required: true, message: '用户名称不能为空', trigger: 'blur' }],
   nickname: [{ required: true, message: '用户昵称不能为空', trigger: 'blur' }],
-  password: [{ required: true, message: '用户密码不能为空', trigger: 'blur' }],
   tutorialAccessPassword: [
     {
       pattern: /^$|^.{6,16}$/,
@@ -209,7 +200,6 @@ const resetForm = () => {
     email: '',
     id: undefined,
     username: '',
-    password: '',
     tutorialAccessPassword: '',
     sex: undefined,
     postIds: [],
