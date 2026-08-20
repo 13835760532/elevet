@@ -11,7 +11,8 @@ const aiAssistantRoute: AppRouteRecordRaw = isDesktopApp
   ? {
       path: '/ai-assistant',
       component: () => import('@/views/ai/ChatAssistant.vue'),
-      name: 'AiAssistant',
+      // 桌面端使用唯一名称，防止与后端动态菜单生成的 'AiAssistant' 路由名冲突
+      name: 'AiAssistantView',
       meta: { title: '小壹助手', hidden: true, noTagsView: true }
     }
   : {
@@ -23,7 +24,8 @@ const aiAssistantRoute: AppRouteRecordRaw = isDesktopApp
         {
           path: '',
           component: () => import('@/views/ai/ChatAssistant.vue'),
-          name: 'AiAssistant',
+          // 使用唯一名称，防止与后端动态菜单 toCamelCase('ai-assistant') 生成的 'AiAssistant' 冲突
+          name: 'AiAssistantView',
           meta: { title: '小壹助手', activeMenu: '/ai-assistant' }
         }
       ]

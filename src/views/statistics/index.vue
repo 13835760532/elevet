@@ -124,7 +124,7 @@ const tabDeptScopes = ref<Record<ScopedTabValue, number>>({
 })
 // 本机构统计的统一默认权限口径。监管机构切换到辖区选项时会在对应处理方法中改为 1。
 const taskDeptScope = ref(3)
-const quickDeptScope = ref(3)
+const quickDeptScope = ref<number | undefined>(3)
 const quickSelfDetection = ref<boolean | undefined>(undefined)
 
 const dropdownActiveCommands = ref<Record<string, string>>((() => {
@@ -348,7 +348,7 @@ const getQueryDeptScopeByCommand = (command: unknown) => {
 const setQuickScopeByCommand = (command: unknown) => {
   const quickCommand = command as QuickCommand
   if (quickCommand === 'self') {
-    quickDeptScope.value = 3
+    quickDeptScope.value = undefined
     quickSelfDetection.value = true
     return
   }
@@ -377,8 +377,19 @@ const setTaskScopeByCommand = (command: unknown) => {
     taskDeptScope.value = isSuperAdminRole.value ? 2 : 3
     return
   }
-  // 非监管机构只允许查询本机构数据，任务类型不再改变数据权限口径。
-  taskDeptScope.value = isRegulatoryDept.value ? getTaskQueryDeptScope(command) : 3
+  if (command === 'executed') {
+    taskDeptScope.value = 2
+    return
+  }
+  if (command === 'issued') {
+    taskDeptScope.value = 3
+    return
+  }
+  if (command === 'all') {
+    taskDeptScope.value = isRegulatoryDept.value ? 1 : 3
+    return
+  }
+  taskDeptScope.value = getTaskQueryDeptScope(command) || 3
 }
 
 /**\n * handleDropdownCommand：处理页面事件或组件回调。读取当前表单、列表或路由状态后执行对应交互，并同步本组件需要更新的响应式数据。\n */

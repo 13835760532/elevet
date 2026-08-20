@@ -1,35 +1,16 @@
 <template>
-  <HelpCenterAccessDialog
-    v-model="accessDialogVisible"
-    @success="handleAccessSuccess"
-    @cancel="handleAccessCancel"
-  />
+  <HelpCenterAccessDialog v-model="accessDialogVisible" @success="handleAccessSuccess" @cancel="handleAccessCancel" />
 
   <main v-if="accessGranted" class="help-center-page">
-    <section
-      v-loading="currentLoading"
-      element-loading-text="正在加载帮助内容"
-      class="help-content"
-      aria-label="帮助中心内容"
-    >
+    <section v-loading="currentLoading" element-loading-text="正在加载帮助内容" class="help-content" aria-label="帮助中心内容">
       <div class="resource-tabs" role="tablist" aria-label="帮助资料类型">
-        <button
-          type="button"
-          role="tab"
-          :aria-selected="activeTab === 'MANUAL'"
-          :class="{ 'is-active': activeTab === 'MANUAL' }"
-          @click="switchTab('MANUAL')"
-        >
+        <button type="button" role="tab" :aria-selected="activeTab === 'MANUAL'"
+          :class="{ 'is-active': activeTab === 'MANUAL' }" @click="switchTab('MANUAL')">
           <Icon icon="ep:reading" :size="20" />
           操作手册
         </button>
-        <button
-          type="button"
-          role="tab"
-          :aria-selected="activeTab === 'VIDEO'"
-          :class="{ 'is-active': activeTab === 'VIDEO' }"
-          @click="switchTab('VIDEO')"
-        >
+        <button type="button" role="tab" :aria-selected="activeTab === 'VIDEO'"
+          :class="{ 'is-active': activeTab === 'VIDEO' }" @click="switchTab('VIDEO')">
           <Icon icon="ep:video-camera" :size="20" />
           操作视频
         </button>
@@ -43,13 +24,8 @@
 
       <template v-else>
         <div v-if="activeTab === 'MANUAL' && currentList.length" class="manual-list">
-          <button
-            v-for="manual in currentList"
-            :key="manual.id"
-            type="button"
-            class="manual-item"
-            @click="openManual(manual)"
-          >
+          <button v-for="manual in currentList" :key="manual.id" type="button" class="manual-item"
+            @click="openManual(manual)">
             <span class="manual-content">
               <strong>{{ manual.title }}</strong>
               <small>{{ manual.summary || '暂无简介' }}</small>
@@ -62,15 +38,8 @@
         </div>
 
         <div v-else-if="activeTab === 'VIDEO' && currentList.length" class="video-grid">
-          <button
-            v-for="video in currentList"
-            :key="video.id"
-            type="button"
-            class="video-card"
-            :class="{ 'is-disabled': !video.url }"
-            :disabled="!video.url"
-            @click="openVideo(video)"
-          >
+          <button v-for="video in currentList" :key="video.id" type="button" class="video-card"
+            :class="{ 'is-disabled': !video.url }" :disabled="!video.url" @click="openVideo(video)">
             <span class="video-cover">
               <video v-if="video.url" :src="video.url" preload="metadata" muted playsinline></video>
               <Icon v-else icon="ep:video-camera" :size="42" class="video-placeholder" />
@@ -92,13 +61,8 @@
       </template>
     </section>
 
-    <el-drawer
-      v-model="manualDrawerVisible"
-      size="680px"
-      append-to-body
-      destroy-on-close
-      class="help-manual-drawer"
-    >
+    <el-dialog v-model="manualDrawerVisible" width="980px" append-to-body destroy-on-close align-center
+      class="help-manual-dialog">
       <template #header>
         <div class="drawer-title">
           <span>操作手册</span>
@@ -112,40 +76,19 @@
             <Icon icon="ep:calendar" :size="15" />
             更新于 {{ formatTutorialDate(selectedManual.updateTime) }}
           </span>
-          <a
-            v-if="selectedManual.url"
-            :href="selectedManual.url"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
+          <a v-if="selectedManual.url" :href="selectedManual.url" target="_blank" rel="noopener noreferrer">
             <Icon icon="ep:link" :size="15" />
             打开文档
           </a>
         </div>
-        <div
-          v-if="selectedManual.content"
-          v-dompurify-html="selectedManual.content"
-          class="manual-rich-content"
-        ></div>
+        <div v-if="selectedManual.content" v-dompurify-html="selectedManual.content" class="manual-rich-content"></div>
         <el-empty v-else-if="!manualDetailLoading" description="暂无手册正文" :image-size="88" />
       </div>
-    </el-drawer>
+    </el-dialog>
 
-    <el-dialog
-      v-model="videoDialogVisible"
-      :title="selectedVideo?.title"
-      width="min(860px, 92vw)"
-      append-to-body
-      destroy-on-close
-      class="help-video-dialog"
-    >
-      <video
-        v-if="selectedVideo?.url"
-        class="preview-video"
-        :src="selectedVideo.url"
-        controls
-        preload="metadata"
-      >
+    <el-dialog v-model="videoDialogVisible" :title="selectedVideo?.title" width="min(860px, 92vw)" append-to-body
+      destroy-on-close class="help-video-dialog">
+      <video v-if="selectedVideo?.url" class="preview-video" :src="selectedVideo.url" controls preload="metadata">
         当前浏览器不支持视频播放。
       </video>
       <p v-if="selectedVideo?.summary" class="video-dialog-note">{{ selectedVideo.summary }}</p>
@@ -479,7 +422,7 @@ button {
     white-space: nowrap;
   }
 
-  > span {
+  >span {
     color: #9aa8af;
     font-size: 12px;
   }
@@ -598,7 +541,7 @@ button {
     white-space: normal;
   }
 
-  .manual-meta > span {
+  .manual-meta>span {
     display: none;
   }
 
@@ -615,7 +558,14 @@ button {
 </style>
 
 <style lang="scss">
-.help-manual-drawer {
+.help-manual-dialog {
+  border-radius: 8px !important;
+
+  .el-dialog__body {
+    max-height: 70vh;
+    overflow-y: auto;
+  }
+
   .drawer-title {
     display: flex;
     flex-direction: column;

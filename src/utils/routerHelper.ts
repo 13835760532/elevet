@@ -80,7 +80,40 @@ export const getRawRoute = (route: RouteLocationNormalized): RouteLocationNormal
 export const generateRoute = (routes: AppCustomRouteRecordRaw[]): AppRouteRecordRaw[] => {
   const res: AppRouteRecordRaw[] = []
   const modulesRoutesKeys = Object.keys(modules)
+
+  // 辅助函数：根据 component 路径或 path 查找匹配的 view 页面模块
+  const findViewComponent = (componentStr?: string) => {
+    if (!componentStr) return undefined
+    let cleanStr = componentStr.startsWith('/') ? componentStr.slice(1) : componentStr
+    if (cleanStr.startsWith('views/')) {
+      cleanStr = cleanStr.slice(6)
+    }
+    let index = modulesRoutesKeys.findIndex(
+      (ev) =>
+        ev === `../views/${cleanStr}.vue` ||
+        ev === `../views/${cleanStr}/index.vue` ||
+        ev === `../views/${cleanStr}.tsx` ||
+        ev === `../views/${cleanStr}/index.tsx`
+    )
+    if (index === -1) {
+      index = modulesRoutesKeys.findIndex((ev) =>
+        ev.toLowerCase().includes(cleanStr.toLowerCase())
+      )
+    }
+    return index !== -1 ? modules[modulesRoutesKeys[index]] : undefined
+  }
+
   for (const route of routes) {
+    // 过滤掉按钮类型等非路由页面的子项（type === 3 或者仅含权限标识且无页面组件/子级的项）
+    const validChildren = (route.children || []).filter((child: any) => {
+      if (child.type === 3) return false
+      if (!child.component && (!child.children || child.children.length === 0) && child.permission) {
+        return false
+      }
+      return true
+    })
+    const hasChildren = validChildren.length > 0
+
     // 1. 生成 meta 菜单元数据
     const meta = {
       title: route.name,
@@ -88,8 +121,7 @@ export const generateRoute = (routes: AppCustomRouteRecordRaw[]): AppRouteRecord
       hidden: !route.visible,
       noCache: !route.keepAlive,
       alwaysShow:
-        route.children &&
-        route.children.length > 0 &&
+        hasChildren &&
         (route.alwaysShow !== undefined ? route.alwaysShow : true)
     } as any
     // 特殊逻辑：如果后端配置的 MenuDO.component 包含 ?，则表示需要传递参数
@@ -113,80 +145,103 @@ export const generateRoute = (routes: AppCustomRouteRecordRaw[]): AppRouteRecord
       redirect: route.redirect,
       meta: meta
     }
-    // Vue Router 的顶级业务页仍需挂在 Layout 下，因此包装成一个空路径子路由。
-    if (!route.children && route.parentId == 0 && route.component) {
-      data.component = Layout
-      data.meta = {
-        hidden: meta.hidden
-      }
-      data.name = toCamelCase(route.path, true) + 'Parent'
-      data.redirect = ''
-      meta.alwaysShow = true
-      const childrenData: AppRouteRecordRaw = {
-        path: '',
-        name:
-          route.componentName && route.componentName.length > 0
-            ? route.componentName
-            : toCamelCase(route.path, true),
-        redirect: route.redirect,
-        meta: meta
-      }
-      const componentStr = route?.component || route?.path
-      let index = modulesRoutesKeys.findIndex(
-        (ev) => 
-          ev === `../views/${componentStr}.vue` || 
-          ev === `../views/${componentStr}/index.vue` || 
-          ev === `../views/${componentStr}.tsx` || 
-          ev === `../views/${componentStr}/index.tsx`
-      )
-      if (index === -1) {
-        index = modulesRoutesKeys.findIndex((ev) => ev.toLowerCase().includes(componentStr.toLowerCase()))
-      }
-      if (index !== -1) {
-        childrenData.component = modules[modulesRoutesKeys[index]]
-      } else {
-        console.error(`[RouterHelper] Cannot find component for route: ${route.name}, path: ${route.path}, componentStr: ${componentStr}`)
-      }
-      data.children = [childrenData]
-    } else {
-      // 目录
-      if (route.children?.length) {
-        data.component = Layout
-        data.redirect = getRedirect(route.path, route.children)
-        // 外链
-      } else if (isUrl(route.path)) {
-        data = {
-          path: '/external-link',
-          component: Layout,
-          meta: {
-            name: route.name
-          },
-          children: [data]
-        } as AppRouteRecordRaw
-        // 菜单
-      } else {
-        // 对后端传component组件路径和不传做兼容（如果后端传component组件路径，那么path可以随便写，如果不传，component组件路径会根path保持一致）
-        const componentStr = route?.component || route?.path
-        let index = modulesRoutesKeys.findIndex(
-          (ev) => 
-            ev === `../views/${componentStr}.vue` || 
-            ev === `../views/${componentStr}/index.vue` || 
-            ev === `../views/${componentStr}.tsx` || 
-            ev === `../views/${componentStr}/index.tsx`
+
+    const componentStr = route?.component
+    const isLayoutComponent = componentStr === 'Layout' || componentStr === 'layout/Layout'
+    const isParentLayoutComponent = componentStr === 'ParentLayout'
+    const isSpecialLayout = isLayoutComponent || isParentLayoutComponent
+
+    if (isUrl(route.path)) {
+      // 外链
+      data = {
+        path: '/external-link',
+        component: Layout,
+        meta: {
+          name: route.name
+        },
+        children: [data]
+      } as AppRouteRecordRaw
+    } else if (componentStr && !isSpecialLayout) {
+      // 明确指定了具体页面组件（例如 ai/ChatAssistant、visualization/BigScreen 等）
+      const viewComponent = findViewComponent(componentStr) || findViewComponent(route.path)
+      if (!viewComponent) {
+        console.error(
+          `[RouterHelper] Cannot find component for route: ${route.name}, path: ${route.path}, componentStr: ${componentStr}`
         )
-        if (index === -1) {
-          index = modulesRoutesKeys.findIndex((ev) => ev.toLowerCase().includes(componentStr.toLowerCase()))
+      }
+
+      if (route.parentId === 0) {
+        // Vue Router 的顶级业务页仍需挂在 Layout 下，因此包装成一个空路径子路由。
+        data.component = Layout
+        data.meta = {
+          hidden: meta.hidden
         }
-        if (index !== -1) {
-          data.component = modules[modulesRoutesKeys[index]]
-        } else {
-          console.error(`[RouterHelper] Cannot find component for menu: ${route.name}, path: ${route.path}, componentStr: ${componentStr}`)
+        data.name = toCamelCase(route.path, true) + 'Parent'
+        data.redirect = ''
+        meta.alwaysShow = true
+        const childrenData: AppRouteRecordRaw = {
+          path: '',
+          name:
+            route.componentName && route.componentName.length > 0
+              ? route.componentName
+              : toCamelCase(route.path, true),
+          redirect: route.redirect,
+          meta: meta,
+          component: viewComponent
+        }
+        data.children = [childrenData]
+        if (hasChildren) {
+          data.children.push(...generateRoute(validChildren))
+        }
+      } else {
+        // 二级或深层叶子业务页：直接挂载视图组件
+        data.component = viewComponent
+        if (hasChildren) {
+          data.children = generateRoute(validChildren)
         }
       }
-      if (route.children) {
-        data.children = generateRoute(route.children)
+    } else if (hasChildren) {
+      // 目录（无具体页面组件，但有子菜单路由）
+      data.component = isParentLayoutComponent
+        ? getParentLayout()
+        : route.parentId === 0
+          ? Layout
+          : getParentLayout()
+      data.redirect = getRedirect(route.path, validChildren)
+      data.children = generateRoute(validChildren)
+    } else {
+      // 兜底：未配置 component，尝试根据 path 匹配组件
+      const fallbackComponent = findViewComponent(route.path)
+      if (fallbackComponent) {
+        if (route.parentId === 0) {
+          data.component = Layout
+          data.meta = {
+            hidden: meta.hidden
+          }
+          data.name = toCamelCase(route.path, true) + 'Parent'
+          data.redirect = ''
+          meta.alwaysShow = true
+          const childrenData: AppRouteRecordRaw = {
+            path: '',
+            name:
+              route.componentName && route.componentName.length > 0
+                ? route.componentName
+                : toCamelCase(route.path, true),
+            redirect: route.redirect,
+            meta: meta,
+            component: fallbackComponent
+          }
+          data.children = [childrenData]
+        } else {
+          data.component = fallbackComponent
+        }
+      } else {
+        console.error(
+          `[RouterHelper] Cannot find component for menu: ${route.name}, path: ${route.path}`
+        )
       }
     }
+
     res.push(data as AppRouteRecordRaw)
   }
   return res

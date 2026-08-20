@@ -77,7 +77,8 @@
               <div class="progress-box">
                 <el-progress :percentage="scope.row.sampleCompletionRate || 0" :stroke-width="8" color="#00B3ED"
                   :show-text="false" />
-                <span class="progress-text">{{ scope.row.sampleCompletedCount }}/{{ scope.row.sampleCount }}</span>
+                <span class="progress-text">{{ scope.row.sampleCompletedCount }}/{{ scope.row.sampleCount
+                  || scope.row.originalSampleCount }}</span>
               </div>
             </template>
           </el-table-column>

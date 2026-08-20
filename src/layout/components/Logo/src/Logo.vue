@@ -65,7 +65,7 @@ watch(
     ]" to="/">
       <img class="h-[calc(var(--logo-height)-26px)] w-[calc(var(--logo-height)-26px)]" src="@/assets/logo/logo.png" />
       <div class="company-title">
-        壹拾智检数智服务平台（专业版v2.0）
+        农产品质量安全监管数智服务平台
       </div>
     </router-link>
   </div>

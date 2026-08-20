@@ -231,10 +231,17 @@ const effectiveSelfDetection = computed(() => {
   return undefined
 })
 
+const effectiveQueryDeptScope = computed(() => {
+  if (props.dataScope === 'ALL') return undefined
+  // 本机构自主检测不需要传 queryDeptScope，只有本机构自主检测不传
+  if (props.selfDetection === true) return undefined
+  return props.queryDeptScope !== undefined && props.queryDeptScope !== 0 ? props.queryDeptScope : undefined
+})
+
 const dashboardQueryParams = computed(() => ({
   ...buildRangeParams(dateRangeType.value, dateRange.value),
   ...getEffectiveAreaParams(canViewAreaRange.value ? areaParams : undefined),
-  queryDeptScope: props.dataScope === 'ALL' ? undefined : props.queryDeptScope,
+  queryDeptScope: effectiveQueryDeptScope.value,
   dataScope: props.dataScope,
   selfDetection: props.selfDetection,
   detectionOrgName: canViewAreaRange.value ? undefined : currentDeptName.value || undefined
@@ -431,7 +438,7 @@ const buildTableQuery = () => {
     detectionArea: filters.area || undefined,
     detectionOrgName: detectionOrgName || undefined,
     overallResult: filters.result !== '' ? filters.result : undefined,
-    queryDeptScope: props.dataScope === 'ALL' ? undefined : props.queryDeptScope,
+    queryDeptScope: effectiveQueryDeptScope.value,
     dataScope: props.dataScope,
     selfDetection: effectiveSelfDetection.value,
     detectionDate
@@ -476,7 +483,7 @@ const buildExportParams = () => {
     detectionArea: filters.area || undefined,
     detectionOrgName: detectionOrgName || undefined,
     overallResult: filters.result !== '' ? filters.result : undefined,
-    queryDeptScope: props.dataScope === 'ALL' ? undefined : props.queryDeptScope,
+    queryDeptScope: effectiveQueryDeptScope.value,
     dataScope: props.dataScope,
     selfDetection: effectiveSelfDetection.value,
     detectionDate

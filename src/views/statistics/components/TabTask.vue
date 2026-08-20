@@ -289,7 +289,7 @@ const currentQueryParams = computed(() => ({
   deptId: canViewAreaRange.value ? undefined : currentDeptId.value || undefined
 }))
 
-const hasNoPermission = computed(() => props.queryDeptScope === 1)
+const hasNoPermission = computed(() => !canViewAreaRange.value && props.queryDeptScope === 1)
 
 const filteredTableData = computed(() => {
   if (hasNoPermission.value) return []
