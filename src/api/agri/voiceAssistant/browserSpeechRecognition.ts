@@ -19,6 +19,29 @@ type BrowserSpeechErrorCode =
   | 'service-not-allowed'
 
 declare global {
+  interface SpeechRecognitionEvent extends Event {
+    resultIndex: number
+    results: SpeechRecognitionResultList
+  }
+
+  interface SpeechRecognitionErrorEvent extends Event {
+    error: BrowserSpeechErrorCode | string
+    message: string
+  }
+
+  interface SpeechRecognition {
+    lang: string
+    continuous: boolean
+    interimResults: boolean
+    maxAlternatives: number
+    onstart: (() => void) | null
+    onresult: ((event: SpeechRecognitionEvent) => void) | null
+    onerror: ((event: SpeechRecognitionErrorEvent) => void) | null
+    onend: (() => void) | null
+    start: () => void
+    stop: () => void
+  }
+
   interface Window {
     webkitSpeechRecognition?: SpeechRecognitionConstructor
     SpeechRecognition?: SpeechRecognitionConstructor
@@ -79,6 +102,8 @@ export class BrowserSpeechRecognizer {
   private stopped = false
   private restartTimer: number | null = null
   private shouldRestart = true
+  private stopPromise: Promise<void> | null = null
+  private resolveStop: (() => void) | null = null
 
   constructor(options: BrowserSpeechRecognizerOptions = {}) {
     this.options = options
@@ -101,6 +126,8 @@ export class BrowserSpeechRecognizer {
 
     this.stopped = false
     this.shouldRestart = true
+    this.stopPromise = null
+    this.resolveStop = null
     this.updateStatus('connecting', '正在启动浏览器语音识别')
 
     await ensureMicrophoneAccess()
@@ -117,7 +144,7 @@ export class BrowserSpeechRecognizer {
 
     recognition.onresult = (event: SpeechRecognitionEvent) => {
       let transcript = ''
-      for (let i = 0; i < event.results.length; i++) {
+      for (let i = event.resultIndex; i < event.results.length; i++) {
         transcript += event.results[i][0]?.transcript || ''
       }
       this.options.onText?.(transcript.trim())
@@ -140,6 +167,9 @@ export class BrowserSpeechRecognizer {
       this.recognition = null
       if (this.stopped || !this.shouldRestart) {
         this.updateStatus('stopped')
+        this.resolveStop?.()
+        this.resolveStop = null
+        this.stopPromise = null
         return
       }
 
@@ -158,7 +188,7 @@ export class BrowserSpeechRecognizer {
   }
 
   /** 清除待重启定时器并停止当前识别实例，最终 stopped 状态由浏览器 onend 回调确认。 */
-  stop() {
+  async stop() {
     this.stopped = true
     this.shouldRestart = false
     if (this.restartTimer) {
@@ -166,7 +196,24 @@ export class BrowserSpeechRecognizer {
       this.restartTimer = null
     }
     this.updateStatus('stopping', '正在结束听写')
-    this.recognition?.stop()
+    const recognition = this.recognition
+    if (!recognition) {
+      this.updateStatus('stopped')
+      return
+    }
+
+    this.stopPromise ||= new Promise<void>((resolve) => {
+      this.resolveStop = resolve
+    })
+    try {
+      recognition.stop()
+    } catch {
+      this.resolveStop?.()
+      this.resolveStop = null
+      this.stopPromise = null
+      this.updateStatus('stopped')
+    }
+    await this.stopPromise
   }
 
   private updateStatus(status: BrowserSpeechStatus, message?: string) {

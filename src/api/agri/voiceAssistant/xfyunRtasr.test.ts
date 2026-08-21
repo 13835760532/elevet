@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { normalizeXfyunErrorMessage } from './xfyunRtasr'
+import { normalizeXfyunErrorMessage, parseResult } from './xfyunRtasr'
 
 describe('normalizeXfyunErrorMessage', () => {
   it('maps authentication failures to a localized message', () => {
@@ -20,5 +20,39 @@ describe('normalizeXfyunErrorMessage', () => {
 
   it('returns the original message for unknown errors', () => {
     expect(normalizeXfyunErrorMessage('random failure')).toBe('random failure')
+  })
+})
+
+describe('parseResult', () => {
+  const message = (type: number, segId: number, text: string) => ({
+    data: JSON.stringify({
+      cn: {
+        st: {
+          type,
+          seg_id: segId,
+          rt: [{ ws: [{ cw: [{ w: text }] }] }]
+        }
+      }
+    })
+  }) as MessageEvent
+
+  it('keeps interim and final segment metadata', () => {
+    expect(parseResult(message(1, 4, '正在识别'))).toEqual({
+      text: '正在识别',
+      type: 'interim',
+      segId: 4
+    })
+    expect(parseResult(message(0, 4, '识别完成'))).toEqual({
+      text: '识别完成',
+      type: 'final',
+      segId: 4
+    })
+  })
+
+  it('handles the started handshake without emitting text', () => {
+    expect(parseResult({ data: JSON.stringify({ action: 'started' }) } as MessageEvent)).toMatchObject({
+      action: 'started',
+      text: ''
+    })
   })
 })

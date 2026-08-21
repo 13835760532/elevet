@@ -13,6 +13,7 @@ const appOrigin = 'app://app'
 let xfyunWakeProcess = null
 let xfyunWakeSender = null
 let isStoppingXfyunWakeProcess = false
+let xfyunWakeStopPromise = null
 
 // Sherpa 的 Emscripten 运行时在启动时同步实例化大于 8 MB 的内置 WASM。
 app.commandLine.appendSwitch('enable-features', 'WebAssemblyUnlimitedSyncCompilation')
@@ -74,12 +75,23 @@ const ensureXfyunWakeConfig = async (runtimePath, userDataPath) => {
 }
 
 const stopXfyunWakeProcess = () => {
-  if (!xfyunWakeProcess) return
+  if (!xfyunWakeProcess) return Promise.resolve()
+  if (xfyunWakeStopPromise) return xfyunWakeStopPromise
 
   isStoppingXfyunWakeProcess = true
-  xfyunWakeProcess.kill()
-  xfyunWakeProcess = null
-  xfyunWakeSender = null
+  const helper = xfyunWakeProcess
+  xfyunWakeStopPromise = new Promise((resolve) => {
+    const timeout = setTimeout(() => {
+      if (xfyunWakeProcess === helper) helper.kill()
+    }, 5000)
+    helper.once('exit', () => {
+      clearTimeout(timeout)
+      resolve()
+    })
+  })
+  if (helper.stdin?.writable) helper.stdin.write('stop\n')
+  else helper.kill()
+  return xfyunWakeStopPromise
 }
 
 /** 启动官方 AIKit C++ 助手；DLL、资源和密钥始终留在 Windows 本机进程边界内。 */
@@ -108,7 +120,7 @@ const startXfyunWakeProcess = async (sender) => {
   ], {
     cwd: runtimePath,
     windowsHide: true,
-    stdio: ['ignore', 'pipe', 'pipe']
+    stdio: ['pipe', 'pipe', 'pipe']
   })
 
   xfyunWakeProcess = helper
@@ -142,6 +154,7 @@ const startXfyunWakeProcess = async (sender) => {
     xfyunWakeProcess = null
     xfyunWakeSender = null
     isStoppingXfyunWakeProcess = false
+    xfyunWakeStopPromise = null
     if (!stoppedByApp && code !== 0 && sender && !sender.isDestroyed()) {
       sender.send('xfyun-wake:event', {
         type: 'error',

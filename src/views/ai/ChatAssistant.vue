@@ -157,20 +157,20 @@
           class="voice-btn"
           :class="{ active: isRecording, disabled: isTyping || voiceTogglePending }"
           :title="voiceButtonTitle"
-          @click="toggleVoiceInput">
+          @click="toggleVoiceInput()">
           <Icon :icon="isRecording ? 'ep:video-pause' : 'ep:microphone'" :size="20" />
         </div>
         <button
           v-if="isDesktopApp"
           type="button"
           class="voice-btn wake-btn"
-          :class="{ active: isWakeWordEnabled, pending: isWakeWordStarting }"
+          :class="{ active: wakeWordRequested, pending: isWakeWordStarting }"
           :disabled="isTyping || !wakeWordRuntimeAvailable || isWakeWordStarting"
           :aria-label="wakeWordButtonTitle"
           :title="wakeWordButtonTitle"
           @click="toggleWakeWord"
         >
-          <Icon :icon="isWakeWordEnabled ? 'ep:bell-filled' : 'ep:bell'" :size="20" />
+          <Icon :icon="wakeWordRequested ? 'ep:bell-filled' : 'ep:bell'" :size="20" />
         </button>
         <div class="send-btn" :class="{ active: inputText.trim() && !isTyping }" @click="handleSend(inputText)">
           <Icon icon="ep:position" :size="20" />
@@ -206,10 +206,6 @@ import {
   isXfyunDesktopWakeWordSupported
 } from '@/api/agri/voiceAssistant/wakeWord/xfyunDesktopWakeWord'
 import type { WakeWordEngine, WakeWordStatus } from '@/api/agri/voiceAssistant/wakeWord/types'
-import {
-  shouldResumeWakeWordAfterDetection,
-  shouldResumeWakeWordAfterVoiceStop
-} from './wakeWordRecovery'
 
 defineOptions({ name: 'ChatAssistant' })
 
@@ -284,12 +280,15 @@ const isTyping = ref(false)
 const isRecording = ref(false)
 const voiceTogglePending = ref(false)
 const isWakeWordEnabled = ref(false)
+// 用户意图与当前引擎运行状态分开：录音/回答期间引擎会暂停，但用户仍保持开启意图。
+const wakeWordRequested = ref(false)
 const voiceStatusText = ref('')
 const voiceRecognizer = ref<XfyunRtasrRecognizer | null>(null)
 const wakeWordEngine = ref<WakeWordEngine | null>(null)
 const wakeWordStatus = ref<WakeWordStatus>('idle')
 const wakeWordTranscript = ref('')
 const wakeWordSessionToken = ref(0)
+let wakeResumeTimer: number | null = null
 const chatMainRef = ref<HTMLElement | null>(null)
 const wakeWordRuntimeAvailable =
   isXfyunDesktopWakeWordAvailable || isDesktopApp || BrowserSpeechRecognizer.isSupported()
@@ -304,7 +303,7 @@ const wakeWordButtonTitle = computed(() => {
   if (isTyping.value) return '小壹正在回答中'
   if (!wakeWordRuntimeAvailable) return '当前设备不支持本地唤醒'
   if (isWakeWordStarting.value) return '正在启动本地唤醒'
-  return isWakeWordEnabled.value ? '关闭唤醒模式' : '启用唤醒模式'
+  return wakeWordRequested.value ? '关闭唤醒模式' : '启用唤醒模式'
 })
 
 // --- 工具函数 ---
@@ -552,10 +551,11 @@ const typeWriter = async (targetMsg: Message, text: string, prop: 'content' | 'c
 }
 
 /**\n * stopVoiceInput：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
-const stopVoiceInput = () => {
-  voiceRecognizer.value?.stop()
+const stopVoiceInput = async () => {
+  const recognizer = voiceRecognizer.value
   voiceRecognizer.value = null
   isRecording.value = false
+  await recognizer?.stop()
   if (isWakeWordEnabled.value) {
     voiceStatusText.value = '正在等待唤醒词'
   } else {
@@ -571,17 +571,42 @@ const releaseVoiceToggle = () => {
   }, VOICE_TOGGLE_DEBOUNCE_MS)
 }
 
+const clearWakeResumeTimer = () => {
+  if (wakeResumeTimer !== null) {
+    window.clearTimeout(wakeResumeTimer)
+    wakeResumeTimer = null
+  }
+}
+
+const scheduleWakeWordResume = (sessionToken: number, delay = 250) => {
+  clearWakeResumeTimer()
+  wakeResumeTimer = window.setTimeout(() => {
+    wakeResumeTimer = null
+    if (
+      !wakeWordRequested.value ||
+      sessionToken !== wakeWordSessionToken.value ||
+      wakeWordEngine.value ||
+      voiceRecognizer.value ||
+      isTyping.value ||
+      isRecording.value
+    ) {
+      return
+    }
+    void startWakeWord()
+  }, delay)
+}
+
 /**
  * 开关实时语音听写。
  * 听写结束后仅在唤醒会话仍有效、当前无回答生成时恢复唤醒词监听，避免重复占用麦克风。
  */
-const toggleVoiceInput = async () => {
-  if (isTyping.value || voiceTogglePending.value) return
+const toggleVoiceInput = async (options: { ignorePending?: boolean } = {}) => {
+  if (isTyping.value || (voiceTogglePending.value && !options.ignorePending)) return
 
   voiceTogglePending.value = true
 
   if (isRecording.value) {
-    stopVoiceInput()
+    await stopVoiceInput()
     releaseVoiceToggle()
     return
   }
@@ -592,7 +617,23 @@ const toggleVoiceInput = async () => {
     return
   }
 
-  voiceRecognizer.value = new XfyunRtasrRecognizer({
+  // 任何录音开始前都先等待唤醒引擎退出，避免两个麦克风消费者并行运行。
+  if (wakeWordEngine.value) {
+    const engine = wakeWordEngine.value
+    wakeWordEngine.value = null
+    isWakeWordEnabled.value = false
+    try {
+      await engine.stop()
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '唤醒引擎停止失败'
+      voiceTogglePending.value = false
+      ElMessage.error(message)
+      return
+    }
+  }
+
+  const voiceSessionToken = wakeWordSessionToken.value
+  const recognizer = new XfyunRtasrRecognizer({
     onText: (text) => {
       inputText.value = text
     },
@@ -603,21 +644,9 @@ const toggleVoiceInput = async () => {
       if (status === 'stopped' || status === 'error') {
         isRecording.value = false
         voiceRecognizer.value = null
-        if (isWakeWordEnabled.value && status !== 'error' && !isTyping.value) {
+        if (wakeWordRequested.value && status !== 'error' && !isTyping.value) {
           voiceStatusText.value = '正在等待唤醒词'
-          window.setTimeout(() => {
-            if (shouldResumeWakeWordAfterVoiceStop({
-              isWakeWordEnabled: isWakeWordEnabled.value,
-              hasWakeWordEngine: Boolean(wakeWordEngine.value),
-              hasVoiceRecognizer: Boolean(voiceRecognizer.value),
-              isTyping: isTyping.value,
-              isRecording: isRecording.value,
-              sessionToken,
-              currentSessionToken: wakeWordSessionToken.value
-            })) {
-              void startWakeWord()
-            }
-          }, 1200)
+          scheduleWakeWordResume(voiceSessionToken, 250)
           return
         }
       }
@@ -627,9 +656,10 @@ const toggleVoiceInput = async () => {
       ElMessage.error(message)
     }
   })
+  voiceRecognizer.value = recognizer
 
   try {
-    await voiceRecognizer.value.start()
+    await recognizer.start()
   } catch (error) {
     const message = error instanceof Error ? error.message : '语音输入启动失败'
     isRecording.value = false
@@ -649,15 +679,23 @@ const updateWakeWordStatusText = (status: WakeWordStatus, message?: string) => {
 }
 
 /** 销毁唤醒引擎并递增会话令牌，使已排队的异步恢复操作立即失效。 */
-const stopWakeWord = () => {
+const stopWakeWord = async () => {
+  clearWakeResumeTimer()
   wakeWordSessionToken.value += 1
-  wakeWordEngine.value?.destroy()
+  const engine = wakeWordEngine.value
   wakeWordEngine.value = null
   isWakeWordEnabled.value = false
+  wakeWordRequested.value = false
   wakeWordStatus.value = 'stopped'
   wakeWordTranscript.value = ''
   if (!isRecording.value) {
     voiceStatusText.value = ''
+  }
+  try {
+    await engine?.stop()
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '唤醒引擎停止失败'
+    ElMessage.error(message)
   }
 }
 
@@ -667,14 +705,13 @@ const stopWakeWord = () => {
  * 检测到唤醒词后暂停引擎、切换到云端听写，听写结束且会话未失效时再恢复监听。
  */
 const startWakeWord = async () => {
-  if (isTyping.value || wakeWordEngine.value) return
+  if (isTyping.value || wakeWordEngine.value || !wakeWordRequested.value) return
 
   if (!isXfyunDesktopWakeWordAvailable && !navigator.mediaDevices?.getUserMedia) {
     ElMessage.warning('当前浏览器不支持麦克风采集')
     return
   }
 
-  const sessionToken = ++wakeWordSessionToken.value
   const engine: WakeWordEngine = isXfyunDesktopWakeWordAvailable
     ? new XfyunDesktopWakeWordEngine({
       keywords: [],
@@ -702,6 +739,7 @@ const startWakeWord = async () => {
     }
     if (status === 'error') {
       isWakeWordEnabled.value = false
+      wakeWordRequested.value = false
       wakeWordEngine.value = null
     }
     if (status === 'stopped' && wakeWordEngine.value === engine) {
@@ -713,28 +751,16 @@ const startWakeWord = async () => {
   async function handleWakeWordDetected() {
     if (isTyping.value || isRecording.value) return
     updateWakeWordStatusText('detected', '已检测到唤醒词，正在开始听写')
-    engine.stop()
+    isWakeWordEnabled.value = false
     if (wakeWordEngine.value === engine) {
       wakeWordEngine.value = null
     }
     try {
-      await toggleVoiceInput()
-    } finally {
-      if (isWakeWordEnabled.value) {
-        window.setTimeout(() => {
-          if (shouldResumeWakeWordAfterDetection({
-            isWakeWordEnabled: isWakeWordEnabled.value,
-            hasWakeWordEngine: Boolean(wakeWordEngine.value),
-            hasVoiceRecognizer: Boolean(voiceRecognizer.value),
-            isTyping: isTyping.value,
-            isRecording: isRecording.value,
-            sessionToken,
-            currentSessionToken: wakeWordSessionToken.value
-          })) {
-            void startWakeWord()
-          }
-        }, 1500)
-      }
+      await engine.stop()
+      await toggleVoiceInput({ ignorePending: true })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '唤醒引擎停止失败'
+      ElMessage.error(message)
     }
   }
 
@@ -745,6 +771,7 @@ const startWakeWord = async () => {
   } catch (error) {
     wakeWordEngine.value = null
     isWakeWordEnabled.value = false
+    wakeWordRequested.value = false
     const message = error instanceof Error ? error.message : '唤醒模式启动失败'
     voiceStatusText.value = message
   }
@@ -761,11 +788,12 @@ const toggleWakeWord = async () => {
     return
   }
 
-  if (isWakeWordEnabled.value) {
-    stopWakeWord()
+  if (wakeWordRequested.value) {
+    await stopWakeWord()
     return
   }
 
+  wakeWordRequested.value = true
   await startWakeWord()
 }
 
@@ -775,7 +803,13 @@ const toggleWakeWord = async () => {
  */
 const handleSend = async (text: string, options: { appendUser?: boolean } = {}) => {
   if (!text || !text.trim() || isTyping.value) return
-  stopVoiceInput()
+  await stopVoiceInput()
+  if (wakeWordEngine.value) {
+    const engine = wakeWordEngine.value
+    wakeWordEngine.value = null
+    isWakeWordEnabled.value = false
+    await engine.stop()
+  }
 
   const query = text.trim()
   inputText.value = ''
@@ -838,6 +872,7 @@ const handleSend = async (text: string, options: { appendUser?: boolean } = {}) 
     ElMessage.error('小壹助手请求失败')
   } finally {
     isTyping.value = false
+    if (wakeWordRequested.value) scheduleWakeWordResume(wakeWordSessionToken.value, 250)
   }
 }
 
@@ -856,12 +891,20 @@ const handleRegenerate = (id: string) => {
 
 onMounted(() => {
   refreshRecommends()
+
+  // 桌面端默认进入待命状态；网页端仍需用户主动操作，避免页面加载即弹出麦克风授权。
+  if (isDesktopApp && wakeWordRuntimeAvailable) {
+    wakeWordRequested.value = true
+    void startWakeWord()
+  }
 })
 
 onBeforeUnmount(() => {
-  stopVoiceInput()
-  wakeWordEngine.value?.destroy()
+  clearWakeResumeTimer()
+  void stopVoiceInput()
+  const engine = wakeWordEngine.value
   wakeWordEngine.value = null
+  void engine?.stop()
 })
 </script>
 

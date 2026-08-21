@@ -3,7 +3,6 @@ import { sharedAudioBus, type AudioChunkListener } from './audioBus'
 
 const RTASR_HOST = 'rtasr.xfyun.cn'
 const RTASR_PATH = '/v1/ws'
-const RTASR_SAMPLE_RATE = 16000
 const SEND_INTERVAL = 40
 // 16 kHz、单声道、16-bit PCM 的 40 ms 音频正好是 1280 字节。
 const CHUNK_SIZE = 1280
@@ -31,9 +30,18 @@ interface RtasrWord {
 interface RtasrResult {
   cn?: {
     st?: {
+      type?: string | number
+      seg_id?: string | number
       rt?: Array<{ ws?: RtasrWord[] }>
     }
   }
+}
+
+interface ParsedRtasrResult {
+  action?: string
+  text: string
+  type: 'final' | 'interim'
+  segId: string | number | null
 }
 
 const getEnvValue = (key: keyof ImportMetaEnv) => String(import.meta.env[key] || '').trim()
@@ -115,27 +123,6 @@ const concatUint8Array = (first: Uint8Array, second: Uint8Array) => {
   return result
 }
 
-const downSampleBuffer = (buffer: Float32Array, inputSampleRate: number) => {
-  if (inputSampleRate === RTASR_SAMPLE_RATE) return buffer
-
-  // 浏览器输入常为 44.1/48 kHz；按区间平均降采样到讯飞要求的 16 kHz，减少混叠。
-  const ratio = inputSampleRate / RTASR_SAMPLE_RATE
-  const newLength = Math.round(buffer.length / ratio)
-  const result = new Float32Array(newLength)
-
-  for (let i = 0; i < newLength; i++) {
-    const start = Math.floor(i * ratio)
-    const end = Math.min(Math.floor((i + 1) * ratio), buffer.length)
-    let sum = 0
-    for (let j = start; j < end; j++) {
-      sum += buffer[j]
-    }
-    result[i] = sum / Math.max(end - start, 1)
-  }
-
-  return result
-}
-
 const floatTo16BitPcm = (input: Float32Array) => {
   const output = new Int16Array(input.length)
 
@@ -148,35 +135,52 @@ const floatTo16BitPcm = (input: Float32Array) => {
   return new Uint8Array(output.buffer)
 }
 
-const parseText = (message: MessageEvent) => {
+const parseResult = (message: MessageEvent): ParsedRtasrResult => {
   const response: RtasrResponse = JSON.parse(message.data)
+
+  if (response.action === 'started') {
+    return { action: response.action, text: '', type: 'interim', segId: null }
+  }
+
+  if (response.action === 'error') {
+    throw new Error(response.desc || `讯飞实时转写错误：${response.code || 'unknown'}`)
+  }
 
   if (response.code && response.code !== '0') {
     throw new Error(response.desc || `讯飞实时转写错误：${response.code}`)
   }
 
-  if (!response.data) return ''
+  if (!response.data) {
+    return { action: response.action, text: '', type: 'interim', segId: null }
+  }
 
   const result: RtasrResult = JSON.parse(response.data)
-  const words = result.cn?.st?.rt?.flatMap((item) => item.ws || []) || []
+  const state = result.cn?.st
+  const words = state?.rt?.flatMap((item) => item.ws || []) || []
 
-  return words
-    .map((item) => item.cw?.[0]?.w || '')
-    .join('')
-    .trim()
+  return {
+    action: response.action,
+    text: words.map((item) => item.cw?.[0]?.w || '').join('').trim(),
+    type: String(state?.type) === '0' ? 'final' : 'interim',
+    segId: state?.seg_id ?? null
+  }
 }
 
-export { normalizeXfyunErrorMessage }
+export { normalizeXfyunErrorMessage, parseResult }
 
 export class XfyunRtasrRecognizer {
   private options: RtasrRecognizerOptions
   private socket: WebSocket | null = null
   private pendingAudio = new Uint8Array()
   private sendTimer: number | null = null
-  private finalText = ''
-  private lastPartialText = ''
+  private finalSegments = new Map<string | number, string>()
+  private fallbackFinalSegments: string[] = []
+  private interimSegment: { id: string | number | null; text: string } | null = null
   private stopped = false
+  private hasError = false
   private audioListener: AudioChunkListener | null = null
+  private stopPromise: Promise<void> | null = null
+  private resolveStop: (() => void) | null = null
 
   constructor(options: RtasrRecognizerOptions = {}) {
     this.options = options
@@ -186,8 +190,12 @@ export class XfyunRtasrRecognizer {
     if (this.socket) return
 
     this.stopped = false
-    this.finalText = ''
-    this.lastPartialText = ''
+    this.hasError = false
+    this.finalSegments.clear()
+    this.fallbackFinalSegments = []
+    this.interimSegment = null
+    this.stopPromise = null
+    this.resolveStop = null
     this.updateStatus('connecting', '正在连接语音识别服务')
 
     const url = await createSignedUrl()
@@ -214,18 +222,21 @@ export class XfyunRtasrRecognizer {
 
     this.socket.onmessage = (event) => {
       try {
-        const text = parseText(event)
-        if (!text) return
+        const result = parseResult(event)
+        if (!result.text) return
 
-        // 讯飞会重复返回不断增长的中间结果，只追加新增后缀以免转写文本重复。
-        if (this.lastPartialText && text.startsWith(this.lastPartialText)) {
-          this.finalText += text.slice(this.lastPartialText.length)
-        } else if (!this.finalText.includes(text)) {
-          this.finalText += text
+        if (result.type === 'final') {
+          if (result.segId === null) {
+            this.fallbackFinalSegments.push(result.text)
+          } else {
+            this.finalSegments.set(result.segId, result.text)
+          }
+          if (this.interimSegment?.id === result.segId) this.interimSegment = null
+        } else {
+          this.interimSegment = { id: result.segId, text: result.text }
         }
 
-        this.lastPartialText = text
-        this.options.onText?.(this.finalText)
+        this.options.onText?.(this.getText())
       } catch (error) {
         this.handleError(error)
       }
@@ -236,17 +247,19 @@ export class XfyunRtasrRecognizer {
     }
 
     this.socket.onclose = () => {
-      if (!this.stopped) {
-        this.stopAudio()
-        this.clearSender()
-        this.socket = null
-      }
-      this.updateStatus(this.stopped ? 'stopped' : 'error')
+      this.stopAudio()
+      this.clearSender()
+      this.socket = null
+      this.resolveStop?.()
+      this.resolveStop = null
+      this.stopPromise = null
+      this.updateStatus(this.hasError ? 'error' : this.stopped ? 'stopped' : 'error')
     }
   }
 
-  stop() {
+  async stop() {
     if (this.stopped && !this.socket) return
+    if (this.stopPromise) return this.stopPromise
 
     this.stopped = true
     this.updateStatus('stopping', '正在结束听写')
@@ -259,11 +272,26 @@ export class XfyunRtasrRecognizer {
       socket.send(JSON.stringify({ end: true }))
     }
 
-    window.setTimeout(() => {
-      socket?.close()
-      if (this.socket === socket) this.socket = null
+    if (!socket || socket.readyState === WebSocket.CLOSED) {
+      this.socket = null
       this.updateStatus('stopped')
-    }, 300)
+      return
+    }
+
+    this.stopPromise = new Promise<void>((resolve) => {
+      this.resolveStop = resolve
+      window.setTimeout(() => {
+        if (this.socket !== socket) return
+        socket.close()
+        this.socket = null
+        this.resolveStop?.()
+        this.resolveStop = null
+        this.stopPromise = null
+        this.updateStatus('stopped')
+        resolve()
+      }, 3000)
+    })
+    return this.stopPromise
   }
 
   private async startAudio() {
@@ -317,14 +345,32 @@ export class XfyunRtasrRecognizer {
     this.options.onStatusChange?.(status, message)
   }
 
+  private getText() {
+    const finalText = [...this.finalSegments.entries()]
+      .sort(([left], [right]) => {
+        if (typeof left === 'number' && typeof right === 'number') return left - right
+        return String(left).localeCompare(String(right))
+      })
+      .map(([, text]) => text)
+      .concat(this.fallbackFinalSegments)
+      .join('')
+
+    return `${finalText}${this.interimSegment?.text || ''}`.trim()
+  }
+
   private handleError(error: unknown) {
     const rawMessage = error instanceof Error ? error.message : '语音识别失败'
     const message = normalizeXfyunErrorMessage(rawMessage)
     this.updateStatus('error', message)
     this.options.onError?.(message)
+    this.stopped = true
+    this.hasError = true
     this.stopAudio()
     this.clearSender()
     this.socket?.close()
     this.socket = null
+    this.resolveStop?.()
+    this.resolveStop = null
+    this.stopPromise = null
   }
 }

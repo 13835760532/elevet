@@ -1,0 +1,59 @@
+name: Build Windows Desktop
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.5
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Build XFYUN Windows wake helper
+        shell: pwsh
+        run: .\electron\native\xfyun-awake\build.ps1 -Configuration Release -Platform x64
+
+      - name: Build renderer
+        run: pnpm build:desktop
+
+      - name: Prepare Electron staging directory
+        run: pnpm desktop:prepare
+
+      - name: Package Windows NSIS x64
+        run: pnpm exec electron-builder --config electron-builder.yml --win nsis --x64
+
+      - name: Upload Windows installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-x64-installer
+          path: release/desktop/*
+          if-no-files-found: error
+          retention-days: 14

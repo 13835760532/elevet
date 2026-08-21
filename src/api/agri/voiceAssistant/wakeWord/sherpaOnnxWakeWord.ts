@@ -196,7 +196,7 @@ export class SherpaOnnxWakeWordEngine implements WakeWordEngine {
     }
   }
 
-  stop() {
+  async stop() {
     if (this.stopped) return
 
     this.stopped = true
@@ -215,7 +215,7 @@ export class SherpaOnnxWakeWordEngine implements WakeWordEngine {
   }
 
   destroy() {
-    this.stop()
+    void this.stop()
     this.kws?.free?.()
     this.kws = null
   }

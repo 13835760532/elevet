@@ -21,6 +21,6 @@ export interface WakeWordEngineOptions {
 
 export interface WakeWordEngine {
   start(): Promise<void>
-  stop(): void
+  stop(): Promise<void>
   destroy(): void
 }

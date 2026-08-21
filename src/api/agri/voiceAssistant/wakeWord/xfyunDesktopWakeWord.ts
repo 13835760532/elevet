@@ -44,18 +44,18 @@ class XfyunDesktopWakeWordEngine implements WakeWordEngine {
     }
   }
 
-  stop() {
+  async stop() {
     if (this.stopped) return
 
     this.stopped = true
     this.unsubscribe?.()
     this.unsubscribe = null
-    void getBridge()?.stop()
+    await getBridge()?.stop()
     this.options.onStatusChange?.('stopped')
   }
 
   destroy() {
-    this.stop()
+    void this.stop()
   }
 
   private handleEvent(event: XfyunWakeWordEvent) {

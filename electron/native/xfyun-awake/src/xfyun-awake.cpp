@@ -2,9 +2,11 @@
 #include <mmsystem.h>
 
 #include <array>
+#include <atomic>
 #include <filesystem>
 #include <iostream>
 #include <string>
+#include <thread>
 
 #include "aikit_biz_api.h"
 #include "aikit_biz_builder.h"
@@ -232,8 +234,21 @@ int RunWakeWord(const Arguments& arguments) {
 
   waveInStart(wave_in);
   EmitStatus("listening", "Listening for wake word");
+  std::atomic<bool> stop_requested{false};
+  std::thread control_thread([&stop_requested]() {
+    std::string command;
+    while (std::getline(std::cin, command)) {
+      if (command == "stop") {
+        stop_requested.store(true);
+        break;
+      }
+    }
+    stop_requested.store(true);
+  });
+
   for (;;) {
-    if (WaitForSingleObject(audio_event, INFINITE) != WAIT_OBJECT_0) break;
+    if (stop_requested.load()) break;
+    if (WaitForSingleObject(audio_event, 100) != WAIT_OBJECT_0) continue;
     for (auto& buffer : buffers) {
       if ((buffer.header.dwFlags & WHDR_DONE) == 0) continue;
       if (buffer.header.dwBytesRecorded > 0) {
@@ -264,6 +279,7 @@ int RunWakeWord(const Arguments& arguments) {
   AIKIT_ParamBuilder::destroy(parameters);
   AIKIT_EngineUnInit(kAbilityId);
   AIKIT_UnInit();
+  if (control_thread.joinable()) control_thread.join();
   return 0;
 }
 

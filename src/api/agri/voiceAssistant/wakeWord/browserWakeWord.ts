@@ -102,15 +102,16 @@ export class BrowserWakeWordEngine implements WakeWordEngine {
   }
 
   /** 标记为用户主动停止并销毁识别器，防止 BrowserSpeechRecognizer 的自动恢复造成幽灵监听。 */
-  stop() {
+  async stop() {
     this.stopped = true
-    this.recognizer?.stop()
+    const recognizer = this.recognizer
+    await recognizer?.stop()
     this.recognizer = null
     this.updateStatus('stopped')
   }
 
   destroy() {
-    this.stop()
+    void this.stop()
   }
 
   private updateStatus(status: WakeWordStatus, message?: string) {
