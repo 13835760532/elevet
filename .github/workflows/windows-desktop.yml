@@ -74,6 +74,21 @@ jobs:
       - name: Package Windows NSIS x64
         run: pnpm exec electron-builder --config electron-builder.yml --win nsis --x64
 
+      - name: Verify packaged XFYUN config
+        shell: pwsh
+        run: |
+          $configPath = 'release/desktop/win-unpacked/resources/xfyun-awake/xfyun-awake.ini'
+          if (!(Test-Path $configPath)) {
+            throw "Packaged XFYUN config was not found: $configPath"
+          }
+          $config = Get-Content -Raw -Path $configPath
+          foreach ($key in @('app_id', 'api_key', 'api_secret')) {
+            if ($config -notmatch "(?mi)^\s*$key\s*=\s*\S") {
+              throw "Packaged XFYUN config is missing $key"
+            }
+          }
+          Write-Host 'Packaged XFYUN config contains app_id, api_key and api_secret.'
+
       - name: Upload Windows installer
         uses: actions/upload-artifact@v4
         with:
