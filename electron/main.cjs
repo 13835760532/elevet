@@ -56,7 +56,7 @@ const hasXfyunCredentials = async (configPath) => {
   try {
     const contents = await readFile(configPath, 'utf8')
     return ['app_id', 'api_key', 'api_secret'].every((key) =>
-      new RegExp(`^\\s*${key}\\s*=\\s*\\S`, 'mi').test(contents)
+      new RegExp(`^[ \\t]*${key}[ \\t]*=[ \\t]*[^\\r\\n \\t]`, 'mi').test(contents)
     )
   } catch {
     return false

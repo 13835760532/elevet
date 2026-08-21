@@ -83,7 +83,7 @@ jobs:
           }
           $config = Get-Content -Raw -Path $configPath
           foreach ($key in @('app_id', 'api_key', 'api_secret')) {
-            if ($config -notmatch "(?mi)^\s*$key\s*=\s*\S") {
+            if ($config -notmatch "(?mi)^[ \t]*$key[ \t]*=[ \t]*[^\r\n \t]") {
               throw "Packaged XFYUN config is missing $key"
             }
           }
