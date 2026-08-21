@@ -94,7 +94,8 @@ std::string ExtractJsonString(const std::string& value, const std::string& key) 
   if (start == std::string::npos) return {};
   const size_t content_start = start + prefix.size();
   const size_t content_end = value.find('"', content_start);
-  return content_end == std::string::npos ? {} : value.substr(content_start, content_end - content_start);
+  if (content_end == std::string::npos) return {};
+  return value.substr(content_start, content_end - content_start);
 }
 
 void OnOutput(AIKIT_HANDLE*, const AIKIT_OutputData* output) {
