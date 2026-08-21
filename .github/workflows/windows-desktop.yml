@@ -37,6 +37,30 @@ jobs:
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
 
+      - name: Configure XFYUN wake credentials
+        shell: pwsh
+        env:
+          XFYUN_APP_ID: ${{ secrets.XFYUN_APP_ID }}
+          XFYUN_API_KEY: ${{ secrets.XFYUN_API_KEY }}
+          XFYUN_API_SECRET: ${{ secrets.XFYUN_API_SECRET }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:XFYUN_APP_ID) -or
+              [string]::IsNullOrWhiteSpace($env:XFYUN_API_KEY) -or
+              [string]::IsNullOrWhiteSpace($env:XFYUN_API_SECRET)) {
+            Write-Host 'XFYUN secrets are not configured; packaging will include the example config.'
+            exit 0
+          }
+          $configPath = 'electron/native/xfyun-awake/runtime/xfyun-awake.ini'
+          @"
+          [xfyun]
+          app_id=$env:XFYUN_APP_ID
+          api_key=$env:XFYUN_API_KEY
+          api_secret=$env:XFYUN_API_SECRET
+
+          [wake]
+          threshold=0
+          "@ | Set-Content -Path $configPath -Encoding utf8
+
       - name: Build XFYUN Windows wake helper
         shell: pwsh
         run: .\electron\native\xfyun-awake\build.ps1 -Configuration Release -Platform x64
