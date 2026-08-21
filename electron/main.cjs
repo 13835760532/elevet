@@ -52,6 +52,17 @@ const getXfyunWakeRuntimePath = () => {
 
 const getXfyunWakeUserDataPath = () => join(app.getPath('userData'), 'xfyun-awake')
 
+const hasXfyunCredentials = async (configPath) => {
+  try {
+    const contents = await readFile(configPath, 'utf8')
+    return ['app_id', 'api_key', 'api_secret'].every((key) =>
+      new RegExp(`^\\s*${key}\\s*=\\s*\\S`, 'mi').test(contents)
+    )
+  } catch {
+    return false
+  }
+}
+
 /**
  * 生成唤醒助手运行配置。
  *
@@ -62,10 +73,11 @@ const getXfyunWakeUserDataPath = () => join(app.getPath('userData'), 'xfyun-awak
 const ensureXfyunWakeConfig = async (runtimePath, userDataPath) => {
   await mkdir(userDataPath, { recursive: true })
   const configPath = join(userDataPath, 'xfyun-awake.ini')
+  const packagedConfigPath = join(runtimePath, 'xfyun-awake.ini')
+  const packagedConfigReady = existsSync(packagedConfigPath) && await hasXfyunCredentials(packagedConfigPath)
 
-  if (!existsSync(configPath)) {
-    const packagedConfigPath = join(runtimePath, 'xfyun-awake.ini')
-    const configSourcePath = existsSync(packagedConfigPath)
+  if (!(await hasXfyunCredentials(configPath))) {
+    const configSourcePath = packagedConfigReady
       ? packagedConfigPath
       : join(runtimePath, 'xfyun-awake.ini.example')
     await copyFile(configSourcePath, configPath)
