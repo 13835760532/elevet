@@ -69,11 +69,15 @@ const patchSherpaWorkerEnvironment = async () => {
 
   const kwsPath = join(stagingRoot, sherpaKwsRelativePath)
   const kwsSource = await readFile(kwsPath, 'utf8')
+  // Sherpa's generated KWS file can use LF or CRLF and varies indentation between releases.
+  // Match the semantic Node check instead of depending on one exact formatting.
   const nodeExportCheck =
-    "typeof process == 'object' && typeof process.versions == 'object' &&\n    typeof process.versions.node == 'string'"
-  const browserSafeExportCheck = `typeof module == 'object' && ${nodeExportCheck}`
+    /typeof process == ['"]object['"] && typeof process\.versions == ['"]object['"] &&\s+typeof process\.versions\.node == ['"]string['"]/g
+  const browserSafeExportCheck =
+    "typeof module == 'object' && typeof process == 'object' && typeof process.versions == 'object' && " +
+    "typeof process.versions.node == 'string'"
 
-  if (!kwsSource.includes(nodeExportCheck)) {
+  if (!nodeExportCheck.test(kwsSource)) {
     throw new Error('未找到 Sherpa KWS CommonJS 环境检测代码')
   }
 
