@@ -155,10 +155,10 @@
           maxlength="100" show-word-limit @keydown.enter.exact.prevent="handleSend(inputText)" />
         <div
           class="voice-btn"
-          :class="{ active: isRecording, disabled: isTyping || voiceTogglePending }"
+          :class="{ active: isVoiceInputActive, disabled: isTyping || voiceTogglePending }"
           :title="voiceButtonTitle"
           @click="toggleVoiceInput()">
-          <Icon :icon="isRecording ? 'ep:video-pause' : 'ep:microphone'" :size="20" />
+          <Icon :icon="isVoiceInputActive ? 'ep:video-pause' : 'ep:microphone'" :size="20" />
         </div>
         <button
           v-if="isDesktopApp"
@@ -293,10 +293,11 @@ const chatMainRef = ref<HTMLElement | null>(null)
 const wakeWordRuntimeAvailable =
   isXfyunDesktopWakeWordAvailable || isDesktopApp || BrowserSpeechRecognizer.isSupported()
 const isWakeWordStarting = computed(() => wakeWordStatus.value === 'initializing')
+const isVoiceInputActive = computed(() => isRecording.value || Boolean(voiceRecognizer.value))
 
 const voiceButtonTitle = computed(() => {
   if (isTyping.value) return '小壹正在回答中'
-  return isRecording.value ? '停止语音输入' : '语音输入'
+  return isVoiceInputActive.value ? '停止语音输入' : '语音输入'
 })
 
 const wakeWordButtonTitle = computed(() => {
@@ -605,7 +606,9 @@ const toggleVoiceInput = async (options: { ignorePending?: boolean } = {}) => {
 
   voiceTogglePending.value = true
 
-  if (isRecording.value) {
+  // 连接阶段 isRecording 还未切换为 true，但识别器已经占用启动流程；
+  // 再次点击必须停止它，不能创建第二个 WebSocket/麦克风消费者。
+  if (voiceRecognizer.value) {
     await stopVoiceInput()
     releaseVoiceToggle()
     return

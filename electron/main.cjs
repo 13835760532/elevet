@@ -55,9 +55,22 @@ const getXfyunWakeUserDataPath = () => join(app.getPath('userData'), 'xfyun-awak
 const hasXfyunCredentials = async (configPath) => {
   try {
     const contents = await readFile(configPath, 'utf8')
-    return ['app_id', 'api_key', 'api_secret'].every((key) =>
-      new RegExp(`^[ \\t]*${key}[ \\t]*=[ \\t]*[^\\r\\n \\t]`, 'mi').test(contents)
-    )
+    let inXfyunSection = false
+    const values = new Set()
+
+    for (const line of contents.split(/\r?\n/)) {
+      const section = line.match(/^\s*\[([^\]]+)\]\s*$/)
+      if (section) {
+        inXfyunSection = section[1].trim().toLowerCase() === 'xfyun'
+        continue
+      }
+      if (!inXfyunSection) continue
+
+      const entry = line.match(/^\s*(app_id|api_key|api_secret)\s*=\s*(\S.*)$/i)
+      if (entry && entry[2].trim()) values.add(entry[1].toLowerCase())
+    }
+
+    return ['app_id', 'api_key', 'api_secret'].every((key) => values.has(key))
   } catch {
     return false
   }
@@ -66,23 +79,24 @@ const hasXfyunCredentials = async (configPath) => {
 /**
  * 生成唤醒助手运行配置。
  *
- * 内部测试包若在构建前放入 runtime/xfyun-awake.ini，则安装后自动复制到当前用户目录，
- * 用户无需手工填写；该文件被 .gitignore 排除，不能提交。正式环境仍应改为后端按设备下发授权，
- * 避免共享密钥随安装包传播。
+ * 安装包内必须带有构建时注入的 runtime/xfyun-awake.ini，每次启动都同步到用户目录，
+ * 避免旧版本遗留的空配置再次覆盖本次安装。该文件被 .gitignore 排除，不能提交；正式环境
+ * 仍应改为后端按设备下发授权，避免共享密钥随安装包传播。
  */
 const ensureXfyunWakeConfig = async (runtimePath, userDataPath) => {
   await mkdir(userDataPath, { recursive: true })
   const configPath = join(userDataPath, 'xfyun-awake.ini')
   const packagedConfigPath = join(runtimePath, 'xfyun-awake.ini')
+  const exampleConfigPath = join(runtimePath, 'xfyun-awake.ini.example')
   const packagedConfigReady = existsSync(packagedConfigPath) && await hasXfyunCredentials(packagedConfigPath)
 
-  if (!(await hasXfyunCredentials(configPath))) {
-    const configSourcePath = packagedConfigReady
-      ? packagedConfigPath
-      : join(runtimePath, 'xfyun-awake.ini.example')
-    await copyFile(configSourcePath, configPath)
+  if (!packagedConfigReady) {
+    if (existsSync(exampleConfigPath)) await copyFile(exampleConfigPath, configPath)
+    throw new Error('Windows 版讯飞语音唤醒配置缺失，请重新下载包含语音配置的安装包')
   }
 
+  // 用户目录可能保留旧版本的空配置或旧密钥；当前安装包配置是唯一可信来源。
+  await copyFile(packagedConfigPath, configPath)
   return configPath
 }
 

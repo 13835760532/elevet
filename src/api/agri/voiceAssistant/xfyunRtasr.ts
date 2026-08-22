@@ -191,6 +191,7 @@ export class XfyunRtasrRecognizer {
 
     this.stopped = false
     this.hasError = false
+    this.pendingAudio = new Uint8Array()
     this.finalSegments.clear()
     this.fallbackFinalSegments = []
     this.interimSegment = null
@@ -328,10 +329,11 @@ export class XfyunRtasrRecognizer {
   }
 
   private flushAudio() {
-    if (!this.socket || this.socket.readyState !== WebSocket.OPEN || !this.pendingAudio.length) return
-
-    this.socket.send(this.pendingAudio)
+    const pendingAudio = this.pendingAudio
     this.pendingAudio = new Uint8Array()
+    if (!this.socket || this.socket.readyState !== WebSocket.OPEN || !pendingAudio.length) return
+
+    this.socket.send(pendingAudio)
   }
 
   private clearSender() {
@@ -367,6 +369,7 @@ export class XfyunRtasrRecognizer {
     this.hasError = true
     this.stopAudio()
     this.clearSender()
+    this.pendingAudio = new Uint8Array()
     this.socket?.close()
     this.socket = null
     this.resolveStop?.()

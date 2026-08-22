@@ -5,6 +5,7 @@
 #include <atomic>
 #include <filesystem>
 #include <iostream>
+#include <memory>
 #include <string>
 #include <thread>
 
@@ -209,48 +210,105 @@ int RunWakeWord(const Arguments& arguments) {
   format.nAvgBytesPerSec = format.nSamplesPerSec * format.nBlockAlign;
 
   HANDLE audio_event = CreateEventW(nullptr, FALSE, FALSE, nullptr);
-  HWAVEIN wave_in = nullptr;
-  MMRESULT wave_result = waveInOpen(&wave_in, WAVE_MAPPER, &format, reinterpret_cast<DWORD_PTR>(audio_event), 0, CALLBACK_EVENT);
-  if (wave_result != MMSYSERR_NOERROR) {
-    EmitError("Unable to open microphone: " + std::to_string(wave_result));
+  if (!audio_event) {
+    const DWORD error = GetLastError();
+    EmitError("Unable to create microphone event: " + std::to_string(error));
     AIKIT_End(handle);
     AIKIT_ParamBuilder::destroy(parameters);
     AIKIT_EngineUnInit(kAbilityId);
     AIKIT_UnInit();
-    CloseHandle(audio_event);
-    return static_cast<int>(wave_result);
+    return static_cast<int>(error ? error : ERROR_GEN_FAILURE);
   }
 
+  HWAVEIN wave_in = nullptr;
   struct AudioBuffer {
     std::array<char, kBufferBytes> data{};
     WAVEHDR header{};
   };
   std::array<AudioBuffer, kBufferCount> buffers{};
-  for (auto& buffer : buffers) {
-    buffer.header.lpData = buffer.data.data();
-    buffer.header.dwBufferLength = static_cast<DWORD>(buffer.data.size());
-    waveInPrepareHeader(wave_in, &buffer.header, sizeof(WAVEHDR));
-    waveInAddBuffer(wave_in, &buffer.header, sizeof(WAVEHDR));
+  std::array<bool, kBufferCount> prepared{};
+
+  const auto cleanup_audio = [&]() {
+    if (wave_in) {
+      waveInStop(wave_in);
+      waveInReset(wave_in);
+      for (size_t index = 0; index < buffers.size(); ++index) {
+        if (!prepared[index]) continue;
+        waveInUnprepareHeader(wave_in, &buffers[index].header, sizeof(WAVEHDR));
+        prepared[index] = false;
+      }
+      waveInClose(wave_in);
+      wave_in = nullptr;
+    }
+    if (audio_event) {
+      CloseHandle(audio_event);
+      audio_event = nullptr;
+    }
+  };
+
+  const auto cleanup_engine = [&]() {
+    AIKIT_End(handle);
+    AIKIT_ParamBuilder::destroy(parameters);
+    AIKIT_EngineUnInit(kAbilityId);
+    AIKIT_UnInit();
+  };
+
+  MMRESULT wave_result = waveInOpen(&wave_in, WAVE_MAPPER, &format, reinterpret_cast<DWORD_PTR>(audio_event), 0, CALLBACK_EVENT);
+  if (wave_result != MMSYSERR_NOERROR) {
+    EmitError("Unable to open microphone: " + std::to_string(wave_result));
+    cleanup_audio();
+    cleanup_engine();
+    return static_cast<int>(wave_result);
   }
 
-  waveInStart(wave_in);
+  for (size_t index = 0; index < buffers.size(); ++index) {
+    auto& buffer = buffers[index];
+    buffer.header.lpData = buffer.data.data();
+    buffer.header.dwBufferLength = static_cast<DWORD>(buffer.data.size());
+    const MMRESULT prepare_result = waveInPrepareHeader(wave_in, &buffer.header, sizeof(WAVEHDR));
+    if (prepare_result != MMSYSERR_NOERROR) {
+      EmitError("Unable to prepare microphone buffer: " + std::to_string(prepare_result));
+      cleanup_audio();
+      cleanup_engine();
+      return static_cast<int>(prepare_result);
+    }
+    prepared[index] = true;
+
+    const MMRESULT add_result = waveInAddBuffer(wave_in, &buffer.header, sizeof(WAVEHDR));
+    if (add_result != MMSYSERR_NOERROR) {
+      EmitError("Unable to queue microphone buffer: " + std::to_string(add_result));
+      cleanup_audio();
+      cleanup_engine();
+      return static_cast<int>(add_result);
+    }
+  }
+
+  const MMRESULT start_result = waveInStart(wave_in);
+  if (start_result != MMSYSERR_NOERROR) {
+    EmitError("Unable to start microphone: " + std::to_string(start_result));
+    cleanup_audio();
+    cleanup_engine();
+    return static_cast<int>(start_result);
+  }
+
   EmitStatus("listening", "Listening for wake word");
-  std::atomic<bool> stop_requested{false};
-  std::thread control_thread([&stop_requested]() {
+  const auto stop_requested = std::make_shared<std::atomic<bool>>(false);
+  std::thread control_thread([stop_requested]() {
     std::string command;
     while (std::getline(std::cin, command)) {
       if (command == "stop") {
-        stop_requested.store(true);
+        stop_requested->store(true);
         break;
       }
     }
-    stop_requested.store(true);
+    stop_requested->store(true);
   });
 
   for (;;) {
-    if (stop_requested.load()) break;
+    if (stop_requested->load()) break;
     if (WaitForSingleObject(audio_event, 100) != WAIT_OBJECT_0) continue;
-    for (auto& buffer : buffers) {
+    for (size_t index = 0; index < buffers.size(); ++index) {
+      auto& buffer = buffers[index];
       if ((buffer.header.dwFlags & WHDR_DONE) == 0) continue;
       if (buffer.header.dwBytesRecorded > 0) {
         AIKIT_DataBuilder* input = AIKIT_DataBuilder::create();
@@ -261,26 +319,37 @@ int RunWakeWord(const Arguments& arguments) {
         AIKIT_DataBuilder::destroy(input);
         if (write_result != 0) EmitError("AIKIT_Write failed: " + std::to_string(write_result));
       }
-      waveInUnprepareHeader(wave_in, &buffer.header, sizeof(WAVEHDR));
+
+      const MMRESULT unprepare_result = waveInUnprepareHeader(wave_in, &buffer.header, sizeof(WAVEHDR));
+      if (unprepare_result != MMSYSERR_NOERROR) {
+        EmitError("Unable to release microphone buffer: " + std::to_string(unprepare_result));
+        stop_requested->store(true);
+        continue;
+      }
+      prepared[index] = false;
       buffer.header.dwBytesRecorded = 0;
       buffer.header.dwFlags = 0;
-      waveInPrepareHeader(wave_in, &buffer.header, sizeof(WAVEHDR));
-      waveInAddBuffer(wave_in, &buffer.header, sizeof(WAVEHDR));
+
+      const MMRESULT prepare_result = waveInPrepareHeader(wave_in, &buffer.header, sizeof(WAVEHDR));
+      if (prepare_result != MMSYSERR_NOERROR) {
+        EmitError("Unable to re-prepare microphone buffer: " + std::to_string(prepare_result));
+        stop_requested->store(true);
+        continue;
+      }
+      prepared[index] = true;
+
+      const MMRESULT add_result = waveInAddBuffer(wave_in, &buffer.header, sizeof(WAVEHDR));
+      if (add_result != MMSYSERR_NOERROR) {
+        EmitError("Unable to re-queue microphone buffer: " + std::to_string(add_result));
+        stop_requested->store(true);
+      }
     }
   }
 
-  waveInStop(wave_in);
-  waveInReset(wave_in);
-  for (auto& buffer : buffers) {
-    waveInUnprepareHeader(wave_in, &buffer.header, sizeof(WAVEHDR));
-  }
-  waveInClose(wave_in);
-  CloseHandle(audio_event);
-  AIKIT_End(handle);
-  AIKIT_ParamBuilder::destroy(parameters);
-  AIKIT_EngineUnInit(kAbilityId);
-  AIKIT_UnInit();
-  if (control_thread.joinable()) control_thread.join();
+  cleanup_audio();
+  cleanup_engine();
+  // stdin 可能仍阻塞在 Electron 的管道读取，错误清理路径不能等待它导致助手挂死。
+  if (control_thread.joinable()) control_thread.detach();
   return 0;
 }
 
