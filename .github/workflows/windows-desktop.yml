@@ -51,15 +51,15 @@ jobs:
             exit 0
           }
           $configPath = 'electron/native/xfyun-awake/runtime/xfyun-awake.ini'
-          @"
-          [xfyun]
-          app_id=$env:XFYUN_APP_ID
-          api_key=$env:XFYUN_API_KEY
-          api_secret=$env:XFYUN_API_SECRET
-
-          [wake]
-          threshold=0
-          "@ | Set-Content -Path $configPath -Encoding utf8
+          @(
+            '[xfyun]'
+            "app_id=$env:XFYUN_APP_ID"
+            "api_key=$env:XFYUN_API_KEY"
+            "api_secret=$env:XFYUN_API_SECRET"
+            ''
+            '[wake]'
+            'threshold=0'
+          ) | Set-Content -Path $configPath -Encoding utf8NoBOM
 
       - name: Build XFYUN Windows wake helper
         shell: pwsh

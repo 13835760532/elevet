@@ -1,7 +1,7 @@
 'use strict'
 
 const { app, BrowserWindow, ipcMain, net, protocol, session, shell } = require('electron')
-const { copyFile, mkdir, readFile } = require('node:fs/promises')
+const { copyFile, cp, mkdir, readFile } = require('node:fs/promises')
 const { existsSync } = require('node:fs')
 const { spawn } = require('node:child_process')
 const { extname, join, resolve, sep } = require('node:path')
@@ -86,6 +86,19 @@ const ensureXfyunWakeConfig = async (runtimePath, userDataPath) => {
   return configPath
 }
 
+/**
+ * AIKit Windows 版要求资源位于可读写的 workDir 中。安装目录可能只读，
+ * 且旧版 SDK 对包含中文的绝对路径兼容性较差，因此运行时统一使用用户目录下的副本，
+ * 启动参数传相对路径，让 SDK 以当前目录作为 workDir。
+ */
+const prepareXfyunWakeWorkspace = async (runtimePath, userDataPath) => {
+  await cp(join(runtimePath, 'resource'), join(userDataPath, 'resource'), {
+    recursive: true,
+    force: true
+  })
+  await copyFile(join(runtimePath, 'keyword.txt'), join(userDataPath, 'keyword.txt'))
+}
+
 const stopXfyunWakeProcess = () => {
   if (!xfyunWakeProcess) return Promise.resolve()
   if (xfyunWakeStopPromise) return xfyunWakeStopPromise
@@ -124,13 +137,14 @@ const startXfyunWakeProcess = async (sender) => {
   }
 
   const userDataPath = getXfyunWakeUserDataPath()
-  const configPath = await ensureXfyunWakeConfig(runtimePath, userDataPath)
+  await ensureXfyunWakeConfig(runtimePath, userDataPath)
+  await prepareXfyunWakeWorkspace(runtimePath, userDataPath)
   const helper = spawn(helperPath, [
-    '--config', configPath,
-    '--resource-dir', join(runtimePath, 'resource'),
-    '--work-dir', userDataPath
+    '--config', 'xfyun-awake.ini',
+    '--resource-dir', 'resource',
+    '--work-dir', './'
   ], {
-    cwd: runtimePath,
+    cwd: userDataPath,
     windowsHide: true,
     stdio: ['pipe', 'pipe', 'pipe']
   })
