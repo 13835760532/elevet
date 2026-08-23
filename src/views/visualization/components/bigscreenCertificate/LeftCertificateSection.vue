@@ -168,9 +168,12 @@ const personalCount = computed(() => {
 const subjectData = computed(() => [
   {
     label: '开具服务主体',
-    value: supervisorOrgCount.value || Number(overview.value.issueSubjectCount || 0)
+    value: Number(overview.value.issueSubjectCount || 0)
   },
-  { label: '存证服务主体', value: enterpriseCount.value || 0 }
+  {
+    label: '存证服务主体',
+    value: Number(overview.value.verificationSubjectCount || 0)
+  }
 ])
 
 /**

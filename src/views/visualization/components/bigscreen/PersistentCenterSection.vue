@@ -924,7 +924,10 @@ const loadDashboardTrendData = async () => {
 
 /** 加载首页顶部概览指标；失败时回退为空对象以保持组件可渲染。 */
 const loadDashboardOverviewData = async () => {
-  const params = getBigScreenQueryParams()
+  const params = {
+    ...getBigScreenQueryParams(),
+    dataScope: 'AREA_REGULATE'
+  }
   try {
     const data = await cachedBigScreenRequest('dashboard-overview', params, () =>
       getDashboardOverview(params)

@@ -338,7 +338,7 @@ const sampleTooltipFormatter = (params: any) => {
 
   return `${month}<br/>` +
     `<span style="display:inline-block;margin-right:4px;border-radius:10px;width:10px;height:10px;background-color:#4deaff;"></span>样品总量：${val}批次<br/>` +
-    `<span style="display:inline-block;margin-right:4px;border-radius:10px;width:10px;height:10px;background-color:#ff7875;"></span>阳性数量/检测总量：${posVal}/${detVal}`;
+    `<span style="display:inline-block;margin-right:4px;border-radius:10px;width:10px;height:10px;background-color:#ff7875;"></span>阳性数量/样品总量：${posVal}/${detVal}`;
 };
 
 /**\n * detectionTooltipFormatter：为当前页面提供局部业务处理能力，输入来自组件状态或调用方参数，输出供页面后续渲染或业务分支使用。\n */
@@ -383,9 +383,9 @@ const riskTooltipFormatter = (params: any) => {
 const currentLeftTrendOption = computed(() =>
   leftTrendTab.value === '样品总量'
     ? createTrendOption(
-      selfSampleXAxis.value,
-      selfSampleData.value,
-      calcMax(selfSampleData.value, 60000),
+      positiveRateXAxis.value,
+      mappedDetectionCounts.value,
+      calcMax(mappedDetectionCounts.value, 60000),
       undefined,
       sampleTooltipFormatter,
       true
