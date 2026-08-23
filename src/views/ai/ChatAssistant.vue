@@ -782,6 +782,7 @@ const startWakeWord = async () => {
     wakeWordEngine.value = null
     isWakeWordEnabled.value = false
     wakeWordRequested.value = false
+    wakeWordStatus.value = 'error'
     const message = error instanceof Error ? error.message : '唤醒模式启动失败'
     voiceStatusText.value = message
   }
