@@ -503,9 +503,7 @@ const renderTrendCompare = (trend: RiskTrendCompareRespVO, voiceText: string): R
         previous: formatPercent(trend.previous?.positiveRate),
         diff: formatPercent(trend.positiveRateDiff)
       },
-      { metric: '禁用检出', current: '--', previous: '--', diff: formatNumber(trend.forbiddenDiff) },
-      { metric: '限用检出', current: '--', previous: '--', diff: formatNumber(trend.restrictedDiff) },
-      { metric: '常规检出', current: '--', previous: '--', diff: formatNumber(trend.regularDiff) }
+
     ],
     conclusion: `风险趋势：${trendMap[trend.riskTrend || ''] || trend.riskTrend || '--'}。${trend.keyAlert || ''}`,
     suggestions: ['本月和上月相比阳性率怎么样？', '上个月抽检合格率如何？', '哪些检测项目不合格最多？']

@@ -57,7 +57,7 @@
           <el-table-column label="机构ID" prop="id" width="80" align="center" />
           <el-table-column prop="name" label="机构名称" min-width="180" align="center" />
 
-          <el-table-column prop="deptType" label="生产经营企业" width="120" align="center">
+          <el-table-column prop="deptType" label="机构类型" width="120" align="center">
             <template #default="scope">
               {{ scope.row.deptType === 1 ? '监管机构' : scope.row.deptType === 2 ? '检测机构' : scope.row.deptType === 3 ?
                 '生产经营企业' : '系统机构管理' }}
