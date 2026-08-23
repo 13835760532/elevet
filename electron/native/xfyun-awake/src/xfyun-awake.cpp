@@ -1,13 +1,17 @@
 #include <Windows.h>
 #include <mmsystem.h>
 
+#include <algorithm>
 #include <array>
 #include <atomic>
+#include <cctype>
 #include <filesystem>
+#include <fstream>
 #include <iostream>
 #include <memory>
 #include <string>
 #include <thread>
+#include <utility>
 
 #include "aikit_biz_api.h"
 #include "aikit_biz_builder.h"
@@ -72,10 +76,51 @@ void EmitDetected(const std::string& keyword) {
             << EscapeJson(keyword) << "\"}" << std::endl;
 }
 
+std::string TrimIniToken(std::string value) {
+  if (value.size() >= 3 && static_cast<unsigned char>(value[0]) == 0xEF &&
+      static_cast<unsigned char>(value[1]) == 0xBB && static_cast<unsigned char>(value[2]) == 0xBF) {
+    value.erase(0, 3);
+  }
+  const auto is_space = [](unsigned char ch) { return std::isspace(ch) != 0; };
+  value.erase(value.begin(), std::find_if(value.begin(), value.end(), [&](char ch) {
+    return !is_space(static_cast<unsigned char>(ch));
+  }));
+  value.erase(std::find_if(value.rbegin(), value.rend(), [&](char ch) {
+    return !is_space(static_cast<unsigned char>(ch));
+  }).base(), value.end());
+  return value;
+}
+
+std::string LowerIniToken(std::string value) {
+  std::transform(value.begin(), value.end(), value.begin(), [](unsigned char ch) {
+    return static_cast<char>(std::tolower(ch));
+  });
+  return value;
+}
+
 std::string ReadIniValue(const std::wstring& config_path, const wchar_t* section, const wchar_t* key) {
-  std::array<wchar_t, 2048> buffer{};
-  GetPrivateProfileStringW(section, key, L"", buffer.data(), static_cast<DWORD>(buffer.size()), config_path.c_str());
-  return ToUtf8(buffer.data());
+  std::ifstream input(std::filesystem::path(config_path), std::ios::binary);
+  if (!input) return {};
+
+  const std::string target_section = LowerIniToken(ToUtf8(section));
+  const std::string target_key = LowerIniToken(ToUtf8(key));
+  std::string current_section;
+  std::string line;
+  while (std::getline(input, line)) {
+    line = TrimIniToken(std::move(line));
+    if (line.empty() || line[0] == ';' || line[0] == '#') continue;
+    if (line.front() == '[' && line.back() == ']') {
+      current_section = LowerIniToken(TrimIniToken(line.substr(1, line.size() - 2)));
+      continue;
+    }
+    if (current_section != target_section) continue;
+    const size_t separator = line.find('=');
+    if (separator == std::string::npos) continue;
+    const std::string parsed_key = LowerIniToken(TrimIniToken(line.substr(0, separator)));
+    if (parsed_key != target_key) continue;
+    return TrimIniToken(line.substr(separator + 1));
+  }
+  return {};
 }
 
 bool ParseArguments(int argc, wchar_t* argv[], Arguments* result) {
