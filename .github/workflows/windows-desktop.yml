@@ -47,8 +47,7 @@ jobs:
           if ([string]::IsNullOrWhiteSpace($env:XFYUN_APP_ID) -or
               [string]::IsNullOrWhiteSpace($env:XFYUN_API_KEY) -or
               [string]::IsNullOrWhiteSpace($env:XFYUN_API_SECRET)) {
-            Write-Host 'XFYUN secrets are not configured; packaging will include the example config.'
-            exit 0
+            throw 'XFYUN_APP_ID, XFYUN_API_KEY and XFYUN_API_SECRET GitHub secrets are required for a Windows wake-word package.'
           }
           $configPath = 'electron/native/xfyun-awake/runtime/xfyun-awake.ini'
           @(
@@ -86,6 +85,9 @@ jobs:
             if ($config -notmatch "(?mi)^[ \t]*$key[ \t]*=[ \t]*[^\r\n \t]") {
               throw "Packaged XFYUN config is missing $key"
             }
+          }
+          if ($config -match '(?mi)^[ \t]*(app_id|api_key|api_secret)[ \t]*=[ \t]*(your_|replace|填写|此处)') {
+            throw 'Packaged XFYUN config still contains placeholder credentials'
           }
           Write-Host 'Packaged XFYUN config contains app_id, api_key and api_secret.'
 

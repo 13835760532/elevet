@@ -2,7 +2,7 @@
 
 const { app, BrowserWindow, ipcMain, net, protocol, session, shell } = require('electron')
 const { copyFile, cp, mkdir, readFile } = require('node:fs/promises')
-const { existsSync } = require('node:fs')
+const { existsSync, readFileSync } = require('node:fs')
 const { spawn } = require('node:child_process')
 const { extname, join, resolve, sep } = require('node:path')
 
@@ -54,12 +54,18 @@ const getXfyunWakeUserDataPath = () => join(app.getPath('userData'), 'xfyun-awak
 
 const hasXfyunCredentials = async (configPath) => {
   try {
-    const contents = await readFile(configPath, 'utf8')
+    return hasXfyunCredentialsInContents(await readFile(configPath, 'utf8'))
+  } catch {
+    return false
+  }
+}
+
+const hasXfyunCredentialsInContents = (contents) => {
     let inXfyunSection = false
     const values = new Set()
 
     for (const line of contents.split(/\r?\n/)) {
-      const section = line.match(/^\s*\[([^\]]+)\]\s*$/)
+      const section = line.replace(/^\uFEFF/, '').match(/^\s*\[([^\]]+)\]\s*$/)
       if (section) {
         inXfyunSection = section[1].trim().toLowerCase() === 'xfyun'
         continue
@@ -71,6 +77,11 @@ const hasXfyunCredentials = async (configPath) => {
     }
 
     return ['app_id', 'api_key', 'api_secret'].every((key) => values.has(key))
+}
+
+const hasXfyunCredentialsSync = (configPath) => {
+  try {
+    return hasXfyunCredentialsInContents(readFileSync(configPath, 'utf8'))
   } catch {
     return false
   }
@@ -120,16 +131,37 @@ const stopXfyunWakeProcess = () => {
   isStoppingXfyunWakeProcess = true
   const helper = xfyunWakeProcess
   xfyunWakeStopPromise = new Promise((resolve) => {
-    const timeout = setTimeout(() => {
-      if (xfyunWakeProcess === helper) helper.kill()
-    }, 5000)
-    helper.once('exit', () => {
+    let settled = false
+    const finish = () => {
+      if (settled) return
+      settled = true
       clearTimeout(timeout)
       resolve()
+    }
+    const timeout = setTimeout(() => {
+      if (xfyunWakeProcess === helper && !helper.killed) helper.kill()
+      finish()
+    }, 5000)
+    if (helper.exitCode !== null || helper.signalCode !== null) return finish()
+    helper.once('exit', finish)
+    // The helper may exit between the checks above and stdin.write(). Always
+    // consume the stream error so Windows does not turn EPIPE into an uncaught exception.
+    helper.stdin?.on('error', () => {
+      if (xfyunWakeProcess === helper && !helper.killed) helper.kill()
+      finish()
     })
+    if (helper.stdin?.writable && !helper.stdin.destroyed && !helper.stdin.writableEnded) {
+      try {
+        helper.stdin.write('stop\n', (error) => {
+          if (error && xfyunWakeProcess === helper) helper.kill()
+        })
+      } catch {
+        if (xfyunWakeProcess === helper) helper.kill()
+      }
+    } else {
+      helper.kill()
+    }
   })
-  if (helper.stdin?.writable) helper.stdin.write('stop\n')
-  else helper.kill()
   return xfyunWakeStopPromise
 }
 
@@ -167,6 +199,7 @@ const startXfyunWakeProcess = async (sender) => {
   xfyunWakeSender = sender
   isStoppingXfyunWakeProcess = false
   let pendingOutput = ''
+  let helperReportedError = false
 
   helper.stdout.setEncoding('utf8')
   helper.stdout.on('data', (chunk) => {
@@ -177,7 +210,10 @@ const startXfyunWakeProcess = async (sender) => {
     lines.forEach((line) => {
       try {
         const event = JSON.parse(line)
-        if (event && typeof event.type === 'string') emitXfyunWakeEvent(event)
+        if (event && typeof event.type === 'string') {
+          if (event.type === 'error') helperReportedError = true
+          emitXfyunWakeEvent(event)
+        }
       } catch {
         // 原生 SDK 的诊断输出不转发给页面，避免异常日志被当作唤醒事件处理。
       }
@@ -186,6 +222,7 @@ const startXfyunWakeProcess = async (sender) => {
   helper.stderr.setEncoding('utf8')
   helper.stderr.on('data', (chunk) => console.error('讯飞唤醒助手:', chunk.trim()))
   helper.on('error', (error) => {
+    helperReportedError = true
     emitXfyunWakeEvent({ type: 'error', message: `讯飞唤醒助手启动失败：${error.message}` })
   })
   helper.on('exit', (code) => {
@@ -195,7 +232,7 @@ const startXfyunWakeProcess = async (sender) => {
     xfyunWakeSender = null
     isStoppingXfyunWakeProcess = false
     xfyunWakeStopPromise = null
-    if (!stoppedByApp && code !== 0 && sender && !sender.isDestroyed()) {
+    if (!stoppedByApp && !helperReportedError && code !== 0 && sender && !sender.isDestroyed()) {
       sender.send('xfyun-wake:event', {
         type: 'error',
         message: `讯飞唤醒助手已退出（${code ?? '未知错误'}）`
@@ -361,7 +398,8 @@ app.whenReady().then(async () => {
   configurePermissions()
   ipcMain.on('xfyun-wake:is-available', (event) => {
     event.returnValue = process.platform === 'win32' &&
-      existsSync(join(getXfyunWakeRuntimePath(), 'xfyun-awake.exe'))
+      existsSync(join(getXfyunWakeRuntimePath(), 'xfyun-awake.exe')) &&
+      hasXfyunCredentialsSync(join(getXfyunWakeRuntimePath(), 'xfyun-awake.ini'))
   })
   ipcMain.handle('xfyun-wake:start', (event) => startXfyunWakeProcess(event.sender))
   ipcMain.handle('xfyun-wake:stop', () => stopXfyunWakeProcess())

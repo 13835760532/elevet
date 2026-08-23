@@ -289,6 +289,7 @@ const wakeWordStatus = ref<WakeWordStatus>('idle')
 const wakeWordTranscript = ref('')
 const wakeWordSessionToken = ref(0)
 let wakeResumeTimer: number | null = null
+let wakeWordErrorNotified = false
 const chatMainRef = ref<HTMLElement | null>(null)
 const wakeWordRuntimeAvailable =
   isXfyunDesktopWakeWordAvailable || isDesktopApp || BrowserSpeechRecognizer.isSupported()
@@ -681,6 +682,12 @@ const updateWakeWordStatusText = (status: WakeWordStatus, message?: string) => {
   voiceStatusText.value = message || (isWakeWordEnabled.value ? '正在等待唤醒词' : '')
 }
 
+const notifyWakeWordError = (message: string) => {
+  if (wakeWordErrorNotified) return
+  wakeWordErrorNotified = true
+  ElMessage({ message, type: 'error', grouping: true })
+}
+
 /** 销毁唤醒引擎并递增会话令牌，使已排队的异步恢复操作立即失效。 */
 const stopWakeWord = async () => {
   clearWakeResumeTimer()
@@ -717,23 +724,23 @@ const startWakeWord = async () => {
 
   const engine: WakeWordEngine = isXfyunDesktopWakeWordAvailable
     ? new XfyunDesktopWakeWordEngine({
-      keywords: [],
-      onStatusChange: handleWakeWordStatusChange,
-      onDetected: handleWakeWordDetected,
-      onError: (message) => ElMessage.error(message)
-    })
+        keywords: [],
+        onStatusChange: handleWakeWordStatusChange,
+        onDetected: handleWakeWordDetected,
+        onError: notifyWakeWordError
+      })
     : isDesktopApp
       ? new SherpaOnnxWakeWordEngine({
         keywords: DESKTOP_WAKE_WORDS,
         onStatusChange: handleWakeWordStatusChange,
         onDetected: handleWakeWordDetected,
-        onError: (message) => ElMessage.error(message)
+        onError: notifyWakeWordError
       })
       : new BrowserWakeWordEngine({
         keywords: DEFAULT_WAKE_WORDS,
         onStatusChange: handleWakeWordStatusChange,
         onDetected: handleWakeWordDetected,
-        onError: (message) => ElMessage.error(message)
+        onError: notifyWakeWordError
       })
 
   function handleWakeWordStatusChange(status: WakeWordStatus, message?: string) {
@@ -797,6 +804,7 @@ const toggleWakeWord = async () => {
   }
 
   wakeWordRequested.value = true
+  wakeWordErrorNotified = false
   await startWakeWord()
 }
 
