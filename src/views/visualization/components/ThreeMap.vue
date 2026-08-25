@@ -621,18 +621,21 @@ const loadCurrentMapData = async () => {
       data = await cachedBigScreenRequest('three-map-task', params, () => getTaskMap(params))
     } else {
       const rawParams = { ...params }
-      let areaLevel = getCachedAreaLevel() || (currentDrillLevel === 2 ? '2' : '1')
+      let targetAreaLevel = getCachedAreaLevel() || (currentDrillLevel === 2 ? '2' : '1')
+      if (targetAreaLevel === '0' || Number(targetAreaLevel) === 0) {
+        targetAreaLevel = '1'
+      }
       let cityName = rawParams.cityName
       if (isMunicipality(rawParams.provinceName)) {
         cityName = rawParams.provinceName
-        areaLevel = '3'
+        targetAreaLevel = '3'
       }
 
       data = await cachedBigScreenRequest('three-map-dashboard', rawParams, () =>
         getDashboardMapData({
           ...rawParams,
           cityName,
-          areaLevel
+          areaLevel: targetAreaLevel as any
         })
       )
     }

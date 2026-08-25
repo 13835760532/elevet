@@ -74,38 +74,64 @@ export const getBigScreenUserDeptType = () => {
 export const canViewBigScreenJurisdictionScope = () =>
   isBigScreenSuperAdmin() || Number(getBigScreenUserDeptType()) === 1
 
+/** 判断当前登录账号是否属于全国级别（超级管理员、全国机构 areaLevel=0 或 areaCode=0/100000）。 */
+export const isBigScreenNationwide = () => {
+  if (isBigScreenSuperAdmin()) return true
+  const { wsCache } = useCache()
+  const userDept = wsCache.get(CACHE_KEY.USER_DEPT) || {}
+  const areaLevel = userDept.areaLevel ?? userDept.areaType
+  const areaCode = String(userDept.areaCode || '').trim()
+  return Number(areaLevel) === 0 || areaCode === '0' || areaCode === '100000'
+}
+
 /**
  * 获取当前账号所属机构的行政区划参数。
  *
- * 超级管理员不附加地区约束；其他账号返回机构缓存中的行政级别和行政区编码，
+ * 超级管理员与全国机构不附加地区约束；其他账号返回机构缓存中的行政级别和行政区编码，
  * 供地图初始范围及统计接口的权限回退使用。
  */
 export const getBigScreenUserDeptAreaParams = () => {
-  if (isBigScreenSuperAdmin()) {
+  if (isBigScreenNationwide()) {
     return {
-      areaType: '',
+      areaType: '0',
       areaCode: ''
     }
   }
 
   const { wsCache } = useCache()
   const userDept = wsCache.get(CACHE_KEY.USER_DEPT) || {}
+  const areaLevel = userDept.areaLevel ?? userDept.areaType
   return {
-    areaType: normalizeAreaValue(userDept.areaType || userDept.areaLevel),
+    areaType: normalizeAreaValue(areaLevel),
     areaCode: normalizeAreaValue(userDept.areaCode)
   }
 }
 
 /**
+ * 获取当前登录账号专属的大屏配置缓存 Key。
+ *
+ * 绑定用户 ID，实现多账号在同一浏览器登录时筛选范围、日期与配置的相互独立。
+ */
+export const getBigScreenConfigStorageKey = () => {
+  const { wsCache } = useCache()
+  const userInfo = wsCache.get(CACHE_KEY.USER) || {}
+  const userId = userInfo?.user?.id ?? userInfo?.id ?? userInfo?.user?.username ?? userInfo?.username
+  return userId !== undefined && userId !== null && userId !== ''
+    ? `${BIG_SCREEN_CONFIG_STORAGE_KEY}_${userId}`
+    : BIG_SCREEN_CONFIG_STORAGE_KEY
+}
+
+/**
  * 读取并校验浏览器中保存的大屏配置。
  *
- * 读取时会合并最新默认值，并兼容旧版本的字段类型。缓存损坏或解析失败时不会
- * 阻断页面渲染，而是回退到当前账号的默认配置。
+ * 优先读取当前账号专属的缓存配置；读取时会合并最新默认值，并兼容旧版本的字段类型。
+ * 缓存损坏或解析失败时不会阻断页面渲染，而是回退到当前账号的默认配置。
  */
 export const getBigScreenConfig = (): BigScreenDataConfig => {
   if (typeof window === 'undefined') return getDefaultBigScreenConfig()
   try {
-    const raw = window.localStorage.getItem(BIG_SCREEN_CONFIG_STORAGE_KEY)
+    const storageKey = getBigScreenConfigStorageKey()
+    const raw = window.localStorage.getItem(storageKey)
     if (!raw) return getDefaultBigScreenConfig()
     const parsed = JSON.parse(raw) as Partial<BigScreenDataConfig> & { dataScope?: unknown }
     const defaults = getDefaultBigScreenConfig()
@@ -129,10 +155,11 @@ export const getBigScreenConfig = (): BigScreenDataConfig => {
   }
 }
 
-/** 将完整的大屏配置持久化到当前浏览器。 */
+/** 将完整的大屏配置持久化到当前浏览器（与当前登录账号绑定）。 */
 export const saveBigScreenConfig = (config: BigScreenDataConfig) => {
   if (typeof window === 'undefined') return
-  window.localStorage.setItem(BIG_SCREEN_CONFIG_STORAGE_KEY, JSON.stringify(config))
+  const storageKey = getBigScreenConfigStorageKey()
+  window.localStorage.setItem(storageKey, JSON.stringify(config))
 }
 
 /**
@@ -230,19 +257,24 @@ export const subscribeBigScreenRefresh = (callback: () => void) => {
 /**
  * 获取地图当前应采用的行政级别。
  *
- * 机构缓存优先于页面选择，兼容 `areaLevel` 与历史字段 `areaType`；无有效值时返回
- * `undefined`，由调用方按全国范围处理。
+ * 机构缓存优先于页面选择，兼容 `areaLevel` 与历史字段 `areaType`；
+ * 当为全国维度（0）时，大屏地图接口统一返回 '1'（省级汇总数据）。
  */
 export const getCachedAreaLevel = () => {
   const { wsCache } = useCache()
   const userDept = wsCache.get(CACHE_KEY.USER_DEPT) || {}
   const config = getBigScreenConfig()
   
-  const level = userDept.areaLevel || userDept.areaType || config.areaType
-  if (level !== undefined && level !== null && level !== '') {
-    return String(level)
+  const rawLevel = userDept.areaLevel ?? userDept.areaType ?? config.areaType
+  if (rawLevel !== undefined && rawLevel !== null && rawLevel !== '') {
+    const num = Number(rawLevel)
+    if (num === 0) {
+      // 全国维度时，接口聚合省级数据，areaLevel 传 '1'
+      return '1'
+    }
+    return String(rawLevel)
   }
-  return undefined
+  return '1'
 }
 
 /** 判断地区名称是否属于四个直辖市之一。 */

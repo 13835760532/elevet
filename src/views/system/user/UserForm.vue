@@ -1,71 +1,83 @@
 <template>
-  <Dialog v-model="dialogVisible" :title="dialogTitle">
-    <el-form ref="formRef" v-loading="formLoading" :model="formData" :rules="formRules" label-width="110px">
-      <el-row>
+  <Dialog v-model="dialogVisible" :title="dialogTitle" width="680px">
+    <el-form ref="formRef" v-loading="formLoading" :model="formData" :rules="formRules" label-width="90px">
+      <el-row :gutter="20">
         <el-col v-if="formData.id === undefined" :span="12">
-          <el-form-item label="账号" prop="username">
-            <el-input v-model="formData.username" placeholder="请输入账号" />
+          <el-form-item label="用户账号" prop="username">
+            <el-input v-model="formData.username" placeholder="请输入用户账号" clearable />
           </el-form-item>
         </el-col>
-        <el-col :span="12">
-          <el-form-item label="教程访问密码" prop="tutorialAccessPassword">
+        <el-col v-if="formData.id === undefined" :span="12">
+          <el-form-item label="用户密码" prop="password">
             <el-input
-              v-model="formData.tutorialAccessPassword"
+              v-model="formData.password"
               type="password"
               show-password
               maxlength="16"
               autocomplete="new-password"
-              :placeholder="formData.id === undefined ? '留空则使用默认密码' : '留空则不修改密码'"
+              placeholder="请输入用户密码"
+              clearable
             />
           </el-form-item>
         </el-col>
       </el-row>
-      <el-row>
+      <el-row :gutter="20">
         <el-col :span="12">
           <el-form-item label="用户昵称" prop="nickname">
-            <el-input v-model="formData.nickname" placeholder="请输入用户昵称" />
+            <el-input v-model="formData.nickname" placeholder="请输入用户昵称" clearable />
           </el-form-item>
         </el-col>
         <el-col :span="12">
           <el-form-item label="归属部门" prop="deptId">
-            <el-tree-select v-model="formData.deptId" :data="deptList" :props="defaultProps" check-strictly
-              node-key="id" placeholder="请选择归属部门" />
+            <el-tree-select
+              v-model="formData.deptId"
+              :data="deptList"
+              :props="defaultProps"
+              check-strictly
+              node-key="id"
+              placeholder="请选择归属部门"
+              class="w-full"
+            />
           </el-form-item>
         </el-col>
       </el-row>
-      <el-row>
+      <el-row :gutter="20">
         <el-col :span="12">
           <el-form-item label="手机号码" prop="mobile">
-            <el-input v-model="formData.mobile" maxlength="11" placeholder="请输入手机号码" />
+            <el-input v-model="formData.mobile" maxlength="11" placeholder="请输入手机号码" clearable />
           </el-form-item>
         </el-col>
         <el-col :span="12">
           <el-form-item label="邮箱" prop="email">
-            <el-input v-model="formData.email" maxlength="50" placeholder="请输入邮箱" />
+            <el-input v-model="formData.email" maxlength="50" placeholder="请输入邮箱" clearable />
           </el-form-item>
         </el-col>
       </el-row>
-      <el-row>
+      <el-row :gutter="20">
         <el-col :span="12">
-          <el-form-item label="用户性别">
-            <el-select v-model="formData.sex" placeholder="请选择">
-              <el-option v-for="dict in getIntDictOptions(DICT_TYPE.SYSTEM_USER_SEX)" :key="dict.value"
-                :label="dict.label" :value="dict.value" />
+          <el-form-item label="用户性别" prop="sex">
+            <el-select v-model="formData.sex" placeholder="请选择" class="w-full" clearable>
+              <el-option
+                v-for="dict in getIntDictOptions(DICT_TYPE.SYSTEM_USER_SEX)"
+                :key="dict.value"
+                :label="dict.label"
+                :value="dict.value"
+              />
             </el-select>
           </el-form-item>
         </el-col>
         <el-col :span="12">
-          <el-form-item label="岗位">
-            <el-select v-model="formData.postIds" multiple placeholder="请选择">
+          <el-form-item label="岗位" prop="postIds">
+            <el-select v-model="formData.postIds" multiple placeholder="请选择" class="w-full" clearable>
               <el-option v-for="item in postList" :key="item.id" :label="item.name" :value="item.id!" />
             </el-select>
           </el-form-item>
         </el-col>
       </el-row>
-      <el-row>
+      <el-row :gutter="20">
         <el-col :span="24">
-          <el-form-item label="备注">
-            <el-input v-model="formData.remark" placeholder="请输入内容" type="textarea" />
+          <el-form-item label="备注" prop="remark">
+            <el-input v-model="formData.remark" placeholder="请输入内容" type="textarea" :rows="3" />
           </el-form-item>
         </el-col>
       </el-row>
@@ -77,6 +89,9 @@
   </Dialog>
 </template>
 <script lang="ts" setup>
+import { computed, reactive, ref } from 'vue'
+import { useI18n } from '@/hooks/web/useI18n'
+import { useMessage } from '@/hooks/web/useMessage'
 import { DICT_TYPE, getIntDictOptions } from '@/utils/dict'
 import { CommonStatusEnum } from '@/utils/constants'
 import { defaultProps, handleTree } from '@/utils/tree'
@@ -99,25 +114,28 @@ const formData = ref({
   deptId: '',
   mobile: '',
   email: '',
-  id: undefined,
+  id: undefined as number | undefined,
   username: '',
-  tutorialAccessPassword: '',
+  password: '',
   sex: undefined,
-  postIds: [],
+  postIds: [] as number[],
   remark: '',
   status: CommonStatusEnum.ENABLE,
   roleIds: []
 })
-const formRules = reactive<FormRules>({
-  username: [{ required: true, message: '用户名称不能为空', trigger: 'blur' }],
-  nickname: [{ required: true, message: '用户昵称不能为空', trigger: 'blur' }],
-  tutorialAccessPassword: [
-    {
-      pattern: /^$|^.{6,16}$/,
-      message: '教程访问密码长度为 6 到 16 个字符',
-      trigger: 'blur'
-    }
+
+const formRules = computed<FormRules>(() => ({
+  username: [
+    { required: true, message: '用户账号不能为空', trigger: 'blur' },
+    { min: 4, max: 30, message: '用户账号长度为 4 到 30 个字符', trigger: 'blur' }
   ],
+  nickname: [{ required: true, message: '用户昵称不能为空', trigger: 'blur' }],
+  password: formType.value === 'create'
+    ? [
+        { required: true, message: '用户密码不能为空', trigger: 'blur' },
+        { min: 4, max: 16, message: '用户密码长度为 4 到 16 个字符', trigger: 'blur' }
+      ]
+    : [],
   email: [
     {
       type: 'email',
@@ -132,7 +150,8 @@ const formRules = reactive<FormRules>({
       trigger: 'blur'
     }
   ]
-})
+}))
+
 const formRef = ref() // 表单 Ref
 const deptList = ref<Tree[]>([]) // 树形结构
 const postList = ref([] as PostApi.PostVO[]) // 岗位列表
@@ -151,7 +170,7 @@ const open = async (type: string, id?: number) => {
       formData.value = {
         ...formData.value,
         ...user,
-        tutorialAccessPassword: ''
+        password: ''
       }
     } finally {
       formLoading.value = false
@@ -166,21 +185,23 @@ defineExpose({ open }) // 提供 open 方法，用于打开弹窗
 
 /** 提交表单 */
 const emit = defineEmits(['success']) // 定义 success 事件，用于操作成功后的回调
-/**\n * submitForm：执行会产生数据或文件副作用的页面操作。调用前使用当前页面状态组装参数，成功后的页面反馈和状态更新由该方法负责。\n */
+
 const submitForm = async () => {
   // 校验表单
-  if (!formRef) return
+  if (!formRef.value) return
   const valid = await formRef.value.validate()
   if (!valid) return
   // 提交请求
   formLoading.value = true
   try {
-    const data = formData.value as unknown as UserApi.UserVO
+    const data = { ...formData.value }
     if (formType.value === 'create') {
-      await UserApi.createUser(data)
+      await UserApi.createUser(data as unknown as UserApi.UserVO)
       message.success(t('common.createSuccess'))
     } else {
-      await UserApi.updateUser(data)
+      // 更新时不传 password
+      delete (data as any).password
+      await UserApi.updateUser(data as unknown as UserApi.UserVO)
       message.success(t('common.updateSuccess'))
     }
     dialogVisible.value = false
@@ -200,7 +221,7 @@ const resetForm = () => {
     email: '',
     id: undefined,
     username: '',
-    tutorialAccessPassword: '',
+    password: '',
     sex: undefined,
     postIds: [],
     remark: '',

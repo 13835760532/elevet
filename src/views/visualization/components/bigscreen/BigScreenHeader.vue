@@ -153,6 +153,7 @@ import {
   getBigScreenUserDeptAreaParams,
   getDefaultBigScreenConfig,
   formatBigScreenRegionLabel,
+  isBigScreenNationwide,
   isBigScreenSuperAdmin,
   saveBigScreenConfig,
   type BigScreenDataConfig
@@ -234,7 +235,7 @@ const formatCascaderAreaTree = (tree: AreaNodeRespVO[] = [], parentName = ''): A
 /**
  * 按需加载行政区划树，并将可选范围限制在当前账号所属机构地区内。
  *
- * 同一组件生命周期只请求一次；账号不是超级管理员且历史配置越界时，自动回填
+ * 同一组件生命周期只请求一次；账号不是全国机构且历史配置越界时，自动回填
  * 当前机构地区。加载失败时保留空选项并记录错误，不影响大屏其他数据展示。
  */
 const ensureAreaOptionsLoaded = async () => {
@@ -242,12 +243,19 @@ const ensureAreaOptionsLoaded = async () => {
   areaOptionsLoading.value = true
   try {
     const data = await getAreaTree()
-    originalAreaOptions.value = formatAreaTree((data || []) as AreaNodeRespVO[])
-    const limitedTree = limitTreeByRootArea(originalAreaOptions.value, userDeptAreaCode.value)
+    let tree = formatAreaTree((data || []) as AreaNodeRespVO[])
+    const isNationwide = isBigScreenNationwide()
+    if (isNationwide) {
+      tree = [{ id: 0, name: '全国' }, ...tree]
+    }
+    originalAreaOptions.value = tree
+    const limitedTree = isNationwide
+      ? tree
+      : limitTreeByRootArea(tree, userDeptAreaCode.value)
     areaOptions.value = formatCascaderAreaTree(limitedTree)
     const cachedConfig = getBigScreenConfig()
     if (
-      !isBigScreenSuperAdmin() &&
+      !isNationwide &&
       (!cachedConfig.regionPath.length ||
         !isPathInRootArea(cachedConfig.regionPath, userDeptAreaCode.value))
     ) {
@@ -337,7 +345,7 @@ const resolvePathByAreaCode = (areaCode: number | string) =>
 
 /** 判断已保存的地区路径是否仍属于当前账号管辖根节点。 */
 const isPathInRootArea = (path: number[], rootAreaCode?: string) => {
-  if (!rootAreaCode) return true
+  if (isBigScreenNationwide() || !rootAreaCode) return true
   return Array.isArray(path) && path.some((id) => String(id) === String(rootAreaCode))
 }
 
@@ -348,8 +356,20 @@ const isPathInRootArea = (path: number[], rootAreaCode?: string) => {
  * 先按末级编码重新解析，修复地区树结构升级造成的路径缺失。
  */
 const resolveRegionMetaByPath = (path?: number[] | null) => {
-  const labels: string[] = []
   const safePath = path || []
+  if (!safePath.length || (safePath.length === 1 && (safePath[0] === 0 || String(safePath[0]) === '0'))) {
+    return {
+      regionPath: safePath.length ? [0] : [],
+      regionLabel: '全国',
+      provinceName: '',
+      cityName: '',
+      districtName: '',
+      areaCode: '',
+      areaType: '0'
+    }
+  }
+
+  const labels: string[] = []
   const fullPath = safePath.length ? resolvePathByAreaCode(safePath[safePath.length - 1]) || safePath : []
   let currentTree = originalAreaOptions.value
   for (const id of fullPath) {
@@ -359,14 +379,15 @@ const resolveRegionMetaByPath = (path?: number[] | null) => {
     currentTree = current.children || []
   }
   const selectedCode = fullPath[fullPath.length - 1]
+  const isNationNode = selectedCode === 0 || String(selectedCode) === '0'
   return {
     regionPath: fullPath,
-    regionLabel: formatBigScreenRegionLabel(labels.join('-')),
-    provinceName: labels[0] || '',
-    cityName: labels[1] || '',
-    districtName: labels[2] || '',
-    areaCode: selectedCode ? String(selectedCode) : '',
-    areaType: fullPath.length ? String(fullPath.length) : ''
+    regionLabel: isNationNode ? '全国' : formatBigScreenRegionLabel(labels.join('-')),
+    provinceName: isNationNode ? '' : (labels[0] || ''),
+    cityName: isNationNode ? '' : (labels[1] || ''),
+    districtName: isNationNode ? '' : (labels[2] || ''),
+    areaCode: isNationNode ? '' : (selectedCode ? String(selectedCode) : ''),
+    areaType: isNationNode ? '0' : (fullPath.length ? String(fullPath.length) : '')
   }
 }
 
@@ -447,7 +468,9 @@ const activeTaskEntry = computed<TaskEntryKey>(() =>
   route.path === '/big-screen-task-receive' ? 'receive' : 'issue'
 )
 
-/**\n * isMenuActive：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。\n */
+/**
+ * isMenuActive：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。
+ */
 const isMenuActive = (key: '' | 'task' | 'inspect' | 'cert' | 'warn') => activeMenu.value === key
 
 /**
@@ -532,7 +555,7 @@ onMounted(async () => {
 
   // 切换账号或老账号缓存的地区不在当前账号的管辖范围内时，自动同步保存并应用当前账号的默认管理地区
   const needAutoReset =
-    !isBigScreenSuperAdmin() &&
+    !isBigScreenNationwide() &&
     (!cachedConfig.regionPath.length ||
       !isPathInRootArea(cachedConfig.regionPath, userDeptAreaCode.value))
 
