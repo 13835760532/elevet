@@ -56,6 +56,13 @@ const queryDeptScopeByDataScope: Record<BigScreenDataScope, BigScreenQueryDeptSc
 export const getBigScreenQueryDeptScope = (scope: BigScreenDataScope): BigScreenQueryDeptScope =>
   queryDeptScopeByDataScope[scope]
 
+/** 将前端语义化数据范围转换为后端接口约定的 dataScope 参数（辖区数据对应 AREA_REGULATE）。 */
+export const getBigScreenApiDataScope = (scope?: BigScreenDataScope): string | undefined => {
+  if (!scope) return undefined
+  if (scope === 'all') return 'AREA_REGULATE'
+  return scope
+}
+
 /** 根据数据范围返回配置面板和摘要中使用的中文名称。 */
 export const getBigScreenDataScopeLabel = (scope: BigScreenDataScope) =>
   [jurisdictionScopeOption, ...organizationScopeOptions].find((option) => option.value === scope)

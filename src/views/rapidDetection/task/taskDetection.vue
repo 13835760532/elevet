@@ -79,12 +79,19 @@
                             </el-select>
                         </el-form-item>
                         <el-form-item label="">
-                            <el-select v-model="queryParams.category" placeholder="产品分类" class="custom-select"
-                                clearable>
-                                <el-option label="全部" value="" />
-                                <el-option v-for="item in categoryOptions" :key="item.value" :label="item.label"
-                                    :value="item.value" />
-                            </el-select>
+                            <el-tree-select
+                                v-model="queryParams.category"
+                                :data="produceCategoryTree"
+                                :props="{ label: 'name', value: 'code', children: 'children' }"
+                                node-key="code"
+                                placeholder="产品分类"
+                                class="custom-select"
+                                popper-class="product-category-tree-popper"
+                                :fit-input-width="false"
+                                clearable
+                                filterable
+                                check-strictly
+                            />
                         </el-form-item>
                         <el-form-item label="">
                             <el-select v-model="queryParams.location" placeholder="采样场所" class="custom-select"
@@ -192,11 +199,13 @@ import { useRouter, useRoute } from 'vue-router';
 import { Search, QuestionFilled } from '@element-plus/icons-vue';
 import * as DetectionTaskApi from '@/api/agri/detectionTask';
 import * as DetectionRecordApi from '@/api/agri/detectionRecord';
+import * as ProduceCategoryApi from '@/api/agri/produceCategory';
 import * as DeptApi from '@/api/system/dept';
 import { formatDate } from '@/utils/formatTime';
 import { useDict } from '@/hooks/web/useDict';
 import download from '@/utils/download';
 import { useMessage } from '@/hooks/web/useMessage';
+import { handleTree } from '@/utils/tree';
 
 const router = useRouter();
 const route = useRoute();
@@ -204,12 +213,44 @@ const activeTab = ref('task');
 const message = useMessage();
 const deptOptions = ref([]);
 const productCategoryDict = useDict('agri_product_category', 'str');
-/**\n * getCategoryLabel：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。\n */
-const getCategoryLabel = (value) => productCategoryDict.getLabel(value);
-const categoryOptions = ref((productCategoryDict.options.value || []).map((item) => ({
-    label: item.label,
-    value: item.value
-})));
+const produceCategoryTree = ref([]);
+
+/**
+ * getCategoryLabel：优先从产品分类树中查找名称，兼容字典与原始值
+ */
+const getCategoryLabel = (val) => {
+    if (!val && val !== 0) return '--';
+    const findLabel = (nodes) => {
+        for (const node of nodes) {
+            if (String(node.code) === String(val) || String(node.name) === String(val) || String(node.id) === String(val)) {
+                return node.name;
+            }
+            if (node.children?.length) {
+                const found = findLabel(node.children);
+                if (found) return found;
+            }
+        }
+        return null;
+    };
+    const foundName = findLabel(produceCategoryTree.value);
+    return foundName || productCategoryDict.getLabel(val) || val;
+};
+
+/** 加载农产品行业分类树（支持一级与二级分类） */
+const loadProduceCategoryTree = async () => {
+    try {
+        const res = await ProduceCategoryApi.getProduceCategoryPage({
+            pageNo: 1,
+            pageSize: 1000,
+            type: '1' // 1-分类
+        });
+        const list = res?.list || [];
+        produceCategoryTree.value = handleTree(list);
+    } catch (error) {
+        console.error('加载农产品分类失败:', error);
+    }
+};
+
 const samplingLocationOptions = ref([
     { label: '田间', value: '田间' },
     { label: '市场', value: '市场' },
@@ -361,6 +402,7 @@ const loadDeptOptions = async () => {
 onMounted(() => {
     initData();
     loadDeptOptions();
+    loadProduceCategoryTree();
     getList();
 });
 
@@ -556,5 +598,36 @@ const handleRetest = (row) => {
     justify-content: flex-end;
     align-items: center;
     padding: 10px 0;
+}
+</style>
+
+<!-- 产品分类树形下拉弹出层全局样式 -->
+<style lang="scss">
+.product-category-tree-popper {
+    min-width: 240px !important;
+    max-width: 420px !important;
+
+    .el-select-dropdown__wrap {
+        max-height: 360px;
+    }
+
+    .el-tree {
+        min-width: 100%;
+        display: inline-block;
+        padding: 6px 8px;
+    }
+
+    .el-tree-node__content {
+        height: 32px;
+        line-height: 32px;
+        padding-right: 12px;
+    }
+
+    .el-tree-node__label {
+        white-space: nowrap;
+        overflow: visible;
+        text-overflow: clip;
+        font-size: 14px;
+    }
 }
 </style>

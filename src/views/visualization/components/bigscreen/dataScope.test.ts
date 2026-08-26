@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  getBigScreenApiDataScope,
   getBigScreenDataScopeOptions,
   getBigScreenQueryDeptScope,
   resolveBigScreenDataScope
@@ -47,5 +48,20 @@ describe('big-screen query department scope', () => {
     ['issued', 3]
   ] as const)('maps %s to queryDeptScope=%i', (scope, queryDeptScope) => {
     expect(getBigScreenQueryDeptScope(scope)).toBe(queryDeptScope)
+  })
+})
+
+describe('big-screen API data scope', () => {
+  it('maps "all" (jurisdiction) to AREA_REGULATE', () => {
+    expect(getBigScreenApiDataScope('all')).toBe('AREA_REGULATE')
+  })
+
+  it('returns scope as is for organization scopes', () => {
+    expect(getBigScreenApiDataScope('issued')).toBe('issued')
+    expect(getBigScreenApiDataScope('self')).toBe('self')
+  })
+
+  it('returns undefined when scope is empty', () => {
+    expect(getBigScreenApiDataScope(undefined)).toBeUndefined()
   })
 })

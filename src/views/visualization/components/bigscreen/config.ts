@@ -1,6 +1,7 @@
 import dayjs from 'dayjs'
 import { CACHE_KEY, useCache } from '@/hooks/web/useCache'
 import {
+  getBigScreenApiDataScope,
   getBigScreenDataScopeLabel,
   getBigScreenQueryDeptScope,
   resolveBigScreenDataScope,
@@ -199,7 +200,7 @@ export const getBigScreenQueryParams = () => {
   return {
     startDate: config.timeRange?.[0] || undefined,
     endDate: config.timeRange?.[1] || undefined,
-    dataScope: config.dataScope || undefined,
+    dataScope: getBigScreenApiDataScope(config.dataScope),
     queryDeptScope: getBigScreenQueryDeptScope(config.dataScope)
   }
 }
