@@ -21,13 +21,19 @@
                             clearable />
                     </el-form-item>
                     <el-form-item label="">
-                        <el-select v-model="queryParams.category" placeholder="产品分类" class="custom-select w140"
-                            clearable>
-                            <el-option label="全部" value="" />
-                            <template v-for="dict in productCategoryOptions" :key="dict.value + ''">
-                                <el-option v-if="dict.label !== '全部'" :label="dict.label" :value="dict.value" />
-                            </template>
-                        </el-select>
+                        <el-tree-select
+                            v-model="queryParams.category"
+                            :data="produceCategoryTree"
+                            :props="{ label: 'name', value: 'name', children: 'children' }"
+                            node-key="name"
+                            placeholder="产品分类"
+                            class="custom-select"
+                            popper-class="product-category-tree-popper"
+                            :fit-input-width="false"
+                            clearable
+                            filterable
+                            check-strictly
+                        />
                     </el-form-item>
                     <el-form-item label="">
                         <AreaCascader v-model="areaIds" @select="handleAreaSelect" placeholder="抽检地区"
@@ -85,8 +91,7 @@
                         <el-table-column label="产品分类" prop="productCategory" min-width="100" align="center"
                             show-overflow-tooltip>
                             <template #default="scope">
-                                {{ getCategoryLabel(scope.row.productCategory) == '--' ? scope.row.productCategory :
-                                    getCategoryLabel(scope.row.productCategory) }}
+                                {{ getCategoryLabel(scope.row.productCategory) }}
                             </template>
                         </el-table-column>
                         <el-table-column label="抽检地区" prop="detectionArea" min-width="110" align="center"
@@ -227,10 +232,47 @@ import { reactive, ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useDict } from '@/hooks/web/useDict';
 
+import * as ProduceCategoryApi from '@/api/agri/produceCategory';
+import { handleTree } from '@/utils/tree';
+
 const productCategoryDict = useDict('agri_product_category', 'str');
-const productCategoryOptions = productCategoryDict.options;
-/**\n * getCategoryLabel：根据当前上下文读取、判断或定位页面数据。返回结果供模板、计算属性或后续业务分支使用，不直接提交表单。\n */
-const getCategoryLabel = (val: string) => productCategoryDict.getLabel(val);
+const produceCategoryTree = ref<any[]>([]);
+
+/**
+ * getCategoryLabel：优先从产品分类树中查找名称，兼容字典与原始值
+ */
+const getCategoryLabel = (val: string | number) => {
+    if (!val && val !== 0) return '--';
+    const findLabel = (nodes: any[]): string | null => {
+        for (const node of nodes) {
+            if (String(node.code) === String(val) || String(node.name) === String(val) || String(node.id) === String(val)) {
+                return node.name;
+            }
+            if (node.children?.length) {
+                const found = findLabel(node.children);
+                if (found) return found;
+            }
+        }
+        return null;
+    };
+    const foundName = findLabel(produceCategoryTree.value);
+    return foundName || productCategoryDict.getLabel(val) || val;
+};
+
+/** 加载农产品行业分类树（支持一级与二级分类） */
+const loadProduceCategoryTree = async () => {
+    try {
+        const res = await ProduceCategoryApi.getProduceCategoryPage({
+            pageNo: 1,
+            pageSize: 1000,
+            type: '1' // 1-分类
+        });
+        const list = res?.list || [];
+        produceCategoryTree.value = handleTree(list);
+    } catch (error) {
+        console.error('加载农产品分类失败:', error);
+    }
+};
 import * as DetectionRecordApi from '@/api/agri/detectionRecord';
 import * as SelfDetectionReportRuleApi from '@/api/agri/selfDetectionReportRule';
 import { useMessage } from '@/hooks/web/useMessage';
@@ -527,6 +569,7 @@ const handleRetest = async (row) => {
 };
 
 onMounted(() => {
+    loadProduceCategoryTree();
     getList();
 });
 </script>
@@ -756,6 +799,37 @@ onMounted(() => {
         justify-content: center !important;
         align-items: center !important;
         padding: 0 !important;
+    }
+}
+</style>
+
+<!-- 产品分类树形下拉弹出层全局样式 -->
+<style lang="scss">
+.product-category-tree-popper {
+    min-width: 240px !important;
+    max-width: 420px !important;
+
+    .el-select-dropdown__wrap {
+        max-height: 360px;
+    }
+
+    .el-tree {
+        min-width: 100%;
+        display: inline-block;
+        padding: 6px 8px;
+    }
+
+    .el-tree-node__content {
+        height: 32px;
+        line-height: 32px;
+        padding-right: 12px;
+    }
+
+    .el-tree-node__label {
+        white-space: nowrap;
+        overflow: visible;
+        text-overflow: clip;
+        font-size: 14px;
     }
 }
 </style>

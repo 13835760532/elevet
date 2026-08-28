@@ -82,8 +82,8 @@
                             <el-tree-select
                                 v-model="queryParams.category"
                                 :data="produceCategoryTree"
-                                :props="{ label: 'name', value: 'code', children: 'children' }"
-                                node-key="code"
+                                :props="{ label: 'name', value: 'name', children: 'children' }"
+                                node-key="name"
                                 placeholder="产品分类"
                                 class="custom-select"
                                 popper-class="product-category-tree-popper"
