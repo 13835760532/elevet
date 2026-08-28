@@ -183,13 +183,9 @@ const subjectData = computed(() => [
  */
 const loadOverviewData = () => {
   const params = getBigScreenQueryParams()
-  const certOverviewParams = {
-    ...params,
-    dataScope: 'AREA_REGULATE'
-  }
 
-  cachedBigScreenRequest('certificate-overview', certOverviewParams, () =>
-    getCertificateOverview(certOverviewParams)
+  cachedBigScreenRequest('certificate-overview', params, () =>
+    getCertificateOverview(params)
   )
     .then((data) => {
       overview.value = data || {}
